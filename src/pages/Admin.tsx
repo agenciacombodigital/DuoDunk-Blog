@@ -59,14 +59,19 @@ export default function AdminPage() {
     const article = queue.find((a: any) => a.id === id);
     if (!article) return;
 
-    // Remove a propriedade 'id' para não dar conflito
-    const { id: queueId, ...articleToPublish } = article;
-
-    const { error: insertError } = await supabase.from('articles').insert({
-      ...articleToPublish,
+    const articleToPublish = {
+      title: article.title,
+      summary: article.summary,
+      body: article.body,
+      image_url: article.image_url,
+      slug: article.slug,
+      tags: article.tags,
+      meta_description: article.meta_description,
       published: true,
       published_at: new Date().toISOString(),
-    });
+    };
+
+    const { error: insertError } = await supabase.from('articles').insert(articleToPublish);
 
     if (insertError) {
       toast.error("Erro ao publicar: " + insertError.message);

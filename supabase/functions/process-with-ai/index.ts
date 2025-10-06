@@ -20,7 +20,6 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
-    // 1. Buscar um artigo 'pending' na fila
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
@@ -35,7 +34,6 @@ serve(async (req) => {
       });
     }
 
-    // 2. Atualizar o status para 'pending_processing' para evitar processamento duplicado
     const { error: updateStatusError } = await supabaseAdmin
       .from('articles_queue')
       .update({ status: 'pending_processing' })
@@ -43,14 +41,13 @@ serve(async (req) => {
 
     if (updateStatusError) throw updateStatusError;
 
-    // 3. Gerar conteúdo com a OpenAI
     const prompt = `Você é um jornalista esportivo especialista em NBA.
     Analise o seguinte título e resumo de uma notícia e gere um artigo completo e detalhado, com pelo menos 5 parágrafos.
     O artigo deve ser envolvente, informativo e otimizado para SEO.
     Inclua tags relevantes para o artigo.
     Crie um slug amigável para URL.
 
-    Título Original: "${article.title}"
+    Título Original: "${article.original_title}"
     Resumo Original: "${article.summary}"
 
     Responda APENAS com um objeto JSON no seguinte formato, sem nenhum texto adicional:
@@ -71,7 +68,6 @@ serve(async (req) => {
 
     const aiResponse = JSON.parse(completion.choices[0].message.content);
 
-    // 4. Atualizar o artigo na fila com o conteúdo gerado pela IA
     const { error: updateError } = await supabaseAdmin
       .from('articles_queue')
       .update({

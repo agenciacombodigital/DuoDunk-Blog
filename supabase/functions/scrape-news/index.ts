@@ -25,8 +25,13 @@ serve(async (req) => {
       const link = $(el).find('a.contentItem__anchor').attr('href');
       const imageUrl = $(el).find('img.contentItem__image').attr('src');
 
-      if (title && link && imageUrl) {
-        articles.push({ title, summary, link, image_url: imageUrl });
+      if (title && link) {
+        articles.push({ 
+          original_title: title, 
+          summary, 
+          original_link: link, 
+          image_url: imageUrl 
+        });
       }
     });
 
@@ -39,16 +44,16 @@ serve(async (req) => {
 
     const { data: existingArticles, error: fetchError } = await supabase
       .from('articles_queue')
-      .select('link')
-      .in('link', articles.map(a => a.link));
+      .select('original_link')
+      .in('original_link', articles.map(a => a.original_link));
 
     if (fetchError) {
       console.error('Error fetching existing articles:', fetchError);
       throw fetchError;
     }
 
-    const existingLinks = new Set(existingArticles?.map(a => a.link));
-    const newArticles = articles.filter(a => !existingLinks.has(a.link));
+    const existingLinks = new Set(existingArticles?.map(a => a.original_link));
+    const newArticles = articles.filter(a => !existingLinks.has(a.original_link));
 
     if (newArticles.length === 0) {
       return new Response(JSON.stringify({ message: 'Nenhum novo artigo para adicionar à fila.' }), {
@@ -61,8 +66,7 @@ serve(async (req) => {
       .from('articles_queue')
       .insert(newArticles.map(article => ({
         ...article,
-        status: 'pending',
-        created_at: new Date().toISOString(),
+        status: 'pending', // A IA vai procurar por este status
       })));
 
     if (insertError) {
