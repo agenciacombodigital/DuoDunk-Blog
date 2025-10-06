@@ -1,0 +1,99 @@
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
+import OpenAI from 'https://deno.land/x/openai@v4.24.1/mod.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY') });
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('PROJECT_URL') ?? '',
+      Deno.env.get('SERVICE_ROLE_KEY') ?? '',
+    );
+
+    // 1. Buscar um artigo 'pending' na fila
+    const { data: article, error: fetchError } = await supabaseAdmin
+      .from('articles_queue')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (fetchError || !article) {
+      return new Response(JSON.stringify({ message: 'Nenhum artigo na fila para processar.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 2. Atualizar o status para 'pending_processing' para evitar processamento duplicado
+    const { error: updateStatusError } = await supabaseAdmin
+      .from('articles_queue')
+      .update({ status: 'pending_processing' })
+      .eq('id', article.id);
+
+    if (updateStatusError) throw updateStatusError;
+
+    // 3. Gerar conteúdo com a OpenAI
+    const prompt = `Você é um jornalista esportivo especialista em NBA.
+    Analise o seguinte título e resumo de uma notícia e gere um artigo completo e detalhado, com pelo menos 5 parágrafos.
+    O artigo deve ser envolvente, informativo e otimizado para SEO.
+    Inclua tags relevantes para o artigo.
+    Crie um slug amigável para URL.
+
+    Título Original: "${article.title}"
+    Resumo Original: "${article.summary}"
+
+    Responda APENAS com um objeto JSON no seguinte formato, sem nenhum texto adicional:
+    {
+      "title": "Seu novo título criativo aqui.",
+      "summary": "Seu novo resumo de uma frase aqui.",
+      "body": "<p>Parágrafo 1 do artigo em HTML.</p><p>Parágrafo 2 do artigo.</p>",
+      "meta_description": "Sua meta description para SEO aqui.",
+      "tags": ["tag1", "tag2", "tag3"],
+      "slug": "seu-novo-slug-baseado-no-titulo"
+    }`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+    });
+
+    const aiResponse = JSON.parse(completion.choices[0].message.content);
+
+    // 4. Atualizar o artigo na fila com o conteúdo gerado pela IA
+    const { error: updateError } = await supabaseAdmin
+      .from('articles_queue')
+      .update({
+        ...aiResponse,
+        status: 'processed',
+        processed_at: new Date().toISOString(),
+      })
+      .eq('id', article.id);
+
+    if (updateError) throw updateError;
+
+    return new Response(
+      JSON.stringify({ message: `Artigo "${aiResponse.title}" processado!` }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
+  } catch (error) {
+    console.error('Error in process-with-ai function:', error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
+  }
+});
