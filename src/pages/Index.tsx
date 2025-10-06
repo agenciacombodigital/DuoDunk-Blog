@@ -1,19 +1,57 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import ArticleCard from '@/components/ArticleCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
-import { MadeWithDyad } from "@/components/made-with-dyad";
+export default function Index() {
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const Index = () => {
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('published', true)
+        .order('published_at', { ascending: false })
+        .limit(12);
+      setArticles(data || []);
+      setLoading(false);
+    };
+    fetchArticles();
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">
-          Start building your amazing project here!
-        </p>
-      </div>
-      <MadeWithDyad />
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-5xl font-bold text-center mb-4 font-poppins">
+        O Jogo Dentro do <span className="text-dunk-yellow">Jogo.</span>
+      </h1>
+      <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+        Notícias, análises profundas e tudo sobre o universo da NBA, trazido até você com o poder da IA.
+      </p>
+
+      <section>
+        <h2 className="text-3xl font-bold mb-6 font-poppins">Últimas Notícias</h2>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {articles.map(article => (
+              <ArticleCard key={article.id} article={article} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
-};
-
-export default Index;
+}

@@ -1,27 +1,27 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
+import AdminPage from "./pages/Admin";
+import Ultimas from "./pages/Ultimas";
+import Artigo from "./pages/Artigo";
+import Layout from "./components/Layout";
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
+  <>
+    <Sonner richColors />
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/ultimas" element={<Ultimas />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/artigos/:slug" element={<Artigo />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </>
 );
 
 export default App;
