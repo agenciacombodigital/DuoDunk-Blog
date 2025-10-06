@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from "sonner";
-import { Loader2, Check, RefreshCw, Bot } from 'lucide-react';
+import { Loader2, Check, RefreshCw, Bot, Link as LinkIcon } from 'lucide-react';
 
 export default function AdminPage() {
   const [queue, setQueue] = useState<any[]>([]);
@@ -40,7 +41,7 @@ export default function AdminPage() {
     setIsScraping(false);
   }
 
-  async function processAI() {
+  async function processOneWithAI() {
     setIsProcessing(true);
     toast.loading("Processando com IA...");
     const { data, error } = await supabase.functions.invoke('process-with-ai');
@@ -55,7 +56,7 @@ export default function AdminPage() {
     setIsProcessing(false);
   }
 
-  async function approve(id: string) {
+  async function approveArticle(id: string) {
     const article = queue.find((a: any) => a.id === id);
     if (!article) return;
 
@@ -99,12 +100,12 @@ export default function AdminPage() {
           Coletar Notícias
         </Button>
         <Button
-          onClick={processAI}
+          onClick={processOneWithAI}
           disabled={isLoading}
           className="bg-dunk-pink text-white hover:bg-pink-600 font-bold"
         >
           {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-          Processar com IA
+          🤖 Processar com IA
         </Button>
       </div>
 
@@ -112,17 +113,32 @@ export default function AdminPage() {
         {loadingQueue && <p>Carregando fila de aprovação...</p>}
         {!loadingQueue && queue.length === 0 && <p>Nenhum artigo pronto para aprovação.</p>}
         {queue.map((article: any) => (
-          <div key={article.id} className="bg-dunk-card p-6 rounded-lg flex flex-col md:flex-row gap-4">
-            <img src={article.image_url} alt="" className="w-full md:w-48 h-48 md:h-32 object-cover rounded" />
+          <div key={article.id} className="bg-dunk-card p-6 rounded-lg flex flex-col md:flex-row gap-6">
+            <img src={article.image_url} alt={article.title} className="w-full md:w-48 h-48 md:h-auto object-cover rounded" />
             <div className="flex-1">
               <h3 className="text-xl font-bold mb-2">{article.title}</h3>
               <p className="text-gray-400 mb-4 text-sm">{article.summary}</p>
-              <Button
-                onClick={() => approve(article.id)}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Check className="mr-2 h-4 w-4" /> Aprovar e Publicar
-              </Button>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {article.tags?.map((tag: string) => (
+                  <Badge key={tag} variant="secondary">{tag}</Badge>
+                ))}
+              </div>
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => approveArticle(article.id)}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Check className="mr-2 h-4 w-4" /> Aprovar e Publicar
+                </Button>
+                <a
+                  href={article.original_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-dunk-yellow hover:underline text-sm font-semibold"
+                >
+                  <LinkIcon className="mr-2 h-4 w-4" /> Ver Original
+                </a>
+              </div>
             </div>
           </div>
         ))}
