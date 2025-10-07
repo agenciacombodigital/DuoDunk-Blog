@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 7 - Busca Super Flexível) ---");
+    console.log("--- Função process-with-ai iniciada (Versão 8 - Modelo Groq Atualizado) ---");
 
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
     if (!groqApiKey) {
@@ -24,17 +24,17 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
-    // MODIFICAÇÃO: Agora busca por status 'pending', 'null' OU string vazia ('')
+    console.log("Buscando artigos na fila (status 'pending', 'null' ou '')...");
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
-      .or('status.eq.pending,status.is.null,status.eq.')
+      .or('status.eq.pending,status.is.null,status.eq.') // Busca por status 'pending', 'null' OU string vazia ('')
       .order('created_at', { ascending: true })
       .limit(1)
       .single();
 
     if (fetchError || !article) {
-      console.log("Nenhum artigo encontrado na fila ('pending', 'null' ou '').");
+      console.log("Nenhum artigo encontrado na fila para processar.");
       return new Response(JSON.stringify({ message: 'Nenhum artigo na fila para processar.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -44,7 +44,7 @@ serve(async (req) => {
 
     await supabaseAdmin
       .from('articles_queue')
-      .update({ status: 'pending_processing' })
+      .update({ status: 'pending_processing' }) // Marcar como em processamento
       .eq('id', article.id);
 
     const prompt = `Você é um jornalista esportivo especialista em NBA.
@@ -66,8 +66,8 @@ serve(async (req) => {
       "slug": "seu-novo-slug-baseado-no-titulo"
     }`;
 
-    const modelToUse = 'llama3-70b-8192';
-    console.log(`Chamando a API Groq diretamente com o modelo: ${modelToUse}`);
+    const modelToUse = 'llama3-8b-8192'; // Modelo Groq atualizado
+    console.log(`Chamando a API Groq com o modelo: ${modelToUse}`);
 
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -93,10 +93,23 @@ serve(async (req) => {
     const aiResponse = JSON.parse(completion.choices[0].message.content);
     console.log("Resposta da IA recebida e processada com sucesso.");
 
+    // Gerar slug se não veio
+    if (!aiResponse.slug && aiResponse.title) {
+      aiResponse.slug = aiResponse.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 100);
+    } else if (!aiResponse.slug) {
+      aiResponse.slug = `artigo-${article.id}`; // Fallback slug
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('articles_queue')
       .update({
-        ...aiResponse,
+        title: aiResponse.title,
+        summary: aiResponse.summary,
+        body: aiResponse.body,
+        image_url: article.image_url, // Manter a imagem original
+        slug: aiResponse.slug,
+        tags: aiResponse.tags || ['nba', 'basquete'], // Fallback para tags
+        meta_description: aiResponse.meta_description,
         status: 'processed',
         processed_at: new Date().toISOString(),
       })
@@ -104,6 +117,7 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
+    console.log("--- Artigo processado com sucesso! ---");
     return new Response(
       JSON.stringify({ message: `Artigo "${aiResponse.title}" processado com sucesso!` }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
