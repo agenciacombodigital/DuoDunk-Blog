@@ -1,6 +1,5 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
-import Groq from "https://esm.sh/groq@0.5.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,9 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 4 - ESM Import) ---");
+    console.log("--- Função process-with-ai iniciada (Versão 5 - Fetch Direto) ---");
 
-    const groq = new Groq({ apiKey: Deno.env.get('GROQ_API_KEY') });
+    const groqApiKey = Deno.env.get('GROQ_API_KEY');
+    if (!groqApiKey) {
+      throw new Error("GROQ_API_KEY não encontrada nas variáveis de ambiente.");
+    }
 
     const supabaseAdmin = createClient(
       Deno.env.get('PROJECT_URL') ?? '',
@@ -39,12 +41,10 @@ serve(async (req) => {
 
     console.log(`Artigo encontrado para processar: ${article.id} - "${article.original_title}"`);
 
-    const { error: updateStatusError } = await supabaseAdmin
+    await supabaseAdmin
       .from('articles_queue')
       .update({ status: 'pending_processing' })
       .eq('id', article.id);
-
-    if (updateStatusError) throw updateStatusError;
 
     const prompt = `Você é um jornalista esportivo especialista em NBA.
     Analise o seguinte título e resumo de uma notícia e gere um artigo completo e detalhado, com pelo menos 5 parágrafos.
@@ -66,14 +66,28 @@ serve(async (req) => {
     }`;
 
     const modelToUse = 'llama3-70b-8192';
-    console.log(`Chamando a API Groq com o modelo: ${modelToUse}`);
+    console.log(`Chamando a API Groq diretamente com o modelo: ${modelToUse}`);
 
-    const completion = await groq.chat.completions.create({
-      model: modelToUse,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelToUse,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+      })
     });
 
+    if (!groqResponse.ok) {
+      const errorBody = await groqResponse.json();
+      console.error("Erro da API Groq:", errorBody);
+      throw new Error(`A chamada à API Groq falhou com status ${groqResponse.status}`);
+    }
+
+    const completion = await groqResponse.json();
     const aiResponse = JSON.parse(completion.choices[0].message.content);
     console.log("Resposta da IA recebida e processada com sucesso.");
 
@@ -89,15 +103,13 @@ serve(async (req) => {
     if (updateError) throw updateError;
 
     return new Response(
-      JSON.stringify({ message: `Artigo "${aiResponse.title}" processado com Groq!` }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
+      JSON.stringify({ message: `Artigo "${aiResponse.title}" processado com sucesso!` }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
-    console.error("--- ERRO na função process-with-ai (Versão 4 - ESM Import) ---");
+    console.error("--- ERRO na função process-with-ai (Versão 5 - Fetch Direto) ---");
     console.error("Mensagem de erro:", error.message);
-    console.error("Objeto de erro completo:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
