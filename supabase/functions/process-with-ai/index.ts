@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 6 - Busca Flexível) ---");
+    console.log("--- Função process-with-ai iniciada (Versão 7 - Busca Super Flexível) ---");
 
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
     if (!groqApiKey) {
@@ -24,17 +24,17 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
-    // MODIFICAÇÃO: Agora busca por status 'pending' OU 'null'
+    // MODIFICAÇÃO: Agora busca por status 'pending', 'null' OU string vazia ('')
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
-      .or('status.eq.pending,status.is.null')
+      .or('status.eq.pending,status.is.null,status.eq.')
       .order('created_at', { ascending: true })
       .limit(1)
       .single();
 
     if (fetchError || !article) {
-      console.log("Nenhum artigo encontrado na fila 'pending' ou 'null'.");
+      console.log("Nenhum artigo encontrado na fila ('pending', 'null' ou '').");
       return new Response(JSON.stringify({ message: 'Nenhum artigo na fila para processar.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -85,6 +85,7 @@ serve(async (req) => {
     if (!groqResponse.ok) {
       const errorBody = await groqResponse.json();
       console.error("Erro da API Groq:", errorBody);
+      await supabaseAdmin.from('articles_queue').update({ status: 'failed' }).eq('id', article.id);
       throw new Error(`A chamada à API Groq falhou com status ${groqResponse.status}`);
     }
 
@@ -109,7 +110,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("--- ERRO na função process-with-ai (Versão 6 - Busca Flexível) ---");
+    console.error("--- ERRO na função process-with-ai ---");
     console.error("Mensagem de erro:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
