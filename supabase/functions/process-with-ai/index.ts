@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
-import Groq from "https://deno.land/x/groq@0.5.0/mod.ts";
+import Groq from "https://esm.sh/groq@0.5.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 3 - Manual Deploy) ---");
+    console.log("--- Função process-with-ai iniciada (Versão 4 - ESM Import) ---");
 
     const groq = new Groq({ apiKey: Deno.env.get('GROQ_API_KEY') });
 
@@ -95,7 +95,7 @@ serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error("--- ERRO na função process-with-ai (Versão 3 - Manual Deploy) ---");
+    console.error("--- ERRO na função process-with-ai (Versão 4 - ESM Import) ---");
     console.error("Mensagem de erro:", error.message);
     console.error("Objeto de erro completo:", error);
     return new Response(JSON.stringify({ error: error.message }), {
