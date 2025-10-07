@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 2 - Diagnóstico) ---");
+    console.log("--- Função process-with-ai iniciada (Versão 3 - Manual Deploy) ---");
 
     const groq = new Groq({ apiKey: Deno.env.get('GROQ_API_KEY') });
 
@@ -95,7 +95,7 @@ serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error("--- ERRO na função process-with-ai (Versão 2 - Diagnóstico) ---");
+    console.error("--- ERRO na função process-with-ai (Versão 3 - Manual Deploy) ---");
     console.error("Mensagem de erro:", error.message);
     console.error("Objeto de erro completo:", error);
     return new Response(JSON.stringify({ error: error.message }), {
