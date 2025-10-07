@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 5 - Fetch Direto) ---");
+    console.log("--- Função process-with-ai iniciada (Versão 6 - Busca Flexível) ---");
 
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
     if (!groqApiKey) {
@@ -24,16 +24,17 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
+    // MODIFICAÇÃO: Agora busca por status 'pending' OU 'null'
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
-      .eq('status', 'pending')
+      .or('status.eq.pending,status.is.null')
       .order('created_at', { ascending: true })
       .limit(1)
       .single();
 
     if (fetchError || !article) {
-      console.log("Nenhum artigo encontrado na fila 'pending'.");
+      console.log("Nenhum artigo encontrado na fila 'pending' ou 'null'.");
       return new Response(JSON.stringify({ message: 'Nenhum artigo na fila para processar.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -108,7 +109,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("--- ERRO na função process-with-ai (Versão 5 - Fetch Direto) ---");
+    console.error("--- ERRO na função process-with-ai (Versão 6 - Busca Flexível) ---");
     console.error("Mensagem de erro:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
