@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
-import OpenAI from 'https://deno.land/x/openai@v4.24.1/mod.ts';
+import Groq from "https://deno.land/x/groq@0.5.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const openai = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY') });
+    const groq = new Groq({ apiKey: Deno.env.get('GROQ_API_KEY') });
 
     const supabaseAdmin = createClient(
       Deno.env.get('PROJECT_URL') ?? '',
@@ -60,8 +60,8 @@ serve(async (req) => {
       "slug": "seu-novo-slug-baseado-no-titulo"
     }`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const completion = await groq.chat.completions.create({
+      model: 'llama3-70b-8192',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     });
@@ -80,7 +80,7 @@ serve(async (req) => {
     if (updateError) throw updateError;
 
     return new Response(
-      JSON.stringify({ message: `Artigo "${aiResponse.title}" processado!` }),
+      JSON.stringify({ message: `Artigo "${aiResponse.title}" processado com Groq!` }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
