@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("--- Função process-with-ai iniciada (Versão 2 - Diagnóstico) ---");
+
     const groq = new Groq({ apiKey: Deno.env.get('GROQ_API_KEY') });
 
     const supabaseAdmin = createClient(
@@ -29,10 +31,13 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !article) {
+      console.log("Nenhum artigo encontrado na fila 'pending'.");
       return new Response(JSON.stringify({ message: 'Nenhum artigo na fila para processar.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    console.log(`Artigo encontrado para processar: ${article.id} - "${article.original_title}"`);
 
     const { error: updateStatusError } = await supabaseAdmin
       .from('articles_queue')
@@ -60,13 +65,17 @@ serve(async (req) => {
       "slug": "seu-novo-slug-baseado-no-titulo"
     }`;
 
+    const modelToUse = 'llama3-70b-8192';
+    console.log(`Chamando a API Groq com o modelo: ${modelToUse}`);
+
     const completion = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
+      model: modelToUse,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     });
 
     const aiResponse = JSON.parse(completion.choices[0].message.content);
+    console.log("Resposta da IA recebida e processada com sucesso.");
 
     const { error: updateError } = await supabaseAdmin
       .from('articles_queue')
@@ -86,7 +95,9 @@ serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error('Error in process-with-ai function:', error.message);
+    console.error("--- ERRO na função process-with-ai (Versão 2 - Diagnóstico) ---");
+    console.error("Mensagem de erro:", error.message);
+    console.error("Objeto de erro completo:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
