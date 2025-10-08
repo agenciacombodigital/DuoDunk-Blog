@@ -180,15 +180,10 @@ export default function AdminPage() {
       </div>
 
       <div className="space-y-8">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">
             Artigos Processados pela IA ({queue.length})
           </h2>
-          {queue.length > 0 && (
-            <p className="text-sm text-gray-400">
-              Revise e aprove para publicar no site
-            </p>
-          )}
         </div>
 
         {loadingQueue ? (
@@ -199,15 +194,15 @@ export default function AdminPage() {
         ) : queue.length === 0 ? (
           <div className="bg-dunk-card rounded-lg p-12 text-center">
             <p className="text-gray-300 text-lg mb-2">
-              Nenhum artigo processado aguardando aprovação.
+              Nenhum artigo processado aguardando aprovação
             </p>
             <p className="text-sm text-gray-500">
-              Clique em "Processar com IA" para analisar os artigos coletados.
+              Clique em "Processar com IA" para processar artigos
             </p>
           </div>
         ) : (
-          queue.map((article) => (
-            <div key={article.id} className="bg-dunk-card rounded-lg overflow-hidden">
+          queue.map((article: any) => (
+            <div key={article.id} className="bg-dunk-card rounded-lg overflow-hidden shadow-lg">
               {article.image_url && (
                 <img
                   src={article.image_url}
@@ -217,15 +212,12 @@ export default function AdminPage() {
               )}
               
               <div className="p-6">
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <div className="flex items-center gap-2 mb-4">
                   <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full font-semibold">
-                    {article.source || 'Fonte Desconhecida'}
+                    {article.source}
                   </span>
                   <span className="px-3 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full font-semibold">
                     ✨ Processado pela IA
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(article.processed_at).toLocaleString('pt-BR')}
                   </span>
                 </div>
                 
@@ -242,38 +234,45 @@ export default function AdminPage() {
                     📄 Ver conteúdo completo
                   </summary>
                   <div 
-                    className="mt-4 prose prose-invert prose-sm max-w-none bg-dunk-dark p-4 rounded-lg"
+                    className="mt-4 prose prose-invert prose-sm max-w-none bg-dunk-dark p-4 rounded-lg overflow-auto max-h-96"
                     dangerouslySetInnerHTML={{ __html: article.body }}
                   />
                 </details>
                 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {article.tags?.map((tag: string) => (
-                    <span 
-                      key={tag} 
-                      className="px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+                {article.tags && article.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {article.tags.map((tag: string) => (
+                      <span 
+                        key={tag} 
+                        className="px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="bg-dunk-dark p-3 rounded-lg mb-4 space-y-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Slug:</p>
+                    <p className="text-sm text-blue-400 font-mono">
+                      /artigos/{article.slug}
+                    </p>
+                  </div>
+                  {article.meta_description && (
+                    <div>
+                      <p className="text-xs text-gray-500">Meta Description:</p>
+                      <p className="text-sm text-gray-400">
+                        {article.meta_description}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="bg-dunk-dark p-3 rounded-lg mb-4">
-                  <p className="text-xs text-gray-500 mb-1">Meta Description (SEO):</p>
-                  <p className="text-sm text-gray-400">{article.meta_description}</p>
-                </div>
-                
-                <div className="bg-dunk-dark p-3 rounded-lg mb-6">
-                  <p className="text-xs text-gray-500 mb-1">URL do artigo:</p>
-                  <p className="text-sm text-blue-400 font-mono">
-                    /artigos/{article.slug}
-                  </p>
-                </div>
-                
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex gap-3">
                   <Button
                     onClick={() => approveArticle(article.id)}
-                    className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
+                    className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
                   >
                     ✅ Aprovar e Publicar
                   </Button>
@@ -281,7 +280,7 @@ export default function AdminPage() {
                   <Button
                     onClick={() => rejectArticle(article.id)}
                     variant="destructive"
-                    className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
+                    className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
                   >
                     ❌ Rejeitar
                   </Button>
@@ -290,7 +289,7 @@ export default function AdminPage() {
                     href={article.original_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition text-center"
+                    className="inline-flex items-center justify-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors text-center"
                   >
                     🔗 Original
                   </a>
