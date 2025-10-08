@@ -134,7 +134,10 @@ export default function AdminPage() {
     }
   };
 
-  async function rejectArticle(id: string) {
+  const rejectArticle = async (id: string) => {
+    const motivo = window.prompt('Motivo da rejeição (opcional):');
+    if (motivo === null) return;
+  
     try {
       await supabase
         .from('articles_queue')
@@ -143,15 +146,13 @@ export default function AdminPage() {
           rejected_at: new Date().toISOString()
         })
         .eq('id', id);
-
-      toast.info('Artigo rejeitado.');
+  
+      alert('Artigo rejeitado');
       loadQueue();
     } catch (error: any) {
-      toast.error('Erro ao rejeitar o artigo.', {
-        description: error.message,
-      });
+      alert('Erro: ' + error.message);
     }
-  }
+  };
 
   const isLoading = isScraping || isProcessing;
 
