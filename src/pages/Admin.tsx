@@ -74,16 +74,24 @@ export default function AdminPage() {
     setIsProcessing(false);
   }
 
-  async function approveArticle(id: string) {
+  const approveArticle = async (id: string) => {
+    if (!window.confirm('Deseja aprovar e publicar este artigo?')) {
+      return;
+    }
+  
     try {
+      console.log('📝 Aprovando artigo:', id);
+      
       const { data: article, error: fetchError } = await supabase
         .from('articles_queue')
         .select('*')
         .eq('id', id)
         .single();
-
+  
       if (fetchError) throw fetchError;
-
+      
+      console.log('✅ Artigo encontrado:', article.title);
+  
       const { error: insertError } = await supabase
         .from('articles')
         .insert({
@@ -102,9 +110,14 @@ export default function AdminPage() {
           views: 0,
           published_at: new Date().toISOString(),
         });
-
-      if (insertError) throw new Error('Erro ao publicar artigo: ' + insertError.message);
-
+  
+      if (insertError) {
+        console.error('❌ Erro ao publicar:', insertError);
+        throw new Error('Erro ao publicar: ' + insertError.message);
+      }
+  
+      console.log('✅ Artigo publicado!');
+  
       await supabase
         .from('articles_queue')
         .update({ 
@@ -112,16 +125,14 @@ export default function AdminPage() {
           approved_at: new Date().toISOString()
         })
         .eq('id', id);
-
-      toast.success('✅ Artigo aprovado e publicado com sucesso!');
+  
+      toast.success('✅ Artigo aprovado e publicado!');
       loadQueue();
     } catch (error: any) {
-      toast.error('❌ Erro ao aprovar o artigo.', {
-        description: error.message,
-      });
-      console.error('Erro completo:', error);
+      console.error('💥 Erro:', error);
+      toast.error('❌ Erro: ' + error.message);
     }
-  }
+  };
 
   async function rejectArticle(id: string) {
     try {
