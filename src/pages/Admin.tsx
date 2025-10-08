@@ -13,14 +13,23 @@ export default function AdminPage() {
 
   async function loadQueue() {
     setLoadingQueue(true);
-    const { data } = await supabase
-      .from('articles_queue')
-      .select('*')
-      .eq('status', 'processed')
-      .order('processed_at', { ascending: false });
-    
-    setQueue(data || []);
-    setLoadingQueue(false);
+    try {
+      const { data, error } = await supabase
+        .from('articles_queue')
+        .select('*')
+        .eq('status', 'processed')
+        .order('processed_at', { ascending: false });
+
+      if (error) throw error;
+      setQueue(data || []);
+    } catch (error: any) {
+      toast.error("Erro ao carregar a fila de artigos.", {
+        description: error.message,
+      });
+      console.error('Erro ao carregar a fila:', error);
+    } finally {
+      setLoadingQueue(false);
+    }
   }
 
   useEffect(() => {
@@ -58,30 +67,41 @@ export default function AdminPage() {
 
   async function approveArticle(id: string) {
     const article = queue.find((a: any) => a.id === id);
-    if (!article) return;
-
-    const articleToPublish = {
-      title: article.title,
-      summary: article.summary,
-      body: article.body,
-      image_url: article.image_url,
-      slug: article.slug,
-      tags: article.tags,
-      meta_description: article.meta_description,
-      published: true,
-      published_at: new Date().toISOString(),
-    };
-
-    const { error: insertError } = await supabase.from('articles').insert(articleToPublish);
-
-    if (insertError) {
-      toast.error("Erro ao publicar: " + insertError.message);
+    if (!article) {
+      toast.error("Artigo não encontrado na fila.");
       return;
     }
 
-    await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', id);
-    toast.success('Artigo publicado!');
-    loadQueue();
+    try {
+      const articleToPublish = {
+        queue_id: article.id,
+        source: article.source,
+        title: article.title,
+        slug: article.slug,
+        summary: article.summary,
+        body: article.body,
+        image_url: article.image_url,
+        original_link: article.original_link,
+        tags: article.tags,
+        meta_description: article.meta_description,
+        published: true,
+        published_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase.from('articles').insert(articleToPublish);
+      if (insertError) throw insertError;
+
+      const { error: updateError } = await supabase.from('articles_queue').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
+      if (updateError) throw updateError;
+
+      toast.success('Artigo publicado com sucesso!');
+      loadQueue(); // Recarrega a lista para remover o item aprovado
+    } catch (error: any) {
+      toast.error("Erro ao publicar o artigo.", {
+        description: error.message,
+      });
+      console.error('Erro ao aprovar:', error);
+    }
   }
 
   const isLoading = isScraping || isProcessing;
