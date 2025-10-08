@@ -10,26 +10,35 @@ export default function AdminPage() {
   const [isScraping, setIsScraping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  async function loadQueue() {
+  const loadQueue = async () => {
     setLoadingQueue(true);
     try {
+      console.log('🔍 Buscando artigos com status=processed...');
+      
       const { data, error } = await supabase
         .from('articles_queue')
         .select('*')
         .eq('status', 'processed')
         .order('processed_at', { ascending: false });
-
-      if (error) throw error;
+  
+      if (error) {
+        console.error('❌ Erro ao buscar:', error);
+        throw error;
+      }
+  
+      console.log('✅ Artigos encontrados:', data?.length || 0);
+      console.log('📋 Dados:', data);
+      
       setQueue(data || []);
     } catch (error: any) {
+      console.error('💥 Erro completo:', error);
       toast.error("Erro ao carregar artigos processados.", {
         description: error.message,
       });
-      console.error('Erro ao carregar a fila:', error);
     } finally {
       setLoadingQueue(false);
     }
-  }
+  };
 
   useEffect(() => {
     loadQueue();
