@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Versão 8 - Modelo Groq Atualizado) ---");
+    console.log("--- Função process-with-ai iniciada (Modelo Groq Atualizado) ---");
 
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
     if (!groqApiKey) {
@@ -66,7 +66,7 @@ serve(async (req) => {
       "slug": "seu-novo-slug-baseado-no-titulo"
     }`;
 
-    const modelToUse = 'llama3-8b-8192'; // Modelo Groq atualizado
+    const modelToUse = 'llama3-8b-8192'; // Modelo Groq ATUALIZADO E ATIVO
     console.log(`Chamando a API Groq com o modelo: ${modelToUse}`);
 
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -78,7 +78,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: modelToUse,
         messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
+        response_format: { type: 'json_object' }, // Pedindo JSON diretamente
       })
     });
 
