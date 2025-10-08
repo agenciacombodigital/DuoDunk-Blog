@@ -41,6 +41,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    console.log('🚀 Admin montado, carregando artigos...');
     loadQueue();
   }, []);
 
