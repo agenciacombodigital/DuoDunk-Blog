@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface Game {
   id: string;
@@ -29,15 +30,13 @@ export default function NBAScoreboard() {
   useEffect(() => {
     fetchGames();
     
-    // Atualizar a cada 30 segundos se houver jogos ao vivo
     const interval = setInterval(() => {
-      // Usamos uma função de callback no setGames para acessar o estado mais recente
       setGames(currentGames => {
         const hasLiveGames = currentGames.some(g => g.status === 'live');
         if (hasLiveGames) {
           fetchGames();
         }
-        return currentGames; // Retorna o estado inalterado se não houver jogos ao vivo
+        return currentGames;
       });
     }, 30000);
 
@@ -48,26 +47,23 @@ export default function NBAScoreboard() {
     try {
       setError(false);
       
-      // API oficial da NBA (CDN público)
-      const response = await fetch(
-        `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json`,
-        { cache: 'no-cache' }
-      );
+      // Usar nossa Edge Function proxy
+      const { data, error: functionError } = await supabase.functions.invoke('nba-scoreboard');
       
-      if (!response.ok) throw new Error('Erro ao buscar jogos');
+      if (functionError) {
+        throw new Error(functionError.message);
+      }
       
-      const data = await response.json();
-      
-      if (!data.scoreboard?.games || data.scoreboard.games.length === 0) {
+      if (!data?.scoreboard?.games || data.scoreboard.games.length === 0) {
         setGames([]);
         setLoading(false);
         return;
       }
-
+  
       const formattedGames: Game[] = data.scoreboard.games.map((game: any) => {
         const isLive = game.gameStatus === 2;
         const isFinal = game.gameStatus === 3;
-
+  
         return {
           id: game.gameId,
           homeTeam: {
@@ -84,13 +80,13 @@ export default function NBAScoreboard() {
           },
           status: isLive ? 'live' : isFinal ? 'final' : 'scheduled',
           statusText: game.gameStatusText,
-          period: game.period,
+          period: game.period || 0,
           gameClock: game.gameClock || ''
         };
       });
       
       setGames(formattedGames);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao buscar jogos:', err);
       setError(true);
     } finally {
