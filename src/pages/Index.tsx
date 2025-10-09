@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ArticleCard from '@/components/ArticleCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Basketball, MoveRight } from 'lucide-react';
+import { Dribbble } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Index() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -32,7 +33,7 @@ export default function Index() {
       <section className="relative text-center py-24 md:py-32 overflow-hidden border-b border-border/50">
         <div className="absolute inset-0 animated-gradient-bg"></div>
         <div className="container mx-auto px-4 relative z-10">
-          <Basketball className="mx-auto text-accent mb-6" size={64} />
+          <Dribbble className="mx-auto text-accent mb-6" size={64} />
           <h1 className="text-6xl md:text-8xl font-heading tracking-wider mb-4">
             O Jogo Dentro do Jogo.
           </h1>
