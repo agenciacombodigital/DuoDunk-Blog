@@ -1,57 +1,129 @@
 import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 interface Game {
   id: string;
-  homeTeam: string;
-  awayTeam: string;
-  homeScore: number;
-  awayScore: number;
+  homeTeam: {
+    name: string;
+    tricode: string;
+    score: number;
+    logo: string;
+  };
+  awayTeam: {
+    name: string;
+    tricode: string;
+    score: number;
+    logo: string;
+  };
   status: 'final' | 'live' | 'scheduled';
-  time: string;
+  statusText: string;
+  period: number;
+  gameClock: string;
 }
 
 export default function NBAScoreboard() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetchGames();
+    
+    // Atualizar a cada 30 segundos se houver jogos ao vivo
+    const interval = setInterval(() => {
+      // Usamos uma função de callback no setGames para acessar o estado mais recente
+      setGames(currentGames => {
+        const hasLiveGames = currentGames.some(g => g.status === 'live');
+        if (hasLiveGames) {
+          fetchGames();
+        }
+        return currentGames; // Retorna o estado inalterado se não houver jogos ao vivo
+      });
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchGames = async () => {
     try {
-      // Usando API pública da NBA (sem autenticação)
+      setError(false);
+      
+      // API oficial da NBA (CDN público)
       const response = await fetch(
-        `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json`
+        `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json`,
+        { cache: 'no-cache' }
       );
+      
+      if (!response.ok) throw new Error('Erro ao buscar jogos');
       
       const data = await response.json();
       
-      const formattedGames = data.scoreboard.games.map((game: any) => {
-        const isLive = ['Q1', 'Q2', 'Q3', 'Q4', 'OT', 'Half'].some(q => game.gameStatusText.includes(q));
+      if (!data.scoreboard?.games || data.scoreboard.games.length === 0) {
+        setGames([]);
+        setLoading(false);
+        return;
+      }
+
+      const formattedGames: Game[] = data.scoreboard.games.map((game: any) => {
+        const isLive = game.gameStatus === 2;
+        const isFinal = game.gameStatus === 3;
+
         return {
           id: game.gameId,
-          homeTeam: game.homeTeam.teamTricode,
-          awayTeam: game.awayTeam.teamTricode,
-          homeScore: game.homeTeam.score,
-          awayScore: game.awayTeam.score,
-          status: game.gameStatusText.includes('Final') ? 'final' : isLive ? 'live' : 'scheduled',
-          time: game.gameStatusText
-        }
+          homeTeam: {
+            name: game.homeTeam.teamName,
+            tricode: game.homeTeam.teamTricode,
+            score: game.homeTeam.score || 0,
+            logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`
+          },
+          awayTeam: {
+            name: game.awayTeam.teamName,
+            tricode: game.awayTeam.teamTricode,
+            score: game.awayTeam.score || 0,
+            logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`
+          },
+          status: isLive ? 'live' : isFinal ? 'final' : 'scheduled',
+          statusText: game.gameStatusText,
+          period: game.period,
+          gameClock: game.gameClock || ''
+        };
       });
       
       setGames(formattedGames);
-    } catch (error) {
-      console.error('Erro ao buscar jogos:', error);
+    } catch (err) {
+      console.error('Erro ao buscar jogos:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading) {
     return (
       <div className="bg-black border-b border-gray-800 py-4">
         <div className="container mx-auto px-4">
-          <p className="text-gray-400 text-center">Carregando jogos...</p>
+          <div className="flex items-center justify-center gap-3">
+            <RefreshCw className="w-5 h-5 text-gray-400 animate-spin" />
+            <p className="text-gray-400 text-sm">Carregando jogos da NBA...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-black border-b border-gray-800 py-4">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center gap-3">
+            <p className="text-gray-400 text-sm">Erro ao carregar placar</p>
+            <button 
+              onClick={fetchGames}
+              className="text-cyan-400 hover:text-cyan-300 text-sm underline"
+            >
+              Tentar novamente
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -61,7 +133,9 @@ export default function NBAScoreboard() {
     return (
       <div className="bg-black border-b border-gray-800 py-4">
         <div className="container mx-auto px-4">
-          <p className="text-gray-400 text-center">Nenhum jogo hoje</p>
+          <p className="text-gray-400 text-center text-sm">
+            Nenhum jogo da NBA hoje 🏀
+          </p>
         </div>
       </div>
     );
@@ -70,42 +144,67 @@ export default function NBAScoreboard() {
   return (
     <div className="bg-black border-b border-gray-800 py-3">
       <div className="container mx-auto px-4">
-        <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide pb-2">
           {games.map((game) => (
             <div 
               key={game.id} 
-              className="flex items-center gap-4 bg-gray-900 px-6 py-3 rounded-lg min-w-max"
+              className="flex items-center gap-4 bg-gray-900 px-6 py-3 rounded-lg min-w-max hover:bg-gray-800 transition-colors"
             >
               {/* Away Team */}
-              <div className="text-right">
-                <p className="text-white font-bold">{game.awayTeam}</p>
-                <p className="text-2xl font-bold text-secondary">{game.awayScore || 0}</p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src={game.awayTeam.logo} 
+                  alt={game.awayTeam.name}
+                  className="w-8 h-8"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <div className="text-right">
+                  <p className="text-white font-bold text-sm">{game.awayTeam.tricode}</p>
+                  <p className="text-2xl font-bold text-secondary">{game.awayTeam.score}</p>
+                </div>
               </div>
               
               {/* Separator */}
-              <div className="text-gray-600 font-bold">VS</div>
+              <div className="text-gray-600 font-bold text-sm">@</div>
               
               {/* Home Team */}
-              <div className="text-left">
-                <p className="text-white font-bold">{game.homeTeam}</p>
-                <p className="text-2xl font-bold text-primary">{game.homeScore || 0}</p>
+              <div className="flex items-center gap-3">
+                <div className="text-left">
+                  <p className="text-white font-bold text-sm">{game.homeTeam.tricode}</p>
+                  <p className="text-2xl font-bold text-primary">{game.homeTeam.score}</p>
+                </div>
+                <img 
+                  src={game.homeTeam.logo} 
+                  alt={game.homeTeam.name}
+                  className="w-8 h-8"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
               </div>
               
               {/* Status */}
-              <div className="ml-4">
+              <div className="ml-4 text-center w-28">
+                {game.status === 'live' && (
+                  <div>
+                    <span className="px-3 py-1 bg-red-900 text-red-300 text-xs rounded-full animate-pulse font-bold">
+                      🔴 AO VIVO
+                    </span>
+                    <p className="text-gray-400 text-xs mt-1 font-mono">
+                      {game.period}Q {game.gameClock}
+                    </p>
+                  </div>
+                )}
                 {game.status === 'final' && (
-                  <span className="px-3 py-1 bg-red-900 text-red-300 text-xs rounded-full">
+                  <span className="px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full font-semibold">
                     FINAL
                   </span>
                 )}
-                {game.status === 'live' && (
-                  <span className="px-3 py-1 bg-green-900 text-green-300 text-xs rounded-full animate-pulse">
-                    AO VIVO
-                  </span>
-                )}
                 {game.status === 'scheduled' && (
-                  <span className="px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full">
-                    {game.time}
+                  <span className="px-3 py-1 bg-gray-800 text-gray-400 text-xs rounded-full">
+                    {game.statusText}
                   </span>
                 )}
               </div>
