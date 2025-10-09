@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, ExternalLink, Clock } from 'lucide-react';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -11,46 +11,138 @@ export default function Artigo() {
   useEffect(() => {
     const fetchArticle = async () => {
       if (!slug) return;
-      setLoading(true);
+      
       const { data } = await supabase
         .from('articles')
         .select('*')
         .eq('slug', slug)
+        .eq('published', true)
         .single();
-      setArticle(data);
+      
+      if (data) {
+        setArticle(data);
+        
+        // Incrementar views
+        await supabase
+          .from('articles')
+          .update({ views: (data.views || 0) + 1 })
+          .eq('id', data.id);
+      }
+      
       setLoading(false);
     };
+    
     fetchArticle();
   }, [slug]);
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <Skeleton className="h-12 w-3/4 mb-4 bg-gray-900" />
-        <Skeleton className="h-6 w-1/2 mb-8 bg-gray-900" />
-        <Skeleton className="h-96 w-full mb-8 bg-gray-900" />
-        <Skeleton className="h-4 w-full mb-4 bg-gray-900" />
-        <Skeleton className="h-4 w-full mb-4 bg-gray-900" />
-        <Skeleton className="h-4 w-5/6 mb-4 bg-gray-900" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#FA007D]"></div>
       </div>
     );
   }
 
   if (!article) {
-    return <div className="text-center py-20">Artigo não encontrado.</div>;
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Artigo não encontrado
+          </h1>
+          <Link 
+            to="/" 
+            className="text-[#00DBFB] hover:text-[#FA007D] transition-colors inline-flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para Home
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <article className="max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">{article.title}</h1>
-        <p className="text-lg text-gray-400 mb-8">{article.summary}</p>
-        <img src={article.image_url} alt={article.title} className="w-full rounded-lg mb-8" />
-        <div
-          className="prose"
+    <article className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        {/* Botão Voltar */}
+        <Link 
+          to="/"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-[#FA007D] transition-colors mb-8 font-semibold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </Link>
+
+        {/* Meta Info */}
+        <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap">
+          <span className="tag-cyan">
+            {article.source}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {new Date(article.published_at).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            })}
+          </span>
+          <span>{article.views || 0} visualizações</span>
+        </div>
+
+        {/* Título */}
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+          {article.title}
+        </h1>
+
+        {/* Resumo */}
+        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+          {article.summary}
+        </p>
+
+        {/* Imagem Hero */}
+        <img
+          src={article.image_url}
+          alt={article.title}
+          className="w-full h-auto rounded-2xl mb-10 shadow-lg"
+        />
+
+        {/* Corpo do Artigo */}
+        <div 
+          className="prose prose-lg max-w-none mb-12"
           dangerouslySetInnerHTML={{ __html: article.body }}
         />
-      </article>
-    </div>
+
+        {/* Tags */}
+        {article.tags && article.tags.length > 0 && (
+          <div className="pt-8 border-t border-gray-200 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags:</h3>
+            <div className="flex flex-wrap gap-2">
+              {article.tags.map((tag: string) => (
+                <span 
+                  key={tag} 
+                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Link Original */}
+        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+          <a 
+            href={article.original_link} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-[#00DBFB] hover:text-[#FA007D] transition-colors inline-flex items-center gap-2 font-semibold"
+          >
+            <ExternalLink className="w-5 h-5" />
+            Ver notícia original (inglês)
+          </a>
+        </div>
+      </div>
+    </article>
   );
 }
