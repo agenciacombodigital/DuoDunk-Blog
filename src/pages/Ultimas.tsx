@@ -4,7 +4,7 @@ import ArticleCard from '@/components/ArticleCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Ultimas() {
-  const [articles, setArticles] = = useState<any[]>([]);
+  const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
