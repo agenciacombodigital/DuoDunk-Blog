@@ -146,7 +146,7 @@ export default function AdminPage() {
           <button
             onClick={scrape}
             disabled={isLoading}
-            className="btn-cyan"
+            className="btn-cyan flex items-center justify-center"
           >
             {isScraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Coletar Notícias
@@ -154,7 +154,7 @@ export default function AdminPage() {
           <button
             onClick={processOneWithAI}
             disabled={isLoading}
-            className="btn-magenta"
+            className="btn-magenta flex items-center justify-center"
           >
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
             🤖 Processar com IA
@@ -213,14 +213,14 @@ export default function AdminPage() {
                   <div className="flex gap-3 mt-6">
                     <button
                       onClick={() => approveArticle(article.id)}
-                      className="btn-success flex-1"
+                      className="btn-success flex-1 flex items-center justify-center"
                     >
                       ✅ Aprovar
                     </button>
                     
                     <button
                       onClick={() => rejectArticle(article.id)}
-                      className="btn-danger"
+                      className="btn-danger flex items-center justify-center"
                     >
                       ❌ Rejeitar
                     </button>
