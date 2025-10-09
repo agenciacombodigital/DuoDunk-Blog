@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ArticleCard from '@/components/ArticleCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Basketball, MoveRight } from 'lucide-react';
 
 export default function Index() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -15,45 +16,68 @@ export default function Index() {
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
-        .limit(12);
+        .limit(7); // Pega 7 artigos (1 destaque + 6 no grid)
       setArticles(data || []);
       setLoading(false);
     };
     fetchArticles();
   }, []);
 
+  const featuredArticle = articles[0];
+  const otherArticles = articles.slice(1);
+
   return (
-    <div className="container mx-auto px-4 py-12">
-      <section className="text-center py-16 mb-12 rounded-xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-cyan-500/10">
-        <h1 className="text-5xl md:text-6xl font-bold mb-4 font-poppins text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400">
-          O Jogo Dentro do Jogo.
-        </h1>
-        <p className="text-center text-gray-400 mt-4 max-w-2xl mx-auto">
-          Notícias, análises profundas e tudo sobre o universo da NBA, trazido até você com o poder da IA.
-        </p>
+    <>
+      {/* Hero Section */}
+      <section className="relative text-center py-24 md:py-32 overflow-hidden border-b border-border/50">
+        <div className="absolute inset-0 animated-gradient-bg"></div>
+        <div className="container mx-auto px-4 relative z-10">
+          <Basketball className="mx-auto text-accent mb-6" size={64} />
+          <h1 className="text-6xl md:text-8xl font-heading tracking-wider mb-4">
+            O Jogo Dentro do Jogo.
+          </h1>
+          <p className="text-lg text-gray-300 mt-4 max-w-2xl mx-auto">
+            Notícias, análises e tudo sobre o universo da NBA com o poder da IA.
+          </p>
+          <button className="btn-gold mt-8">Explorar Notícias</button>
+        </div>
       </section>
 
-      <section>
-        <h2 className="text-3xl font-bold mb-6 font-poppins">Últimas Notícias</h2>
+      {/* Últimas Notícias */}
+      <div className="container mx-auto px-4 py-12">
+        <h2 className="text-4xl font-heading tracking-wider mb-8">Últimas Notícias</h2>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-7 lg:col-span-8"><Skeleton className="h-[500px] w-full" /></div>
+            <div className="md:col-span-5 lg:col-span-4 space-y-4">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {articles.map(article => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Artigo em Destaque */}
+            {featuredArticle && (
+              <Link to={`/artigos/${featuredArticle.slug}`} className="lg:col-span-2 group relative block rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-primary/30 hover:scale-[1.02]">
+                <img src={featuredArticle.image_url} alt={featuredArticle.title} className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
+                <div className="relative p-8 flex flex-col justify-end h-[500px]">
+                  <span className="bg-accent text-accent-foreground text-xs font-bold uppercase px-3 py-1 rounded mb-3 self-start">Destaque</span>
+                  <h3 className="text-4xl font-heading text-white mb-2 transition-colors duration-300 group-hover:text-primary">{featuredArticle.title}</h3>
+                  <p className="text-gray-300 line-clamp-2">{featuredArticle.summary}</p>
+                </div>
+              </Link>
+            )}
+            {/* Outros Artigos */}
+            <div className="lg:col-span-1 space-y-6">
+              {otherArticles.map(article => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+            </div>
           </div>
         )}
-      </section>
-    </div>
+      </div>
+    </>
   );
 }

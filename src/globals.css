@@ -4,35 +4,32 @@
 
 @layer base {
   :root {
-    --background: 20 20 30; /* Azul escuro suave */
+    --background: 10 10 26; /* #0A0A1A */
     --foreground: 255 255 255;
 
-    --card: 30 30 45; /* Cards mais claros */
+    --card: 18 18 18; /* #121212 */
     --card-foreground: 255 255 255;
 
-    --popover: 30 30 45;
+    --popover: 10 10 26;
     --popover-foreground: 255 255 255;
 
-    --primary: 255 20 147; /* Rosa DuoDunk */
+    --primary: 230 0 126; /* Rosa Magenta #E6007E */
     --primary-foreground: 255 255 255;
 
-    --secondary: 0 217 255; /* Ciano DuoDunk */
-    --secondary-foreground: 20 20 30;
+    --secondary: 0 207 255; /* Azul Ciano #00CFFF */
+    --secondary-foreground: 10 10 26;
 
-    --muted: 45 45 60;
-    --muted-foreground: 200 200 220;
-
-    --accent: 255 215 0; /* Amarelo ouro */
-    --accent-foreground: 20 20 30;
+    --accent: 255 196 0; /* Amarelo Ouro #FFC400 */
+    --accent-foreground: 10 10 26;
 
     --destructive: 220 38 38;
     --destructive-foreground: 255 255 255;
 
     --border: 45 45 60;
     --input: 45 45 60;
-    --ring: 255 20 147;
+    --ring: 230 0 126;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 }
 
@@ -42,68 +39,37 @@
   }
 
   body {
-    @apply bg-gradient-to-br from-[#14141e] via-[#1a1a2e] to-[#0f0f1e] text-foreground font-sans;
-    background-attachment: fixed;
+    @apply bg-background text-foreground font-sans;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-poppins;
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-accent text-accent-foreground font-bold px-8 py-3 rounded-md uppercase tracking-wider
+           transform transition-all duration-300 hover:scale-105 
+           hover:shadow-[0_0_20px_theme(colors.accent),0_0_5px_theme(colors.accent)];
   }
 
-  .prose h2 {
-    color: #FF1493; /* Rosa */
-    font-size: 1.875rem;
-    font-weight: 700;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
+  .link-gradient-underline {
+    @apply relative after:content-[''] after:absolute after:left-0 after:bottom-[-4px] 
+           after:h-[2px] after:w-full after:bg-gradient-to-r from-secondary to-primary
+           after:scale-x-0 after:origin-left after:transition-transform after:duration-300
+           hover:after:scale-x-100;
   }
 
-  .prose h3 {
-    color: #00D9FF; /* Ciano */
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
+  .animated-gradient-bg {
+    background: linear-gradient(45deg, theme(colors.secondary / 10%), theme(colors.primary / 10%), theme(colors.accent / 10%));
+    background-size: 400% 400%;
+    animation: gradient-animation 15s ease infinite;
   }
+}
 
-  .prose p {
-    margin-bottom: 1.25rem;
-    line-height: 1.75;
-    color: #e5e7eb;
-  }
-
-  .prose a {
-    color: #00D9FF;
-    text-decoration: underline;
-  }
-
-  /* Botão estilo DuoDunk */
-  .btn-duodunk {
-    @apply bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 
-           text-white font-bold px-6 py-3 rounded-lg transition-all duration-300 
-           shadow-lg hover:shadow-pink-500/50 transform hover:scale-105;
-  }
-
-  .btn-duodunk-secondary {
-    @apply bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600 
-           text-gray-900 font-bold px-6 py-3 rounded-lg transition-all duration-300 
-           shadow-lg hover:shadow-cyan-400/50 transform hover:scale-105;
-  }
-
-  /* Cards com gradiente */
-  .card-duodunk {
-    @apply bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm 
-           border border-gray-700/50 rounded-xl overflow-hidden 
-           hover:border-pink-500/50 transition-all duration-300 
-           hover:shadow-xl hover:shadow-pink-500/20;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-
-  .float-animation {
-    animation: float 3s ease-in-out infinite;
-  }
+@keyframes gradient-animation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
