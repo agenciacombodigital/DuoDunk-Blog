@@ -13,25 +13,16 @@ export default function AdminPage() {
   const loadQueue = async () => {
     setLoadingQueue(true);
     try {
-      console.log('🔍 Buscando artigos com status=processed...');
-      
       const { data, error } = await supabase
         .from('articles_queue')
         .select('*')
         .eq('status', 'processed')
         .order('processed_at', { ascending: false });
   
-      if (error) {
-        console.error('❌ Erro ao buscar:', error);
-        throw error;
-      }
-  
-      console.log('✅ Artigos encontrados:', data?.length || 0);
-      console.log('📋 Dados:', data);
+      if (error) throw error;
       
       setQueue(data || []);
     } catch (error: any) {
-      console.error('💥 Erro completo:', error);
       toast.error("Erro ao carregar artigos processados.", {
         description: error.message,
       });
@@ -41,7 +32,6 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    console.log('🚀 Admin montado, carregando artigos...');
     loadQueue();
   }, []);
 
@@ -80,8 +70,6 @@ export default function AdminPage() {
     }
   
     try {
-      console.log('📝 Aprovando artigo:', id);
-      
       const { data: article, error: fetchError } = await supabase
         .from('articles_queue')
         .select('*')
@@ -89,8 +77,6 @@ export default function AdminPage() {
         .single();
   
       if (fetchError) throw fetchError;
-      
-      console.log('✅ Artigo encontrado:', article.title);
   
       const { error: insertError } = await supabase
         .from('articles')
@@ -112,11 +98,8 @@ export default function AdminPage() {
         });
   
       if (insertError) {
-        console.error('❌ Erro ao publicar:', insertError);
         throw new Error('Erro ao publicar: ' + insertError.message);
       }
-  
-      console.log('✅ Artigo publicado!');
   
       await supabase
         .from('articles_queue')
@@ -129,7 +112,6 @@ export default function AdminPage() {
       toast.success('✅ Artigo aprovado e publicado!');
       loadQueue();
     } catch (error: any) {
-      console.error('💥 Erro:', error);
       toast.error('❌ Erro: ' + error.message);
     }
   };
@@ -147,10 +129,10 @@ export default function AdminPage() {
         })
         .eq('id', id);
   
-      alert('Artigo rejeitado');
+      toast.info('Artigo rejeitado');
       loadQueue();
     } catch (error: any) {
-      alert('Erro: ' + error.message);
+      toast.error('Erro: ' + error.message);
     }
   };
 
@@ -164,7 +146,7 @@ export default function AdminPage() {
         <Button
           onClick={scrape}
           disabled={isLoading}
-          className="bg-dunk-yellow text-black hover:bg-yellow-400 font-bold"
+          className="btn-duodunk-secondary"
         >
           {isScraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
           Coletar Notícias
@@ -172,7 +154,7 @@ export default function AdminPage() {
         <Button
           onClick={processOneWithAI}
           disabled={isLoading}
-          className="bg-dunk-pink text-white hover:bg-pink-600 font-bold"
+          className="btn-duodunk"
         >
           {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
           🤖 Processar com IA
@@ -188,11 +170,11 @@ export default function AdminPage() {
 
         {loadingQueue ? (
           <div className="text-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-dunk-yellow mx-auto mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-accent mx-auto mb-4" />
             <p className="text-gray-400">Carregando artigos...</p>
           </div>
         ) : queue.length === 0 ? (
-          <div className="bg-dunk-card rounded-lg p-12 text-center">
+          <div className="card-duodunk p-12 text-center">
             <p className="text-gray-300 text-lg mb-2">
               Nenhum artigo processado aguardando aprovação
             </p>
@@ -202,7 +184,7 @@ export default function AdminPage() {
           </div>
         ) : (
           queue.map((article: any) => (
-            <div key={article.id} className="bg-dunk-card rounded-lg overflow-hidden shadow-lg">
+            <div key={article.id} className="card-duodunk shadow-lg">
               {article.image_url && (
                 <img
                   src={article.image_url}
@@ -230,11 +212,11 @@ export default function AdminPage() {
                 </p>
                 
                 <details className="mb-4">
-                  <summary className="cursor-pointer text-dunk-yellow hover:text-yellow-400 text-sm font-semibold">
+                  <summary className="cursor-pointer text-accent hover:text-yellow-400 text-sm font-semibold">
                     📄 Ver conteúdo completo
                   </summary>
                   <div 
-                    className="mt-4 prose prose-invert prose-sm max-w-none bg-dunk-dark p-4 rounded-lg overflow-auto max-h-96"
+                    className="mt-4 prose prose-invert prose-sm max-w-none bg-background p-4 rounded-lg overflow-auto max-h-96"
                     dangerouslySetInnerHTML={{ __html: article.body }}
                   />
                 </details>
@@ -252,7 +234,7 @@ export default function AdminPage() {
                   </div>
                 )}
                 
-                <div className="bg-dunk-dark p-3 rounded-lg mb-4 space-y-2">
+                <div className="bg-background p-3 rounded-lg mb-4 space-y-2">
                   <div>
                     <p className="text-xs text-gray-500">Slug:</p>
                     <p className="text-sm text-blue-400 font-mono">
@@ -272,7 +254,7 @@ export default function AdminPage() {
                 <div className="flex gap-3">
                   <Button
                     onClick={() => approveArticle(article.id)}
-                    className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-lg hover:shadow-green-500/50"
                   >
                     ✅ Aprovar e Publicar
                   </Button>

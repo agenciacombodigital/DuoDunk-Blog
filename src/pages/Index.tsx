@@ -24,12 +24,14 @@ export default function Index() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-5xl font-bold text-center mb-4 font-poppins">
-        O Jogo Dentro do <span className="text-dunk-yellow">Jogo.</span>
-      </h1>
-      <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
-        Notícias, análises profundas e tudo sobre o universo da NBA, trazido até você com o poder da IA.
-      </p>
+      <section className="text-center py-16 mb-12 rounded-xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-cyan-500/10">
+        <h1 className="text-5xl md:text-6xl font-bold mb-4 font-poppins text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400">
+          O Jogo Dentro do Jogo.
+        </h1>
+        <p className="text-center text-gray-400 mt-4 max-w-2xl mx-auto">
+          Notícias, análises profundas e tudo sobre o universo da NBA, trazido até você com o poder da IA.
+        </p>
+      </section>
 
       <section>
         <h2 className="text-3xl font-bold mb-6 font-poppins">Últimas Notícias</h2>

@@ -23,11 +23,6 @@ export default {
         poppins: ["Poppins", "sans-serif"],
       },
       colors: {
-        'dunk-yellow': '#FFC107',
-        'dunk-pink': '#E91E63',
-        'dunk-blue': '#00BCD4',
-        'dunk-dark': '#0A0E27',
-        'dunk-card': '#2D3748',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

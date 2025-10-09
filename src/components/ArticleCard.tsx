@@ -4,7 +4,7 @@ export default function ArticleCard({ article }: any) {
   return (
     <Link 
       to={`/artigos/${article.slug}`}
-      className="group block bg-dunk-card rounded-lg overflow-hidden hover:scale-105 transition-transform duration-300"
+      className="group block card-duodunk"
     >
       <img
         src={article.image_url}
@@ -12,7 +12,7 @@ export default function ArticleCard({ article }: any) {
         className="w-full h-48 object-cover"
       />
       <div className="p-4">
-        <h3 className="font-bold text-lg mb-2 group-hover:text-dunk-yellow transition-colors">
+        <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">
           {article.title}
         </h3>
         <p className="text-sm text-gray-400 line-clamp-2">
