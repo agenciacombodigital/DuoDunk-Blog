@@ -1,6 +1,6 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/Admin";
 import Ultimas from "./pages/Ultimas";
@@ -13,7 +13,7 @@ const App = () => (
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Home />} />
           <Route path="/ultimas" element={<Ultimas />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/artigos/:slug" element={<Artigo />} />
