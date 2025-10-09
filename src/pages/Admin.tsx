@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
 import { Loader2, RefreshCw, Bot } from 'lucide-react';
 
@@ -139,42 +138,41 @@ export default function AdminPage() {
   const isLoading = isScraping || isProcessing;
 
   return (
-    <div className="dark-section min-h-screen">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8 font-poppins">Painel de Admin</h1>
+        <h1 className="text-4xl font-bold mb-8">Painel de Admin</h1>
         
         <div className="flex gap-4 mb-8">
-          <Button
+          <button
             onClick={scrape}
             disabled={isLoading}
-            variant="secondary"
+            className="btn-cyan"
           >
             {isScraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Coletar Notícias
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={processOneWithAI}
             disabled={isLoading}
+            className="btn-magenta"
           >
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
             🤖 Processar com IA
-          </Button>
+          </button>
         </div>
 
         <div className="space-y-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Artigos Processados pela IA ({queue.length})
-            </h2>
-          </div>
+          <h2 className="text-2xl font-bold text-white">
+            Artigos Processados pela IA ({queue.length})
+          </h2>
 
           {loadingQueue ? (
             <div className="text-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-accent mx-auto mb-4" />
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
               <p className="text-gray-400">Carregando artigos...</p>
             </div>
           ) : queue.length === 0 ? (
-            <div className="card-duodunk p-12 text-center">
+            <div className="card-premium p-12 text-center">
               <p className="text-gray-300 text-lg mb-2">
                 Nenhum artigo processado aguardando aprovação
               </p>
@@ -184,7 +182,7 @@ export default function AdminPage() {
             </div>
           ) : (
             queue.map((article: any) => (
-              <div key={article.id} className="card-duodunk shadow-lg">
+              <div key={article.id} className="card-premium">
                 {article.image_url && (
                   <img
                     src={article.image_url}
@@ -194,15 +192,6 @@ export default function AdminPage() {
                 )}
                 
                 <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full font-semibold">
-                      {article.source}
-                    </span>
-                    <span className="px-3 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full font-semibold">
-                      ✨ Processado pela IA
-                    </span>
-                  </div>
-                  
                   <h3 className="text-2xl font-bold text-white mb-3">
                     {article.title}
                   </h3>
@@ -212,69 +201,29 @@ export default function AdminPage() {
                   </p>
                   
                   <details className="mb-4">
-                    <summary className="cursor-pointer text-accent hover:text-yellow-400 text-sm font-semibold">
+                    <summary className="cursor-pointer text-secondary hover:text-cyan-300 text-sm font-semibold">
                       📄 Ver conteúdo completo
                     </summary>
                     <div 
-                      className="mt-4 prose prose-invert prose-sm max-w-none bg-background p-4 rounded-lg overflow-auto max-h-96"
+                      className="mt-4 prose prose-sm max-w-none bg-black p-4 rounded-lg overflow-auto max-h-96"
                       dangerouslySetInnerHTML={{ __html: article.body }}
                     />
                   </details>
                   
-                  {article.tags && article.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {article.tags.map((tag: string) => (
-                        <span 
-                          key={tag} 
-                          className="px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="bg-background p-3 rounded-lg mb-4 space-y-2">
-                    <div>
-                      <p className="text-xs text-gray-500">Slug:</p>
-                      <p className="text-sm text-blue-400 font-mono">
-                        /artigos/{article.slug}
-                      </p>
-                    </div>
-                    {article.meta_description && (
-                      <div>
-                        <p className="text-xs text-gray-500">Meta Description:</p>
-                        <p className="text-sm text-gray-400">
-                          {article.meta_description}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <Button
+                  <div className="flex gap-3 mt-6">
+                    <button
                       onClick={() => approveArticle(article.id)}
-                      className="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-lg hover:shadow-green-500/50"
+                      className="btn-success flex-1"
                     >
-                      ✅ Aprovar e Publicar
-                    </Button>
+                      ✅ Aprovar
+                    </button>
                     
-                    <Button
+                    <button
                       onClick={() => rejectArticle(article.id)}
-                      variant="destructive"
-                      className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                      className="btn-danger"
                     >
                       ❌ Rejeitar
-                    </Button>
-                    
-                    <a
-                      href={article.original_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors text-center"
-                    >
-                      🔗 Original
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
