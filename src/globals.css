@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    --background: 10 10 26; /* #0A0A1A */
+    --background: 0 0 0; /* UPDATED TO BLACK */
     --foreground: 255 255 255;
 
     --card: 18 18 18; /* #121212 */
     --card-foreground: 255 255 255;
 
-    --popover: 10 10 26;
+    --popover: 0 0 0; /* UPDATED TO BLACK */
     --popover-foreground: 255 255 255;
 
     --primary: 229 0 125; /* Magenta #E5007D */
@@ -33,11 +33,12 @@
   }
 
   .dark-section {
-    --background: 10 10 26;
+    --background: 0 0 0; /* UPDATED TO BLACK */
     --foreground: 255 255 255;
     --border: 45 45 60;
     --input: 45 45 60;
     --card: 18 18 18;
+    --secondary-foreground: 255 255 255; /* Ensures text on cyan buttons is white */
   }
 }
 
