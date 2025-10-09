@@ -3,7 +3,7 @@ import { Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border/50">
+    <header className="dark-section sticky top-0 z-50 border-b border-border/50">
       <div className="container mx-auto px-4 flex items-center justify-between h-20">
         <Link to="/" className="text-4xl font-heading tracking-wider group">
           Duo<span className="text-primary group-hover:text-secondary transition-colors duration-300">Dunk</span>

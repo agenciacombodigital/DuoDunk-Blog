@@ -29,24 +29,23 @@ export default function Index() {
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative text-center py-24 md:py-32 overflow-hidden border-b border-border/50">
-        <div className="absolute inset-0 animated-gradient-bg"></div>
+      {/* Hero Section (Dark) */}
+      <section className="dark-section text-center py-24 md:py-32 overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
-          <Dribbble className="mx-auto text-accent mb-6" size={64} />
+          <Dribbble className="mx-auto text-secondary mb-6" size={64} />
           <h1 className="text-6xl md:text-8xl font-heading tracking-wider mb-4">
             O Jogo Dentro do Jogo.
           </h1>
           <p className="text-lg text-gray-300 mt-4 max-w-2xl mx-auto">
             Notícias, análises e tudo sobre o universo da NBA com o poder da IA.
           </p>
-          <button className="btn-gold mt-8">Explorar Notícias</button>
+          <button className="btn-primary mt-8">Explorar Notícias</button>
         </div>
       </section>
 
-      {/* Últimas Notícias */}
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-4xl font-heading tracking-wider mb-8">Últimas Notícias</h2>
+      {/* Últimas Notícias (Light) */}
+      <section className="container mx-auto px-4 py-12">
+        <h2 className="text-4xl font-heading tracking-wider mb-8 text-gray-900">Últimas Notícias</h2>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             <div className="md:col-span-7 lg:col-span-8"><Skeleton className="h-[500px] w-full" /></div>
@@ -64,8 +63,8 @@ export default function Index() {
                 <img src={featuredArticle.image_url} alt={featuredArticle.title} className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 group-hover:scale-110" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
                 <div className="relative p-8 flex flex-col justify-end h-[500px]">
-                  <span className="bg-accent text-accent-foreground text-xs font-bold uppercase px-3 py-1 rounded mb-3 self-start">Destaque</span>
-                  <h3 className="text-4xl font-heading text-white mb-2 transition-colors duration-300 group-hover:text-primary">{featuredArticle.title}</h3>
+                  <span className="bg-primary text-primary-foreground text-xs font-bold uppercase px-3 py-1 rounded mb-3 self-start">Destaque</span>
+                  <h3 className="text-4xl font-heading text-white mb-2 transition-colors duration-300 group-hover:text-secondary">{featuredArticle.title}</h3>
                   <p className="text-gray-300 line-clamp-2">{featuredArticle.summary}</p>
                 </div>
               </Link>
@@ -78,7 +77,7 @@ export default function Index() {
             </div>
           </div>
         )}
-      </div>
+      </section>
     </>
   );
 }
