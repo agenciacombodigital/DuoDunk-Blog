@@ -138,7 +138,7 @@ export default function AdminPage() {
   const isLoading = isScraping || isProcessing;
 
   return (
-    <div className="min-h-screen">
+    <div className="bg-black min-h-screen text-white">
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8">Painel de Admin</h1>
         
@@ -172,7 +172,7 @@ export default function AdminPage() {
               <p className="text-gray-400">Carregando artigos...</p>
             </div>
           ) : queue.length === 0 ? (
-            <div className="card-premium p-12 text-center">
+            <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-12 text-center">
               <p className="text-gray-300 text-lg mb-2">
                 Nenhum artigo processado aguardando aprovação
               </p>
@@ -182,7 +182,7 @@ export default function AdminPage() {
             </div>
           ) : (
             queue.map((article: any) => (
-              <div key={article.id} className="card-premium">
+              <div key={article.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden">
                 {article.image_url && (
                   <img
                     src={article.image_url}
@@ -205,7 +205,7 @@ export default function AdminPage() {
                       📄 Ver conteúdo completo
                     </summary>
                     <div 
-                      className="mt-4 prose prose-sm max-w-none bg-black p-4 rounded-lg overflow-auto max-h-96"
+                      className="mt-4 prose prose-invert prose-sm max-w-none bg-black p-4 rounded-lg overflow-auto max-h-96"
                       dangerouslySetInnerHTML={{ __html: article.body }}
                     />
                   </details>

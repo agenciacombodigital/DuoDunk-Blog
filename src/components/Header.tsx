@@ -3,7 +3,7 @@ import { Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/50 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b">
       <div className="container mx-auto px-4 flex items-center justify-between h-20">
         <Link to="/">
           <img src="/images/logo.png" alt="Duo Dunk Logo" className="h-10" />

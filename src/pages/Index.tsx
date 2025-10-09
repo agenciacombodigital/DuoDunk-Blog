@@ -29,7 +29,7 @@ export default function Index() {
 
   return (
     <>
-      <section className="text-center py-24 md:py-32">
+      <section className="hero-section text-center py-24 md:py-32">
         <div className="container mx-auto px-4">
           <Dribbble className="mx-auto text-secondary mb-6 glow-cyan" size={64} />
           <h1 className="text-6xl md:text-8xl font-heading tracking-wider mb-4">
@@ -42,11 +42,11 @@ export default function Index() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-12">
+      <section className="content-area container mx-auto px-4 py-12">
         <h2 className="text-4xl font-bold mb-8">Últimas Notícias</h2>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-80 w-full bg-gray-900 rounded-2xl" />)}
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-2xl" />)}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

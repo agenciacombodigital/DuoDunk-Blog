@@ -4,7 +4,7 @@ import ArticleCard from '@/components/ArticleCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Ultimas() {
-  const [articles, setArticles] = useState<any[]>([]);
+  const [articles, setArticles] = = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,8 +23,8 @@ export default function Ultimas() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8 font-poppins">Últimas Notícias</h1>
+    <div className="content-area container mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold mb-8">Últimas Notícias</h1>
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 12 }).map((_, i) => (

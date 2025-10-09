@@ -6,12 +6,12 @@
   :root {
     --background: 0 0 0; /* Preto puro */
     --foreground: 255 255 255;
-    --card: 26 26 26;
-    --card-foreground: 255 255 255;
-    --primary: 250 0 125; /* Magenta */
-    --secondary: 0 219 251; /* Ciano */
-    --muted: 45 45 45;
-    --border: 45 45 45;
+    --card: 255 255 255; /* Cards brancos */
+    --card-foreground: 17 24 39; /* Texto escuro nos cards */
+    --primary: 250 0 125; /* Magenta #FA007D */
+    --secondary: 0 219 251; /* Ciano #00DBFB */
+    --muted: 243 244 246;
+    --border: 229 231 235;
     --radius: 0.75rem;
   }
 }
@@ -22,20 +22,56 @@
   }
 
   body {
-    @apply bg-black text-white font-sans antialiased;
-    background-image: 
-      radial-gradient(circle at 20% 50%, rgba(250, 0, 125, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(0, 219, 251, 0.05) 0%, transparent 50%);
-    background-attachment: fixed;
+    @apply bg-white text-gray-900 font-sans antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans font-bold;
   }
 
-  /* Prose (artigos) */
+  /* Hero Section - Mantém preta */
+  .hero-section {
+    @apply bg-black text-white relative;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(250, 0, 125, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(0, 219, 251, 0.1) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Header e Footer mantêm preto */
+  header, footer {
+    @apply bg-black text-white border-gray-800;
+  }
+
+  /* Área de conteúdo - fundo branco */
+  .content-area {
+    @apply bg-white;
+  }
+
+  /* Cards de artigos - brancos com sombra sutil */
+  .article-card {
+    @apply bg-white border border-gray-100 rounded-xl overflow-hidden
+           shadow-sm hover:shadow-xl transition-all duration-300
+           hover:border-[#FA007D]/20;
+  }
+
+  .article-card:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Títulos de artigos - PRETO para contrastar */
+  .article-card h2, .article-card h3 {
+    @apply text-gray-900;
+  }
+
+  /* Resumo - cinza escuro */
+  .article-card p {
+    @apply text-gray-600;
+  }
+
+  /* Prose (conteúdo dos artigos) */
   .prose {
-    @apply text-gray-200 max-w-none;
+    @apply text-gray-800 max-w-none;
   }
 
   .prose h2 {
@@ -47,81 +83,60 @@
   }
 
   .prose p {
-    @apply mb-4 leading-relaxed text-gray-300;
+    @apply mb-4 leading-relaxed text-gray-700;
   }
 
   .prose a {
     @apply text-[#00DBFB] hover:text-[#FA007D] transition-colors underline;
   }
 
-  /* Botões Premium */
+  /* Botões Premium com Cores Harmoniosas */
   .btn-magenta {
     @apply bg-gradient-to-r from-[#FA007D] to-[#C9006A] 
            text-white font-bold px-8 py-3 rounded-xl
-           hover:shadow-[0_0_30px_rgba(250,0,125,0.5)] 
-           transition-all duration-300 transform hover:scale-105
-           border-2 border-[#FA007D]/20;
+           hover:shadow-[0_0_30px_rgba(250,0,125,0.4)] 
+           transition-all duration-300 transform hover:scale-105;
   }
 
   .btn-cyan {
     @apply bg-gradient-to-r from-[#00DBFB] to-[#00A8CC] 
-           text-black font-bold px-8 py-3 rounded-xl
-           hover:shadow-[0_0_30px_rgba(0,219,251,0.5)] 
-           transition-all duration-300 transform hover:scale-105
-           border-2 border-[#00DBFB]/20;
+           text-white font-bold px-8 py-3 rounded-xl
+           hover:shadow-[0_0_30px_rgba(0,219,251,0.4)] 
+           transition-all duration-300 transform hover:scale-105;
   }
 
   .btn-success {
     @apply bg-gradient-to-r from-emerald-500 to-emerald-600
            text-white font-bold px-8 py-3 rounded-xl
-           hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]
+           hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]
            transition-all duration-300 transform hover:scale-105;
   }
 
   .btn-danger {
     @apply bg-gradient-to-r from-red-500 to-red-600
            text-white font-bold px-6 py-3 rounded-xl
-           hover:shadow-[0_0_20px_rgba(239,68,68,0.5)]
+           hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]
            transition-all duration-300;
   }
 
-  /* Cards Premium */
-  .card-premium {
-    @apply bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d]
-           border border-gray-800 rounded-2xl overflow-hidden
-           hover:border-[#FA007D]/30 transition-all duration-300
-           hover:shadow-[0_8px_30px_rgba(250,0,125,0.15)]
-           backdrop-blur-sm;
+  /* Tags com cores sutis */
+  .tag-magenta {
+    @apply bg-[#FA007D]/10 text-[#FA007D] border border-[#FA007D]/20 
+           px-3 py-1 rounded-full text-xs font-semibold;
   }
 
-  /* Animações */
-  @keyframes glow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+  .tag-cyan {
+    @apply bg-[#00DBFB]/10 text-[#00DBFB] border border-[#00DBFB]/20 
+           px-3 py-1 rounded-full text-xs font-semibold;
   }
 
-  .glow-magenta {
-    animation: glow 2s ease-in-out infinite;
-    box-shadow: 0 0 20px rgba(250, 0, 125, 0.4);
-  }
-
-  .glow-cyan {
-    animation: glow 2s ease-in-out infinite;
-    box-shadow: 0 0 20px rgba(0, 219, 251, 0.4);
-  }
-
-  /* Scroll suave */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Scrollbar customizada */
+  /* Scrollbar customizada - MANTÉM AS CORES ATUAIS */
   ::-webkit-scrollbar {
     width: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #0d0d0d;
+    background: #f1f1f1;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -131,5 +146,20 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #C9006A, #00A8CC);
+  }
+
+  /* Animações suaves */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  /* Scroll suave */
+  html {
+    scroll-behavior: smooth;
   }
 }
