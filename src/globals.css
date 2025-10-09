@@ -69,9 +69,9 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-primary-foreground font-bold px-8 py-3 rounded-md uppercase tracking-wider
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground font-bold px-8 py-3 rounded-md uppercase tracking-wider
            transform transition-all duration-300 hover:scale-105 
-           hover:shadow-[0_0_20px_theme(colors.primary),0_0_5px_theme(colors.primary)];
+           hover:shadow-[0_0_20px_theme(colors.primary),0_0_20px_theme(colors.secondary)];
   }
 
   .link-gradient-underline {
@@ -79,5 +79,15 @@
            after:h-[2px] after:w-full after:bg-gradient-to-r from-secondary to-primary
            after:scale-x-0 after:origin-left after:transition-transform after:duration-300
            hover:after:scale-x-100;
+  }
+
+  .diagonal-cut {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 90%);
+  }
+
+  @media (min-width: 768px) {
+    .diagonal-cut {
+      clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    }
   }
 }

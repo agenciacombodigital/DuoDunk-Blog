@@ -30,8 +30,8 @@ export default function Index() {
   return (
     <>
       {/* Hero Section (Dark) */}
-      <section className="dark-section text-center py-24 md:py-32 overflow-hidden">
-        <div className="container mx-auto px-4 relative z-10">
+      <section className="dark-section text-center py-24 md:py-32 overflow-hidden diagonal-cut">
+        <div className="container mx-auto px-4 relative z-10 pb-12 md:pb-24">
           <Dribbble className="mx-auto text-secondary mb-6" size={64} />
           <h1 className="text-6xl md:text-8xl font-heading tracking-wider mb-4">
             O Jogo Dentro do Jogo.
