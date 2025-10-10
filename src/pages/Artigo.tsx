@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, ExternalLink, Clock } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -129,19 +129,6 @@ export default function Artigo() {
             </div>
           </div>
         )}
-
-        {/* Link Original */}
-        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-          <a 
-            href={article.original_link} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-[#00DBFB] hover:text-[#FA007D] transition-colors inline-flex items-center gap-2 font-semibold"
-          >
-            <ExternalLink className="w-5 h-5" />
-            Ver notícia original (inglês)
-          </a>
-        </div>
       </div>
     </article>
   );
