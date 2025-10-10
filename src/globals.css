@@ -172,4 +172,20 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  /* Estilos para a scrollbar do placar */
+  .scoreboard-scrollbar::-webkit-scrollbar {
+    height: 6px;
+  }
+  .scoreboard-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+  .scoreboard-scrollbar::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 3px;
+  }
+  .scoreboard-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6a6a6a;
+  }
 }
