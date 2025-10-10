@@ -30,6 +30,7 @@ export default function NBAScoreboard() {
   useEffect(() => {
     fetchGames();
     
+    // Atualizar a cada 60 segundos
     const interval = setInterval(() => {
       setGames(currentGames => {
         const hasLiveGames = currentGames.some(g => g.status === 'live');
@@ -38,32 +39,36 @@ export default function NBAScoreboard() {
         }
         return currentGames;
       });
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
 
   const fetchGames = async () => {
     try {
+      console.log('🏀 Buscando placar da NBA...');
       setError(false);
       
-      // Usar nossa Edge Function proxy
       const { data, error: functionError } = await supabase.functions.invoke('nba-scoreboard');
       
       if (functionError) {
+        console.error('❌ Erro na Edge Function:', functionError);
         throw new Error(functionError.message);
       }
       
+      console.log('📊 Resposta recebida:', data);
+      
       if (!data?.scoreboard?.games || data.scoreboard.games.length === 0) {
+        console.log('ℹ️ Nenhum jogo encontrado');
         setGames([]);
         setLoading(false);
         return;
       }
-  
+
       const formattedGames: Game[] = data.scoreboard.games.map((game: any) => {
         const isLive = game.gameStatus === 2;
         const isFinal = game.gameStatus === 3;
-  
+
         return {
           id: game.gameId,
           homeTeam: {
@@ -79,15 +84,17 @@ export default function NBAScoreboard() {
             logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`
           },
           status: isLive ? 'live' : isFinal ? 'final' : 'scheduled',
-          statusText: game.gameStatusText,
+          statusText: game.gameStatusText.trim(),
           period: game.period || 0,
           gameClock: game.gameClock || ''
         };
       });
       
+      console.log(`✅ ${formattedGames.length} jogos carregados`);
       setGames(formattedGames);
+      
     } catch (err: any) {
-      console.error('Erro ao buscar jogos:', err);
+      console.error('❌ Erro ao buscar jogos:', err);
       setError(true);
     } finally {
       setLoading(false);
@@ -115,7 +122,7 @@ export default function NBAScoreboard() {
             <p className="text-gray-400 text-sm">Erro ao carregar placar</p>
             <button 
               onClick={fetchGames}
-              className="text-cyan-400 hover:text-cyan-300 text-sm underline"
+              className="text-cyan-400 hover:text-cyan-300 text-sm underline transition-colors"
             >
               Tentar novamente
             </button>
@@ -138,43 +145,47 @@ export default function NBAScoreboard() {
   }
 
   return (
-    <div className="bg-black border-b border-gray-800 py-3">
+    <div className="bg-black border-b border-gray-800 py-3 sticky top-20 z-40">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide pb-2">
           {games.map((game) => (
             <div 
               key={game.id} 
-              className="flex items-center gap-4 bg-gray-900 px-6 py-3 rounded-lg min-w-max hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-4 bg-gray-900/90 backdrop-blur-sm px-6 py-3 rounded-lg min-w-max hover:bg-gray-800 transition-all duration-300 border border-gray-800 hover:border-gray-700"
             >
               {/* Away Team */}
               <div className="flex items-center gap-3">
                 <img 
                   src={game.awayTeam.logo} 
                   alt={game.awayTeam.name}
-                  className="w-8 h-8"
+                  className="w-8 h-8 object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
                 <div className="text-right">
-                  <p className="text-white font-bold text-sm">{game.awayTeam.tricode}</p>
-                  <p className="text-2xl font-bold text-secondary">{game.awayTeam.score}</p>
+                  <p className="text-white font-bold text-sm tracking-wider">{game.awayTeam.tricode}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
+                    {game.awayTeam.score}
+                  </p>
                 </div>
               </div>
               
               {/* Separator */}
-              <div className="text-gray-600 font-bold text-sm">@</div>
+              <div className="text-gray-600 font-bold text-sm px-2">@</div>
               
               {/* Home Team */}
               <div className="flex items-center gap-3">
                 <div className="text-left">
-                  <p className="text-white font-bold text-sm">{game.homeTeam.tricode}</p>
-                  <p className="text-2xl font-bold text-primary">{game.homeTeam.score}</p>
+                  <p className="text-white font-bold text-sm tracking-wider">{game.homeTeam.tricode}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">
+                    {game.homeTeam.score}
+                  </p>
                 </div>
                 <img 
                   src={game.homeTeam.logo} 
                   alt={game.homeTeam.name}
-                  className="w-8 h-8"
+                  className="w-8 h-8 object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -182,24 +193,25 @@ export default function NBAScoreboard() {
               </div>
               
               {/* Status */}
-              <div className="ml-4 text-center w-28">
+              <div className="ml-4 text-center min-w-[110px]">
                 {game.status === 'live' && (
-                  <div>
-                    <span className="px-3 py-1 bg-red-900 text-red-300 text-xs rounded-full animate-pulse font-bold">
-                      🔴 AO VIVO
+                  <div className="space-y-1">
+                    <span className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs rounded-full animate-pulse font-bold flex items-center gap-1.5 justify-center shadow-lg shadow-red-500/50">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                      AO VIVO
                     </span>
-                    <p className="text-gray-400 text-xs mt-1 font-mono">
-                      {game.period}Q {game.gameClock}
+                    <p className="text-gray-400 text-xs font-mono">
+                      {game.period}Q • {game.gameClock.replace('PT', '').replace('S', '').substring(0, 5)}
                     </p>
                   </div>
                 )}
                 {game.status === 'final' && (
-                  <span className="px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full font-semibold">
+                  <span className="px-4 py-1.5 bg-gray-700/80 text-gray-300 text-xs rounded-full font-bold">
                     FINAL
                   </span>
                 )}
                 {game.status === 'scheduled' && (
-                  <span className="px-3 py-1 bg-gray-800 text-gray-400 text-xs rounded-full">
+                  <span className="px-3 py-1.5 bg-gray-800/80 text-gray-400 text-xs rounded-full font-medium">
                     {game.statusText}
                   </span>
                 )}
