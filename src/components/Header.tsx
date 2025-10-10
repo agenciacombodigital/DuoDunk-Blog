@@ -8,7 +8,7 @@ export default function Header() {
       <header className="sticky top-0 z-50 border-b">
         <div className="container mx-auto px-4 flex items-center justify-between h-20">
           <Link to="/">
-            <img src="/images/logo.png" alt="Duo Dunk Logo" className="h-10" />
+            <img src="/images/logo.svg" alt="Duo Dunk Logo" className="h-8" />
           </Link>
           
           <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">

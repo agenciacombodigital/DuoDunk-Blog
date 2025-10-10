@@ -1,0 +1,11 @@
+<svg role="img" aria-label="Duo Dunk Logo" width="150" height="30" viewBox="0 0 150 30" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      fill: white;
+      letter-spacing: 1px;
+    }
+  </style>
+  <text x="0" y="23" class="logo-text">DUO DUNK</text>
+</svg>
