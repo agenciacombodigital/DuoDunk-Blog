@@ -181,58 +181,186 @@ export default function NBAScoreboard() {
         </div>
       </div>
 
+      {/* Modal de Estatísticas COMPLETO */}
       {selectedGame && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedGame(null)}>
-          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full p-6 border border-gray-800 relative fade-in" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setSelectedGame(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X className="w-6 h-6" /></button>
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Estatísticas do Jogo</h2>
-            <div className="flex items-center justify-between mb-6 bg-black/50 rounded-xl p-6">
-              <div className="flex flex-col items-center flex-1"><img src={selectedGame.awayTeam.logo} alt={selectedGame.awayTeam.name} className="w-16 h-16 mb-2" /><p className="text-sm text-white font-bold mb-1">{selectedGame.awayTeam.name}</p><p className="text-xs text-gray-400 mb-2">{`(${selectedGame.awayTeam.wins}-${selectedGame.awayTeam.losses})`}</p><p className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">{selectedGame.awayTeam.score}</p></div>
-              <div className="text-center px-6"><span className={`px-4 py-2 text-sm rounded-full font-bold ${selectedGame.status === 'live' ? 'bg-red-600 text-white animate-pulse' : 'bg-gray-700 text-gray-300'}`}>{selectedGame.status === 'live' ? 'AO VIVO' : 'FINAL'}</span><p className="text-gray-400 text-xs mt-2">{selectedGame.period}Q • {selectedGame.statusText}</p></div>
-              <div className="flex flex-col items-center flex-1"><img src={selectedGame.homeTeam.logo} alt={selectedGame.homeTeam.name} className="w-16 h-16 mb-2" /><p className="text-sm text-white font-bold mb-1">{selectedGame.homeTeam.name}</p><p className="text-xs text-gray-400 mb-2">{`(${selectedGame.homeTeam.wins}-${selectedGame.homeTeam.losses})`}</p><p className="text-4xl font-bold bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">{selectedGame.homeTeam.score}</p></div>
-            </div>
-            
-            <div className="space-y-6">
-              {selectedGame.awayTeam.statistics && selectedGame.homeTeam.statistics ? (
-                <div>
-                  <h3 className="text-lg font-bold text-white text-center mb-4">Estatísticas da Equipe</h3>
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <StatRow label="FG%" awayValue={`${(selectedGame.awayTeam.statistics.fieldGoalsPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.fieldGoalsPercentage * 100).toFixed(1)}%`} />
-                    <StatRow label="3P%" awayValue={`${(selectedGame.awayTeam.statistics.threePointersPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.threePointersPercentage * 100).toFixed(1)}%`} />
-                    <StatRow label="FT%" awayValue={`${(selectedGame.awayTeam.statistics.freeThrowsPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.freeThrowsPercentage * 100).toFixed(1)}%`} />
-                    <StatRow label="Rebotes" awayValue={selectedGame.awayTeam.statistics.reboundsTotal} homeValue={selectedGame.homeTeam.statistics.reboundsTotal} />
-                    <StatRow label="Assistências" awayValue={selectedGame.awayTeam.statistics.assists} homeValue={selectedGame.homeTeam.statistics.assists} />
-                    <StatRow label="Turnovers" awayValue={selectedGame.awayTeam.statistics.turnovers} homeValue={selectedGame.homeTeam.statistics.turnovers} />
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm text-center">Estatísticas da equipe não disponíveis no momento.</p>
-              )}
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setSelectedGame(null)}
+        >
+          <div 
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-4xl w-full p-8 border-2 border-gray-700 relative my-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Botão Fechar */}
+            <button
+              onClick={() => setSelectedGame(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors bg-gray-800 rounded-full p-2 hover:bg-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-black/30 rounded-lg p-4">
-                  <h3 className="text-sm font-bold text-cyan-400 mb-3">Destaque {selectedGame.awayTeam.tricode}</h3>
-                  {selectedGame.awayTeam.leaders ? (
-                    <div>
-                      <p className="text-white font-semibold mb-2">{selectedGame.awayTeam.leaders.name}</p>
-                      <div className="space-y-1 text-sm text-gray-300">
-                        <p>{selectedGame.awayTeam.leaders.points} PTS / {selectedGame.awayTeam.leaders.rebounds} REB / {selectedGame.awayTeam.leaders.assists} AST</p>
-                      </div>
-                    </div>
-                  ) : <p className="text-gray-500 text-sm">Não disponível</p>}
+            {/* Título e Status */}
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-white mb-2">Estatísticas do Jogo</h2>
+              {selectedGame.status === 'live' && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm rounded-full animate-pulse font-bold">
+                  <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
+                  AO VIVO • {selectedGame.period}Q {selectedGame.gameClock.replace('PT', '').replace('S', '').substring(0, 5)}
                 </div>
-                <div className="bg-black/30 rounded-lg p-4">
-                  <h3 className="text-sm font-bold text-pink-400 mb-3">Destaque {selectedGame.homeTeam.tricode}</h3>
-                  {selectedGame.homeTeam.leaders ? (
-                    <div>
-                      <p className="text-white font-semibold mb-2">{selectedGame.homeTeam.leaders.name}</p>
-                      <div className="space-y-1 text-sm text-gray-300">
-                        <p>{selectedGame.homeTeam.leaders.points} PTS / {selectedGame.homeTeam.leaders.rebounds} REB / {selectedGame.homeTeam.leaders.assists} AST</p>
-                      </div>
-                    </div>
-                  ) : <p className="text-gray-500 text-sm">Não disponível</p>}
+              )}
+              {selectedGame.status === 'final' && (
+                <span className="inline-block px-4 py-2 bg-gray-700 text-gray-300 text-sm rounded-full font-bold">
+                  JOGO FINALIZADO
+                </span>
+              )}
+              {selectedGame.status === 'scheduled' && (
+                <span className="inline-block px-4 py-2 bg-blue-900 text-blue-300 text-sm rounded-full font-bold">
+                  AGENDADO • {selectedGame.statusText}
+                </span>
+              )}
+            </div>
+
+            {/* Placar Grande */}
+            <div className="grid grid-cols-3 items-center gap-6 mb-8 bg-black/50 rounded-2xl p-8 border border-gray-700">
+              {/* Away Team */}
+              <div className="flex flex-col items-center">
+                <img 
+                  src={selectedGame.awayTeam.logo} 
+                  alt={selectedGame.awayTeam.name}
+                  className="w-24 h-24 mb-4 filter drop-shadow-lg"
+                />
+                <p className="text-sm text-gray-400 mb-1 tracking-wide">{selectedGame.awayTeam.tricode}</p>
+                <p className="text-lg text-gray-300 mb-2 font-medium">{selectedGame.awayTeam.name}</p>
+                <p className="text-5xl font-black bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent">
+                  {selectedGame.awayTeam.score}
+                </p>
+              </div>
+
+              {/* VS Divider */}
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-pink-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-xl">VS</span>
                 </div>
               </div>
+
+              {/* Home Team */}
+              <div className="flex flex-col items-center">
+                <img 
+                  src={selectedGame.homeTeam.logo} 
+                  alt={selectedGame.homeTeam.name}
+                  className="w-24 h-24 mb-4 filter drop-shadow-lg"
+                />
+                <p className="text-sm text-gray-400 mb-1 tracking-wide">{selectedGame.homeTeam.tricode}</p>
+                <p className="text-lg text-gray-300 mb-2 font-medium">{selectedGame.homeTeam.name}</p>
+                <p className="text-5xl font-black bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">
+                  {selectedGame.homeTeam.score}
+                </p>
+              </div>
+            </div>
+
+            {/* Líderes do Jogo */}
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-cyan-400" />
+                Destaques do Jogo
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Away Leader */}
+                <div className="bg-gradient-to-br from-cyan-900/30 to-cyan-800/20 rounded-xl p-5 border border-cyan-700/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                    <h4 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">
+                      Melhor {selectedGame.awayTeam.tricode}
+                    </h4>
+                  </div>
+                  {selectedGame.awayTeam.leaders ? (
+                    <div>
+                      <p className="text-white font-bold text-lg mb-3">{selectedGame.awayTeam.leaders.name}</p>
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-black/30 rounded-lg p-2">
+                          <p className="text-2xl font-bold text-cyan-400">{selectedGame.awayTeam.leaders.points}</p>
+                          <p className="text-xs text-gray-400 mt-1">PONTOS</p>
+                        </div>
+                        <div className="bg-black/30 rounded-lg p-2">
+                          <p className="text-2xl font-bold text-cyan-400">{selectedGame.awayTeam.leaders.rebounds}</p>
+                          <p className="text-xs text-gray-400 mt-1">REBOTES</p>
+                        </div>
+                        <div className="bg-black/30 rounded-lg p-2">
+                          <p className="text-2xl font-bold text-cyan-400">{selectedGame.awayTeam.leaders.assists}</p>
+                          <p className="text-xs text-gray-400 mt-1">ASSISTS</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm py-6 text-center">Estatísticas não disponíveis</p>
+                  )}
+                </div>
+
+                {/* Home Leader */}
+                <div className="bg-gradient-to-br from-pink-900/30 to-pink-800/20 rounded-xl p-5 border border-pink-700/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                    <h4 className="text-sm font-bold text-pink-400 uppercase tracking-wider">
+                      Melhor {selectedGame.homeTeam.tricode}
+                    </h4>
+                  </div>
+                  {selectedGame.homeTeam.leaders ? (
+                    <div>
+                      <p className="text-white font-bold text-lg mb-3">{selectedGame.homeTeam.leaders.name}</p>
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-black/30 rounded-lg p-2">
+                          <p className="text-2xl font-bold text-pink-400">{selectedGame.homeTeam.leaders.points}</p>
+                          <p className="text-xs text-gray-400 mt-1">PONTOS</p>
+                        </div>
+                        <div className="bg-black/30 rounded-lg p-2">
+                          <p className="text-2xl font-bold text-pink-400">{selectedGame.homeTeam.leaders.rebounds}</p>
+                          <p className="text-xs text-gray-400 mt-1">REBOTES</p>
+                        </div>
+                        <div className="bg-black/30 rounded-lg p-2">
+                          <p className="text-2xl font-bold text-pink-400">{selectedGame.homeTeam.leaders.assists}</p>
+                          <p className="text-xs text-gray-400 mt-1">ASSISTS</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm py-6 text-center">Estatísticas não disponíveis</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Informações Adicionais */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-black/30 rounded-xl p-4 border border-gray-700">
+              <div className="text-center">
+                <p className="text-gray-400 text-xs mb-1">PERÍODO</p>
+                <p className="text-white font-bold text-lg">{selectedGame.period}º Quarto</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-xs mb-1">TEMPO</p>
+                <p className="text-white font-bold text-lg">
+                  {selectedGame.gameClock ? selectedGame.gameClock.replace('PT', '').replace('S', '').substring(0, 5) : '--:--'}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-xs mb-1">PLACAR TOTAL</p>
+                <p className="text-white font-bold text-lg">
+                  {selectedGame.awayTeam.score + selectedGame.homeTeam.score}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-xs mb-1">DIFERENÇA</p>
+                <p className="text-white font-bold text-lg">
+                  {Math.abs(selectedGame.awayTeam.score - selectedGame.homeTeam.score)}
+                </p>
+              </div>
+            </div>
+
+            {/* Aviso */}
+            <div className="mt-6 text-center">
+              <p className="text-gray-500 text-xs">
+                Estatísticas atualizadas automaticamente • Fonte: NBA Official API
+              </p>
             </div>
           </div>
         </div>
