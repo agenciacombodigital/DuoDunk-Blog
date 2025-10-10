@@ -30,19 +30,21 @@ export default function TwitterFeed() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide">
           {twitterAccounts.map((account) => (
-            <div key={account.username} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-              <a
-                className="twitter-timeline"
-                data-height="500"
-                data-theme="light"
-                data-tweet-limit="3"
-                data-chrome="noheader nofooter noborders"
-                href={`https://twitter.com/${account.username}?ref_src=twsrc%5Etfw`}
-              >
-                Posts de @{account.username}
-              </a>
+            <div key={account.username} className="w-80 flex-shrink-0">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 h-[500px]">
+                <a
+                  className="twitter-timeline"
+                  data-height="500"
+                  data-theme="light"
+                  data-tweet-limit="3"
+                  data-chrome="noheader nofooter noborders"
+                  href={`https://twitter.com/${account.username}?ref_src=twsrc%5Etfw`}
+                >
+                  Carregando tweets de @{account.username}...
+                </a>
+              </div>
             </div>
           ))}
         </div>
