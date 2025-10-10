@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ArticleCard from '@/components/ArticleCard';
+import TwitterFeed from '@/components/TwitterFeed';
 
 interface Article {
   id: string;
@@ -154,6 +155,8 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      <TwitterFeed />
     </>
   );
 }
