@@ -46,7 +46,6 @@ const StatRow = ({ label, awayValue, homeValue }: { label: string, awayValue: st
   const awayNum = parseFloat(String(awayValue));
   const homeNum = parseFloat(String(homeValue));
   
-  // Para turnovers, menor é melhor. Para outros, maior é melhor.
   const isAwayBetter = label === 'Turnovers' ? awayNum < homeNum : awayNum > homeNum;
   const isHomeBetter = label === 'Turnovers' ? homeNum < awayNum : homeNum > awayNum;
 
@@ -96,8 +95,22 @@ export default function NBAScoreboard() {
           logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`,
           wins: game.homeTeam.wins || 0,
           losses: game.homeTeam.losses || 0,
-          leaders: game.gameLeaders?.homeLeaders?.personId ? { ...game.gameLeaders.homeLeaders } : null,
-          statistics: game.homeTeam.statistics ? { ...game.homeTeam.statistics } : null,
+          leaders: game.gameLeaders?.homeLeaders?.personId ? {
+            name: game.gameLeaders.homeLeaders.name,
+            points: game.gameLeaders.homeLeaders.points,
+            rebounds: game.gameLeaders.homeLeaders.rebounds,
+            assists: game.gameLeaders.homeLeaders.assists,
+          } : null,
+          statistics: game.homeTeam.statistics ? {
+            fieldGoalsPercentage: game.homeTeam.statistics.fieldGoalsPercentage,
+            threePointersPercentage: game.homeTeam.statistics.threePointersPercentage,
+            freeThrowsPercentage: game.homeTeam.statistics.freeThrowsPercentage,
+            reboundsTotal: game.homeTeam.statistics.reboundsTotal,
+            assists: game.homeTeam.statistics.assists,
+            steals: game.homeTeam.statistics.steals,
+            blocks: game.homeTeam.statistics.blocks,
+            turnovers: game.homeTeam.statistics.turnovers,
+          } : null,
         },
         awayTeam: {
           name: game.awayTeam.teamName,
@@ -106,8 +119,22 @@ export default function NBAScoreboard() {
           logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`,
           wins: game.awayTeam.wins || 0,
           losses: game.awayTeam.losses || 0,
-          leaders: game.gameLeaders?.awayLeaders?.personId ? { ...game.gameLeaders.awayLeaders } : null,
-          statistics: game.awayTeam.statistics ? { ...game.awayTeam.statistics } : null,
+          leaders: game.gameLeaders?.awayLeaders?.personId ? {
+            name: game.gameLeaders.awayLeaders.name,
+            points: game.gameLeaders.awayLeaders.points,
+            rebounds: game.gameLeaders.awayLeaders.rebounds,
+            assists: game.gameLeaders.awayLeaders.assists,
+          } : null,
+          statistics: game.awayTeam.statistics ? {
+            fieldGoalsPercentage: game.awayTeam.statistics.fieldGoalsPercentage,
+            threePointersPercentage: game.awayTeam.statistics.threePointersPercentage,
+            freeThrowsPercentage: game.awayTeam.statistics.freeThrowsPercentage,
+            reboundsTotal: game.awayTeam.statistics.reboundsTotal,
+            assists: game.awayTeam.statistics.assists,
+            steals: game.awayTeam.statistics.steals,
+            blocks: game.awayTeam.statistics.blocks,
+            turnovers: game.awayTeam.statistics.turnovers,
+          } : null,
         },
         status: game.gameStatus === 2 ? 'live' : game.gameStatus === 3 ? 'final' : 'scheduled',
         statusText: game.gameStatusText.trim(),
@@ -165,21 +192,48 @@ export default function NBAScoreboard() {
               <div className="flex flex-col items-center flex-1"><img src={selectedGame.homeTeam.logo} alt={selectedGame.homeTeam.name} className="w-16 h-16 mb-2" /><p className="text-sm text-white font-bold mb-1">{selectedGame.homeTeam.name}</p><p className="text-xs text-gray-400 mb-2">{`(${selectedGame.homeTeam.wins}-${selectedGame.homeTeam.losses})`}</p><p className="text-4xl font-bold bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">{selectedGame.homeTeam.score}</p></div>
             </div>
             
-            {selectedGame.awayTeam.statistics && selectedGame.homeTeam.statistics ? (
-              <div className="space-y-2">
-                <h3 className="text-lg font-bold text-white text-center mb-4">Estatísticas da Equipe</h3>
+            <div className="space-y-6">
+              {selectedGame.awayTeam.statistics && selectedGame.homeTeam.statistics ? (
+                <div>
+                  <h3 className="text-lg font-bold text-white text-center mb-4">Estatísticas da Equipe</h3>
+                  <div className="bg-black/30 rounded-lg p-4">
+                    <StatRow label="FG%" awayValue={`${(selectedGame.awayTeam.statistics.fieldGoalsPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.fieldGoalsPercentage * 100).toFixed(1)}%`} />
+                    <StatRow label="3P%" awayValue={`${(selectedGame.awayTeam.statistics.threePointersPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.threePointersPercentage * 100).toFixed(1)}%`} />
+                    <StatRow label="FT%" awayValue={`${(selectedGame.awayTeam.statistics.freeThrowsPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.freeThrowsPercentage * 100).toFixed(1)}%`} />
+                    <StatRow label="Rebotes" awayValue={selectedGame.awayTeam.statistics.reboundsTotal} homeValue={selectedGame.homeTeam.statistics.reboundsTotal} />
+                    <StatRow label="Assistências" awayValue={selectedGame.awayTeam.statistics.assists} homeValue={selectedGame.homeTeam.statistics.assists} />
+                    <StatRow label="Turnovers" awayValue={selectedGame.awayTeam.statistics.turnovers} homeValue={selectedGame.homeTeam.statistics.turnovers} />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm text-center">Estatísticas da equipe não disponíveis no momento.</p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-black/30 rounded-lg p-4">
-                  <StatRow label="FG%" awayValue={`${(selectedGame.awayTeam.statistics.fieldGoalsPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.fieldGoalsPercentage * 100).toFixed(1)}%`} />
-                  <StatRow label="3P%" awayValue={`${(selectedGame.awayTeam.statistics.threePointersPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.threePointersPercentage * 100).toFixed(1)}%`} />
-                  <StatRow label="FT%" awayValue={`${(selectedGame.awayTeam.statistics.freeThrowsPercentage * 100).toFixed(1)}%`} homeValue={`${(selectedGame.homeTeam.statistics.freeThrowsPercentage * 100).toFixed(1)}%`} />
-                  <StatRow label="Rebotes" awayValue={selectedGame.awayTeam.statistics.reboundsTotal} homeValue={selectedGame.homeTeam.statistics.reboundsTotal} />
-                  <StatRow label="Assistências" awayValue={selectedGame.awayTeam.statistics.assists} homeValue={selectedGame.homeTeam.statistics.assists} />
-                  <StatRow label="Turnovers" awayValue={selectedGame.awayTeam.statistics.turnovers} homeValue={selectedGame.homeTeam.statistics.turnovers} />
+                  <h3 className="text-sm font-bold text-cyan-400 mb-3">Destaque {selectedGame.awayTeam.tricode}</h3>
+                  {selectedGame.awayTeam.leaders ? (
+                    <div>
+                      <p className="text-white font-semibold mb-2">{selectedGame.awayTeam.leaders.name}</p>
+                      <div className="space-y-1 text-sm text-gray-300">
+                        <p>{selectedGame.awayTeam.leaders.points} PTS / {selectedGame.awayTeam.leaders.rebounds} REB / {selectedGame.awayTeam.leaders.assists} AST</p>
+                      </div>
+                    </div>
+                  ) : <p className="text-gray-500 text-sm">Não disponível</p>}
+                </div>
+                <div className="bg-black/30 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-pink-400 mb-3">Destaque {selectedGame.homeTeam.tricode}</h3>
+                  {selectedGame.homeTeam.leaders ? (
+                    <div>
+                      <p className="text-white font-semibold mb-2">{selectedGame.homeTeam.leaders.name}</p>
+                      <div className="space-y-1 text-sm text-gray-300">
+                        <p>{selectedGame.homeTeam.leaders.points} PTS / {selectedGame.homeTeam.leaders.rebounds} REB / {selectedGame.homeTeam.leaders.assists} AST</p>
+                      </div>
+                    </div>
+                  ) : <p className="text-gray-500 text-sm">Não disponível</p>}
                 </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-sm text-center">Estatísticas da equipe estarão disponíveis em breve.</p>
-            )}
+            </div>
           </div>
         </div>
       )}
