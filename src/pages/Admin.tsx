@@ -8,6 +8,7 @@ export default function AdminPage() {
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
   const loadQueue = async () => {
     setLoadingQueue(true);
@@ -33,6 +34,48 @@ export default function AdminPage() {
   useEffect(() => {
     loadQueue();
   }, []);
+
+  const handleImageUpload = async (articleId: string, file: File) => {
+    setUploadingImage(articleId);
+    const toastId = toast.loading("Fazendo upload da imagem...");
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${articleId}-${Date.now()}.${fileExt}`;
+      const filePath = `public/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('article-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('article-images')
+        .getPublicUrl(filePath);
+
+      if (!publicUrl) throw new Error("Não foi possível obter a URL da imagem.");
+
+      const { error: updateError } = await supabase
+        .from('articles_queue')
+        .update({ image_url: publicUrl })
+        .eq('id', articleId);
+
+      if (updateError) throw updateError;
+
+      setQueue(currentQueue =>
+        currentQueue.map(article =>
+          article.id === articleId ? { ...article, image_url: publicUrl } : article
+        )
+      );
+
+      toast.success("Imagem atualizada com sucesso!", { id: toastId });
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message, { id: toastId });
+    } finally {
+      setUploadingImage(null);
+    }
+  };
 
   async function scrape() {
     setIsScraping(true);
@@ -192,6 +235,31 @@ export default function AdminPage() {
                 )}
                 
                 <div className="p-6">
+                  <div className="mb-4 p-3 bg-gray-900 rounded-lg border border-gray-700">
+                    <label className="block text-sm text-gray-400 mb-2">
+                      📸 Alterar imagem do artigo:
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(article.id, file);
+                      }}
+                      disabled={uploadingImage === article.id}
+                      className="block w-full text-sm text-gray-300
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-lg file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-cyan-600 file:text-white
+                        hover:file:bg-cyan-700
+                        file:cursor-pointer cursor-pointer"
+                    />
+                    {uploadingImage === article.id && (
+                      <p className="text-xs text-cyan-400 mt-2 animate-pulse">Fazendo upload...</p>
+                    )}
+                  </div>
+
                   <h3 className="text-2xl font-bold text-white mb-3">
                     {article.title}
                   </h3>
