@@ -1,0 +1,45 @@
+name: Process Articles with AI
+
+on:
+  schedule:
+    # Processar com IA a cada 10 minutos (horário pico)
+    - cron: '*/10 10-23 * * *'
+    - cron: '*/10 0-2 * * *'
+    
+    # Horário baixo: a cada 30 minutos
+    - cron: '*/30 2-10 * * *'
+  
+  workflow_dispatch:
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🤖 Processar com IA
+        run: |
+          # Processar até 3 artigos de uma vez
+          for i in {1..3}; do
+            echo "Processando artigo $i..."
+            
+            response=$(curl -s -w "\n%{http_code}" -X POST \
+              "https://brerfpcfkyptkzygyzxl.supabase.co/functions/v1/process-with-ai" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d '{}')
+            
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | sed '$d')
+            
+            echo "Status: $http_code"
+            echo "Response: $body"
+            
+            # Se não houver mais artigos, parar
+            if echo "$body" | grep -q "Nenhum artigo na fila"; then
+              echo "✅ Fila processada completamente"
+              break
+            fi
+            
+            # Aguardar 2 segundos entre processamentos
+            sleep 2
+          done
