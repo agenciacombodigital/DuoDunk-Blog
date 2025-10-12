@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Bot, LogOut } from 'lucide-react';
+import { Loader2, RefreshCw, Bot } from 'lucide-react';
 import { logout } from '@/lib/auth';
 
 export default function AdminPage() {
@@ -25,7 +25,7 @@ export default function AdminPage() {
       if (error) throw error;
       
       setQueue(data || []);
-    } catch (error: any)
+    } catch (error: any) {
       toast.error("Erro ao carregar artigos processados.", {
         description: error.message,
       });
