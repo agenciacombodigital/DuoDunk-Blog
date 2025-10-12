@@ -27,7 +27,7 @@ jobs:
       - name: 🤖 Chamar Edge Function Scraper
         run: |
           response=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://brerfpcfkyptkzygyzxl.supabase.co/functions/v1/scrape-news" \
+            "https://qruwcedwvylwldxtqoew.supabase.co/functions/v1/scrape-news" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{}')
@@ -54,7 +54,7 @@ jobs:
       - name: 🧹 Limpar artigos antigos
         run: |
           curl -X POST \
-            "https://brerfpcfkyptkzygyzxl.supabase.co/rest/v1/rpc/cleanup_old_data" \
+            "https://qruwcedwvylwldxtqoew.supabase.co/rest/v1/rpc/cleanup_old_data" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json"
