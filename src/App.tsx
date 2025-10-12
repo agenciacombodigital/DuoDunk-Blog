@@ -9,6 +9,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
+import EditArticle from "./pages/EditArticle";
 
 const AppContent = () => {
   const location = useLocation();
@@ -31,6 +32,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <AdminPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/edit/:slug" 
+            element={
+              <ProtectedRoute>
+                <EditArticle />
               </ProtectedRoute>
             } 
           />

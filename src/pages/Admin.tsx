@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { logout, isAuthenticated } from '@/lib/auth';
 import { toast } from "sonner";
-import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit } from 'lucide-react';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -98,8 +98,7 @@ export default function AdminPage() {
     const toastId = toast.loading("Fazendo upload da imagem...");
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${articleId}-${Date.now()}.${fileExt}`;
-      const filePath = `public/${fileName}`;
+      const fileName = `public/${articleId}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('article-images')
@@ -295,6 +294,9 @@ export default function AdminPage() {
                       <span className="text-xs text-cyan-400">{article.views || 0} views</span>
                     </div>
                   </div>
+                  <Link to={`/admin/edit/${article.slug}`} className="ml-4 p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                    <Edit className="w-4 h-4 text-cyan-400" />
+                  </Link>
                 </div>
               ))}
             </div>
