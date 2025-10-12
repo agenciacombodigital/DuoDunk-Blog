@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { logout } from '@/lib/auth';
+import { logout, isAuthenticated } from '@/lib/auth';
 import { toast } from "sonner";
 import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 
@@ -14,6 +14,14 @@ export default function AdminPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/admin/login');
+    } else {
+      loadData();
+    }
+  }, [navigate]);
 
   const loadData = async () => {
     setLoading(true);
@@ -45,10 +53,6 @@ export default function AdminPage() {
     if (error) throw error;
     setPublished(data || []);
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const handleLogout = () => {
     logout();
