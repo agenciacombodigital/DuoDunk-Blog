@@ -102,10 +102,10 @@ export default function AdminPage() {
 
       const { error: uploadError } = await supabase.storage
         .from('article-images')
-        .upload(filePath, file, { upsert: true });
+        .upload(fileName, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('article-images').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('article-images').getPublicUrl(fileName);
       if (!data.publicUrl) throw new Error("URL da imagem não encontrada.");
 
       const { error: updateError } = await supabase
@@ -294,7 +294,7 @@ export default function AdminPage() {
                       <span className="text-xs text-cyan-400">{article.views || 0} views</span>
                     </div>
                   </div>
-                  <Link to={`/admin/edit/${article.slug}`} className="ml-4 p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                  <Link to={`/admin/editar/${article.slug}`} className="ml-4 p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
                     <Edit className="w-4 h-4 text-cyan-400" />
                   </Link>
                 </div>

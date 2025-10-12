@@ -36,7 +36,7 @@ const AppContent = () => {
             } 
           />
           <Route 
-            path="/admin/edit/:slug" 
+            path="/admin/editar/:slug" 
             element={
               <ProtectedRoute>
                 <EditArticle />
