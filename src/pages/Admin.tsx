@@ -287,15 +287,25 @@ export default function AdminPage() {
               {published.map((article) => (
                 <div key={article.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700 hover:border-green-700/50 transition-colors">
                   <div className="flex-1">
-                    <a href={`/artigos/${article.slug}`} target="_blank" rel="noopener noreferrer" className="text-white font-semibold text-sm hover:text-green-400 transition-colors">{article.title}</a>
+                    <a 
+                      href={`/artigos/${article.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white font-semibold text-sm hover:text-green-400"
+                    >
+                      {article.title}
+                    </a>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs text-gray-500">{article.source}</span>
                       <span className="text-xs text-gray-500">{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                       <span className="text-xs text-cyan-400">{article.views || 0} views</span>
                     </div>
                   </div>
-                  <Link to={`/admin/editar/${article.slug}`} className="ml-4 p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
-                    <Edit className="w-4 h-4 text-cyan-400" />
+                  <Link
+                    to={`/admin/editar/${article.slug}`}
+                    className="ml-4 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm font-semibold"
+                  >
+                    ✏️ Editar
                   </Link>
                 </div>
               ))}
