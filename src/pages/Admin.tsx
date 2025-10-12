@@ -184,7 +184,7 @@ export default function AdminPage() {
   const handleLogout = () => {
     logout();
     toast.info('Você foi desconectado.');
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   const isLoading = isScraping || isProcessing;

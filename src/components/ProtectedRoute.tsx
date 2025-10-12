@@ -3,7 +3,7 @@ import { isAuthenticated } from '@/lib/auth';
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;
