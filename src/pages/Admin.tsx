@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Bot } from 'lucide-react';
+import { Loader2, RefreshCw, Bot, LogOut } from 'lucide-react';
+import { logout } from '@/lib/auth';
 
 export default function AdminPage() {
   const [queue, setQueue] = useState<any[]>([]);
@@ -9,6 +11,7 @@ export default function AdminPage() {
   const [isScraping, setIsScraping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const loadQueue = async () => {
     setLoadingQueue(true);
@@ -178,12 +181,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    toast.info('Você foi desconectado.');
+    navigate('/login');
+  };
+
   const isLoading = isScraping || isProcessing;
 
   return (
     <div className="bg-black min-h-screen text-white">
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8">Painel de Admin</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Painel de Admin</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
         
         <div className="flex gap-4 mb-8">
           <button

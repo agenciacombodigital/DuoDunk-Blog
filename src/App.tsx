@@ -6,6 +6,8 @@ import AdminPage from "./pages/Admin";
 import Ultimas from "./pages/Ultimas";
 import Artigo from "./pages/Artigo";
 import Layout from "./components/Layout";
+import LoginPage from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => (
   <>
@@ -15,10 +17,18 @@ const App = () => (
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/ultimas" element={<Ultimas />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/artigos/:slug" element={<Artigo />} />
           <Route path="*" element={<NotFound />} />
         </Route>
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
   </>
