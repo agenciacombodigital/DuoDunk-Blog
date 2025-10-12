@@ -23,7 +23,7 @@ jobs:
             echo "Processando artigo $i..."
             
             response=$(curl -s -w "\n%{http_code}" -X POST \
-              "https://brerfpcfkyptkzygyzxl.supabase.co/functions/v1/process-with-ai" \
+              "https://qruwcedwvylwldxtqoew.supabase.co/functions/v1/process-with-ai" \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
               -H "Content-Type: application/json" \
               -d '{}')
