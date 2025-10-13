@@ -25,14 +25,6 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
           alt={article.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
-        {/* Badge da fonte */}
-        {article.source && (
-          <div className="absolute top-3 left-3">
-            <span className="tag-cyan">
-              {article.source}
-            </span>
-          </div>
-        )}
       </div>
       
       {/* Conteúdo */}
