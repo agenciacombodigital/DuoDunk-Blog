@@ -25,22 +25,38 @@ export default function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
+    console.log('Iniciando carregamento de dados...');
+    
     try {
-      await Promise.all([loadQueue(), loadPublished()]);
-    } catch (error: any) {
-      toast.error("Erro ao carregar dados", { description: error.message });
+      await loadQueue();
+      await loadPublished();
+      console.log('Dados carregados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const loadQueue = async () => {
-    const { data, error } = await supabase
-      .from('articles_queue')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    setQueue(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('articles_queue')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      console.log('Artigos na fila:', data?.length || 0);
+      console.log('Artigos por status:', data?.reduce((acc: { [key: string]: number }, a: { status: string }) => {
+        acc[a.status] = (acc[a.status] || 0) + 1;
+        return acc;
+      }, {}));
+      
+      setQueue(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar fila:', error);
+    }
   };
 
   const loadPublished = async () => {
