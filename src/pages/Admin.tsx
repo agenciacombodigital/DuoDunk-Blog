@@ -97,7 +97,9 @@ export default function AdminPage() {
       const { data, error } = await supabase.functions.invoke('process-with-ai');
       if (error) throw error;
       toast.success("Processamento finalizado!", { id: toastId, description: data.message });
-      await loadData();
+      setTimeout(() => {
+        loadData();
+      }, 2000);
     } catch (error: any) {
       toast.error('Erro ao processar', { id: toastId, description: error.message });
     }
