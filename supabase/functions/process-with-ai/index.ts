@@ -42,6 +42,28 @@ serve(async (req) => {
 
     console.log(`Artigo encontrado para processar: ${article.id} - "${article.original_title}"`);
 
+    // 1. VERIFICAÇÃO DE DUPLICIDADE (title_hash)
+    if (article.title_hash) {
+      const { data: existingArticle, error: checkError } = await supabaseAdmin
+        .from('articles')
+        .select('id')
+        .eq('title_hash', article.title_hash)
+        .limit(1)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = No rows found
+        throw checkError;
+      }
+
+      if (existingArticle) {
+        console.log(`Artigo duplicado encontrado (hash: ${article.title_hash}). Removendo da fila.`);
+        await supabaseAdmin.from('articles_queue').delete().eq('id', article.id);
+        return new Response(JSON.stringify({ message: `Artigo duplicado (hash: ${article.title_hash}) foi removido da fila.` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     await supabaseAdmin
       .from('articles_queue')
       .update({ status: 'pending_processing' }) // Marcar como em processamento

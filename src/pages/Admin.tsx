@@ -96,7 +96,14 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase.functions.invoke('process-with-ai');
       if (error) throw error;
-      toast.success("Processamento finalizado!", { id: toastId, description: data.message });
+      
+      // Se mensagem indica artigo inválido removido, mostrar info ao invés de sucesso
+      if (data.message?.includes('removido da fila')) {
+        toast.info("Artigo inválido removido", { id: toastId, description: data.message });
+      } else {
+        toast.success("Processamento finalizado!", { id: toastId, description: data.message });
+      }
+      
       setTimeout(() => {
         loadData();
       }, 2000);
