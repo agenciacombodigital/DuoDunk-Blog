@@ -218,7 +218,10 @@ export default function AdminPage() {
   }
 
   const pendingApproval = queue.filter(a => a.status === 'processed');
-  const pendingProcessing = queue.filter(a => a.status === 'pending' || a.status === null || a.status === '');
+  const pendingProcessing = queue.filter(a => 
+    (a.status === 'pending_approval' || a.status === 'pending' || a.status === null || a.status === '') 
+    && a.body === null
+  );
   const autoApproved = queue.filter(a => a.status === 'auto_approved');
 
   return (
