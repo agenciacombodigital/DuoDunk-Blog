@@ -26,12 +26,13 @@ export default function Home() {
 
   const loadArticles = async () => {
     try {
+      // Hero section usa 8, este grid usa 6. Total 14.
       const { data } = await supabase
         .from('articles')
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
-        .limit(10);
+        .limit(14); 
       
       setArticles(data || []);
     } catch (error) {
@@ -40,9 +41,8 @@ export default function Home() {
     setLoading(false);
   };
 
-  const mainArticle = articles.length > 0 ? articles[0] : null;
-  const headlineArticles = articles.length > 1 ? articles.slice(1, 5) : [];
-  const secondaryArticles = articles.length > 5 ? articles.slice(5) : [];
+  // Artigos para o grid 3x2, após os 8 do HeroSection
+  const latestArticles = articles.length >= 8 ? articles.slice(8, 14) : [];
 
   return (
     <>
@@ -65,73 +65,37 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="text-center py-20">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#FA007D] mx-auto mb-4"></div>
-              <p className="text-gray-500">Carregando artigos...</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Skeleton loader */}
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-3 p-4 border border-gray-200 rounded-lg">
+                  <div className="h-40 bg-gray-200 rounded-md animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                </div>
+              ))}
             </div>
-          ) : articles.length === 0 ? (
+          ) : latestArticles.length === 0 ? (
             <div className="text-center py-20 bg-gray-50 rounded-2xl">
-              <p className="text-gray-500 text-lg mb-2">Nenhum artigo publicado ainda.</p>
-              <p className="text-sm text-gray-400">Aprove artigos no painel admin para publicá-los aqui!</p>
+              <p className="text-gray-500 text-lg mb-2">Nenhum artigo adicional para mostrar.</p>
             </div>
           ) : (
-            <div className="space-y-12">
-              {/* Main Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Article (Left) */}
-                {mainArticle && (
-                  <div className="lg:col-span-2">
-                    <Link to={`/artigos/${mainArticle.slug}`} className="group block">
-                      <div className="relative overflow-hidden h-[28rem] rounded-xl shadow-lg">
-                        <img
-                          src={mainArticle.image_url}
-                          alt={mainArticle.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                      </div>
-                      <div className="pt-6">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-[#FA007D] transition-colors leading-tight">
-                          {mainArticle.title}
-                        </h2>
-                        <p className="text-gray-600 text-lg mb-4 line-clamp-3">
-                          {mainArticle.summary}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Headlines (Right) */}
-                <div className="space-y-4">
-                  {headlineArticles.map((article) => (
-                    <Link key={article.id} to={`/artigos/${article.slug}`} className="flex items-center gap-4 group p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                      <img 
-                        src={article.image_url} 
-                        alt={article.title} 
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0" 
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 group-hover:text-[#FA007D] line-clamp-3 text-sm leading-tight">
-                          {article.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(article.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {latestArticles.map((article, index) => (
+                  <ArticleCard key={article.id} article={article} index={index} />
+                ))}
               </div>
-
-              {/* Secondary Grid */}
-              {secondaryArticles.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-12 border-t border-gray-200">
-                  {secondaryArticles.map((article, index) => (
-                    <ArticleCard key={article.id} article={article} index={index} />
-                  ))}
-                </div>
-              )}
-            </div>
+              <div className="text-center mt-12">
+                <Link
+                  to="/ultimas"
+                  className="btn-magenta"
+                >
+                  Ver Todas as Notícias
+                </Link>
+              </div>
+            </>
           )}
         </div>
       </section>
