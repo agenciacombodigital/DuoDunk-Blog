@@ -13,6 +13,7 @@ import EditArticle from "./pages/EditArticle";
 import Classificacao from "./pages/Classificacao";
 import Calendario from "./pages/Calendario";
 import Jogadores from "./pages/Jogadores";
+import Lideres from "./pages/Lideres";
 
 const AppContent = () => {
   const location = useLocation();
@@ -30,6 +31,7 @@ const AppContent = () => {
           <Route path="/classificacao" element={<Classificacao />} />
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/jogadores" element={<Jogadores />} />
+          <Route path="/lideres" element={<Lideres />} />
           <Route path="/artigos/:slug" element={<Artigo />} />
           
           {/* Admin Routes */}

@@ -17,6 +17,7 @@ export default function Header() {
             <Link to="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
             <Link to="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
             <Link to="/jogadores" className="text-gray-300 hover:text-white transition-colors">Jogadores</Link>
+            <Link to="/lideres" className="text-gray-300 hover:text-white transition-colors">Líderes</Link>
           </nav>
 
           <div className="flex items-center gap-4">
