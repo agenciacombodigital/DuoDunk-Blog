@@ -102,15 +102,22 @@ export default function Home() {
                 )}
 
                 {/* Headlines (Right) */}
-                <div className="space-y-1">
-                  {headlineArticles.map((article, index) => (
-                    <Link key={article.id} to={`/artigos/${article.slug}`} className={`block p-4 rounded-lg hover:bg-gray-50 transition-colors ${index !== 0 ? 'border-t border-gray-100' : ''}`}>
-                      <h3 className="font-semibold text-gray-800 group-hover:text-[#FA007D]">
-                        {article.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(article.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                      </p>
+                <div className="space-y-4">
+                  {headlineArticles.map((article) => (
+                    <Link key={article.id} to={`/artigos/${article.slug}`} className="flex items-center gap-4 group p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                      <img 
+                        src={article.image_url} 
+                        alt={article.title} 
+                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0" 
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-800 group-hover:text-[#FA007D] line-clamp-3 text-sm leading-tight">
+                          {article.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(article.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                        </p>
+                      </div>
                     </Link>
                   ))}
                 </div>
