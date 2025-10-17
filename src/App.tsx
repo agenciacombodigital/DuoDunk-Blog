@@ -10,10 +10,7 @@ import Footer from "./components/Footer";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
-import Classificacao from "./pages/Classificacao";
-import Calendario from "./pages/Calendario";
-import Jogadores from "./pages/Jogadores";
-import Lideres from "./pages/Lideres";
+import Estatisticas from "./pages/Estatisticas";
 
 const AppContent = () => {
   const location = useLocation();
@@ -28,10 +25,7 @@ const AppContent = () => {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/ultimas" element={<Ultimas />} />
-          <Route path="/classificacao" element={<Classificacao />} />
-          <Route path="/calendario" element={<Calendario />} />
-          <Route path="/jogadores" element={<Jogadores />} />
-          <Route path="/lideres" element={<Lideres />} />
+          <Route path="/estatisticas" element={<Estatisticas />} />
           <Route path="/artigos/:slug" element={<Artigo />} />
           
           {/* Admin Routes */}

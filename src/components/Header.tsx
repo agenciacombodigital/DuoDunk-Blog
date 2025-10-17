@@ -14,10 +14,7 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">
             <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
             <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
-            <Link to="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
-            <Link to="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
-            <Link to="/jogadores" className="text-gray-300 hover:text-white transition-colors">Jogadores</Link>
-            <Link to="/lideres" className="text-gray-300 hover:text-white transition-colors">Líderes</Link>
+            <Link to="/estatisticas" className="text-gray-300 hover:text-white transition-colors">Estatísticas</Link>
           </nav>
 
           <div className="flex items-center gap-4">
