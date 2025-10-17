@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Clock, Eye } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface HeroArticle {
   id: string;
@@ -16,6 +18,7 @@ interface HeroArticle {
 
 export default function HeroSection() {
   const [featuredArticle, setFeaturedArticle] = useState<HeroArticle | null>(null);
+  const [miniGridArticles, setMiniGridArticles] = useState<HeroArticle[]>([]);
   const [sideArticles, setSideArticles] = useState<HeroArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,17 +28,19 @@ export default function HeroSection() {
 
   const loadHeroArticles = async () => {
     try {
+      // Fetch enough articles: 1 main + 3 mini-grid + 4 sidebar = 8
       const { data } = await supabase
         .from('articles')
         .select('id, title, subtitle, slug, image_url, source, published_at, views')
         .eq('published', true)
         .order('views', { ascending: false })
         .order('published_at', { ascending: false })
-        .limit(5);
+        .limit(8);
 
       if (data && data.length > 0) {
         setFeaturedArticle(data[0]);
-        setSideArticles(data.slice(1, 5));
+        setMiniGridArticles(data.slice(1, 4));
+        setSideArticles(data.slice(4, 8));
       }
     } catch (error) {
       console.error('Erro ao carregar artigos em destaque:', error);
@@ -85,8 +90,9 @@ export default function HeroSection() {
 
         {/* Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Featured Article - Grande */}
-          <div className="lg:col-span-2">
+          {/* Coluna Esquerda - Destaque + Mini Grid */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Featured Article - Grande */}
             <Link
               to={`/artigos/${featuredArticle.slug}`}
               className="group block"
@@ -119,6 +125,40 @@ export default function HeroSection() {
                 )}
               </div>
             </Link>
+
+            {/* Mini Grid de 3 notícias */}
+            {miniGridArticles.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {miniGridArticles.map((article) => (
+                  <Link
+                    key={article.id}
+                    to={`/artigos/${article.slug}`}
+                    className="group"
+                  >
+                    <div className="bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-all h-full flex flex-col">
+                      <div className="aspect-video relative overflow-hidden">
+                        <img
+                          src={article.image_url}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4 flex flex-col flex-grow">
+                        <h3 className="font-bold text-sm line-clamp-2 group-hover:text-pink-600 transition-colors flex-grow">
+                          {article.title}
+                        </h3>
+                        <span className="text-xs text-gray-500 mt-2 block">
+                          {formatDistanceToNow(new Date(article.published_at), {
+                            addSuffix: true,
+                            locale: ptBR
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Side Articles - Menores */}
