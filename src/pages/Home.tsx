@@ -31,7 +31,7 @@ export default function Home() {
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
-        .limit(10); // Ajustado para 10 artigos (1 principal, 4 manchetes, 5 secundários)
+        .limit(10);
       
       setArticles(data || []);
     } catch (error) {
@@ -41,8 +41,7 @@ export default function Home() {
   };
 
   const mainArticle = articles.length > 0 ? articles[0] : null;
-  const headlineArticles = articles.length > 1 ? articles.slice(1, 5) : [];
-  const secondaryArticles = articles.length > 5 ? articles.slice(5) : [];
+  const subFeatureArticles = articles.length > 1 ? articles.slice(1, 4) : [];
 
   return (
     <>
@@ -76,50 +75,33 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-12">
-              {/* Main Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Article (Left) */}
-                {mainArticle && (
-                  <div className="lg:col-span-2">
-                    <Link to={`/artigos/${mainArticle.slug}`} className="group block">
-                      <div className="relative overflow-hidden h-[28rem] rounded-xl shadow-lg">
-                        <img
-                          src={mainArticle.image_url}
-                          alt={mainArticle.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                      </div>
-                      <div className="pt-6">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-[#FA007D] transition-colors leading-tight">
-                          {mainArticle.title}
-                        </h2>
-                        <p className="text-gray-600 text-lg mb-4 line-clamp-3">
-                          {mainArticle.summary}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Headlines (Right) */}
-                <div className="space-y-1">
-                  {headlineArticles.map((article, index) => (
-                    <Link key={article.id} to={`/artigos/${article.slug}`} className={`block p-4 rounded-lg hover:bg-gray-50 transition-colors ${index !== 0 ? 'border-t border-gray-100' : ''}`}>
-                      <h3 className="font-semibold text-gray-800 group-hover:text-[#FA007D]">
-                        {article.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(article.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+              {/* Main Article (Full Width) */}
+              {mainArticle && (
+                <div>
+                  <Link to={`/artigos/${mainArticle.slug}`} className="group block">
+                    <div className="relative overflow-hidden h-[28rem] rounded-xl shadow-lg">
+                      <img
+                        src={mainArticle.image_url}
+                        alt={mainArticle.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="pt-6">
+                      <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-[#FA007D] transition-colors leading-tight">
+                        {mainArticle.title}
+                      </h2>
+                      <p className="text-gray-600 text-lg mb-4 line-clamp-3">
+                        {mainArticle.summary}
                       </p>
-                    </Link>
-                  ))}
+                    </div>
+                  </Link>
                 </div>
-              </div>
+              )}
 
-              {/* Secondary Grid */}
-              {secondaryArticles.length > 0 && (
+              {/* Sub-Feature Grid (3 columns) */}
+              {subFeatureArticles.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-12 border-t border-gray-200">
-                  {secondaryArticles.map((article, index) => (
+                  {subFeatureArticles.map((article, index) => (
                     <ArticleCard key={article.id} article={article} index={index} />
                   ))}
                 </div>
