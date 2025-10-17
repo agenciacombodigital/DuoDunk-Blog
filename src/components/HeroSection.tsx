@@ -57,10 +57,10 @@ export default function HeroSection() {
 
   if (loading) {
     return (
-      <section className="relative bg-black py-20">
+      <section className="relative bg-white py-20">
         <div className="container mx-auto px-4">
           <div className="animate-pulse flex items-center justify-center h-96">
-            <div className="text-white text-xl">Carregando destaques...</div>
+            <div className="text-gray-500 text-xl">Carregando destaques...</div>
           </div>
         </div>
       </section>
@@ -70,19 +70,7 @@ export default function HeroSection() {
   if (!featuredArticle) return null;
 
   return (
-    <section className="relative bg-gradient-to-br from-black via-gray-900 to-black overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }}></div>
-      </div>
-
-      {/* Gradient Overlays */}
-      <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-br from-[#FA007D]/20 to-transparent blur-3xl"></div>
-      <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-cyan-500/20 to-transparent blur-3xl"></div>
-
+    <section className="relative bg-white overflow-hidden">
       <div className="relative container mx-auto px-4 py-16">
         {/* Header */}
         <div className="flex items-center gap-3 mb-10">
@@ -92,63 +80,46 @@ export default function HeroSection() {
               Em Destaque
             </span>
           </div>
-          <div className="flex-1 h-px bg-gradient-to-r from-[#FA007D] to-transparent"></div>
+          <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
         </div>
 
         {/* Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Featured Article - Grande */}
-          <Link
-            to={`/artigos/${featuredArticle.slug}`}
-            className="lg:col-span-2 group relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-[#FA007D]/50 transition-all duration-500 transform hover:scale-[1.02]"
-          >
-            {/* Imagem de Fundo */}
-            <div className="relative h-[500px] lg:h-[600px]">
-              <img
-                src={featuredArticle.image_url}
-                alt={featuredArticle.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
-
-              {/* Badge "Mais Lida" */}
-              <div className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FA007D] to-[#C9006A] rounded-full shadow-lg">
-                <Eye className="w-4 h-4 text-white" />
-                <span className="text-white font-bold text-sm">
-                  {featuredArticle.views || 0} views
-                </span>
+          <div className="lg:col-span-2">
+            <Link
+              to={`/artigos/${featuredArticle.slug}`}
+              className="group block"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                <img
+                  src={featuredArticle.image_url}
+                  alt={featuredArticle.title}
+                  className="w-full h-[500px] object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#FA007D] to-[#C9006A] rounded-full shadow-lg">
+                  <Eye className="w-4 h-4 text-white" />
+                  <span className="text-white font-bold text-xs">
+                    {featuredArticle.views || 0} views
+                  </span>
+                </div>
               </div>
-
-              {/* Conteúdo */}
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                {/* Tempo */}
-                <div className="flex items-center gap-2 text-cyan-400 text-sm font-semibold mb-4">
+              <div className="pt-6">
+                <div className="flex items-center gap-2 text-cyan-600 text-sm font-semibold mb-3">
                   <Clock className="w-4 h-4" />
                   {getTimeAgo(featuredArticle.published_at)}
                 </div>
-
-                {/* Título */}
-                <h2 className="text-white font-black text-3xl lg:text-5xl leading-tight mb-4 group-hover:text-[#FA007D] transition-colors">
+                <h2 className="text-gray-900 font-bold text-3xl lg:text-4xl leading-tight mb-3 group-hover:text-[#FA007D] transition-colors">
                   {featuredArticle.title}
                 </h2>
-
-                {/* Subtítulo */}
                 {featuredArticle.subtitle && (
-                  <p className="text-gray-300 text-lg lg:text-xl font-medium leading-relaxed mb-6 line-clamp-2">
+                  <p className="text-gray-600 text-lg leading-relaxed line-clamp-2">
                     {featuredArticle.subtitle}
                   </p>
                 )}
-
-                {/* CTA */}
-                <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-full hover:bg-[#FA007D] transition-all group-hover:translate-x-2">
-                  Ler matéria completa
-                  <span className="text-xl">→</span>
-                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
 
           {/* Side Articles - Menores */}
           <div className="flex flex-col gap-6">
@@ -156,32 +127,22 @@ export default function HeroSection() {
               <Link
                 key={article.id}
                 to={`/artigos/${article.slug}`}
-                className="group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-[#FA007D]/30 transition-all duration-300 transform hover:scale-105"
+                className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                <div className="relative h-56">
+                <div className="relative h-48">
                   <img
                     src={article.image_url}
                     alt={article.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-
-                  {/* Número de Ranking */}
-                  <div className="absolute top-4 left-4 w-10 h-10 bg-gradient-to-br from-[#FA007D] to-[#C9006A] rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white font-black text-lg">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
+                  <div className="absolute top-3 left-3 w-8 h-8 bg-gradient-to-br from-[#FA007D] to-[#C9006A] rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-base">
                       {index + 2}
                     </span>
                   </div>
-
-                  {/* Conteúdo */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold mb-2">
-                      <Clock className="w-3 h-3" />
-                      {getTimeAgo(article.published_at)}
-                    </div>
-
-                    <h3 className="text-white font-bold text-lg leading-tight line-clamp-2 group-hover:text-[#FA007D] transition-colors">
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-white font-bold text-base leading-tight line-clamp-2 group-hover:text-[#FA007D] transition-colors">
                       {article.title}
                     </h3>
                   </div>
@@ -195,10 +156,9 @@ export default function HeroSection() {
         <div className="text-center mt-12">
           <Link
             to="/ultimas"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#FA007D] to-[#C9006A] text-white font-bold text-lg rounded-full hover:from-[#FA007D]/90 hover:to-[#C9006A]/90 transition-all shadow-lg hover:shadow-[#FA007D]/50 hover:scale-105"
+            className="btn-magenta"
           >
             Ver Todas as Notícias
-            <TrendingUp className="w-5 h-5" />
           </Link>
         </div>
       </div>
