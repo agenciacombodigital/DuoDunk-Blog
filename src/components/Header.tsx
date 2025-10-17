@@ -14,6 +14,7 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest">
             <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
             <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
+            <Link to="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
           </nav>
 
           <div className="flex items-center gap-4">
