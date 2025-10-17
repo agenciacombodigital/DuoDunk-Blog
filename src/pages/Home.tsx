@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ArticleCard from '@/components/ArticleCard';
 import HeroSection from '@/components/HeroSection';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface Article {
   id: string;
@@ -31,7 +33,7 @@ export default function Home() {
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
-        .limit(10); // Ajustado para 10 artigos (1 principal, 4 manchetes, 5 secundários)
+        .limit(15); // Aumentado para popular o novo layout
       
       setArticles(data || []);
     } catch (error) {
@@ -40,9 +42,11 @@ export default function Home() {
     setLoading(false);
   };
 
+  // Nova lógica para distribuir os artigos no layout
   const mainArticle = articles.length > 0 ? articles[0] : null;
-  const headlineArticles = articles.length > 1 ? articles.slice(1, 5) : [];
-  const secondaryArticles = articles.length > 5 ? articles.slice(5) : [];
+  const miniGridArticles = articles.length > 1 ? articles.slice(1, 4) : [];
+  const sidebarArticles = articles.length > 4 ? articles.slice(4, 8) : [];
+  const secondaryArticles = articles.length > 8 ? articles.slice(8) : [];
 
   return (
     <>
@@ -76,11 +80,13 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-12">
-              {/* Main Grid */}
+              {/* Main Grid Reestruturado */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Article (Left) */}
-                {mainArticle && (
-                  <div className="lg:col-span-2">
+                
+                {/* Coluna Esquerda - Destaque + Mini Grid */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Notícia Principal */}
+                  {mainArticle && (
                     <Link to={`/artigos/${mainArticle.slug}`} className="group block">
                       <div className="relative overflow-hidden h-[28rem] rounded-xl shadow-lg">
                         <img
@@ -98,12 +104,46 @@ export default function Home() {
                         </p>
                       </div>
                     </Link>
-                  </div>
-                )}
+                  )}
 
-                {/* Headlines (Right) */}
+                  {/* NOVO: Mini Grid de 3 notícias */}
+                  {miniGridArticles.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {miniGridArticles.map((article) => (
+                        <Link
+                          key={article.id}
+                          to={`/artigos/${article.slug}`}
+                          className="group"
+                        >
+                          <div className="bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-all h-full flex flex-col">
+                            <div className="aspect-video relative overflow-hidden">
+                              <img
+                                src={article.image_url}
+                                alt={article.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                            <div className="p-4 flex flex-col flex-grow">
+                              <h3 className="font-bold text-sm line-clamp-2 group-hover:text-pink-600 transition-colors flex-grow">
+                                {article.title}
+                              </h3>
+                              <span className="text-xs text-gray-500 mt-2 block">
+                                {formatDistanceToNow(new Date(article.published_at), {
+                                  addSuffix: true,
+                                  locale: ptBR
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Coluna Direita - Sidebar */}
                 <div className="space-y-4">
-                  {headlineArticles.map((article) => (
+                  {sidebarArticles.map((article) => (
                     <Link key={article.id} to={`/artigos/${article.slug}`} className="flex items-center gap-4 group p-2 rounded-lg hover:bg-gray-50 transition-colors">
                       <img 
                         src={article.image_url} 
