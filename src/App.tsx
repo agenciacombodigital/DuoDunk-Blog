@@ -11,6 +11,7 @@ import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
 import Classificacao from "./pages/Classificacao";
+import Calendario from "./pages/Calendario";
 
 const AppContent = () => {
   const location = useLocation();
@@ -26,6 +27,7 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/ultimas" element={<Ultimas />} />
           <Route path="/classificacao" element={<Classificacao />} />
+          <Route path="/calendario" element={<Calendario />} />
           <Route path="/artigos/:slug" element={<Artigo />} />
           
           {/* Admin Routes */}
