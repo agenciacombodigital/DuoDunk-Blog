@@ -13,6 +13,7 @@ import EditArticle from "./pages/EditArticle";
 
 const AppContent = () => {
   const location = useLocation();
+  // Verifica se a rota é de administrador para aplicar estilos e esconder Header/Footer
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
