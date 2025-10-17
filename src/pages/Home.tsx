@@ -49,7 +49,7 @@ export default function Home() {
       <HeroSection />
 
       {/* Últimas Notícias */}
-      <section className="content-area py-16">
+      <section className="bg-white py-16">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-10">
             <h2 className="text-4xl font-bold text-gray-900">
