@@ -15,7 +15,7 @@ export default function Ultimas() {
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
-        .limit(20);
+        .limit(100);
       setArticles(data || []);
       setLoading(false);
     };

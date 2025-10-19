@@ -31,7 +31,7 @@ export default function Home() {
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
-        .limit(10);
+        .limit(100);
       
       setArticles(data || []);
     } catch (error) {
