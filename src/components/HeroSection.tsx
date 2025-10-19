@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Clock, Eye } from 'lucide-react';
+import { TrendingUp, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -33,7 +33,6 @@ export default function HeroSection() {
         .from('articles')
         .select('id, title, subtitle, slug, image_url, source, published_at, views')
         .eq('published', true)
-        .order('views', { ascending: false })
         .order('published_at', { ascending: false })
         .limit(8);
 
