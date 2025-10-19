@@ -91,7 +91,6 @@ export default function Artigo() {
                   year: 'numeric'
                 })}
               </span>
-              <span>{article.views || 0} visualizações</span>
             </div>
 
             {/* Título */}

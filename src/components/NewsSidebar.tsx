@@ -111,8 +111,6 @@ export default function NewsSidebar() {
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <Clock className="w-3 h-3" />
                 <span>{getTimeAgo(article.published_at)}</span>
-                <span className="text-gray-300">•</span>
-                <span className="text-cyan-600 font-semibold">{article.views || 0} views</span>
               </div>
             </div>
           </Link>

@@ -103,12 +103,6 @@ export default function HeroSection() {
                   alt={featuredArticle.title}
                   className="w-full h-[500px] object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#FA007D] to-[#C9006A] rounded-full shadow-lg">
-                  <Eye className="w-4 h-4 text-white" />
-                  <span className="text-white font-bold text-xs">
-                    {featuredArticle.views || 0} views
-                  </span>
-                </div>
               </div>
               <div className="pt-6">
                 <div className="flex items-center gap-2 text-cyan-600 text-sm font-semibold mb-3">
