@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
+import AdminManual from "./pages/AdminManual";
 
 const AppContent = () => {
   const location = useLocation();
@@ -41,6 +42,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <EditArticle />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/manual" 
+            element={
+              <ProtectedRoute>
+                <AdminManual />
               </ProtectedRoute>
             } 
           />
