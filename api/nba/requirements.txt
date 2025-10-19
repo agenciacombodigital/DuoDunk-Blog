@@ -1,1 +1,0 @@
-basketball-reference-web-scraper==4.15.4

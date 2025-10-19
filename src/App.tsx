@@ -10,7 +10,6 @@ import Footer from "./components/Footer";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
-import Estatisticas from "./pages/Estatisticas";
 
 const AppContent = () => {
   const location = useLocation();
@@ -25,7 +24,6 @@ const AppContent = () => {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/ultimas" element={<Ultimas />} />
-          <Route path="/estatisticas" element={<Estatisticas />} />
           <Route path="/artigos/:slug" element={<Artigo />} />
           
           {/* Admin Routes */}

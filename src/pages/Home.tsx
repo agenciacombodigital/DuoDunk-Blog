@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ArticleCard from '@/components/ArticleCard';
 import HeroSection from '@/components/HeroSection';
-import { Scoreboard } from '@/components/Scoreboard';
 
 interface Article {
   id: string;
@@ -48,12 +47,6 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-
-      <section className="bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          <Scoreboard />
-        </div>
-      </section>
 
       {/* Últimas Notícias */}
       <section className="bg-white py-16">
