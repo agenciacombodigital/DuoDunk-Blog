@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- PROCESSAMENTO COM GOOGLE GEMINI ---");
+    console.log("--- Função process-with-ai iniciada (Modelo Groq Atualizado) ---");
 
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) {
-      throw new Error("GEMINI_API_KEY não encontrada nas variáveis de ambiente.");
+    const groqApiKey = Deno.env.get('GROQ_API_KEY');
+    if (!groqApiKey) {
+      throw new Error("GROQ_API_KEY não encontrada nas variáveis de ambiente.");
     }
 
     const supabaseAdmin = createClient(
@@ -24,11 +24,11 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Lógica original: busca o próximo artigo pendente na fila
+    console.log("Buscando artigos na fila (status 'pending', 'null' ou '')...");
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
-      .or('status.eq.pending,status.is.null,status.eq.')
+      .or('status.eq.pending,status.is.null,status.eq.') // Busca por status 'pending', 'null' OU string vazia ('')
       .order('created_at', { ascending: true })
       .limit(1)
       .single();
@@ -40,11 +40,33 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Processando: ${article.original_title}`);
+    console.log(`Artigo encontrado para processar: ${article.id} - "${article.original_title}"`);
+
+    // 1. VERIFICAÇÃO DE DUPLICIDADE (title_hash)
+    if (article.title_hash) {
+      const { data: existingArticle, error: checkError } = await supabaseAdmin
+        .from('articles')
+        .select('id')
+        .eq('title_hash', article.title_hash)
+        .limit(1)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = No rows found
+        throw checkError;
+      }
+
+      if (existingArticle) {
+        console.log(`Artigo duplicado encontrado (hash: ${article.title_hash}). Removendo da fila.`);
+        await supabaseAdmin.from('articles_queue').delete().eq('id', article.id);
+        return new Response(JSON.stringify({ message: `Artigo duplicado (hash: ${article.title_hash}) foi removido da fila.` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     await supabaseAdmin
       .from('articles_queue')
-      .update({ status: 'pending_processing' })
+      .update({ status: 'pending_processing' }) // Marcar como em processamento
       .eq('id', article.id);
 
     const prompt = `Você é um jornalista esportivo especialista em NBA.
@@ -66,42 +88,38 @@ serve(async (req) => {
       "slug": "seu-novo-slug-baseado-no-titulo"
     }`;
 
-    const modelToUse = 'gemini-1.5-flash-latest';
-    console.log(`Chamando Gemini 1.5 Flash (JSON mode otimizado)...`);
+    const modelToUse = 'llama3-8b-8192'; // Modelo Groq ATUALIZADO E ATIVO
+    console.log(`Chamando a API Groq com o modelo: ${modelToUse}`);
 
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${geminiApiKey}`, {
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
-        generationConfig: {
-          response_mime_type: "application/json",
-        }
+        model: modelToUse,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }, // Pedindo JSON diretamente
       })
     });
 
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.json();
-      console.error("Erro da API Gemini:", errorBody);
+    if (!groqResponse.ok) {
+      const errorBody = await groqResponse.json();
+      console.error("Erro da API Groq:", errorBody);
       await supabaseAdmin.from('articles_queue').update({ status: 'failed' }).eq('id', article.id);
-      throw new Error(`A chamada à API Gemini falhou com status ${geminiResponse.status}`);
+      throw new Error(`A chamada à API Groq falhou com status ${groqResponse.status}`);
     }
 
-    const completion = await geminiResponse.json();
-    
-    const rawText = completion.candidates[0].content.parts[0].text;
-    const aiResponse = JSON.parse(rawText);
-    
-    console.log(`Artigo gerado: ${aiResponse.title}`);
+    const completion = await groqResponse.json();
+    const aiResponse = JSON.parse(completion.choices[0].message.content);
+    console.log("Resposta da IA recebida e processada com sucesso.");
 
+    // Gerar slug se não veio
     if (!aiResponse.slug && aiResponse.title) {
       aiResponse.slug = aiResponse.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 100);
     } else if (!aiResponse.slug) {
-      aiResponse.slug = `artigo-${article.id}`;
+      aiResponse.slug = `artigo-${article.id}`; // Fallback slug
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -110,9 +128,9 @@ serve(async (req) => {
         title: aiResponse.title,
         summary: aiResponse.summary,
         body: aiResponse.body,
-        image_url: article.image_url,
+        image_url: article.image_url, // Manter a imagem original
         slug: aiResponse.slug,
-        tags: aiResponse.tags || ['nba', 'basquete'],
+        tags: aiResponse.tags || ['nba', 'basquete'], // Fallback para tags
         meta_description: aiResponse.meta_description,
         status: 'processed',
         processed_at: new Date().toISOString(),
@@ -121,7 +139,7 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    console.log("Processado e salvo");
+    console.log("--- Artigo processado com sucesso! ---");
     return new Response(
       JSON.stringify({ message: `Artigo "${aiResponse.title}" processado com sucesso!` }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

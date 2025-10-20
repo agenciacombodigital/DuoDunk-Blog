@@ -11,7 +11,6 @@ import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
 import AdminManual from "./pages/AdminManual";
-import AdminRodadaNBA from "./pages/AdminRodadaNBA";
 
 const AppContent = () => {
   const location = useLocation();
@@ -51,14 +50,6 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <AdminManual />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin/rodada-nba" 
-            element={
-              <ProtectedRoute>
-                <AdminRodadaNBA />
               </ProtectedRoute>
             } 
           />
