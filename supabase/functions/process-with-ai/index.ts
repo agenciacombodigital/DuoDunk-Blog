@@ -24,23 +24,14 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
-    const body = await req.json().catch(() => ({}));
-    const articleIdFromRequest = body.article_id;
-
-    let query = supabaseAdmin.from('articles_queue').select('*');
-
-    if (articleIdFromRequest) {
-      console.log(`Buscando artigo específico: ${articleIdFromRequest}`);
-      query = query.eq('id', articleIdFromRequest);
-    } else {
-      console.log("Buscando próximo artigo na fila (status 'pending', 'null' ou '')...");
-      query = query
-        .or('status.eq.pending,status.is.null,status.eq.')
-        .order('created_at', { ascending: true })
-        .limit(1);
-    }
-
-    const { data: article, error: fetchError } = await query.single();
+    // Lógica original: busca o próximo artigo pendente na fila
+    const { data: article, error: fetchError } = await supabaseAdmin
+      .from('articles_queue')
+      .select('*')
+      .or('status.eq.pending,status.is.null,status.eq.')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single();
 
     if (fetchError || !article) {
       console.log("Nenhum artigo encontrado na fila para processar.");
@@ -50,28 +41,6 @@ serve(async (req) => {
     }
 
     console.log(`Artigo encontrado para processar: ${article.id} - "${article.original_title}"`);
-
-    // 1. VERIFICAÇÃO DE DUPLICIDADE (title_hash)
-    if (article.title_hash) {
-      const { data: existingArticle, error: checkError } = await supabaseAdmin
-        .from('articles')
-        .select('id')
-        .eq('title_hash', article.title_hash)
-        .limit(1)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = No rows found
-        throw checkError;
-      }
-
-      if (existingArticle) {
-        console.log(`Artigo duplicado encontrado (hash: ${article.title_hash}). Removendo da fila.`);
-        await supabaseAdmin.from('articles_queue').delete().eq('id', article.id);
-        return new Response(JSON.stringify({ message: `Artigo duplicado (hash: ${article.title_hash}) foi removido da fila.` }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
 
     await supabaseAdmin
       .from('articles_queue')

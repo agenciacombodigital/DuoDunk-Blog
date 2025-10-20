@@ -14,7 +14,6 @@ export default function AdminPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
-  const [selectedForProcessing, setSelectedForProcessing] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -75,54 +74,18 @@ export default function AdminPage() {
     setIsScraping(false);
   };
 
-  const handleSelectionChange = (articleId: string) => {
-    setSelectedForProcessing(prev =>
-      prev.includes(articleId)
-        ? prev.filter(id => id !== articleId)
-        : [...prev, articleId]
-    );
-  };
-
-  const processSelectedWithAI = async () => {
-    if (selectedForProcessing.length === 0) {
-      toast.info("Nenhum artigo selecionado para processar.");
-      return;
-    }
+  const processOneWithAI = async () => {
     setIsProcessing(true);
-    const toastId = toast.loading(`Processando ${selectedForProcessing.length} artigo(s) com IA...`);
-    let successCount = 0;
-    let errorCount = 0;
-    for (const articleId of selectedForProcessing) {
-      try {
-        const { error } = await supabase.functions.invoke('process-with-ai', { body: { article_id: articleId } });
-        if (error) throw error;
-        successCount++;
-      } catch (error) {
-        console.error(`Erro ao processar artigo ${articleId}:`, error);
-        errorCount++;
-      }
-    }
-    if (errorCount > 0) {
-      toast.error(`${errorCount} artigo(s) falharam ao processar.`, { id: toastId });
-    } else {
-      toast.success(`${successCount} artigo(s) processados com sucesso!`, { id: toastId });
-    }
-    setSelectedForProcessing([]);
-    setIsProcessing(false);
-    await loadData();
-  };
-
-  const deleteFromQueue = async (articleId: string) => {
-    if (!window.confirm('Tem certeza que deseja deletar este artigo da fila?')) return;
-    const toastId = toast.loading("Deletando artigo da fila...");
+    const toastId = toast.loading("Processando com IA...");
     try {
-      const { error } = await supabase.from('articles_queue').delete().eq('id', articleId);
+      const { data, error } = await supabase.functions.invoke('process-with-ai');
       if (error) throw error;
-      toast.success("Artigo deletado da fila.", { id: toastId });
-      await loadQueue();
+      toast.success("Processamento finalizado!", { id: toastId, description: data.message });
+      await loadData();
     } catch (error: any) {
-      toast.error("Erro ao deletar.", { id: toastId, description: error.message });
+      toast.error('Erro ao processar', { id: toastId, description: error.message });
     }
+    setIsProcessing(false);
   };
 
   const deletePublishedArticle = async (articleId: string) => {
@@ -235,7 +198,7 @@ export default function AdminPage() {
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Bot className="w-6 h-6 text-cyan-400" />Ações</h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <button onClick={scrape} disabled={isLoading} className="btn-cyan flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">{isScraping ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />} Coletar Notícias</button>
-            <button onClick={processSelectedWithAI} disabled={isLoading || selectedForProcessing.length === 0} className="btn-magenta flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">{isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bot className="w-5 h-5" />} Processar com IA ({selectedForProcessing.length})</button>
+            <button onClick={processOneWithAI} disabled={isLoading} className="btn-magenta flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">{isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bot className="w-5 h-5" />} Processar com IA</button>
             <Link to="/admin/manual" className="btn-success flex items-center justify-center gap-2"><Edit3 className="w-5 h-5" /> Publicação Manual</Link>
             <Link to="/admin/rodada-nba" className="btn-gold flex items-center justify-center gap-2"><Calendar className="w-5 h-5" /> Criar Rodada NBA</Link>
             <button onClick={deleteAllPublished} disabled={isLoading} className="btn-danger flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">{isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />} ⚠️ Deletar Publicados</button>
@@ -256,7 +219,7 @@ export default function AdminPage() {
         {pendingProcessing.length > 0 && (
           <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-yellow-400" />Aguardando Processamento ({pendingProcessing.length})</h2>
-            <div className="space-y-4">{pendingProcessing.map((article) => (<div key={article.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex items-start gap-4"><input type="checkbox" className="mt-1 h-5 w-5 rounded bg-gray-700 border-gray-600 text-cyan-500 focus:ring-cyan-600" checked={selectedForProcessing.includes(article.id)} onChange={() => handleSelectionChange(article.id)} /><div className="flex-1"><span className="px-2 py-1 bg-yellow-900/50 text-yellow-300 text-xs rounded-full font-semibold">{article.source}</span><h4 className="text-white font-semibold text-sm mt-2 line-clamp-2">{article.original_title}</h4><p className="text-gray-400 text-xs mt-1">{new Date(article.created_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p></div><button onClick={() => deleteFromQueue(article.id)} className="p-2 text-gray-500 hover:text-red-400 transition-colors" title="Deletar da fila"><Trash2 className="w-4 h-4" /></button></div>))}</div>
+            <div className="space-y-4">{pendingProcessing.map((article) => (<div key={article.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700"><span className="px-2 py-1 bg-yellow-900/50 text-yellow-300 text-xs rounded-full font-semibold">{article.source}</span><h4 className="text-white font-semibold text-sm mt-2 line-clamp-2">{article.original_title}</h4><p className="text-gray-400 text-xs mt-1">{new Date(article.created_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p></div>))}</div>
           </div>
         )}
         {published.length > 0 && (
