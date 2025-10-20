@@ -24,14 +24,23 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     );
 
-    console.log("Buscando artigos na fila (status 'pending', 'null' ou '')...");
-    const { data: article, error: fetchError } = await supabaseAdmin
-      .from('articles_queue')
-      .select('*')
-      .or('status.eq.pending,status.is.null,status.eq.') // Busca por status 'pending', 'null' OU string vazia ('')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .single();
+    const body = await req.json().catch(() => ({}));
+    const articleIdFromRequest = body.article_id;
+
+    let query = supabaseAdmin.from('articles_queue').select('*');
+
+    if (articleIdFromRequest) {
+      console.log(`Buscando artigo específico: ${articleIdFromRequest}`);
+      query = query.eq('id', articleIdFromRequest);
+    } else {
+      console.log("Buscando próximo artigo na fila (status 'pending', 'null' ou '')...");
+      query = query
+        .or('status.eq.pending,status.is.null,status.eq.')
+        .order('created_at', { ascending: true })
+        .limit(1);
+    }
+
+    const { data: article, error: fetchError } = await query.single();
 
     if (fetchError || !article) {
       console.log("Nenhum artigo encontrado na fila para processar.");

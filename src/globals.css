@@ -93,21 +93,21 @@
   /* Botões Premium com Cores Harmoniosas */
   .btn-magenta {
     @apply bg-gradient-to-r from-[#FA007D] to-[#C9006A] 
-           text-white font-bold px-8 py-3 rounded-xl
+           text-white font-bold px-6 py-3 rounded-xl
            hover:shadow-[0_0_30px_rgba(250,0,125,0.4)] 
            transition-all duration-300 transform hover:scale-105;
   }
 
   .btn-cyan {
     @apply bg-gradient-to-r from-[#00DBFB] to-[#00A8CC] 
-           text-white font-bold px-8 py-3 rounded-xl
+           text-white font-bold px-6 py-3 rounded-xl
            hover:shadow-[0_0_30px_rgba(0,219,251,0.4)] 
            transition-all duration-300 transform hover:scale-105;
   }
 
   .btn-success {
     @apply bg-gradient-to-r from-emerald-500 to-emerald-600
-           text-white font-bold px-8 py-3 rounded-xl
+           text-white font-bold px-6 py-3 rounded-xl
            hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]
            transition-all duration-300 transform hover:scale-105;
   }
@@ -117,6 +117,13 @@
            text-white font-bold px-6 py-3 rounded-xl
            hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]
            transition-all duration-300;
+  }
+
+  .btn-gold {
+    @apply bg-gradient-to-r from-yellow-400 to-amber-500 
+           text-white font-bold px-6 py-3 rounded-xl
+           hover:shadow-[0_0_30px_rgba(250,195,0,0.4)] 
+           transition-all duration-300 transform hover:scale-105;
   }
 
   /* Tags com cores sutis */
