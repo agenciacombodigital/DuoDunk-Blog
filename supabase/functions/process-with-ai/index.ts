@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    console.log("--- Função process-with-ai iniciada (Modelo Groq Atualizado) ---");
+    console.log("--- PROCESSAMENTO COM GOOGLE GEMINI ---");
 
-    const groqApiKey = Deno.env.get('GROQ_API_KEY');
-    if (!groqApiKey) {
-      throw new Error("GROQ_API_KEY não encontrada nas variáveis de ambiente.");
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      throw new Error("GEMINI_API_KEY não encontrada nas variáveis de ambiente.");
     }
 
     const supabaseAdmin = createClient(
@@ -40,11 +40,11 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Artigo encontrado para processar: ${article.id} - "${article.original_title}"`);
+    console.log(`Processando: ${article.original_title}`);
 
     await supabaseAdmin
       .from('articles_queue')
-      .update({ status: 'pending_processing' }) // Marcar como em processamento
+      .update({ status: 'pending_processing' })
       .eq('id', article.id);
 
     const prompt = `Você é um jornalista esportivo especialista em NBA.
@@ -66,38 +66,42 @@ serve(async (req) => {
       "slug": "seu-novo-slug-baseado-no-titulo"
     }`;
 
-    const modelToUse = 'llama3-8b-8192'; // Modelo Groq ATUALIZADO E ATIVO
-    console.log(`Chamando a API Groq com o modelo: ${modelToUse}`);
+    const modelToUse = 'gemini-1.5-flash-latest';
+    console.log(`Chamando Gemini 1.5 Flash (JSON mode otimizado)...`);
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: modelToUse,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' }, // Pedindo JSON diretamente
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       })
     });
 
-    if (!groqResponse.ok) {
-      const errorBody = await groqResponse.json();
-      console.error("Erro da API Groq:", errorBody);
+    if (!geminiResponse.ok) {
+      const errorBody = await geminiResponse.json();
+      console.error("Erro da API Gemini:", errorBody);
       await supabaseAdmin.from('articles_queue').update({ status: 'failed' }).eq('id', article.id);
-      throw new Error(`A chamada à API Groq falhou com status ${groqResponse.status}`);
+      throw new Error(`A chamada à API Gemini falhou com status ${geminiResponse.status}`);
     }
 
-    const completion = await groqResponse.json();
-    const aiResponse = JSON.parse(completion.choices[0].message.content);
-    console.log("Resposta da IA recebida e processada com sucesso.");
+    const completion = await geminiResponse.json();
+    
+    const rawText = completion.candidates[0].content.parts[0].text;
+    const aiResponse = JSON.parse(rawText);
+    
+    console.log(`Artigo gerado: ${aiResponse.title}`);
 
-    // Gerar slug se não veio
     if (!aiResponse.slug && aiResponse.title) {
       aiResponse.slug = aiResponse.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 100);
     } else if (!aiResponse.slug) {
-      aiResponse.slug = `artigo-${article.id}`; // Fallback slug
+      aiResponse.slug = `artigo-${article.id}`;
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -106,9 +110,9 @@ serve(async (req) => {
         title: aiResponse.title,
         summary: aiResponse.summary,
         body: aiResponse.body,
-        image_url: article.image_url, // Manter a imagem original
+        image_url: article.image_url,
         slug: aiResponse.slug,
-        tags: aiResponse.tags || ['nba', 'basquete'], // Fallback para tags
+        tags: aiResponse.tags || ['nba', 'basquete'],
         meta_description: aiResponse.meta_description,
         status: 'processed',
         processed_at: new Date().toISOString(),
@@ -117,7 +121,7 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    console.log("--- Artigo processado com sucesso! ---");
+    console.log("Processado e salvo");
     return new Response(
       JSON.stringify({ message: `Artigo "${aiResponse.title}" processado com sucesso!` }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
