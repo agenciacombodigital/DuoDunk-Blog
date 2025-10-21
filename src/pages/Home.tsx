@@ -65,18 +65,15 @@ export default function Home() {
 
   // Separar artigos por seções
   const featuredArticle = articles[0];
-  const section1 = articles.slice(1, 8); // 7 articles for the new hero
-  const section2 = articles.slice(8, 14);
-  const section3 = articles.slice(14, 16);
-  const section4 = articles.slice(16, 20);
-  const section5 = articles.slice(20, 26);
-  const section6 = articles.slice(26, 29);
-  const section7 = articles.slice(29, 35);
-  const section8 = articles.slice(35, 37);
-  const section9 = articles.slice(37, 43);
-  const section10 = articles.slice(43, 47);
-  const section11 = articles.slice(47, 53);
-  const remaining = articles.slice(53);
+  const section1 = articles.slice(1, 8); // 7 notícias: 3 direita + 3 abaixo + 1 grande
+  const section2 = articles.slice(8, 14); // Lista horizontal
+  const section3 = articles.slice(14, 16); // Grid 2 colunas
+  const section4 = articles.slice(16, 20); // Grid 4 colunas
+  const section5 = articles.slice(20, 26); // Layout alternado
+  const section6 = articles.slice(26, 29); // Grid 3 colunas
+  const section7 = articles.slice(29, 35); // Lista horizontal
+  const section8 = articles.slice(35, 37); // Grid 2 colunas
+  const remaining = articles.slice(37); // Resto
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -423,91 +420,6 @@ export default function Home() {
                       <span>•</span>
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* SEÇÃO 9: Lista Horizontal (Repetição) */}
-        {section9.length > 0 && (
-          <section className="bg-gray-50 rounded-xl p-8">
-            <h2 className="text-2xl font-bold mb-6">🎯 Recomendados</h2>
-            <div className="space-y-4">
-              {section9.map((article) => (
-                <Link
-                  key={article.id}
-                  to={`/artigos/${article.slug}`}
-                  className="flex gap-4 group hover:bg-gray-100 p-4 rounded-lg transition"
-                >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-32 h-24 object-cover rounded-lg flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-1">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* SEÇÃO 10: Grid 4 Colunas */}
-        {section10.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">⭐ Populares</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {section10.map((article) => (
-                <Link
-                  key={article.id}
-                  to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition"
-                >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-32 object-cover"
-                  />
-                  <div className="p-3">
-                    <h3 className="font-bold text-sm group-hover:text-pink-400 transition line-clamp-2">
-                      {article.title}
-                    </h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* SEÇÃO 11: Layout Alternado */}
-        {section11.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">📌 Você Pode Gostar</h2>
-            <div className="space-y-6">
-              {section11.map((article, index) => (
-                <Link
-                  key={article.id}
-                  to={`/artigos/${article.slug}`}
-                  className={`group flex gap-6 bg-gray-50 rounded-xl overflow-hidden hover:bg-gray-100 transition ${
-                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                  }`}
-                >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1 p-6 flex flex-col justify-center">
-                    <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
