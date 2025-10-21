@@ -10,13 +10,13 @@ interface Game {
     teamName: string;
     teamTricode: string;
     score: string;
-    logo?: string;
+    logo: string;
   };
   awayTeam: {
     teamName: string;
     teamTricode: string;
     score: string;
-    logo?: string;
+    logo: string;
   };
 }
 
@@ -27,38 +27,33 @@ export default function NBAScoreboard() {
 
   useEffect(() => {
     loadGames();
-    // Atualizar a cada 30 segundos
     const interval = setInterval(loadGames, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const loadGames = async () => {
     try {
+      console.log('🏀 Buscando jogos da NBA...');
+      
       const { data, error } = await supabase.functions.invoke('nba-scoreboard');
       
       if (error) {
-        console.error('Erro ao buscar jogos:', error);
+        console.error('❌ Erro:', error);
         setGames([]);
-      } else if (data?.scoreboard?.games && data.scoreboard.games.length > 0) {
-        const formattedGames = data.scoreboard.games.map((game: any) => ({
-          ...game,
-          homeTeam: {
-            ...game.homeTeam,
-            logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`
-          },
-          awayTeam: {
-            ...game.awayTeam,
-            logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`
-          }
-        }));
-        console.log('✅ Jogos carregados:', formattedGames.length);
-        setGames(formattedGames);
+        return;
+      }
+
+      console.log('📦 Resposta recebida:', data);
+
+      if (data?.games && Array.isArray(data.games) && data.games.length > 0) {
+        console.log(`✅ ${data.games.length} jogos encontrados!`);
+        setGames(data.games);
       } else {
         console.log('ℹ️ Nenhum jogo disponível');
         setGames([]);
       }
     } catch (err) {
-      console.error('Erro na requisição:', err);
+      console.error('❌ Erro na requisição:', err);
       setGames([]);
     } finally {
       setLoading(false);
@@ -79,7 +74,7 @@ export default function NBAScoreboard() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-2 text-gray-400">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500" />
-            <span>Carregando placar...</span>
+            <span className="text-sm">Carregando placar...</span>
           </div>
         </div>
       </div>
@@ -122,13 +117,11 @@ export default function NBAScoreboard() {
               >
                 {/* Time Visitante */}
                 <div className="flex items-center gap-2 flex-1">
-                  {game.awayTeam.logo && (
-                    <img 
-                      src={game.awayTeam.logo} 
-                      alt={game.awayTeam.teamTricode}
-                      className="w-8 h-8 object-contain"
-                    />
-                  )}
+                  <img 
+                    src={game.awayTeam.logo} 
+                    alt={game.awayTeam.teamTricode}
+                    className="w-8 h-8 object-contain"
+                  />
                   <span className="font-bold text-white text-lg">
                     {game.awayTeam.teamTricode}
                   </span>
@@ -140,22 +133,23 @@ export default function NBAScoreboard() {
                 {/* Status */}
                 <div className="flex flex-col items-center px-2">
                   <span className="text-xs text-gray-400 whitespace-nowrap">
-                    {game.gameStatusText}
+                    {game.gameStatusText.includes('at') 
+                      ? game.gameStatusText.split('at')[1].trim()
+                      : game.gameStatusText
+                    }
                   </span>
-                  {game.gameStatus === '2' && ( // '2' significa "in progress"
+                  {game.gameStatus === 'in' && (
                     <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mt-1" />
                   )}
                 </div>
 
                 {/* Time Mandante */}
                 <div className="flex items-center gap-2 flex-1 flex-row-reverse">
-                  {game.homeTeam.logo && (
-                    <img 
-                      src={game.homeTeam.logo} 
-                      alt={game.homeTeam.teamTricode}
-                      className="w-8 h-8 object-contain"
-                    />
-                  )}
+                  <img 
+                    src={game.homeTeam.logo} 
+                    alt={game.homeTeam.teamTricode}
+                    className="w-8 h-8 object-contain"
+                  />
                   <span className="font-bold text-white text-lg">
                     {game.homeTeam.teamTricode}
                   </span>
