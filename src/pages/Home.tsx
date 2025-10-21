@@ -1,23 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import ArticleCard from '@/components/ArticleCard';
-import HeroSection from '@/components/HeroSection';
-
-interface Article {
-  id: string;
-  title: string;
-  slug: string;
-  summary: string;
-  image_url: string;
-  source: string;
-  tags: string[];
-  published_at: string;
-}
+import { TrendingUp, Calendar, Loader2 } from 'lucide-react';
 
 export default function Home() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,115 +13,371 @@ export default function Home() {
 
   const loadArticles = async () => {
     try {
-      const { data } = await supabase
+      // Buscamos 33 artigos para preencher as 8 seções iniciais + o restante
+      const { data, error } = await supabase
         .from('articles')
         .select('*')
         .eq('published', true)
         .order('published_at', { ascending: false })
         .limit(100);
-      
+
+      if (error) throw error;
       setArticles(data || []);
     } catch (error) {
       console.error('Erro ao carregar artigos:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const mainArticle = articles.length > 0 ? articles[0] : null;
-  const headlineArticles = articles.length > 1 ? articles.slice(1, 5) : [];
-  const secondaryArticles = articles.length > 5 ? articles.slice(5) : [];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (articles.length === 0) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-gray-400 text-lg">Nenhum artigo publicado ainda.</p>
+      </div>
+    );
+  }
+
+  // Separar artigos por seções
+  const featuredArticle = articles[0];
+  const section1 = articles.slice(1, 4); // Grid 3 colunas (3 itens)
+  const section2 = articles.slice(4, 10); // Lista horizontal (6 itens)
+  const section3 = articles.slice(10, 12); // Grid 2 colunas grandes (2 itens)
+  const section4 = articles.slice(12, 16); // Grid 4 colunas (4 itens)
+  const section5 = articles.slice(16, 22); // Layout alternado (6 itens)
+  const section6 = articles.slice(22, 25); // Grid 3 colunas (3 itens)
+  const section7 = articles.slice(25, 31); // Lista horizontal (6 itens)
+  const section8 = articles.slice(31, 33); // Grid 2 colunas (2 itens)
+  const remaining = articles.slice(33); // Resto em grid 3 colunas
 
   return (
-    <>
-      <HeroSection />
-
-      {/* Últimas Notícias */}
-      <section className="bg-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
-            <h2 className="text-4xl font-bold text-gray-900">
-              Últimas Notícias
-            </h2>
-            <Link 
-              to="/ultimas" 
-              className="text-[#FA007D] hover:text-[#00DBFB] transition-colors font-semibold inline-flex items-center gap-2"
-            >
-              Ver Todas
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+    <div className="min-h-screen bg-black text-white">
+      {/* Hero - Artigo em Destaque */}
+      {featuredArticle && (
+        <section className="relative h-[600px] mb-12">
+          <div className="absolute inset-0">
+            <img
+              src={featuredArticle.image_url}
+              alt={featuredArticle.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
           </div>
 
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#FA007D] mx-auto mb-4"></div>
-              <p className="text-gray-500">Carregando artigos...</p>
-            </div>
-          ) : articles.length === 0 ? (
-            <div className="text-center py-20 bg-gray-50 rounded-2xl">
-              <p className="text-gray-500 text-lg mb-2">Nenhum artigo publicado ainda.</p>
-              <p className="text-sm text-gray-400">Aprove artigos no painel admin para publicá-los aqui!</p>
-            </div>
-          ) : (
-            <div className="space-y-12">
-              {/* Main Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Article (Left) */}
-                {mainArticle && (
-                  <div className="lg:col-span-2">
-                    <Link to={`/artigos/${mainArticle.slug}`} className="group block">
-                      <div className="relative overflow-hidden h-[28rem] rounded-xl shadow-lg">
-                        <img
-                          src={mainArticle.image_url}
-                          alt={mainArticle.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                      </div>
-                      <div className="pt-6">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-[#FA007D] transition-colors leading-tight">
-                          {mainArticle.title}
-                        </h2>
-                        <p className="text-gray-600 text-lg mb-4 line-clamp-3">
-                          {mainArticle.summary}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Headlines (Right) */}
-                <div className="space-y-4">
-                  {headlineArticles.map((article) => (
-                    <Link key={article.id} to={`/artigos/${article.slug}`} className="flex items-center gap-4 group p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                      <img 
-                        src={article.image_url} 
-                        alt={article.title} 
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0" 
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 group-hover:text-[#FA007D] line-clamp-3 text-sm leading-tight">
-                          {article.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(article.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+          <div className="container mx-auto px-4 h-full flex items-end pb-12 relative z-10">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="bg-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  EM DESTAQUE
+                </span>
               </div>
-
-              {/* Secondary Grid */}
-              {secondaryArticles.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-12 border-t border-gray-200">
-                  {secondaryArticles.map((article, index) => (
-                    <ArticleCard key={article.id} article={article} index={index} />
-                  ))}
-                </div>
-              )}
+              <Link to={`/artigos/${featuredArticle.slug}`}>
+                <h1 className="text-5xl font-bold mb-4 hover:text-pink-400 transition leading-tight">
+                  {featuredArticle.title}
+                </h1>
+              </Link>
+              <p className="text-xl text-gray-300 mb-6 line-clamp-3">{featuredArticle.summary}</p>
+              <div className="flex items-center gap-4 text-sm text-gray-400">
+                <span>{featuredArticle.source}</span>
+                <span>•</span>
+                <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR')}</span>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
-    </>
+          </div>
+        </section>
+      )}
+
+      <div className="container mx-auto px-4 space-y-16">
+        {/* SEÇÃO 1: Grid 3 Colunas */}
+        {section1.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <TrendingUp className="w-6 h-6 text-pink-400" />
+              Últimas Notícias
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {section1.map((article, index) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                >
+                  <div className="relative">
+                    <span className="absolute top-4 left-4 bg-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg z-10">
+                      {index + 2}
+                    </span>
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 2: Lista Horizontal */}
+        {section2.length > 0 && (
+          <section className="bg-gray-900 rounded-xl p-8 border border-gray-800">
+            <h2 className="text-2xl font-bold mb-6">📰 Notícias em Destaque</h2>
+            <div className="space-y-4">
+              {section2.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="flex flex-col md:flex-row gap-4 group hover:bg-gray-800 p-4 rounded-lg transition"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 3: Grid 2 Colunas Grandes */}
+        {section3.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">🔥 Análises Profundas</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {section3.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 mb-4 line-clamp-3">{article.summary}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>{article.source}</span>
+                      <span>•</span>
+                      <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 4: Grid 4 Colunas Compactas */}
+        {section4.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">⚡ Destaques Rápidos</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {section4.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="p-3">
+                    <h3 className="font-bold text-sm group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 5: Layout Alternado (Zebra) */}
+        {section5.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">📊 Mais Lidas</h2>
+            <div className="space-y-6">
+              {section5.map((article, index) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className={`group flex flex-col md:flex-row gap-6 bg-gray-900 rounded-xl overflow-hidden hover:bg-gray-800 transition duration-300 ${
+                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                  }`}
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1 p-6 flex flex-col justify-center">
+                    <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 line-clamp-2">{article.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 6: Grid 3 Colunas (Repetição) */}
+        {section6.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">🏀 Mais da NBA</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {section6.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 7: Lista Horizontal (Repetição) */}
+        {section7.length > 0 && (
+          <section className="bg-gray-900 rounded-xl p-8 border border-gray-800">
+            <h2 className="text-2xl font-bold mb-6">📌 Não Perca</h2>
+            <div className="space-y-4">
+              {section7.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="flex flex-col md:flex-row gap-4 group hover:bg-gray-800 p-4 rounded-lg transition"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 8: Grid 2 Colunas (Repetição) */}
+        {section8.length > 0 && (
+          <section>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {section8.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 line-clamp-3">{article.summary}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>{article.source}</span>
+                      <span>•</span>
+                      <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Artigos Restantes: Grid 3 Colunas */}
+        {remaining.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">📚 Arquivo</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {remaining.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* Espaçamento final */}
+      <div className="h-20" />
+    </div>
   );
 }
