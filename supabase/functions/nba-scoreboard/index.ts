@@ -17,7 +17,11 @@ serve(async (req) => {
     
     const response = await fetch(nbaApiUrl, {
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        // Adicionando headers para evitar cache e buscar dados sempre atualizados
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       }
     });
 
