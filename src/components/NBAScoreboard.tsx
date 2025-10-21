@@ -99,7 +99,7 @@ export default function NBAScoreboard() {
   const visibleGames = games.slice(currentIndex, currentIndex + 3);
 
   return (
-    <div className="bg-gray-900 py-4 border-b border-gray-800 sticky top-[96px] md:top-[80px] z-40">
+    <div className="bg-gray-900 py-4 border-b border-gray-800">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between gap-4">
           {/* Botão Anterior */}
