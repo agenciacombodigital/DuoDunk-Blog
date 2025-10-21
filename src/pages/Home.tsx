@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { TrendingUp, Calendar, Loader2, Clock } from 'lucide-react';
 
 export default function Home() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -30,6 +30,20 @@ export default function Home() {
     }
   };
 
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -48,98 +62,131 @@ export default function Home() {
 
   // Separar artigos por seções
   const featuredArticle = articles[0];
-  const section1 = articles.slice(1, 4); // Grid 3 colunas (3 itens)
-  const section2 = articles.slice(4, 10); // Lista horizontal (6 itens)
-  const section3 = articles.slice(10, 12); // Grid 2 colunas grandes (2 itens)
-  const section4 = articles.slice(12, 16); // Grid 4 colunas (4 itens)
-  const section5 = articles.slice(16, 22); // Layout alternado (6 itens)
-  const section6 = articles.slice(22, 25); // Grid 3 colunas (3 itens)
-  const section7 = articles.slice(25, 31); // Lista horizontal (6 itens)
-  const section8 = articles.slice(31, 33); // Grid 2 colunas (2 itens)
-  
-  // Novas seções
-  const section9 = articles.slice(33, 39);
-  const section10 = articles.slice(39, 43);
-  const section11 = articles.slice(43, 49);
-
-  // Resto em grid 3 colunas
-  const remaining = articles.slice(49); 
+  const section1 = articles.slice(1, 7); // Para o novo grid (6 artigos)
+  const section2 = articles.slice(7, 13);
+  const section3 = articles.slice(13, 15);
+  const section4 = articles.slice(15, 19);
+  const section5 = articles.slice(19, 25);
+  const section6 = articles.slice(25, 28);
+  const section7 = articles.slice(28, 34);
+  const section8 = articles.slice(34, 36);
+  const section9 = articles.slice(36, 42);
+  const section10 = articles.slice(42, 46);
+  const section11 = articles.slice(46, 52);
+  const remaining = articles.slice(52);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      {/* Hero - Artigo em Destaque */}
-      {featuredArticle && (
-        <section className="relative h-[600px] mb-12">
-          <div className="absolute inset-0">
-            <img
-              src={featuredArticle.image_url}
-              alt={featuredArticle.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-          </div>
+      {/* Hero Section - Layout Grid Completo */}
+      {featuredArticle && section1.length >= 3 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Coluna Esquerda: Notícia em Destaque */}
+            <div className="lg:col-span-2 lg:row-span-2">
+              <Link
+                to={`/artigos/${featuredArticle.slug}`}
+                className="group relative block h-full min-h-[600px] rounded-xl overflow-hidden"
+              >
+                <img
+                  src={featuredArticle.image_url}
+                  alt={featuredArticle.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
-          <div className="container mx-auto px-4 h-full flex items-end pb-12 relative z-10">
-            <div className="max-w-3xl">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="bg-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  EM DESTAQUE
-                </span>
-              </div>
-              <Link to={`/artigos/${featuredArticle.slug}`}>
-                <h1 className="text-5xl font-bold mb-4 hover:text-pink-400 transition leading-tight text-white">
-                  {featuredArticle.title}
-                </h1>
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="bg-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      EM DESTAQUE
+                    </span>
+                    <span className="text-white/80 text-sm flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Há {getTimeAgo(featuredArticle.published_at)}
+                    </span>
+                  </div>
+
+                  <h1 className="text-4xl lg:text-5xl font-bold mb-4 text-white group-hover:text-pink-400 transition line-clamp-3">
+                    {featuredArticle.title}
+                  </h1>
+
+                  <p className="text-xl text-white/90 line-clamp-2 mb-4">
+                    {featuredArticle.summary}
+                  </p>
+
+                  <div className="flex items-center gap-3 text-sm text-white/70">
+                    <span className="font-medium">{featuredArticle.source}</span>
+                    <span>•</span>
+                    <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                </div>
               </Link>
-              <p className="text-xl text-gray-300 mb-6 line-clamp-3">{featuredArticle.summary}</p>
-              <div className="flex items-center gap-4 text-sm text-gray-400">
-                <span>{featuredArticle.source}</span>
-                <span>•</span>
-                <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR')}</span>
-              </div>
             </div>
-          </div>
-        </section>
-      )}
 
-      <div className="container mx-auto px-4 space-y-16">
-        {/* SEÇÃO 1: Grid 3 Colunas */}
-        {section1.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-pink-400" />
-              Últimas Notícias
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {section1.map((article, index) => (
+            {/* Coluna Direita: 3 Notícias ao Lado */}
+            <div className="flex flex-col gap-6">
+              {section1.slice(0, 3).map((article, index) => (
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group relative bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition h-[180px]"
                 >
-                  <div className="relative">
-                    <span className="absolute top-4 left-4 bg-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg z-10">
-                      {index + 2}
-                    </span>
+                  <div className="flex h-full">
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-1/3 object-cover"
+                    />
+                    <div className="flex-1 p-4 flex flex-col justify-between">
+                      <div>
+                        <span className="inline-flex items-center justify-center w-8 h-8 bg-pink-600 text-white rounded-full text-sm font-bold mb-2">
+                          {index + 2}
+                        </span>
+                        <h3 className="font-bold text-gray-900 text-lg group-hover:text-pink-600 transition line-clamp-2">
+                          {article.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Calendar className="w-3 h-3" />
+                        <span>Há {getTimeAgo(article.published_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Linha Inferior: 3 Notícias Abaixo */}
+            {section1.slice(3, 6).length > 0 && (
+              <>
+                {section1.slice(3, 6).map((article) => (
+                  <Link
+                    key={article.id}
+                    to={`/artigos/${article.slug}`}
+                    className="group bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition"
+                  >
                     <img
                       src={article.image_url}
                       alt={article.title}
                       className="w-full h-48 object-cover"
                     />
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                        {article.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm line-clamp-2">
+                        {article.summary}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
+      <div className="container mx-auto px-4 space-y-16">
         {/* SEÇÃO 2: Lista Horizontal */}
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
