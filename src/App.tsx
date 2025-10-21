@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
 import AdminManual from "./pages/AdminManual";
 import AdminRodadaNBA from "./pages/AdminRodadaNBA";
+import NBAScoreboard from "./components/NBAScoreboard";
 
 const AppContent = () => {
   const location = useLocation();
@@ -20,7 +21,12 @@ const AppContent = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${isAdminRoute ? 'bg-black' : 'bg-white'}`}>
-      {!isAdminRoute && <Header />}
+      {!isAdminRoute && (
+        <>
+          <Header />
+          <NBAScoreboard />
+        </>
+      )}
       <main className="flex-grow">
         <Routes>
           {/* Public Routes */}
