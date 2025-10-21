@@ -3,6 +3,23 @@ import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Calendar, Loader2, Clock } from 'lucide-react';
 
+// Função para calcular tempo atrás
+function getTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  
+  if (diffInHours < 1) return 'menos de 1h';
+  if (diffInHours < 24) return `${diffInHours}h`;
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) return '1 dia';
+  if (diffInDays < 7) return `${diffInDays} dias`;
+  
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
 export default function Home() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,20 +45,6 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const past = new Date(dateString);
-    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
-    
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d`;
   };
 
   if (loading) {
