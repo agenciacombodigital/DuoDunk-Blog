@@ -5,7 +5,7 @@ import NBAScoreboard from './NBAScoreboard';
 export default function Header() {
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-black border-gray-800">
+      <header className="sticky top-0 z-50 border-b">
         <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
           <Link to="/">
             {/* Logo: h-12 no mobile, h-16 no desktop */}
@@ -14,16 +14,16 @@ export default function Header() {
           
           {/* Navegação principal escondida no mobile */}
           <nav className="hidden lg:flex items-center gap-8 text-sm uppercase tracking-widest">
-            <Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link>
-            <Link to="/ultimas" className="text-gray-400 hover:text-white transition-colors">Últimas</Link>
+            <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
+            <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
           </nav>
 
           {/* Ícones de redes sociais */}
           <div className="flex items-center gap-4">
-            <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Youtube size={20} /></a>
-            <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Instagram size={20} /></a>
-            <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Twitter size={20} /></a>
-            <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Twitch size={20} /></a>
+            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={20} /></a>
+            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
+            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
+            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitch size={20} /></a>
           </div>
         </div>
       </header>
