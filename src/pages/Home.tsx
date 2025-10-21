@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Calendar, Loader2, Clock } from 'lucide-react';
+import { TrendingUp, Calendar, Loader2, Clock, Eye } from 'lucide-react';
 
 // Função para calcular tempo atrás
 function getTimeAgo(dateString: string): string {
@@ -65,30 +65,36 @@ export default function Home() {
 
   // Separar artigos por seções
   const featuredArticle = articles[0];
-  const section1 = articles.slice(1, 7); // Para o novo grid (6 artigos)
-  const section2 = articles.slice(7, 13);
-  const section3 = articles.slice(13, 15);
-  const section4 = articles.slice(15, 19);
-  const section5 = articles.slice(19, 25);
-  const section6 = articles.slice(25, 28);
-  const section7 = articles.slice(28, 34);
-  const section8 = articles.slice(34, 36);
-  const section9 = articles.slice(36, 42);
-  const section10 = articles.slice(42, 46);
-  const section11 = articles.slice(46, 52);
-  const remaining = articles.slice(52);
+  const section1 = articles.slice(1, 8); // 7 articles for the new hero
+  const section2 = articles.slice(8, 14);
+  const section3 = articles.slice(14, 16);
+  const section4 = articles.slice(16, 20);
+  const section5 = articles.slice(20, 26);
+  const section6 = articles.slice(26, 29);
+  const section7 = articles.slice(29, 35);
+  const section8 = articles.slice(35, 37);
+  const section9 = articles.slice(37, 43);
+  const section10 = articles.slice(43, 47);
+  const section11 = articles.slice(47, 53);
+  const remaining = articles.slice(53);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      {/* Hero Section - Layout Grid Completo */}
-      {featuredArticle && section1.length >= 3 && (
+      {/* Hero Section - Layout Exato do Print */}
+      {featuredArticle && (
         <section className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Coluna Esquerda: Notícia em Destaque */}
-            <div className="lg:col-span-2 lg:row-span-2">
-              <Link
+          <h2 className="text-sm font-bold text-pink-600 mb-4 uppercase tracking-wide flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            EM DESTAQUE
+          </h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* ESQUERDA: Notícia em Destaque Retangular */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Notícia Principal */}
+              <Link 
                 to={`/artigos/${featuredArticle.slug}`}
-                className="group relative block h-full min-h-[600px] rounded-xl overflow-hidden"
+                className="group relative block rounded-2xl overflow-hidden h-[400px] shadow-xl hover:shadow-2xl transition-shadow"
               >
                 <img
                   src={featuredArticle.image_url}
@@ -96,95 +102,115 @@ export default function Home() {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-
+                
                 <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="bg-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4" />
-                      EM DESTAQUE
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {featuredArticle.views || 0} views
                     </span>
-                    <span className="text-white/80 text-sm flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
+                    <span className="text-white/80 text-sm flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
                       Há {getTimeAgo(featuredArticle.published_at)}
                     </span>
                   </div>
-
-                  <h1 className="text-4xl lg:text-5xl font-bold mb-4 text-white group-hover:text-pink-400 transition line-clamp-3">
+                  
+                  <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-white group-hover:text-pink-400 transition line-clamp-2">
                     {featuredArticle.title}
                   </h1>
-
-                  <p className="text-xl text-white/90 line-clamp-2 mb-4">
+                  
+                  <p className="text-lg text-white/90 line-clamp-2 mb-3">
                     {featuredArticle.summary}
                   </p>
-
-                  <div className="flex items-center gap-3 text-sm text-white/70">
+                  
+                  <div className="flex items-center gap-2 text-sm text-white/70">
                     <span className="font-medium">{featuredArticle.source}</span>
                     <span>•</span>
-                    <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR')}</span>
+                    <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                   </div>
                 </div>
               </Link>
-            </div>
 
-            {/* Coluna Direita: 3 Notícias ao Lado */}
-            <div className="flex flex-col gap-6">
-              {section1.slice(0, 3).map((article, index) => (
-                <Link
-                  key={article.id}
-                  to={`/artigos/${article.slug}`}
-                  className="group relative bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition h-[180px]"
-                >
-                  <div className="flex h-full">
-                    <img
-                      src={article.image_url}
-                      alt={article.title}
-                      className="w-1/3 object-cover"
-                    />
-                    <div className="flex-1 p-4 flex flex-col justify-between">
-                      <div>
-                        <span className="inline-flex items-center justify-center w-8 h-8 bg-pink-600 text-white rounded-full text-sm font-bold mb-2">
-                          {index + 2}
-                        </span>
-                        <h3 className="font-bold text-gray-900 text-lg group-hover:text-pink-600 transition line-clamp-2">
-                          {article.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Calendar className="w-3 h-3" />
-                        <span>Há {getTimeAgo(article.published_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Linha Inferior: 3 Notícias Abaixo */}
-            {section1.slice(3, 6).length > 0 && (
-              <>
+              {/* 3 Notícias Abaixo (Grid 3 Colunas) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {section1.slice(3, 6).map((article) => (
                   <Link
                     key={article.id}
                     to={`/artigos/${article.slug}`}
-                    className="group bg-gray-50 rounded-xl overflow-hidden hover:shadow-lg transition"
+                    className="group bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition"
                   >
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-40 object-cover"
                     />
                     <div className="p-4">
-                      <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                      <h3 className="font-bold text-gray-900 text-base mb-2 group-hover:text-pink-600 transition line-clamp-2">
                         {article.title}
                       </h3>
-                      <p className="text-gray-600 text-sm line-clamp-2">
-                        {article.summary}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Clock className="w-3 h-3" />
+                        <span>há {getTimeAgo(article.published_at)}</span>
+                      </div>
                     </div>
                   </Link>
                 ))}
-              </>
-            )}
+              </div>
+            </div>
+
+            {/* DIREITA: 3 Notícias Verticais + 1 Grande */}
+            <div className="lg:col-span-4 space-y-4">
+              {/* 3 Cards Pequenos */}
+              {section1.slice(0, 3).map((article, index) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group flex gap-3 bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition h-[120px]"
+                >
+                  <div className="relative w-2/5 flex-shrink-0">
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute top-2 left-2 bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                      {index + 2}
+                    </span>
+                  </div>
+                  <div className="flex-1 p-3 flex flex-col justify-between">
+                    <h3 className="font-bold text-gray-900 text-sm group-hover:text-pink-600 transition line-clamp-3">
+                      {article.title}
+                    </h3>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Clock className="w-3 h-3" />
+                      <span>Há {getTimeAgo(article.published_at)}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+
+              {/* Card Grande no Final */}
+              {section1[6] && (
+                <Link
+                  to={`/artigos/${section1[6].slug}`}
+                  className="group block bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition"
+                >
+                  <img
+                    src={section1[6].image_url}
+                    alt={section1[6].title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4">
+                    <span className="inline-block bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-2">
+                      5
+                    </span>
+                    <h3 className="font-bold text-gray-900 text-base mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                      {section1[6].title}
+                    </h3>
+                  </div>
+                </Link>
+              )}
+            </div>
           </div>
         </section>
       )}
