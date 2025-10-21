@@ -157,7 +157,8 @@ export default function NBAScoreboard() {
 
   return (
     <>
-      <div className="bg-black border-b border-gray-800 py-3 sticky top-20 z-40">
+      {/* Removendo sticky no mobile, mantendo no desktop */}
+      <div className="bg-black border-b border-gray-800 py-3 md:sticky md:top-20 md:z-40">
         <div className="container mx-auto px-4">
           <div className="relative group">
             <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
@@ -181,7 +182,7 @@ export default function NBAScoreboard() {
         </div>
       </div>
 
-      {/* Modal de Estatísticas COMPLETO */}
+      {/* Modal de Estatísticas COMPLETO (mantido) */}
       {selectedGame && (
         <div 
           className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
