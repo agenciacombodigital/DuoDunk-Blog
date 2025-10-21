@@ -19,7 +19,7 @@ export default function Header() {
         {/* Ícones de redes sociais */}
         <div className="flex items-center gap-4">
           <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={20} /></a>
-          <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
+          <a href="https://www.instagram.com/duodunk/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
           <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
           <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitch size={20} /></a>
         </div>
