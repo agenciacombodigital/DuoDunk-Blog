@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export default function AdminManual() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [form, setForm] = useState({
     title: '',
     subtitle: '',
@@ -15,6 +16,37 @@ export default function AdminManual() {
     image_url: '',
     tags: 'nba, basquete',
   });
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione apenas imagens!');
+      return;
+    }
+
+    const toastId = toast.loading("Fazendo upload da imagem...");
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `public/manual-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('article-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('article-images')
+        .getPublicUrl(fileName);
+
+      setForm(prev => ({ ...prev, image_url: data.publicUrl }));
+      toast.success('Imagem enviada com sucesso!', { id: toastId });
+    } catch (error: any) {
+      toast.error('Erro ao fazer upload', { id: toastId, description: error.message });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,27 +183,54 @@ export default function AdminManual() {
             </p>
           </div>
 
-          {/* URL da Imagem */}
+          {/* Imagem */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              URL da Imagem (opcional)
+              Imagem da Notícia (opcional)
             </label>
-            <div className="flex gap-2">
+            
+            {form.image_url && (
+              <div className="mb-4">
+                <img src={form.image_url} alt="Preview" className="w-full h-64 object-cover rounded-lg" />
+              </div>
+            )}
+
+            <div className="flex gap-2 items-center">
               <input
                 type="url"
                 value={form.image_url}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                 className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500 transition"
-                placeholder="https://exemplo.com/imagem.jpg"
+                placeholder="Cole a URL da imagem aqui..."
               />
-              <button
-                type="button"
-                className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition"
-                title="Upload de imagem (em breve)"
-                disabled
+              
+              <input
+                type="file"
+                id="manual-image-upload"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                }}
+                disabled={uploadingImage}
+              />
+              <label
+                htmlFor="manual-image-upload"
+                className={`flex items-center justify-center gap-2 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition cursor-pointer ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <Upload className="w-5 h-5" />
-              </button>
+                {uploadingImage ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Enviando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    <span>Upload</span>
+                  </>
+                )}
+              </label>
             </div>
           </div>
 
@@ -195,7 +254,7 @@ export default function AdminManual() {
           {/* Botão Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploadingImage}
             className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? (
