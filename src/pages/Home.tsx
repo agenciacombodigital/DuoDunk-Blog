@@ -66,7 +66,7 @@ export default function Home() {
   const remaining = articles.slice(49); 
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-black text-white">
       {/* Hero - Artigo em Destaque */}
       {featuredArticle && (
         <section className="relative h-[600px] mb-12">
@@ -116,7 +116,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
                   <div className="relative">
                     <span className="absolute top-4 left-4 bg-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg z-10">
@@ -132,7 +132,7 @@ export default function Home() {
                     <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -142,14 +142,14 @@ export default function Home() {
 
         {/* SEÇÃO 2: Lista Horizontal */}
         {section2.length > 0 && (
-          <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
+          <section className="bg-gray-900 rounded-xl p-8 border border-gray-800">
             <h2 className="text-2xl font-bold mb-6">📰 Notícias em Destaque</h2>
             <div className="space-y-4">
               {section2.map((article) => (
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="flex flex-col md:flex-row gap-4 group hover:bg-gray-100 p-4 rounded-lg transition"
+                  className="flex flex-col md:flex-row gap-4 group hover:bg-gray-800 p-4 rounded-lg transition"
                 >
                   <img
                     src={article.image_url}
@@ -160,7 +160,7 @@ export default function Home() {
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
+                    <p className="text-gray-400 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
@@ -181,7 +181,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
                   <img
                     src={article.image_url}
@@ -192,7 +192,7 @@ export default function Home() {
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{article.summary}</p>
+                    <p className="text-gray-400 mb-4 line-clamp-3">{article.summary}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <span>{article.source}</span>
                       <span>•</span>
@@ -214,7 +214,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-lg overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
                   <img
                     src={article.image_url}
@@ -241,7 +241,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className={`group flex flex-col md:flex-row gap-6 bg-gray-50 rounded-xl overflow-hidden hover:bg-gray-100 transition duration-300 ${
+                  className={`group flex flex-col md:flex-row gap-6 bg-gray-900 rounded-xl overflow-hidden hover:bg-gray-800 transition duration-300 ${
                     index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
                   }`}
                 >
@@ -254,7 +254,7 @@ export default function Home() {
                     <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-400 line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -271,7 +271,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
                   <img
                     src={article.image_url}
@@ -282,7 +282,7 @@ export default function Home() {
                     <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -292,14 +292,14 @@ export default function Home() {
 
         {/* SEÇÃO 7: Lista Horizontal (Repetição) */}
         {section7.length > 0 && (
-          <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
+          <section className="bg-gray-900 rounded-xl p-8 border border-gray-800">
             <h2 className="text-2xl font-bold mb-6">📌 Não Perca</h2>
             <div className="space-y-4">
               {section7.map((article) => (
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="flex flex-col md:flex-row gap-4 group hover:bg-gray-100 p-4 rounded-lg transition"
+                  className="flex flex-col md:flex-row gap-4 group hover:bg-gray-800 p-4 rounded-lg transition"
                 >
                   <img
                     src={article.image_url}
@@ -310,7 +310,7 @@ export default function Home() {
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
+                    <p className="text-gray-400 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
@@ -330,7 +330,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
                   <img
                     src={article.image_url}
@@ -341,7 +341,7 @@ export default function Home() {
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 line-clamp-3">{article.summary}</p>
+                    <p className="text-gray-400 line-clamp-3">{article.summary}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <span>{article.source}</span>
                       <span>•</span>
@@ -356,14 +356,14 @@ export default function Home() {
 
         {/* SEÇÃO 9: Lista Horizontal (Repetição) */}
         {section9.length > 0 && (
-          <section className="bg-gray-50 rounded-xl p-8">
+          <section className="bg-gray-900 rounded-xl p-8">
             <h2 className="text-2xl font-bold mb-6">🎯 Recomendados</h2>
             <div className="space-y-4">
               {section9.map((article) => (
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="flex gap-4 group hover:bg-gray-100 p-4 rounded-lg transition"
+                  className="flex gap-4 group hover:bg-gray-800 p-4 rounded-lg transition"
                 >
                   <img
                     src={article.image_url}
@@ -374,7 +374,7 @@ export default function Home() {
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-1">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -391,7 +391,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-lg overflow-hidden hover:transform hover:scale-105 transition"
+                  className="group bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-105 transition"
                 >
                   <img
                     src={article.image_url}
@@ -418,7 +418,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className={`group flex gap-6 bg-gray-50 rounded-xl overflow-hidden hover:bg-gray-100 transition ${
+                  className={`group flex gap-6 bg-gray-900 rounded-xl overflow-hidden hover:bg-gray-800 transition ${
                     index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
                   }`}
                 >
@@ -431,7 +431,7 @@ export default function Home() {
                     <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-400 line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -448,7 +448,7 @@ export default function Home() {
                 <Link
                   key={article.id}
                   to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
+                  className="group bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
                   <img
                     src={article.image_url}
@@ -459,7 +459,7 @@ export default function Home() {
                     <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}

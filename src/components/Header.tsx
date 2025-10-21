@@ -5,7 +5,7 @@ import NBAScoreboard from './NBAScoreboard';
 export default function Header() {
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-white border-gray-200">
+      <header className="sticky top-0 z-50 border-b bg-black border-gray-800">
         <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
           <Link to="/">
             {/* Logo: h-12 no mobile, h-16 no desktop */}
@@ -14,8 +14,8 @@ export default function Header() {
           
           {/* Navegação principal escondida no mobile */}
           <nav className="hidden lg:flex items-center gap-8 text-sm uppercase tracking-widest">
-            <Link to="/" className="text-gray-600 hover:text-gray-900 transition-colors">Home</Link>
-            <Link to="/ultimas" className="text-gray-600 hover:text-gray-900 transition-colors">Últimas</Link>
+            <Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link>
+            <Link to="/ultimas" className="text-gray-400 hover:text-white transition-colors">Últimas</Link>
           </nav>
 
           {/* Ícones de redes sociais */}

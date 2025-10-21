@@ -151,28 +151,28 @@ export default function NBAScoreboard() {
     }
   };
 
-  if (loading) return <div className="bg-white border-b border-gray-200 py-4 flex items-center justify-center gap-3"><RefreshCw className="w-5 h-5 text-gray-500 animate-spin" /><p className="text-gray-500 text-sm">Carregando jogos da NBA...</p></div>;
-  if (error) return <div className="bg-white border-b border-gray-200 py-4 flex items-center justify-center gap-3"><p className="text-gray-500 text-sm">Erro ao carregar placar</p><button onClick={fetchGames} className="text-cyan-500 hover:text-cyan-600 text-sm underline">Tentar novamente</button></div>;
-  if (games.length === 0) return <div className="bg-white border-b border-gray-200 py-4"><p className="text-gray-500 text-center text-sm">Nenhum jogo da NBA hoje 🏀</p></div>;
+  if (loading) return <div className="bg-black border-b border-gray-800 py-4 flex items-center justify-center gap-3"><RefreshCw className="w-5 h-5 text-gray-400 animate-spin" /><p className="text-gray-400 text-sm">Carregando jogos da NBA...</p></div>;
+  if (error) return <div className="bg-black border-b border-gray-800 py-4 flex items-center justify-center gap-3"><p className="text-gray-400 text-sm">Erro ao carregar placar</p><button onClick={fetchGames} className="text-cyan-400 hover:text-cyan-300 text-sm underline">Tentar novamente</button></div>;
+  if (games.length === 0) return <div className="bg-black border-b border-gray-800 py-4"><p className="text-gray-400 text-center text-sm">Nenhum jogo da NBA hoje 🏀</p></div>;
 
   return (
     <>
       {/* Removendo sticky no mobile, mantendo no desktop */}
-      <div className="bg-white border-b border-gray-200 py-3 md:sticky md:top-24 md:z-40">
+      <div className="bg-black border-b border-gray-800 py-3 md:sticky md:top-24 md:z-40">
         <div className="container mx-auto px-4">
           <div className="relative group">
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
             <div className="flex items-center gap-4 overflow-x-auto scoreboard-scrollbar pb-2 scroll-smooth">
               {games.map((game) => (
-                <button key={game.id} onClick={() => setSelectedGame(game)} className="flex items-center gap-4 bg-gray-50/90 backdrop-blur-sm px-5 py-3 rounded-xl min-w-max hover:bg-gray-100 transition-all duration-300 border border-gray-200 hover:border-cyan-500/50 hover:scale-105 cursor-pointer group/card">
-                  <div className="flex items-center gap-2.5"><img src={game.awayTeam.logo} alt={game.awayTeam.name} className="w-7 h-7 object-contain" /><div className="text-right"><p className="text-gray-900 font-bold text-xs tracking-wider">{game.awayTeam.tricode}</p><p className="text-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-400 bg-clip-text text-transparent">{game.awayTeam.score}</p></div></div>
-                  <div className="text-gray-500 font-bold text-xs px-1">@</div>
-                  <div className="flex items-center gap-2.5"><div className="text-left"><p className="text-gray-900 font-bold text-xs tracking-wider">{game.homeTeam.tricode}</p><p className="text-xl font-bold bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">{game.homeTeam.score}</p></div><img src={game.homeTeam.logo} alt={game.homeTeam.name} className="w-7 h-7 object-contain" /></div>
+                <button key={game.id} onClick={() => setSelectedGame(game)} className="flex items-center gap-4 bg-gray-900/90 backdrop-blur-sm px-5 py-3 rounded-xl min-w-max hover:bg-gray-800 transition-all duration-300 border border-gray-700 hover:border-cyan-500/50 hover:scale-105 cursor-pointer group/card">
+                  <div className="flex items-center gap-2.5"><img src={game.awayTeam.logo} alt={game.awayTeam.name} className="w-7 h-7 object-contain" /><div className="text-right"><p className="text-white font-bold text-xs tracking-wider">{game.awayTeam.tricode}</p><p className="text-xl font-bold bg-gradient-to-r from-cyan-500 to-cyan-400 bg-clip-text text-transparent">{game.awayTeam.score}</p></div></div>
+                  <div className="text-gray-400 font-bold text-xs px-1">@</div>
+                  <div className="flex items-center gap-2.5"><div className="text-left"><p className="text-white font-bold text-xs tracking-wider">{game.homeTeam.tricode}</p><p className="text-xl font-bold bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">{game.homeTeam.score}</p></div><img src={game.homeTeam.logo} alt={game.homeTeam.name} className="w-7 h-7 object-contain" /></div>
                   <div className="ml-3 text-center min-w-[100px]">
-                    {game.status === 'live' && <><span className="px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] rounded-full animate-pulse font-bold flex items-center gap-1 justify-center shadow-lg shadow-red-500/50"><span className="w-1 h-1 bg-white rounded-full animate-pulse"></span>AO VIVO</span><p className="text-gray-500 text-[10px] font-mono mt-1">{game.period}Q • {game.gameClock.replace('PT', '').replace('S', '').substring(0, 5)}</p></>}
-                    {game.status === 'final' && <span className="px-3 py-1 bg-gray-200/80 text-gray-700 text-[10px] rounded-full font-bold">FINAL</span>}
-                    {game.status === 'scheduled' && <span className="px-2.5 py-1 bg-gray-100/80 text-gray-500 text-[10px] rounded-full font-medium">{game.statusText}</span>}
+                    {game.status === 'live' && <><span className="px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-500 text-white text-[10px] rounded-full animate-pulse font-bold flex items-center gap-1 justify-center shadow-lg shadow-red-500/50"><span className="w-1 h-1 bg-white rounded-full animate-pulse"></span>AO VIVO</span><p className="text-gray-400 text-[10px] font-mono mt-1">{game.period}Q • {game.gameClock.replace('PT', '').replace('S', '').substring(0, 5)}</p></>}
+                    {game.status === 'final' && <span className="px-3 py-1 bg-gray-700/80 text-gray-300 text-[10px] rounded-full font-bold">FINAL</span>}
+                    {game.status === 'scheduled' && <span className="px-2.5 py-1 bg-gray-800/80 text-gray-400 text-[10px] rounded-full font-medium">{game.statusText}</span>}
                   </div>
                   <TrendingUp className="w-4 h-4 text-gray-400 group-hover/card:text-cyan-500 transition-colors ml-2" />
                 </button>
