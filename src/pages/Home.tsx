@@ -13,7 +13,7 @@ export default function Home() {
 
   const loadArticles = async () => {
     try {
-      // Buscamos 33 artigos para preencher as 8 seções iniciais + o restante
+      // Buscamos 100 artigos para preencher as seções
       const { data, error } = await supabase
         .from('articles')
         .select('*')
@@ -56,7 +56,14 @@ export default function Home() {
   const section6 = articles.slice(22, 25); // Grid 3 colunas (3 itens)
   const section7 = articles.slice(25, 31); // Lista horizontal (6 itens)
   const section8 = articles.slice(31, 33); // Grid 2 colunas (2 itens)
-  const remaining = articles.slice(33); // Resto em grid 3 colunas
+  
+  // Novas seções
+  const section9 = articles.slice(33, 39);
+  const section10 = articles.slice(39, 43);
+  const section11 = articles.slice(43, 49);
+
+  // Resto em grid 3 colunas
+  const remaining = articles.slice(49); 
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -340,6 +347,91 @@ export default function Home() {
                       <span>•</span>
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 9: Lista Horizontal (Repetição) */}
+        {section9.length > 0 && (
+          <section className="bg-gray-900 rounded-xl p-8">
+            <h2 className="text-2xl font-bold mb-6">🎯 Recomendados</h2>
+            <div className="space-y-4">
+              {section9.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="flex gap-4 group hover:bg-gray-800 p-4 rounded-lg transition"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-1">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 10: Grid 4 Colunas */}
+        {section10.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">⭐ Populares</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {section10.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className="group bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-105 transition"
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="p-3">
+                    <h3 className="font-bold text-sm group-hover:text-pink-400 transition line-clamp-2">
+                      {article.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEÇÃO 11: Layout Alternado */}
+        {section11.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-bold mb-6">📌 Você Pode Gostar</h2>
+            <div className="space-y-6">
+              {section11.map((article, index) => (
+                <Link
+                  key={article.id}
+                  to={`/artigos/${article.slug}`}
+                  className={`group flex gap-6 bg-gray-900 rounded-xl overflow-hidden hover:bg-gray-800 transition ${
+                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                  }`}
+                >
+                  <img
+                    src={article.image_url}
+                    alt={article.title}
+                    className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1 p-6 flex flex-col justify-center">
+                    <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 line-clamp-2">{article.summary}</p>
                   </div>
                 </Link>
               ))}
