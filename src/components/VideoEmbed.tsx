@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-const VideoPlayer = ({ url }: { url: string }) => {
+const VideoEmbed = ({ url }: { url: string }) => {
   let embedUrl = '';
   let isTwitter = false;
 
@@ -66,4 +66,4 @@ const VideoPlayer = ({ url }: { url: string }) => {
   return null;
 };
 
-export default VideoPlayer;
+export default VideoEmbed;
