@@ -19,6 +19,7 @@ interface Game {
 export default function AdminRodadaNBA() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false); // Novo estado para upload
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -57,6 +58,38 @@ export default function AdminRodadaNBA() {
       }
       return { ...g, [field]: value };
     }));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione apenas imagens!');
+      return;
+    }
+
+    const toastId = toast.loading("Fazendo upload da imagem...");
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const uniqueId = Date.now();
+      const fileName = `public/rodada-${uniqueId}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('article-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('article-images')
+        .getPublicUrl(fileName);
+
+      setImageUrl(data.publicUrl);
+      toast.success('Imagem enviada com sucesso!', { id: toastId });
+    } catch (error: any) {
+      toast.error('Erro ao fazer upload', { id: toastId, description: error.message });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -264,14 +297,28 @@ export default function AdminRodadaNBA() {
                 className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white"
                 placeholder="https://exemplo.com/imagem.jpg"
               />
-              <button
-                type="button"
-                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition"
-                title="Upload (em breve)"
-                disabled
+              
+              <input
+                type="file"
+                id="rodada-image-upload"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                }}
+                disabled={uploadingImage}
+              />
+              <label
+                htmlFor="rodada-image-upload"
+                className={`flex items-center justify-center gap-2 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition cursor-pointer ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <Upload className="w-5 h-5" />
-              </button>
+                {uploadingImage ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Upload className="w-5 h-5" />
+                )}
+              </label>
             </div>
             {imageUrl && (
               <img 
@@ -378,7 +425,7 @@ export default function AdminRodadaNBA() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploadingImage}
             className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition"
           >
             {loading ? (
