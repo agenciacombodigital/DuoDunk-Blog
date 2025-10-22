@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, TrendingUp, Clock } from 'lucide-react';
 
 interface Game {
   gameId: string;
@@ -24,6 +24,7 @@ export default function NBAScoreboard() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 
   useEffect(() => {
     loadGames();
@@ -33,8 +34,6 @@ export default function NBAScoreboard() {
 
   const loadGames = async () => {
     try {
-      console.log('🏀 Buscando jogos da NBA...');
-      
       const { data, error } = await supabase.functions.invoke('nba-scoreboard');
       
       if (error) {
@@ -43,17 +42,46 @@ export default function NBAScoreboard() {
         return;
       }
 
-      console.log('📦 Resposta recebida:', data);
-
       if (data?.games && Array.isArray(data.games) && data.games.length > 0) {
-        console.log(`✅ ${data.games.length} jogos encontrados!`);
-        setGames(data.games);
+        // Converter horários para Brasília (UTC-3)
+        const gamesWithBrasiliaTime = data.games.map((game: Game) => {
+          const utcTime = game.gameStatusText;
+          
+          // Extrair hora do formato "Tue, October 21st at 7:30 PM EDT"
+          const timeMatch = utcTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+          
+          if (timeMatch) {
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[2];
+            const period = timeMatch[3].toUpperCase();
+            
+            // Converter para 24h
+            if (period === 'PM' && hours !== 12) hours += 12;
+            if (period === 'AM' && hours === 12) hours = 0;
+            
+            // EDT é UTC-4, então soma 4 para ter UTC
+            // Depois subtrai 3 para ter Brasília (UTC-3)
+            // Resultado: +1 hora
+            hours += 1;
+            
+            // Formatar para horário de Brasília
+            const brasiliaTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+            
+            return {
+              ...game,
+              gameStatusText: brasiliaTime
+            };
+          }
+          
+          return game;
+        });
+        
+        setGames(gamesWithBrasiliaTime);
       } else {
-        console.log('ℹ️ Nenhum jogo disponível');
         setGames([]);
       }
     } catch (err) {
-      console.error('❌ Erro na requisição:', err);
+      console.error('❌ Erro:', err);
       setGames([]);
     } finally {
       setLoading(false);
@@ -61,20 +89,38 @@ export default function NBAScoreboard() {
   };
 
   const nextGames = () => {
-    setCurrentIndex((prev) => (prev + 3 >= games.length ? 0 : prev + 3));
+    setCurrentIndex((prev) => (prev + 2 >= games.length ? 0 : prev + 2));
   };
 
   const prevGames = () => {
-    setCurrentIndex((prev) => (prev - 3 < 0 ? Math.max(0, games.length - 3) : prev - 3));
+    setCurrentIndex((prev) => (prev - 2 < 0 ? Math.max(0, games.length - 2) : prev - 2));
+  };
+
+  const teamColors: { [key: string]: { primary: string; secondary: string } } = {
+    LAL: { primary: 'from-purple-600 to-yellow-500', secondary: 'bg-purple-600' },
+    GSW: { primary: 'from-blue-600 to-yellow-400', secondary: 'bg-blue-600' },
+    BOS: { primary: 'from-green-600 to-green-400', secondary: 'bg-green-600' },
+    MIA: { primary: 'from-red-600 to-black', secondary: 'bg-red-600' },
+    CHI: { primary: 'from-red-600 to-black', secondary: 'bg-red-600' },
+    HOU: { primary: 'from-red-600 to-gray-800', secondary: 'bg-red-600' },
+    OKC: { primary: 'from-blue-500 to-orange-500', secondary: 'bg-blue-500' },
+  };
+
+  const getTeamGradient = (tricode: string) => {
+    return teamColors[tricode]?.primary || 'from-gray-700 to-gray-900';
   };
 
   if (loading) {
     return (
-      <div className="bg-gray-900 py-4 border-b border-gray-800">
+      <div className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 py-6 border-b border-gray-700/50 backdrop-blur-sm">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE0YzMuMzE0IDAgNiAyLjY4NiA2IDZzLTIuNjg2IDYtNiA2LTYtMi42ODYtNi02IDIuNjg2LTYgNi02ek0yNCAzOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-2 text-gray-400">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500" />
-            <span className="text-sm">Carregando placar...</span>
+          <div className="flex items-center justify-center gap-3">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-pink-500 border-t-transparent"></div>
+              <div className="absolute inset-0 rounded-full bg-pink-500/20 animate-ping"></div>
+            </div>
+            <span className="text-gray-300 text-sm font-medium">Carregando jogos da NBA...</span>
           </div>
         </div>
       </div>
@@ -83,96 +129,230 @@ export default function NBAScoreboard() {
 
   if (games.length === 0) {
     return (
-      <div className="bg-gray-900 py-3 border-b border-gray-800">
+      <div className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 py-4 border-b border-gray-700/50">
         <div className="container mx-auto px-4 text-center">
-          <span className="text-gray-400 text-sm">Nenhum jogo da NBA hoje 🏀</span>
+          <span className="text-gray-400 text-sm font-medium inline-flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Nenhum jogo da NBA hoje 🏀
+          </span>
         </div>
       </div>
     );
   }
 
-  const visibleGames = games.slice(currentIndex, currentIndex + 3);
+  const visibleGames = games.slice(currentIndex, currentIndex + 2);
 
   return (
-    <div className="bg-gray-900 py-4 border-b border-gray-800">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Botão Anterior */}
-          {games.length > 3 && (
-            <button
-              onClick={prevGames}
-              className="p-2 hover:bg-gray-800 rounded-full transition flex-shrink-0"
-              aria-label="Jogos anteriores"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-400" />
-            </button>
-          )}
-
-          {/* Lista de Jogos */}
-          <div className="flex-1 flex gap-4 justify-center overflow-hidden">
-            {visibleGames.map((game) => (
-              <div
-                key={game.gameId}
-                className="bg-gray-800 rounded-lg px-6 py-3 flex items-center gap-4 min-w-[280px] hover:bg-gray-700 transition"
+    <>
+      <div className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 py-5 border-b border-gray-700/50 backdrop-blur-xl overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE0YzMuMzE0IDAgNiAyLjY4NiA2IDZzLTIuNjg2IDYtNiA2LTYtMi42ODYtNi02IDIuNjg2LTYgNi02ek0yNCAzOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex items-center justify-between gap-4">
+            {/* Botão Anterior */}
+            {games.length > 2 && (
+              <button
+                onClick={prevGames}
+                className="group p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50"
+                aria-label="Jogos anteriores"
               >
+                <ChevronLeft className="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors" />
+              </button>
+            )}
+
+            {/* Lista de Jogos */}
+            <div className="flex-1 flex gap-6 justify-center overflow-hidden">
+              {visibleGames.map((game) => (
+                <button
+                  key={game.gameId}
+                  onClick={() => setSelectedGame(game)}
+                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl px-8 py-5 flex items-center gap-6 min-w-[400px] hover:scale-105 transition-all duration-300 border border-white/10 hover:border-pink-500/50 shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
+                >
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+                  
+                  {/* Time Visitante */}
+                  <div className="relative flex items-center gap-3 flex-1">
+                    <div className="relative">
+                      <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.awayTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
+                      <img 
+                        src={game.awayTeam.logo} 
+                        alt={game.awayTeam.teamTricode}
+                        className="relative w-12 h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
+                      />
+                    </div>
+                    <div className="text-left">
+                      <span className="block font-bold text-white text-xl tracking-tight">
+                        {game.awayTeam.teamTricode}
+                      </span>
+                      <span className="block text-xs text-gray-400 font-medium">
+                        {game.awayTeam.teamName}
+                      </span>
+                    </div>
+                    <span className="ml-auto text-3xl font-black text-white group-hover:text-pink-400 transition-colors">
+                      {game.awayTeam.score}
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  <div className="relative flex flex-col items-center px-6 border-x border-white/10">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-3.5 h-3.5 text-pink-400" />
+                      <span className="text-sm font-bold text-pink-400 tracking-wide">
+                        {game.gameStatusText}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 font-medium">
+                      Horário de Brasília
+                    </span>
+                    {game.gameStatus === 'in' && (
+                      <div className="absolute -top-1 right-0">
+                        <div className="relative">
+                          <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
+                          <div className="absolute inset-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Time Mandante */}
+                  <div className="relative flex items-center gap-3 flex-1 flex-row-reverse">
+                    <div className="relative">
+                      <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.homeTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
+                      <img 
+                        src={game.homeTeam.logo} 
+                        alt={game.homeTeam.teamTricode}
+                        className="relative w-12 h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
+                      />
+                    </div>
+                    <div className="text-right">
+                      <span className="block font-bold text-white text-xl tracking-tight">
+                        {game.homeTeam.teamTricode}
+                      </span>
+                      <span className="block text-xs text-gray-400 font-medium">
+                        {game.homeTeam.teamName}
+                      </span>
+                    </div>
+                    <span className="mr-auto text-3xl font-black text-white group-hover:text-pink-400 transition-colors">
+                      {game.homeTeam.score}
+                    </span>
+                  </div>
+
+                  {/* Click Indicator */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs text-gray-500 font-medium">Clique para detalhes</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Botão Próximo */}
+            {games.length > 2 && (
+              <button
+                onClick={nextGames}
+                className="group p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50"
+                aria-label="Próximos jogos"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Detalhes */}
+      {selectedGame && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedGame(null)}
+        >
+          <div 
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto border border-white/10 shadow-2xl animate-in zoom-in duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="relative p-8 border-b border-white/10">
+              <button
+                onClick={() => setSelectedGame(null)}
+                className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-400 hover:text-white" />
+              </button>
+              
+              <div className="flex items-center justify-between gap-8">
                 {/* Time Visitante */}
-                <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-4 flex-1">
                   <img 
-                    src={game.awayTeam.logo} 
-                    alt={game.awayTeam.teamTricode}
-                    className="w-8 h-8 object-contain"
+                    src={selectedGame.awayTeam.logo} 
+                    alt={selectedGame.awayTeam.teamTricode}
+                    className="w-20 h-20 object-contain drop-shadow-2xl"
                   />
-                  <span className="font-bold text-white text-lg">
-                    {game.awayTeam.teamTricode}
-                  </span>
-                  <span className="text-2xl font-bold text-white ml-auto">
-                    {game.awayTeam.score}
+                  <div>
+                    <h3 className="text-3xl font-black text-white mb-1">
+                      {selectedGame.awayTeam.teamTricode}
+                    </h3>
+                    <p className="text-gray-400 font-medium">
+                      {selectedGame.awayTeam.teamName}
+                    </p>
+                  </div>
+                  <span className="ml-auto text-5xl font-black text-white">
+                    {selectedGame.awayTeam.score}
                   </span>
                 </div>
 
-                {/* Status */}
-                <div className="flex flex-col items-center px-2">
-                  <span className="text-xs text-gray-400 whitespace-nowrap">
-                    {game.gameStatusText.includes('at') 
-                      ? game.gameStatusText.split('at')[1].trim()
-                      : game.gameStatusText
-                    }
-                  </span>
-                  {game.gameStatus === 'in' && (
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mt-1" />
-                  )}
+                {/* VS */}
+                <div className="text-center px-8">
+                  <span className="text-2xl font-bold text-gray-600">VS</span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Clock className="w-4 h-4 text-pink-400" />
+                    <span className="text-sm font-bold text-pink-400">
+                      {selectedGame.gameStatusText}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Time Mandante */}
-                <div className="flex items-center gap-2 flex-1 flex-row-reverse">
+                <div className="flex items-center gap-4 flex-1 flex-row-reverse">
                   <img 
-                    src={game.homeTeam.logo} 
-                    alt={game.homeTeam.teamTricode}
-                    className="w-8 h-8 object-contain"
+                    src={selectedGame.homeTeam.logo} 
+                    alt={selectedGame.homeTeam.teamTricode}
+                    className="w-20 h-20 object-contain drop-shadow-2xl"
                   />
-                  <span className="font-bold text-white text-lg">
-                    {game.homeTeam.teamTricode}
-                  </span>
-                  <span className="text-2xl font-bold text-white mr-auto">
-                    {game.homeTeam.score}
+                  <div className="text-right">
+                    <h3 className="text-3xl font-black text-white mb-1">
+                      {selectedGame.homeTeam.teamTricode}
+                    </h3>
+                    <p className="text-gray-400 font-medium">
+                      {selectedGame.homeTeam.teamName}
+                    </p>
+                  </div>
+                  <span className="mr-auto text-5xl font-black text-white">
+                    {selectedGame.homeTeam.score}
                   </span>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Botão Próximo */}
-          {games.length > 3 && (
-            <button
-              onClick={nextGames}
-              className="p-2 hover:bg-gray-800 rounded-full transition flex-shrink-0"
-              aria-label="Próximos jogos"
-            >
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
-          )}
+            {/* Body - Estatísticas (Preview) */}
+            <div className="p-8">
+              <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl p-8 border border-white/10 text-center">
+                <TrendingUp className="w-16 h-16 text-pink-400 mx-auto mb-4" />
+                <h4 className="text-2xl font-bold text-white mb-2">
+                  Estatísticas Detalhadas
+                </h4>
+                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                  Em breve você terá acesso a estatísticas completas dos jogadores, incluindo pontos, rebotes, assistências e muito mais!
+                </p>
+                <div className="inline-flex items-center gap-2 text-sm text-pink-400 font-medium">
+                  <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
+                  Implementação prevista para amanhã
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
