@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { logout, isAuthenticated } from '@/lib/auth';
 import { toast } from "sonner";
-import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star } from 'lucide-react';
+import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star, X } from 'lucide-react';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -14,6 +14,10 @@ export default function AdminPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  
+  // Novos estados para edição
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<any>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -106,8 +110,15 @@ export default function AdminPage() {
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from('article-images').getPublicUrl(fileName);
       if (!data.publicUrl) throw new Error("URL da imagem não encontrada.");
+      
+      // Atualiza o artigo na fila ou no modal de edição
       const { error: updateError } = await supabase.from('articles_queue').update({ image_url: data.publicUrl }).eq('id', articleId);
       if (updateError) throw updateError;
+
+      if (editingArticle && editingArticle.id === articleId) {
+        setEditingArticle((prev: any) => ({ ...prev, image_url: data.publicUrl }));
+      }
+
       toast.success('Imagem atualizada!', { id: toastId });
       await loadQueue();
     } catch (error: any) {
@@ -117,12 +128,10 @@ export default function AdminPage() {
     }
   };
 
-  const approveArticle = async (articleId: string) => {
+  const approveArticle = async (article: any) => {
     if (!window.confirm('Aprovar e publicar este artigo?')) return;
     const toastId = toast.loading("Publicando artigo...");
     try {
-      const article = queue.find(a => a.id === articleId);
-      if (!article) throw new Error("Artigo não encontrado na fila.");
       await supabase.from('articles').insert({
         queue_id: article.id,
         title: article.title,
@@ -137,10 +146,12 @@ export default function AdminPage() {
         published: true,
         published_at: new Date().toISOString(),
         is_featured: article.is_featured || false,
+        video_url: article.video_url || null,
       });
-      await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', articleId);
+      await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       toast.success('Artigo publicado!', { id: toastId });
       await loadData();
+      setShowEditModal(false);
     } catch (error: any) {
       toast.error('Erro ao publicar', { id: toastId, description: error.message });
     }
@@ -222,7 +233,43 @@ export default function AdminPage() {
     }
   };
 
-  const isLoading = isScraping || isProcessing || isDeleting;
+  const handleSaveEdit = async () => {
+    if (!editingArticle || !editingArticle.title || !editingArticle.body) {
+      toast.error('Título e corpo do artigo são obrigatórios.');
+      return;
+    }
+
+    setLoading(true);
+    const toastId = toast.loading("Salvando edição...");
+
+    try {
+      const { error } = await supabase
+        .from('articles_queue')
+        .update({
+          title: editingArticle.title,
+          summary: editingArticle.summary,
+          body: editingArticle.body,
+          meta_description: editingArticle.meta_description,
+          tags: editingArticle.tags,
+          image_url: editingArticle.image_url,
+          video_url: editingArticle.video_url,
+          is_featured: editingArticle.is_featured,
+        })
+        .eq('id', editingArticle.id);
+
+      if (error) throw error;
+
+      toast.success('Edição salva na fila!', { id: toastId });
+      setShowEditModal(false);
+      await loadQueue();
+    } catch (error: any) {
+      toast.error('Erro ao salvar edição', { id: toastId, description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isLoading = isScraping || isProcessing || isDeleting || loading;
 
   if (loading) {
     return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -290,7 +337,21 @@ export default function AdminPage() {
                         <Star className={`w-5 h-5 ${article.is_featured ? 'fill-white' : ''}`} />
                         {article.is_featured ? 'Em Destaque' : 'Destacar'}
                       </button>
-                      <button onClick={() => approveArticle(article.id)} className="btn-success flex-1 flex items-center justify-center gap-2"><CheckCircle className="w-5 h-5" />Aprovar</button>
+                      
+                      {/* NOVO BOTÃO DE EDIÇÃO */}
+                      <button
+                        onClick={() => {
+                          setEditingArticle(article);
+                          setShowEditModal(true);
+                        }}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition"
+                        title="Editar antes de publicar"
+                      >
+                        <Edit className="w-5 h-5" />
+                        Editar
+                      </button>
+                      
+                      <button onClick={() => approveArticle(article)} className="btn-success flex-1 flex items-center justify-center gap-2"><CheckCircle className="w-5 h-5" />Aprovar</button>
                       <button onClick={() => rejectArticle(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-6 py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2"><Trash2 className="w-5 h-5" />Rejeitar</button>
                       <button onClick={() => deleteFromQueue(article.id)} className="btn-danger flex-1 flex items-center justify-center gap-2"><Trash2 className="w-5 h-5" />Deletar</button>
                     </div>
@@ -340,6 +401,140 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      
+      {/* Modal de Edição */}
+      {showEditModal && editingArticle && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div 
+            className="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto border border-gray-700 shadow-2xl animate-in zoom-in duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header do Modal */}
+            <div className="sticky top-0 bg-gray-900 p-6 border-b border-gray-700 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <Edit className="w-6 h-6 text-blue-400" />
+                Editar Artigo (Fila)
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-400 hover:text-white" />
+              </button>
+            </div>
+
+            {/* Formulário de Edição */}
+            <div className="p-6 space-y-6">
+              {/* Título */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">Título</label>
+                <input
+                  type="text"
+                  value={editingArticle.title}
+                  onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-bold"
+                />
+              </div>
+
+              {/* Resumo */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">Resumo</label>
+                <textarea
+                  value={editingArticle.summary}
+                  onChange={(e) => setEditingArticle({ ...editingArticle, summary: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              {/* Corpo do Artigo */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">Conteúdo (HTML)</label>
+                <textarea
+                  value={editingArticle.body}
+                  onChange={(e) => setEditingArticle({ ...editingArticle, body: e.target.value })}
+                  rows={10}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+                />
+              </div>
+
+              {/* Vídeo URL */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">Vídeo URL (Opcional)</label>
+                <input
+                  type="url"
+                  value={editingArticle.video_url || ''}
+                  onChange={(e) => setEditingArticle({ ...editingArticle, video_url: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Link do YouTube ou Twitter"
+                />
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">Tags (separadas por vírgula)</label>
+                <input
+                  type="text"
+                  value={Array.isArray(editingArticle.tags) ? editingArticle.tags.join(', ') : ''}
+                  onChange={(e) => setEditingArticle({ 
+                    ...editingArticle, 
+                    tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) 
+                  })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+
+              {/* Imagem (Apenas URL para simplificar o modal) */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">URL da Imagem</label>
+                {editingArticle.image_url && (
+                  <img src={editingArticle.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" />
+                )}
+                <input
+                  type="url"
+                  value={editingArticle.image_url || ''}
+                  onChange={(e) => setEditingArticle({ ...editingArticle, image_url: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  placeholder="URL da imagem"
+                />
+              </div>
+            </div>
+
+            {/* Footer do Modal */}
+            <div className="p-6 border-t border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isLoading}
+                className="btn-magenta flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Save className="w-5 h-5" />
+                )}
+                Salvar Edição
+              </button>
+              <button
+                onClick={() => approveArticle(editingArticle)}
+                disabled={isLoading}
+                className="btn-success flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <CheckCircle className="w-5 h-5" />
+                Aprovar & Publicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
