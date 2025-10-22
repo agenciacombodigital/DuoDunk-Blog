@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, X, TrendingUp, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, TrendingUp, Clock, Trophy, Target, Users } from 'lucide-react';
 
 interface Game {
   gameId: string;
@@ -20,17 +20,54 @@ interface Game {
   };
 }
 
+interface GameStats {
+  status: string;
+  homeTeam: {
+    name: string;
+    abbreviation: string;
+    logo: string;
+    score: string;
+    leaders: {
+      points: { displayName: string; value: string; } | null;
+      rebounds: { displayName: string; value: string; } | null;
+      assists: { displayName: string; value: string; } | null;
+    };
+    players: any[];
+  };
+  awayTeam: {
+    name: string;
+    abbreviation: string;
+    logo: string;
+    score: string;
+    leaders: {
+      points: { displayName: string; value: string; } | null;
+      rebounds: { displayName: string; value: string; } | null;
+      assists: { displayName: string; value: string; } | null;
+    };
+    players: any[];
+  };
+}
+
 export default function NBAScoreboard() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [gameStats, setGameStats] = useState<GameStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     loadGames();
     const interval = setInterval(loadGames, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Carregar estatísticas quando selecionar jogo
+  useEffect(() => {
+    if (selectedGame) {
+      loadGameStats(selectedGame.gameId);
+    }
+  }, [selectedGame]);
 
   const loadGames = async () => {
     try {
@@ -88,6 +125,36 @@ export default function NBAScoreboard() {
     }
   };
 
+  const loadGameStats = async (gameId: string) => {
+    setLoadingStats(true);
+    try {
+      console.log('📊 Buscando estatísticas do jogo:', gameId);
+      
+      const { data, error } = await supabase.functions.invoke('nba-game-stats', {
+        body: { gameId }
+      });
+
+      if (error) {
+        console.error('❌ Erro ao buscar stats:', error);
+        setGameStats(null);
+        return;
+      }
+
+      if (data?.success && data?.stats) {
+        console.log('✅ Estatísticas carregadas:', data.stats);
+        setGameStats(data.stats);
+      } else {
+        console.log('ℹ️ Sem estatísticas disponíveis');
+        setGameStats(null);
+      }
+    } catch (err) {
+      console.error('❌ Erro:', err);
+      setGameStats(null);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   const nextGames = () => {
     setCurrentIndex((prev) => (prev + 2 >= games.length ? 0 : prev + 2));
   };
@@ -104,6 +171,10 @@ export default function NBAScoreboard() {
     CHI: { primary: 'from-red-600 to-black', secondary: 'bg-red-600' },
     HOU: { primary: 'from-red-600 to-gray-800', secondary: 'bg-red-600' },
     OKC: { primary: 'from-blue-500 to-orange-500', secondary: 'bg-blue-500' },
+    NYK: { primary: 'from-blue-600 to-orange-500', secondary: 'bg-blue-600' },
+    BKN: { primary: 'from-black to-gray-800', secondary: 'bg-black' },
+    CLE: { primary: 'from-red-800 to-yellow-600', secondary: 'bg-red-800' },
+    CHA: { primary: 'from-teal-500 to-purple-600', secondary: 'bg-teal-500' },
   };
 
   const getTeamGradient = (tricode: string) => {
@@ -340,21 +411,115 @@ export default function NBAScoreboard() {
               </div>
             </div>
 
-            {/* Body - Estatísticas (Preview) */}
+            {/* Body - Estatísticas */}
             <div className="p-8">
-              <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl p-8 border border-white/10 text-center">
-                <TrendingUp className="w-16 h-16 text-pink-400 mx-auto mb-4" />
-                <h4 className="text-2xl font-bold text-white mb-2">
-                  Estatísticas Detalhadas
-                </h4>
-                <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                  Em breve você terá acesso a estatísticas completas dos jogadores, incluindo pontos, rebotes, assistências e muito mais!
-                </p>
-                <div className="inline-flex items-center gap-2 text-sm text-pink-400 font-medium">
-                  <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
-                  Implementação prevista para amanhã
+              {loadingStats ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
+                    <div className="absolute inset-0 rounded-full bg-pink-500/20 animate-ping"></div>
+                  </div>
+                  <span className="ml-4 text-gray-300">Carregando estatísticas...</span>
                 </div>
-              </div>
+              ) : gameStats ? (
+                <div className="space-y-6">
+                  {/* Top Performers */}
+                  <div>
+                    <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-pink-400" />
+                      Top Performers
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Pontos */}
+                      <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-xl p-6 border border-white/10">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Target className="w-5 h-5 text-pink-400" />
+                          <h5 className="font-bold text-white">Pontos</h5>
+                        </div>
+                        
+                        {gameStats.awayTeam.leaders.points && (
+                          <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                            <p className="text-sm text-gray-400">{gameStats.awayTeam.abbreviation}</p>
+                            <p className="font-bold text-white">{gameStats.awayTeam.leaders.points.displayName}</p>
+                            <p className="text-2xl font-black text-pink-400">{gameStats.awayTeam.leaders.points.value} pts</p>
+                          </div>
+                        )}
+                        
+                        {gameStats.homeTeam.leaders.points && (
+                          <div className="p-3 bg-white/5 rounded-lg">
+                            <p className="text-sm text-gray-400">{gameStats.homeTeam.abbreviation}</p>
+                            <p className="font-bold text-white">{gameStats.homeTeam.leaders.points.displayName}</p>
+                            <p className="text-2xl font-black text-pink-400">{gameStats.homeTeam.leaders.points.value} pts</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Rebotes */}
+                      <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-xl p-6 border border-white/10">
+                        <div className="flex items-center gap-2 mb-4">
+                          <TrendingUp className="w-5 h-5 text-blue-400" />
+                          <h5 className="font-bold text-white">Rebotes</h5>
+                        </div>
+                        
+                        {gameStats.awayTeam.leaders.rebounds && (
+                          <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                            <p className="text-sm text-gray-400">{gameStats.awayTeam.abbreviation}</p>
+                            <p className="font-bold text-white">{gameStats.awayTeam.leaders.rebounds.displayName}</p>
+                            <p className="text-2xl font-black text-blue-400">{gameStats.awayTeam.leaders.rebounds.value} reb</p>
+                          </div>
+                        )}
+                        
+                        {gameStats.homeTeam.leaders.rebounds && (
+                          <div className="p-3 bg-white/5 rounded-lg">
+                            <p className="text-sm text-gray-400">{gameStats.homeTeam.abbreviation}</p>
+                            <p className="font-bold text-white">{gameStats.homeTeam.leaders.rebounds.displayName}</p>
+                            <p className="text-2xl font-black text-blue-400">{gameStats.homeTeam.leaders.rebounds.value} reb</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Assistências */}
+                      <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-xl p-6 border border-white/10">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Users className="w-5 h-5 text-green-400" />
+                          <h5 className="font-bold text-white">Assistências</h5>
+                        </div>
+                        
+                        {gameStats.awayTeam.leaders.assists && (
+                          <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                            <p className="text-sm text-gray-400">{gameStats.awayTeam.abbreviation}</p>
+                            <p className="font-bold text-white">{gameStats.awayTeam.leaders.assists.displayName}</p>
+                            <p className="text-2xl font-black text-green-400">{gameStats.awayTeam.leaders.assists.value} ast</p>
+                          </div>
+                        )}
+                        
+                        {gameStats.homeTeam.leaders.assists && (
+                          <div className="p-3 bg-white/5 rounded-lg">
+                            <p className="text-sm text-gray-400">{gameStats.homeTeam.abbreviation}</p>
+                            <p className="font-bold text-white">{gameStats.homeTeam.leaders.assists.displayName}</p>
+                            <p className="text-2xl font-black text-green-400">{gameStats.homeTeam.leaders.assists.value} ast</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl p-8 border border-white/10 text-center">
+                  <TrendingUp className="w-16 h-16 text-pink-400 mx-auto mb-4" />
+                  <h4 className="text-2xl font-bold text-white mb-2">
+                    Estatísticas em Breve
+                  </h4>
+                  <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                    As estatísticas detalhadas estarão disponíveis assim que o jogo começar!
+                  </p>
+                  <div className="inline-flex items-center gap-2 text-sm text-pink-400 font-medium">
+                    <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
+                    Aguardando início do jogo
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
