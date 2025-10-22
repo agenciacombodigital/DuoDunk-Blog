@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Clock } from 'lucide-react';
 import NewsSidebar from '@/components/NewsSidebar';
+import DisqusComments from '@/components/DisqusComments';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -132,6 +133,13 @@ export default function Artigo() {
                 </div>
               </div>
             )}
+
+            {/* Disqus Comments Section */}
+            <DisqusComments
+              identifier={article.slug}
+              title={article.title}
+              url={window.location.href}
+            />
           </article>
           
           <aside className="lg:col-span-1">
