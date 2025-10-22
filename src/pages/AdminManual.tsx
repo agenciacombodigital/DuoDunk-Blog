@@ -15,6 +15,7 @@ export default function AdminManual() {
     body: '',
     image_url: '',
     tags: 'nba, basquete',
+    video_url: '',
   });
 
   const handleImageUpload = async (file: File) => {
@@ -77,7 +78,8 @@ export default function AdminManual() {
         published_at: new Date().toISOString(),
         source: 'Editorial DuoDunk',
         original_link: null,
-        views: 0
+        views: 0,
+        video_url: form.video_url || null,
       });
 
       if (error) throw error;
@@ -180,6 +182,23 @@ export default function AdminManual() {
             />
             <p className="text-xs text-gray-500 mt-1">
               {form.body.length} caracteres
+            </p>
+          </div>
+
+          {/* Campo de Vídeo (Opcional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              🎬 Vídeo (Opcional) - YouTube ou Twitter
+            </label>
+            <input
+              type="url"
+              value={form.video_url || ''}
+              onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+              placeholder="https://www.youtube.com/watch?v=... ou https://twitter.com/..."
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20"
+            />
+            <p className="mt-2 text-xs text-gray-400">
+              Cole o link do YouTube ou Twitter. O vídeo aparecerá no topo da notícia.
             </p>
           </div>
 

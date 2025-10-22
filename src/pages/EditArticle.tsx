@@ -20,6 +20,7 @@ export default function EditArticle() {
     image_url: '',
     meta_description: '',
     tags: [] as string[],
+    video_url: '',
   });
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function EditArticle() {
         image_url: data.image_url || '',
         meta_description: data.meta_description || '',
         tags: data.tags || [],
+        video_url: data.video_url || '',
       });
     } catch (error: any) {
       console.error('Erro ao carregar artigo:', error);
@@ -106,6 +108,7 @@ export default function EditArticle() {
           image_url: formData.image_url,
           meta_description: formData.meta_description,
           tags: formData.tags,
+          video_url: formData.video_url,
         })
         .eq('id', article.id);
 
@@ -252,6 +255,23 @@ export default function EditArticle() {
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-mono text-sm"
                 placeholder="<p>Parágrafo 1.</p><p>Parágrafo 2.</p>"
               />
+            </div>
+
+            {/* Vídeo */}
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <label className="block text-sm font-bold text-gray-300 mb-2">
+                🎬 Vídeo (Opcional) - YouTube ou Twitter
+              </label>
+              <input
+                type="url"
+                value={formData.video_url || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                placeholder="https://www.youtube.com/watch?v=... ou https://twitter.com/..."
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Se preenchido, o vídeo substituirá a imagem de destaque.
+              </p>
             </div>
           </div>
 

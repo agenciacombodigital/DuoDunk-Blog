@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Clock } from 'lucide-react';
 import NewsSidebar from '@/components/NewsSidebar';
 import DisqusComments from '@/components/DisqusComments';
+import VideoPlayer from '@/components/VideoPlayer';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -104,12 +105,16 @@ export default function Artigo() {
               {article.summary}
             </p>
 
-            {/* Imagem Hero */}
-            <img
-              src={article.image_url}
-              alt={article.title}
-              className="w-full h-auto rounded-2xl mb-10 shadow-lg"
-            />
+            {/* Vídeo ou Imagem Hero */}
+            {article.video_url ? (
+              <VideoPlayer url={article.video_url} />
+            ) : (
+              article.image_url && <img
+                src={article.image_url}
+                alt={article.title}
+                className="w-full h-auto rounded-2xl mb-10 shadow-lg"
+              />
+            )}
 
             {/* Corpo do Artigo */}
             <div 
