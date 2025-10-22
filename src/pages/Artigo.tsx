@@ -133,19 +133,21 @@ export default function Artigo() {
                 </div>
               </div>
             )}
-
-            {/* Disqus Comments Section */}
-            <DisqusComments
-              identifier={article.slug}
-              title={article.title}
-              url={window.location.href}
-            />
           </article>
           
           <aside className="lg:col-span-1">
             <NewsSidebar />
           </aside>
         </div>
+      </div>
+
+      {/* Sistema de Comentários */}
+      <div className="container mx-auto px-4 max-w-4xl pb-12">
+        <DisqusComments
+          identifier={article.slug}
+          title={article.title}
+          url={`https://duo-dunk-blog.vercel.app/artigos/${article.slug}`}
+        />
       </div>
     </div>
   );
