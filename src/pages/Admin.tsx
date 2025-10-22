@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { logout, isAuthenticated } from '@/lib/auth';
 import { toast } from "sonner";
-import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar } from 'lucide-react';
+import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star } from 'lucide-react';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -127,13 +127,34 @@ export default function AdminPage() {
         queue_id: article.id, title: article.title, summary: article.summary, body: article.body,
         meta_description: article.meta_description, tags: article.tags, slug: article.slug,
         image_url: article.image_url, source: article.source, original_link: article.original_link,
-        published: true, published_at: new Date().toISOString(),
+        published: true, published_at: new Date().toISOString(), is_featured: article.is_featured,
       });
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', articleId);
       toast.success('Artigo publicado!', { id: toastId });
       await loadData();
     } catch (error: any) {
       toast.error('Erro ao publicar', { id: toastId, description: error.message });
+    }
+  };
+
+  const handleToggleFeatured = async (articleId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('articles_queue')
+        .update({ is_featured: !currentStatus })
+        .eq('id', articleId);
+  
+      if (error) throw error;
+  
+      toast.success(
+        !currentStatus ? '⭐ Marcado como destaque!' : '✓ Destaque removido'
+      );
+      
+      loadData();
+    } catch (error: any) {
+      toast.error('Erro ao atualizar destaque', { 
+        description: error.message,
+      });
     }
   };
 
@@ -248,6 +269,18 @@ export default function AdminPage() {
                     <details className="mb-4"><summary className="cursor-pointer text-secondary hover:text-cyan-300 text-sm font-semibold">📄 Ver conteúdo completo</summary><div className="mt-4 prose prose-invert prose-sm max-w-none bg-black p-4 rounded-lg overflow-auto max-h-96" dangerouslySetInnerHTML={{ __html: article.body }} /></details>
                     {article.tags && <div className="flex flex-wrap gap-2 mb-4">{article.tags.map((tag: string) => (<span key={tag} className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded">#{tag}</span>))}</div>}
                     <div className="flex gap-3">
+                      <button
+                        onClick={() => handleToggleFeatured(article.id, article.is_featured)}
+                        className={`flex-1 ${
+                          article.is_featured 
+                            ? 'bg-yellow-600 hover:bg-yellow-700' 
+                            : 'bg-gray-600 hover:bg-gray-700'
+                        } text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition`}
+                        title={article.is_featured ? 'Remover destaque' : 'Marcar como destaque'}
+                      >
+                        <Star className={`w-5 h-5 ${article.is_featured ? 'fill-white' : ''}`} />
+                        {article.is_featured ? 'Em Destaque' : 'Destacar'}
+                      </button>
                       <button onClick={() => approveArticle(article.id)} className="btn-success flex-1 flex items-center justify-center gap-2"><CheckCircle className="w-5 h-5" />Aprovar</button>
                       <button onClick={() => rejectArticle(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-6 py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2"><Trash2 className="w-5 h-5" />Rejeitar</button>
                       <button onClick={() => deleteFromQueue(article.id)} className="btn-danger flex-1 flex items-center justify-center gap-2"><Trash2 className="w-5 h-5" />Deletar</button>

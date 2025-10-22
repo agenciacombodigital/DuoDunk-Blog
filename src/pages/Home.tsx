@@ -64,8 +64,12 @@ export default function Home() {
   }
 
   // Separar artigos por seções
-  const featuredArticle = articles[0];
-  const section1 = articles.slice(1, 8); // 7 notícias: 3 direita + 3 abaixo + 1 grande
+  // Priorizar notícias marcadas como destaque
+  const featuredArticle = articles.find(a => a.is_featured) || articles[0];
+  // Filtrar o artigo em destaque das outras seções
+  const section1 = articles
+    .filter(a => a.id !== featuredArticle?.id)
+    .slice(0, 7); // 7 notícias: 3 direita + 3 abaixo + 1 grande
   const section2 = articles.slice(8, 14); // Lista horizontal
   const section3 = articles.slice(14, 16); // Grid 2 colunas
   const section4 = articles.slice(16, 20); // Grid 4 colunas
