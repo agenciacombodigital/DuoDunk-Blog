@@ -162,85 +162,91 @@ export default function NBAScoreboard() {
             )}
 
             {/* Lista de Jogos */}
-            <div className="flex-1 flex gap-6 justify-center overflow-hidden">
+            <div className="flex-1 flex gap-3 sm:gap-6 justify-center overflow-hidden px-2 sm:px-0">
               {visibleGames.map((game) => (
                 <button
                   key={game.gameId}
                   onClick={() => setSelectedGame(game)}
-                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl px-8 py-5 flex items-center gap-6 min-w-[400px] hover:scale-105 transition-all duration-300 border border-white/10 hover:border-pink-500/50 shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
+                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl 
+                             px-4 sm:px-8 py-4 sm:py-5 
+                             flex items-center gap-3 sm:gap-6 
+                             min-w-full sm:min-w-[400px] 
+                             hover:scale-105 transition-all duration-300 
+                             border border-white/10 hover:border-pink-500/50 
+                             shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
                 >
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                   
                   {/* Time Visitante */}
-                  <div className="relative flex items-center gap-3 flex-1">
-                    <div className="relative">
+                  <div className="relative flex items-center gap-2 sm:gap-3 flex-1">
+                    <div className="relative flex-shrink-0">
                       <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.awayTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
                       <img 
                         src={game.awayTeam.logo} 
                         alt={game.awayTeam.teamTricode}
-                        className="relative w-12 h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
+                        className="relative w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
                       />
                     </div>
-                    <div className="text-left">
-                      <span className="block font-bold text-white text-xl tracking-tight">
+                    <div className="text-left min-w-0">
+                      <span className="block font-bold text-white text-base sm:text-xl tracking-tight truncate">
                         {game.awayTeam.teamTricode}
                       </span>
-                      <span className="block text-xs text-gray-400 font-medium">
+                      <span className="hidden sm:block text-xs text-gray-400 font-medium truncate">
                         {game.awayTeam.teamName}
                       </span>
                     </div>
-                    <span className="ml-auto text-3xl font-black text-white group-hover:text-pink-400 transition-colors">
+                    <span className="ml-auto text-2xl sm:text-3xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
                       {game.awayTeam.score}
                     </span>
                   </div>
 
                   {/* Status */}
-                  <div className="relative flex flex-col items-center px-6 border-x border-white/10">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-3.5 h-3.5 text-pink-400" />
-                      <span className="text-sm font-bold text-pink-400 tracking-wide">
+                  <div className="relative flex flex-col items-center px-3 sm:px-6 border-x border-white/10 flex-shrink-0">
+                    <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                      <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-400" />
+                      <span className="text-xs sm:text-sm font-bold text-pink-400 tracking-wide whitespace-nowrap">
                         {game.gameStatusText}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="hidden sm:block text-xs text-gray-500 font-medium whitespace-nowrap">
                       Horário de Brasília
                     </span>
                     {game.gameStatus === 'in' && (
                       <div className="absolute -top-1 right-0">
                         <div className="relative">
-                          <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
-                          <div className="absolute inset-0 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></div>
+                          <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full animate-pulse"></div>
+                          <div className="absolute inset-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full animate-ping"></div>
                         </div>
                       </div>
                     )}
                   </div>
 
                   {/* Time Mandante */}
-                  <div className="relative flex items-center gap-3 flex-1 flex-row-reverse">
-                    <div className="relative">
+                  <div className="relative flex items-center gap-2 sm:gap-3 flex-1 flex-row-reverse">
+                    <div className="relative flex-shrink-0">
                       <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.homeTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
                       <img 
                         src={game.homeTeam.logo} 
                         alt={game.homeTeam.teamTricode}
-                        className="relative w-12 h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
+                        className="relative w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
                       />
                     </div>
-                    <div className="text-right">
-                      <span className="block font-bold text-white text-xl tracking-tight">
+                    <div className="text-right min-w-0">
+                      <span className="block font-bold text-white text-base sm:text-xl tracking-tight truncate">
                         {game.homeTeam.teamTricode}
                       </span>
-                      <span className="block text-xs text-gray-400 font-medium">
+                      <span className="hidden sm:block text-xs text-gray-400 font-medium truncate">
                         {game.homeTeam.teamName}
                       </span>
                     </div>
-                    <span className="mr-auto text-3xl font-black text-white group-hover:text-pink-400 transition-colors">
+                    <span className="mr-auto text-2xl sm:text-3xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
                       {game.homeTeam.score}
                     </span>
                   </div>
 
-                  {/* Click Indicator */}
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Click Indicator - Esconder no mobile */}
+                  <div className="hidden sm:block absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-xs text-gray-500 font-medium">Clique para detalhes</span>
                   </div>
                 </button>
