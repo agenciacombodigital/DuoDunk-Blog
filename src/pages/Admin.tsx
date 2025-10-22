@@ -124,10 +124,19 @@ export default function AdminPage() {
       const article = queue.find(a => a.id === articleId);
       if (!article) throw new Error("Artigo não encontrado na fila.");
       await supabase.from('articles').insert({
-        queue_id: article.id, title: article.title, summary: article.summary, body: article.body,
-        meta_description: article.meta_description, tags: article.tags, slug: article.slug,
-        image_url: article.image_url, source: article.source, original_link: article.original_link,
-        published: true, published_at: new Date().toISOString(), is_featured: article.is_featured,
+        queue_id: article.id,
+        title: article.title,
+        summary: article.summary,
+        body: article.body,
+        meta_description: article.meta_description,
+        tags: article.tags,
+        slug: article.slug,
+        image_url: article.image_url,
+        source: article.source,
+        original_link: article.original_link,
+        published: true,
+        published_at: new Date().toISOString(),
+        is_featured: article.is_featured || false,
       });
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', articleId);
       toast.success('Artigo publicado!', { id: toastId });

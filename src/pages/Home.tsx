@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Calendar, Loader2, Clock, Eye } from 'lucide-react';
+import { TrendingUp, Calendar, Loader2, Clock, Eye, Star } from 'lucide-react';
 
 // Função para calcular tempo atrás
 function getTimeAgo(dateString: string): string {
@@ -107,8 +107,8 @@ export default function Home() {
                 <div className="absolute bottom-0 left-0 right-0 p-8">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                      <Eye className="w-3 h-3" />
-                      {featuredArticle.views || 0} views
+                      <Star className="w-3 h-3 fill-white" />
+                      DESTAQUE
                     </span>
                     <span className="text-white/80 text-sm flex items-center gap-1">
                       <Clock className="w-3 h-3" />
