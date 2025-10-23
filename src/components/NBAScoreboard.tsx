@@ -457,21 +457,31 @@ export default function NBAScoreboard() {
                           <h5 className="font-bold text-white">Pontos</h5>
                         </div>
                         
-                        {gameStats.awayTeam.leaders.points && (
-                          <div className="mb-3 p-3 bg-white/5 rounded-lg">
-                            <p className="text-sm text-gray-400">{gameStats.awayTeam.abbreviation}</p>
-                            <p className="font-bold text-white">{gameStats.awayTeam.leaders.points.displayName}</p>
-                            <p className="text-2xl font-black text-pink-400">{gameStats.awayTeam.leaders.points.value} pts</p>
-                          </div>
-                        )}
+                        {/* Visitante - Pontos */}
+                        <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                          <p className="text-sm text-gray-400 mb-1">{gameStats.awayTeam.abbreviation}</p>
+                          {gameStats.awayTeam.leaders.points ? (
+                            <>
+                              <p className="font-bold text-white text-sm">{gameStats.awayTeam.leaders.points.displayName}</p>
+                              <p className="text-2xl font-black text-pink-400">{gameStats.awayTeam.leaders.points.value} pts</p>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
+                          )}
+                        </div>
                         
-                        {gameStats.homeTeam.leaders.points && (
-                          <div className="p-3 bg-white/5 rounded-lg">
-                            <p className="text-sm text-gray-400">{gameStats.homeTeam.abbreviation}</p>
-                            <p className="font-bold text-white">{gameStats.homeTeam.leaders.points.displayName}</p>
-                            <p className="text-2xl font-black text-pink-400">{gameStats.homeTeam.leaders.points.value} pts</p>
-                          </div>
-                        )}
+                        {/* Mandante - Pontos */}
+                        <div className="p-3 bg-white/5 rounded-lg">
+                          <p className="text-sm text-gray-400 mb-1">{gameStats.homeTeam.abbreviation}</p>
+                          {gameStats.homeTeam.leaders.points ? (
+                            <>
+                              <p className="font-bold text-white text-sm">{gameStats.homeTeam.leaders.points.displayName}</p>
+                              <p className="text-2xl font-black text-pink-400">{gameStats.homeTeam.leaders.points.value} pts</p>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
+                          )}
+                        </div>
                       </div>
 
                       {/* Rebotes */}
@@ -481,21 +491,31 @@ export default function NBAScoreboard() {
                           <h5 className="font-bold text-white">Rebotes</h5>
                         </div>
                         
-                        {gameStats.awayTeam.leaders.rebounds && (
-                          <div className="mb-3 p-3 bg-white/5 rounded-lg">
-                            <p className="text-sm text-gray-400">{gameStats.awayTeam.abbreviation}</p>
-                            <p className="font-bold text-white">{gameStats.awayTeam.leaders.rebounds.displayName}</p>
-                            <p className="text-2xl font-black text-blue-400">{gameStats.awayTeam.leaders.rebounds.value} reb</p>
-                          </div>
-                        )}
+                        {/* Visitante - Rebotes */}
+                        <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                          <p className="text-sm text-gray-400 mb-1">{gameStats.awayTeam.abbreviation}</p>
+                          {gameStats.awayTeam.leaders.rebounds ? (
+                            <>
+                              <p className="font-bold text-white text-sm">{gameStats.awayTeam.leaders.rebounds.displayName}</p>
+                              <p className="text-2xl font-black text-blue-400">{gameStats.awayTeam.leaders.rebounds.value} reb</p>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
+                          )}
+                        </div>
                         
-                        {gameStats.homeTeam.leaders.rebounds && (
-                          <div className="p-3 bg-white/5 rounded-lg">
-                            <p className="text-sm text-gray-400">{gameStats.homeTeam.abbreviation}</p>
-                            <p className="font-bold text-white">{gameStats.homeTeam.leaders.rebounds.displayName}</p>
-                            <p className="text-2xl font-black text-blue-400">{gameStats.homeTeam.leaders.rebounds.value} reb</p>
-                          </div>
-                        )}
+                        {/* Mandante - Rebotes */}
+                        <div className="p-3 bg-white/5 rounded-lg">
+                          <p className="text-sm text-gray-400 mb-1">{gameStats.homeTeam.abbreviation}</p>
+                          {gameStats.homeTeam.leaders.rebounds ? (
+                            <>
+                              <p className="font-bold text-white text-sm">{gameStats.homeTeam.leaders.rebounds.displayName}</p>
+                              <p className="text-2xl font-black text-blue-400">{gameStats.homeTeam.leaders.rebounds.value} reb</p>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
+                          )}
+                        </div>
                       </div>
 
                       {/* Assistências */}
@@ -505,21 +525,31 @@ export default function NBAScoreboard() {
                           <h5 className="font-bold text-white">Assistências</h5>
                         </div>
                         
-                        {gameStats.awayTeam.leaders.assists && (
-                          <div className="mb-3 p-3 bg-white/5 rounded-lg">
-                            <p className="text-sm text-gray-400">{gameStats.awayTeam.abbreviation}</p>
-                            <p className="font-bold text-white">{gameStats.awayTeam.leaders.assists.displayName}</p>
-                            <p className="text-2xl font-black text-green-400">{gameStats.awayTeam.leaders.assists.value} ast</p>
-                          </div>
-                        )}
+                        {/* Visitante - Assistências */}
+                        <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                          <p className="text-sm text-gray-400 mb-1">{gameStats.awayTeam.abbreviation}</p>
+                          {gameStats.awayTeam.leaders.assists ? (
+                            <>
+                              <p className="font-bold text-white text-sm">{gameStats.awayTeam.leaders.assists.displayName}</p>
+                              <p className="text-2xl font-black text-green-400">{gameStats.awayTeam.leaders.assists.value} ast</p>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
+                          )}
+                        </div>
                         
-                        {gameStats.homeTeam.leaders.assists && (
-                          <div className="p-3 bg-white/5 rounded-lg">
-                            <p className="text-sm text-gray-400">{gameStats.homeTeam.abbreviation}</p>
-                            <p className="font-bold text-white">{gameStats.homeTeam.leaders.assists.displayName}</p>
-                            <p className="text-2xl font-black text-green-400">{gameStats.homeTeam.leaders.assists.value} ast</p>
-                          </div>
-                        )}
+                        {/* Mandante - Assistências */}
+                        <div className="p-3 bg-white/5 rounded-lg">
+                          <p className="text-sm text-gray-400 mb-1">{gameStats.homeTeam.abbreviation}</p>
+                          {gameStats.homeTeam.leaders.assists ? (
+                            <>
+                              <p className="font-bold text-white text-sm">{gameStats.homeTeam.leaders.assists.displayName}</p>
+                              <p className="text-2xl font-black text-green-400">{gameStats.homeTeam.leaders.assists.value} ast</p>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
