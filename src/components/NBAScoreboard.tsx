@@ -234,7 +234,7 @@ export default function NBAScoreboard() {
             {games.length > 1 && (
               <button
                 onClick={prevGames}
-                className="group p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50 hidden sm:block"
+                className="group p-2 sm:p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50"
                 aria-label="Jogos anteriores"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors" />
@@ -242,7 +242,7 @@ export default function NBAScoreboard() {
             )}
 
             {/* Lista de Jogos */}
-            <div className="flex-1 flex gap-3 sm:gap-6 justify-start sm:justify-center overflow-x-auto px-2 sm:px-0 snap-x snap-mandatory">
+            <div className="flex-1 flex gap-3 sm:gap-6 justify-start sm:justify-center overflow-x-auto px-2 sm:px-0 snap-x snap-mandatory scrollbar-hide">
               {visibleGames.map((game) => (
                 <button
                   key={game.gameId}
@@ -338,7 +338,7 @@ export default function NBAScoreboard() {
             {games.length > 1 && (
               <button
                 onClick={nextGames}
-                className="group p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50 hidden sm:block"
+                className="group p-2 sm:p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50"
                 aria-label="Próximos jogos"
               >
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors" />
