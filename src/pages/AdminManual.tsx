@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Save, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Loader2, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ export default function AdminManual() {
     image_url: '',
     tags: 'nba, basquete',
     video_url: '',
+    is_featured: false, // Adicionado
   });
 
   const handleImageUpload = async (file: File) => {
@@ -80,6 +81,7 @@ export default function AdminManual() {
         original_link: null,
         views: 0,
         video_url: form.video_url || null,
+        is_featured: form.is_featured || false, // Adicionado
       });
 
       if (error) throw error;
@@ -268,6 +270,29 @@ export default function AdminManual() {
             <p className="text-xs text-gray-500 mt-1">
               Separe cada tag com vírgula. Ex: nba, playoffs, warriors
             </p>
+          </div>
+          
+          {/* Marcar como Destaque */}
+          <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <input
+              type="checkbox"
+              id="featured-manual"
+              checked={form.is_featured || false}
+              onChange={(e) => setForm({ 
+                ...form, 
+                is_featured: e.target.checked 
+              })}
+              className="w-5 h-5 rounded border-gray-600 text-pink-600 focus:ring-pink-500 focus:ring-offset-gray-900 cursor-pointer"
+            />
+            <label htmlFor="featured-manual" className="flex-1 cursor-pointer">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <span className="font-bold text-white">Marcar como Destaque</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Notícias em destaque aparecem no topo da página inicial
+              </p>
+            </label>
           </div>
 
           {/* Botão Submit */}
