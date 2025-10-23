@@ -116,6 +116,31 @@ export default function Artigo() {
               />
             )}
 
+            {/* Links para times mencionados nas tags */}
+            {article.tags && article.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {article.tags
+                  .filter((tag: string) => {
+                    const lowerTag = tag.toLowerCase();
+                    return ['lakers', 'warriors', 'celtics', 'heat', 'bulls', 'knicks', 
+                            'nets', 'cavaliers', 'mavericks', 'spurs', 'rockets', 'thunder', 
+                            'bucks', 'suns', '76ers', 'hawks', 'magic', 'hornets', 'pistons',
+                            'pacers', 'clippers', 'pelicans', 'timberwolves', 'trail-blazers',
+                            'kings', 'raptors', 'jazz', 'wizards', 'grizzlies', 'nuggets'].includes(lowerTag);
+                  })
+                  .map((tag: string) => (
+                    <Link
+                      key={tag}
+                      to={`/times/${tag.toLowerCase()}`}
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 text-pink-900 px-4 py-2 rounded-full text-sm font-medium transition group"
+                    >
+                      🏀 <span className="group-hover:underline">Ver página do {tag}</span>
+                    </Link>
+                  ))
+                }
+              </div>
+            )}
+
             {/* Corpo do Artigo */}
             <div 
               className="prose prose-lg max-w-none mb-12"
