@@ -156,11 +156,15 @@ export default function NBAScoreboard() {
   };
 
   const nextGames = () => {
-    setCurrentIndex((prev) => (prev + 2 >= games.length ? 0 : prev + 2));
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const step = isMobile ? 1 : 2;
+    setCurrentIndex((prev) => (prev + step >= games.length ? 0 : prev + step));
   };
 
   const prevGames = () => {
-    setCurrentIndex((prev) => (prev - 2 < 0 ? Math.max(0, games.length - 2) : prev - 2));
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const step = isMobile ? 1 : 2;
+    setCurrentIndex((prev) => (prev - step < 0 ? Math.max(0, games.length - step) : prev - step));
   };
 
   const teamColors: { [key: string]: { primary: string; secondary: string } } = {
@@ -211,7 +215,10 @@ export default function NBAScoreboard() {
     );
   }
 
-  const visibleGames = games.slice(currentIndex, currentIndex + 2);
+  // No mobile: 1 jogo por vez | No desktop: 2 jogos por vez
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const gamesPerView = isMobile ? 1 : 2;
+  const visibleGames = games.slice(currentIndex, currentIndex + gamesPerView);
 
   return (
     <>
@@ -222,7 +229,7 @@ export default function NBAScoreboard() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex items-center justify-between gap-4">
             {/* Botão Anterior */}
-            {games.length > 2 && (
+            {games.length > 1 && (
               <button
                 onClick={prevGames}
                 className="group p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50 hidden sm:block"
@@ -326,7 +333,7 @@ export default function NBAScoreboard() {
             </div>
 
             {/* Botão Próximo */}
-            {games.length > 2 && (
+            {games.length > 1 && (
               <button
                 onClick={nextGames}
                 className="group p-3 hover:bg-white/5 rounded-full transition-all duration-300 flex-shrink-0 backdrop-blur-sm border border-white/10 hover:border-pink-500/50 hidden sm:block"
