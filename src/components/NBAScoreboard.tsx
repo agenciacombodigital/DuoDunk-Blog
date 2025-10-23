@@ -130,7 +130,7 @@ export default function NBAScoreboard() {
     try {
       console.log('📊 Buscando estatísticas do jogo:', gameId);
       
-      const { data, error } = await supabase.functions.invoke('nba-game-stats-v2', {
+      const { data, error } = await supabase.functions.invoke('nba-game-stats', {
         body: { gameId }
       });
 
