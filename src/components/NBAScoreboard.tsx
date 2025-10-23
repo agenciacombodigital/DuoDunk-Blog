@@ -142,6 +142,8 @@ export default function NBAScoreboard() {
 
       if (data?.success && data?.stats) {
         console.log('✅ Estatísticas carregadas:', data.stats);
+        console.log('🔍 HOME LEADERS:', data.stats.homeTeam.leaders);
+        console.log('🔍 AWAY LEADERS:', data.stats.awayTeam.leaders);
         setGameStats(data.stats);
       } else {
         console.log('ℹ️ Sem estatísticas disponíveis');
