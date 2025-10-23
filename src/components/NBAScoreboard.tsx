@@ -248,11 +248,12 @@ export default function NBAScoreboard() {
                   key={game.gameId}
                   onClick={() => setSelectedGame(game)}
                   className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl 
-                             px-4 sm:px-8 py-4 sm:py-5 
-                             flex items-center gap-3 sm:gap-6 
-                             min-w-[calc(100vw-2rem)] sm:min-w-[400px] 
+                             px-4 sm:px-6 md:px-8 py-4 sm:py-5 
+                             flex items-center gap-3 sm:gap-4 md:gap-6 
+                             min-w-[calc(100vw-2rem)] sm:min-w-[480px] md:min-w-[520px] lg:min-w-[560px]
+                             max-w-[95vw] sm:max-w-[48%] md:max-w-[45%]
                              flex-shrink-0 snap-center
-                             hover:scale-105 transition-all duration-300 
+                             hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 
                              border border-white/10 hover:border-pink-500/50 
                              shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
                 >
