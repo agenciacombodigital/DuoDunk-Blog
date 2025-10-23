@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { logout, isAuthenticated } from '@/lib/auth';
 import { toast } from "sonner";
-import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star, X } from 'lucide-react';
+import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star, X, Save } from 'lucide-react';
 
 export default function AdminPage() {
   const navigate = useNavigate();
