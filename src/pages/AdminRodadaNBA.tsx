@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Save, Loader2, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Upload, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -13,6 +13,7 @@ export default function AdminRodadaNBA() {
   const [subtitle, setSubtitle] = useState('');
   const [intro, setIntro] = useState('');
   const [imageUrl, setImageUrl] = useState('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=630&fit=crop');
+  const [isFeatured, setIsFeatured] = useState(true); // PADRÃO: TRUE
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -96,7 +97,8 @@ export default function AdminRodadaNBA() {
         original_link: null,
         published: true,
         published_at: new Date().toISOString(),
-        views: 0
+        views: 0,
+        is_featured: isFeatured, // Adicionado
       });
 
       if (error) throw error;
@@ -239,6 +241,26 @@ export default function AdminRodadaNBA() {
                 onError={() => setImageUrl('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200')}
               />
             )}
+          </div>
+          
+          {/* Marcar como Destaque */}
+          <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <input
+              type="checkbox"
+              id="featured-rodada"
+              checked={isFeatured}
+              onChange={(e) => setIsFeatured(e.target.checked)}
+              className="w-5 h-5 rounded border-gray-600 text-pink-600 focus:ring-pink-500 focus:ring-offset-gray-900 cursor-pointer"
+            />
+            <label htmlFor="featured-rodada" className="flex-1 cursor-pointer">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                <span className="font-bold text-white">Marcar como Destaque</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                ⚡ Rodadas NBA sempre devem ser destaque para maior engajamento nos comentários!
+              </p>
+            </label>
           </div>
 
           {/* Submit */}
