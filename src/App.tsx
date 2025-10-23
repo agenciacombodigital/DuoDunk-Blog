@@ -14,7 +14,7 @@ import AdminManual from "./pages/AdminManual";
 import AdminRodadaNBA from "./pages/AdminRodadaNBA";
 import NBAScoreboard from "./components/NBAScoreboard";
 import TeamsPage from "./pages/Teams";
-import TeamPage from "./pages/Team";
+import Time from "./pages/Time";
 
 const AppContent = () => {
   const location = useLocation();
@@ -36,7 +36,7 @@ const AppContent = () => {
           <Route path="/ultimas" element={<Ultimas />} />
           <Route path="/artigos/:slug" element={<Artigo />} />
           <Route path="/times" element={<TeamsPage />} />
-          <Route path="/times/:slug" element={<TeamPage />} />
+          <Route path="/times/:teamSlug" element={<Time />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />

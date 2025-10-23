@@ -70,13 +70,13 @@ interface TeamData {
   }>;
 }
 
-export default function TeamPage() {
-  const { slug } = useParams<{ slug: string }>();
+export default function Time() {
+  const { teamSlug } = useParams<{ teamSlug: string }>();
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'roster' | 'games' | 'news'>('roster');
 
-  const teamInfo = slug ? getTeamBySlug(slug) : null;
+  const teamInfo = teamSlug ? getTeamBySlug(teamSlug) : null;
 
   useEffect(() => {
     if (teamInfo) {
@@ -84,7 +84,7 @@ export default function TeamPage() {
     } else {
       setLoading(false);
     }
-  }, [slug]);
+  }, [teamSlug]);
 
   const loadTeamData = async () => {
     if (!teamInfo) return;
