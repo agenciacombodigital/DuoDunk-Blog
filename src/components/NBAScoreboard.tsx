@@ -271,10 +271,10 @@ export default function NBAScoreboard() {
                       />
                     </div>
                     <div className="text-left min-w-0">
-                      <span className="block font-bold text-white text-base sm:text-xl tracking-tight truncate">
+                      <span className="block font-bold text-white text-sm sm:text-base md:text-lg tracking-tight">
                         {game.awayTeam.teamTricode}
                       </span>
-                      <span className="hidden sm:block text-xs text-gray-400 font-medium truncate">
+                      <span className="hidden sm:block text-[10px] md:text-xs text-gray-400 font-medium max-w-[80px] truncate">
                         {game.awayTeam.teamName}
                       </span>
                     </div>
@@ -315,10 +315,10 @@ export default function NBAScoreboard() {
                       />
                     </div>
                     <div className="text-right min-w-0">
-                      <span className="block font-bold text-white text-base sm:text-xl tracking-tight truncate">
+                      <span className="block font-bold text-white text-sm sm:text-base md:text-lg tracking-tight">
                         {game.homeTeam.teamTricode}
                       </span>
-                      <span className="hidden sm:block text-xs text-gray-400 font-medium truncate">
+                      <span className="hidden sm:block text-[10px] md:text-xs text-gray-400 font-medium max-w-[80px] truncate">
                         {game.homeTeam.teamName}
                       </span>
                     </div>
