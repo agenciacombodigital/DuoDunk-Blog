@@ -356,11 +356,19 @@ export default function NBAScoreboard() {
           onClick={() => setSelectedGame(null)}
         >
           <div 
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-auto border border-white/10 shadow-2xl animate-in zoom-in duration-300"
+            className="bg-gradient-to-br from-gray-900 to-gray-800 
+             rounded-t-3xl sm:rounded-3xl 
+             max-w-4xl w-full 
+             max-h-[85vh] sm:max-h-[90vh] 
+             overflow-auto 
+             border border-white/10 
+             shadow-2xl 
+             animate-in zoom-in duration-300
+             mx-2 sm:mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative p-8 border-b border-white/10">
+            <div className="relative p-4 sm:p-8 border-b border-white/10">
               <button
                 onClick={() => setSelectedGame(null)}
                 className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -374,27 +382,27 @@ export default function NBAScoreboard() {
                   <img 
                     src={selectedGame.awayTeam.logo} 
                     alt={selectedGame.awayTeam.teamTricode}
-                    className="w-20 h-20 object-contain drop-shadow-2xl"
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-2xl"
                   />
                   <div>
-                    <h3 className="text-3xl font-black text-white mb-1">
+                    <h3 className="text-2xl sm:text-3xl font-black text-white mb-1">
                       {selectedGame.awayTeam.teamTricode}
                     </h3>
-                    <p className="text-gray-400 font-medium">
+                    <p className="text-gray-400 font-medium text-sm sm:text-base">
                       {selectedGame.awayTeam.teamName}
                     </p>
                   </div>
-                  <span className="ml-auto text-5xl font-black text-white">
+                  <span className="ml-auto text-4xl sm:text-5xl font-black text-white">
                     {selectedGame.awayTeam.score}
                   </span>
                 </div>
 
                 {/* VS */}
-                <div className="text-center px-8">
-                  <span className="text-2xl font-bold text-gray-600">VS</span>
+                <div className="text-center px-4 sm:px-8">
+                  <span className="text-xl sm:text-2xl font-bold text-gray-600">VS</span>
                   <div className="flex items-center gap-2 mt-2">
                     <Clock className="w-4 h-4 text-pink-400" />
-                    <span className="text-sm font-bold text-pink-400">
+                    <span className="text-xs sm:text-sm font-bold text-pink-400">
                       {selectedGame.gameStatusText}
                     </span>
                   </div>
@@ -405,17 +413,17 @@ export default function NBAScoreboard() {
                   <img 
                     src={selectedGame.homeTeam.logo} 
                     alt={selectedGame.homeTeam.teamTricode}
-                    className="w-20 h-20 object-contain drop-shadow-2xl"
+                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-2xl"
                   />
                   <div className="text-right">
-                    <h3 className="text-3xl font-black text-white mb-1">
+                    <h3 className="text-2xl sm:text-3xl font-black text-white mb-1">
                       {selectedGame.homeTeam.teamTricode}
                     </h3>
-                    <p className="text-gray-400 font-medium">
+                    <p className="text-gray-400 font-medium text-sm sm:text-base">
                       {selectedGame.homeTeam.teamName}
                     </p>
                   </div>
-                  <span className="mr-auto text-5xl font-black text-white">
+                  <span className="mr-auto text-4xl sm:text-5xl font-black text-white">
                     {selectedGame.homeTeam.score}
                   </span>
                 </div>
@@ -423,7 +431,7 @@ export default function NBAScoreboard() {
             </div>
 
             {/* Body - Estatísticas */}
-            <div className="p-8">
+            <div className="p-4 sm:p-8">
               {loadingStats ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="relative">
@@ -436,12 +444,12 @@ export default function NBAScoreboard() {
                 <div className="space-y-6">
                   {/* Top Performers */}
                   <div>
-                    <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                    <h4 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
                       <Trophy className="w-6 h-6 text-pink-400" />
                       Top Performers
                     </h4>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {/* Pontos */}
                       <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-xl p-6 border border-white/10">
                         <div className="flex items-center gap-2 mb-4">
