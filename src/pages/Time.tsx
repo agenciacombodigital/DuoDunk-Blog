@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { getTeamBySlug } from '@/lib/nbaTeams';
+import { getTeamBySlug, getTeamById } from '@/lib/nbaTeams';
 import { 
   Users, TrendingUp, Calendar, Award, 
   ArrowLeft, Trophy, TrendingDown, Clock,
@@ -135,10 +135,25 @@ export default function Time() {
     }).format(date);
   };
 
-  // 🔧 HELPER PARA GARANTIR QUE LOGO É STRING
-  const getLogo = (logo: any): string => {
-    if (typeof logo === 'string') return logo;
+  // 🔧 HELPER ROBUSTO PARA GARANTIR QUE LOGO É SEMPRE STRING
+  const getLogo = (logo: any, fallbackAbbr?: string): string => {
+    // Se já for string, retorna
+    if (typeof logo === 'string' && logo.length > 0) return logo;
+    
+    // Se tiver array de logos
+    if (logo?.logos && Array.isArray(logo.logos) && logo.logos.length > 0) {
+      return logo.logos[0].href || logo.logos[0].url || '';
+    }
+    
+    // Se tiver objeto com href
     if (logo?.href) return logo.href;
+    if (logo?.url) return logo.url;
+    
+    // Fallback: constrói URL do ESPN
+    if (fallbackAbbr) {
+      return `https://a.espncdn.com/i/teamlogos/nba/500/${fallbackAbbr.toLowerCase()}.png`;
+    }
+    
     return '';
   };
 
@@ -405,9 +420,12 @@ export default function Time() {
                                 {opponentScore}
                               </span>
                               <img 
-                                src={getLogo(opponent.logo)}
+                                src={getLogo(opponent.logo, getTeamById(opponent.id)?.abbreviation)}
                                 alt={opponent.name}
                                 className="w-10 h-10 object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
                               />
                               <span className="text-gray-900 font-medium hidden sm:block">
                                 {opponent.name}
@@ -460,9 +478,12 @@ export default function Time() {
                               />
                               <span className="text-gray-400 font-bold text-lg">VS</span>
                               <img 
-                                src={getLogo(opponent.logo)}
+                                src={getLogo(opponent.logo, getTeamById(opponent.id)?.abbreviation)}
                                 alt={opponent.name}
                                 className="w-10 h-10 object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
                               />
                               <span className="text-gray-900 font-medium hidden sm:block">
                                 {opponent.name}

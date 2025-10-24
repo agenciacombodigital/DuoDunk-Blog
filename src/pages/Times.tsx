@@ -43,9 +43,16 @@ export default function Times() {
                       alt={team.name}
                       className="w-16 h-16 object-contain"
                       onError={(e) => {
-                        // Fallback para abreviação se imagem falhar
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                        // Tenta URL alternativa da ESPN
+                        const alternativeUrl = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png&h=200&w=200`;
+                        
+                        if (e.currentTarget.src !== alternativeUrl) {
+                          e.currentTarget.src = alternativeUrl;
+                        } else {
+                          // Se ainda falhar, mostra abreviação
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                        }
                       }}
                     />
                   </div>
@@ -79,9 +86,16 @@ export default function Times() {
                       alt={team.name}
                       className="w-16 h-16 object-contain"
                       onError={(e) => {
-                        // Fallback para abreviação se imagem falhar
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                        // Tenta URL alternativa da ESPN
+                        const alternativeUrl = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png&h=200&w=200`;
+                        
+                        if (e.currentTarget.src !== alternativeUrl) {
+                          e.currentTarget.src = alternativeUrl;
+                        } else {
+                          // Se ainda falhar, mostra abreviação
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                        }
                       }}
                     />
                   </div>
