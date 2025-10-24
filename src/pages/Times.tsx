@@ -37,11 +37,16 @@ export default function Times() {
                 className="bg-gray-50 hover:bg-gray-100 rounded-xl p-6 text-center transition border border-gray-200 hover:border-gray-300 group"
               >
                 <div className="mb-3">
-                  <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                  <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition overflow-hidden">
                     <img 
-                      src={`https://cdn.nba.com/logos/nba/${team.id}/primary/L/logo.svg`} 
-                      alt={`${team.name} logo`}
-                      className="h-16 w-16 object-contain"
+                      src={`https://a.espncdn.com/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png`}
+                      alt={team.name}
+                      className="w-16 h-16 object-contain"
+                      onError={(e) => {
+                        // Fallback para abreviação se imagem falhar
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                      }}
                     />
                   </div>
                 </div>
@@ -68,11 +73,16 @@ export default function Times() {
                 className="bg-gray-50 hover:bg-gray-100 rounded-xl p-6 text-center transition border border-gray-200 hover:border-gray-300 group"
               >
                 <div className="mb-3">
-                  <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition">
-                     <img 
-                      src={`https://cdn.nba.com/logos/nba/${team.id}/primary/L/logo.svg`} 
-                      alt={`${team.name} logo`}
-                      className="h-16 w-16 object-contain"
+                  <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition overflow-hidden">
+                    <img 
+                      src={`https://a.espncdn.com/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png`}
+                      alt={team.name}
+                      className="w-16 h-16 object-contain"
+                      onError={(e) => {
+                        // Fallback para abreviação se imagem falhar
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                      }}
                     />
                   </div>
                 </div>
