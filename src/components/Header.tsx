@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
+import MobileMenu from './MobileMenu';
 
 export default function Header() {
   return (
@@ -17,12 +18,15 @@ export default function Header() {
           <Link to="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
         </nav>
 
-        {/* Ícones de redes sociais */}
+        {/* Ícones de redes sociais e menu mobile */}
         <div className="flex items-center gap-4">
-          <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={20} /></a>
-          <a href="https://www.instagram.com/duodunk/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
-          <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
-          <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitch size={20} /></a>
+          <a href="#" className="text-gray-400 hover:text-primary transition-colors hidden sm:flex"><Youtube size={20} /></a>
+          <a href="https://www.instagram.com/duodunk/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors hidden sm:flex"><Instagram size={20} /></a>
+          <a href="#" className="text-gray-400 hover:text-primary transition-colors hidden sm:flex"><Twitter size={20} /></a>
+          <a href="#" className="text-gray-400 hover:text-primary transition-colors hidden sm:flex"><Twitch size={20} /></a>
+          
+          {/* Menu mobile */}
+          <MobileMenu />
         </div>
       </div>
     </header>
