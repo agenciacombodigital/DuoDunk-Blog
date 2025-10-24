@@ -1,114 +1,144 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Save, Loader2, Upload, Star } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Upload, Star, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function AdminRodadaNBA() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=630&fit=crop');
+
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [intro, setIntro] = useState('');
-  const [imageUrl, setImageUrl] = useState('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=630&fit=crop');
-  const [isFeatured, setIsFeatured] = useState(true); // PADRÃO: TRUE
+  const [isFeatured, setIsFeatured] = useState(true);
 
   const handleImageUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione apenas imagens!');
-      return;
-    }
-
-    const toastId = toast.loading("Fazendo upload da imagem...");
-    setUploadingImage(true);
     try {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Formato de imagem inválido. Use JPEG, PNG ou WEBP.');
+      }
+
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        throw new Error('Imagem muito grande. Tamanho máximo: 5MB.');
+      }
+
       const fileExt = file.name.split('.').pop();
-      const uniqueId = Date.now();
-      const fileName = `public/rodada-${uniqueId}.${fileExt}`;
+      const fileName = `rodada-${Date.now()}.${fileExt}`;
+      const filePath = `public/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('📤 Enviando imagem:', fileName);
+
+      const { data, error: uploadError } = await supabase.storage
         .from('article-images')
-        .upload(fileName, file, { upsert: true });
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ Erro no upload:', uploadError);
+        throw uploadError;
+      }
 
-      const { data } = supabase.storage
+      console.log('✅ Upload concluído:', data);
+
+      const { data: { publicUrl } } = supabase.storage
         .from('article-images')
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
-      setImageUrl(data.publicUrl);
-      toast.success('Imagem enviada com sucesso!', { id: toastId });
-    } catch (error: any) {
-      toast.error('Erro ao fazer upload', { id: toastId, description: error.message });
-    } finally {
-      setUploadingImage(false);
+      return publicUrl;
+    } catch (error) {
+      console.error('❌ Erro ao fazer upload:', error);
+      throw error;
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      setError(null); // Limpa o erro ao selecionar nova imagem
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title || !intro) {
-      toast.error('Preencha título e texto introdutório!');
-      return;
-    }
-
-    setLoading(true);
-    const toastId = toast.loading('Criando post de rodada...');
+    setIsPublishing(true);
+    setError(null);
+    const toastId = toast.loading('Publicando rodada...');
 
     try {
+      if (!imageFile) {
+        throw new Error('Selecione uma imagem de capa para a rodada.');
+      }
+      if (!title.trim()) {
+        throw new Error('O título da rodada é obrigatório.');
+      }
+      if (!intro.trim()) {
+        throw new Error('O conteúdo da rodada é obrigatório.');
+      }
+
+      console.log('🚀 Iniciando publicação...');
+      const imageUrl = await handleImageUpload(imageFile);
+      if (!imageUrl) {
+        throw new Error('Falha ao obter URL da imagem após o upload.');
+      }
+      console.log('✅ Imagem enviada:', imageUrl);
+
       const dateObj = new Date(`${date}T12:00:00Z`);
       const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
 
-      // Criar corpo HTML a partir do texto introdutório
       let body = '<div class="schedule-post" style="font-family: system-ui, -apple-system, sans-serif;">';
-      
-      // Texto introdutório (agora contendo os jogos formatados pelo usuário)
-      if (intro) {
-        // Substituir quebras de linha por parágrafos HTML
-        const paragraphs = intro.split('\n').map(p => `<p style="color: #333; line-height: 1.8; margin: 0 0 15px 0;">${p}</p>`).join('');
-        
-        body += `<div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 12px; border-left: 4px solid #e91e63;">`;
-        body += paragraphs;
-        body += `</div>`;
-      }
-
-      body += '<div style="margin-top: 30px; padding: 15px; background: #fff3f8; border-left: 4px solid #e91e63; border-radius: 4px;">';
-      body += '<p style="margin: 0; color: #666; font-size: 14px;"><strong>💬 Participe!</strong> Deixe seu comentário e palpite para os jogos de hoje!</p>';
-      body += '</div>';
+      const paragraphs = intro.split('\n').map(p => `<p style="color: #333; line-height: 1.8; margin: 0 0 15px 0;">${p}</p>`).join('');
+      body += `<div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 12px; border-left: 4px solid #e91e63;">${paragraphs}</div>`;
+      body += '<div style="margin-top: 30px; padding: 15px; background: #fff3f8; border-left: 4px solid #e91e63; border-radius: 4px;"><p style="margin: 0; color: #666; font-size: 14px;"><strong>💬 Participe!</strong> Deixe seu comentário e palpite para os jogos de hoje!</p></div>';
       body += '</div>';
 
       const slug = `rodada-nba-${dateStr.replace(/\//g, '-')}-${Date.now()}`;
-      
-      const summary = intro.substring(0, 240) || `Confira a rodada de hoje da NBA, horários e transmissões.`;
+      console.log('📄 Slug gerado:', slug);
 
-      const { error } = await supabase.from('articles').insert({
-        title: title || `Rodada NBA - ${dateStr}`,
-        subtitle: subtitle || `Confira os jogos, horários e transmissões`,
-        summary,
+      const { error: insertError } = await supabase.from('articles').insert({
+        title: title.trim(),
+        subtitle: subtitle.trim() || `Confira os jogos, horários e transmissões`,
+        summary: intro.substring(0, 240) || `Confira a rodada de hoje da NBA.`,
         body,
         slug,
-        meta_description: summary.substring(0, 160),
+        meta_description: intro.substring(0, 160),
         tags: ['nba', 'rodada', 'jogos-de-hoje', 'horarios', 'onde-assistir'],
         image_url: imageUrl,
         source: 'DuoDunk - Rodada NBA',
-        original_link: null,
         published: true,
         published_at: new Date().toISOString(),
         views: 0,
-        is_featured: isFeatured, // Adicionado
+        is_featured: isFeatured,
       });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('❌ Erro ao salvar no banco:', insertError);
+        throw insertError;
+      }
 
-      toast.success('Post de rodada criado!', { id: toastId });
+      console.log('✅ Rodada publicada com sucesso!');
+      toast.success('Post de rodada criado com sucesso!', { id: toastId });
       navigate('/admin');
+
     } catch (error: any) {
-      toast.error('Erro ao criar post', { id: toastId, description: error.message });
+      const errorMessage = error.message || 'Ocorreu um erro desconhecido.';
+      setError(errorMessage);
+      toast.error('Erro ao criar post', { id: toastId, description: errorMessage });
+      console.error(error);
     } finally {
-      setLoading(false);
+      setIsPublishing(false);
     }
   };
 
@@ -180,7 +210,7 @@ export default function AdminRodadaNBA() {
             <p className="text-xs text-gray-500 mt-1">{subtitle.length}/100 caracteres</p>
           </div>
 
-          {/* Texto Introdutório (Agora inclui os jogos) */}
+          {/* Conteúdo */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               ✍️ Conteúdo da Rodada (Inclua os jogos aqui) *
@@ -200,45 +230,30 @@ export default function AdminRodadaNBA() {
           {/* Imagem */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
-              🖼️ Imagem da Capa
+              🖼️ Imagem da Capa *
             </label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white"
-                placeholder="https://exemplo.com/imagem.jpg"
-              />
-              
-              <input
-                type="file"
-                id="rodada-image-upload"
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file);
-                }}
-                disabled={uploadingImage}
-              />
-              <label
-                htmlFor="rodada-image-upload"
-                className={`flex items-center justify-center gap-2 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition cursor-pointer ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {uploadingImage ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Upload className="w-5 h-5" />
-                )}
-              </label>
-            </div>
-            {imageUrl && (
+            <input
+              type="file"
+              id="rodada-image-upload"
+              className="hidden"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
+              disabled={isPublishing}
+            />
+            <label
+              htmlFor="rodada-image-upload"
+              className={`flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-600 rounded-xl hover:border-pink-500 transition-colors cursor-pointer ${isPublishing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Upload className="w-5 h-5 text-gray-400" />
+              <span className="text-sm font-semibold text-gray-400">
+                {imageFile ? `Arquivo: ${imageFile.name}` : 'Selecionar imagem (Max 5MB)'}
+              </span>
+            </label>
+            {imagePreview && (
               <img 
-                src={imageUrl} 
+                src={imagePreview} 
                 alt="Preview" 
                 className="mt-3 w-full h-48 object-cover rounded-lg"
-                onError={() => setImageUrl('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200')}
               />
             )}
           </div>
@@ -263,13 +278,21 @@ export default function AdminRodadaNBA() {
             </label>
           </div>
 
+          {/* Mensagem de Erro */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium p-4 rounded-xl flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5" />
+              {error}
+            </div>
+          )}
+
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading || uploadingImage}
+            disabled={isPublishing}
             className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition"
           >
-            {loading ? (
+            {isPublishing ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Publicando...
