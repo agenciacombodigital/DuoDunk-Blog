@@ -278,7 +278,7 @@ export default function NBAScoreboard() {
                         {game.awayTeam.teamName}
                       </span>
                     </div>
-                    <span className="ml-auto text-2xl sm:text-3xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
+                    <span className="ml-auto text-xl sm:text-2xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
                       {game.awayTeam.score}
                     </span>
                   </div>
@@ -322,7 +322,7 @@ export default function NBAScoreboard() {
                         {game.homeTeam.teamName}
                       </span>
                     </div>
-                    <span className="mr-auto text-2xl sm:text-3xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
+                    <span className="mr-auto text-xl sm:text-2xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
                       {game.homeTeam.score}
                     </span>
                   </div>
