@@ -7,7 +7,6 @@ import {
   ArrowLeft, Trophy, TrendingDown, Clock,
   MapPin, Tv
 } from 'lucide-react';
-import NotFound from './NotFound';
 
 interface TeamData {
   team: {
@@ -54,8 +53,20 @@ interface TeamData {
     date: string;
     name: string;
     shortName: string;
-    homeTeam: any;
-    awayTeam: any;
+    homeTeam: {
+      id: string;
+      name: string;
+      logo: string;
+      score: string;
+      winner: boolean;
+    };
+    awayTeam: {
+      id: string;
+      name: string;
+      logo: string;
+      score: string;
+      winner: boolean;
+    };
     status: string;
   }>;
   upcomingGames: Array<{
@@ -63,8 +74,16 @@ interface TeamData {
     date: string;
     name: string;
     shortName: string;
-    homeTeam: any;
-    awayTeam: any;
+    homeTeam: {
+      id: string;
+      name: string;
+      logo: string;
+    };
+    awayTeam: {
+      id: string;
+      name: string;
+      logo: string;
+    };
     venue: string;
     broadcast: string;
   }>;
@@ -74,7 +93,7 @@ export default function Time() {
   const { teamSlug } = useParams<{ teamSlug: string }>();
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'roster' | 'games' | 'news'>('roster');
+  const [activeTab, setActiveTab] = useState<'roster' | 'games'>('roster');
 
   const teamInfo = teamSlug ? getTeamBySlug(teamSlug) : null;
 
@@ -116,30 +135,53 @@ export default function Time() {
     }).format(date);
   };
 
+  // 🔧 HELPER PARA GARANTIR QUE LOGO É STRING
+  const getLogo = (logo: any): string => {
+    if (typeof logo === 'string') return logo;
+    if (logo?.href) return logo.href;
+    return '';
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto"></div>
+      <div className="min-h-screen bg-white">
+        <div className="container mx-auto px-4 py-20 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando informações do time...</p>
+        </div>
       </div>
     );
   }
 
   if (!teamInfo || !teamData) {
-    return <NotFound />;
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Time não encontrado</h1>
+          <p className="text-gray-600 mb-8">Não conseguimos encontrar informações sobre este time.</p>
+          <Link
+            to="/times"
+            className="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-xl font-bold transition"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Voltar para Times
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const { team, record, roster, pastGames, upcomingGames } = teamData;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section com cores do time */}
+      {/* Hero Section */}
       <div 
         className="relative py-16 sm:py-20"
         style={{ 
           background: `linear-gradient(135deg, #${team.color} 0%, #${team.alternateColor} 100%)` 
         }}
       >
-        {/* Padrão de fundo */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
@@ -152,7 +194,7 @@ export default function Time() {
             className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 transition"
           >
             <ArrowLeft className="w-5 h-5" />
-            Voltar para Times
+            Voltar
           </Link>
 
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
@@ -316,6 +358,7 @@ export default function Time() {
             )}
           </div>
         )}
+
         {activeTab === 'games' && (
           <div className="space-y-8">
             {/* Últimos Jogos */}
@@ -327,7 +370,7 @@ export default function Time() {
               {pastGames.length > 0 ? (
                 <div className="space-y-4">
                   {pastGames.map((game) => {
-                    const isHomeGame = game.homeTeam.id === team.id;
+                    const isHomeGame = String(game.homeTeam.id) === String(team.id);
                     const teamScore = isHomeGame ? game.homeTeam.score : game.awayTeam.score;
                     const opponentScore = isHomeGame ? game.awayTeam.score : game.homeTeam.score;
                     const opponent = isHomeGame ? game.awayTeam : game.homeTeam;
@@ -362,7 +405,7 @@ export default function Time() {
                                 {opponentScore}
                               </span>
                               <img 
-                                src={opponent.logo} 
+                                src={getLogo(opponent.logo)}
                                 alt={opponent.name}
                                 className="w-10 h-10 object-contain"
                               />
@@ -395,7 +438,7 @@ export default function Time() {
               {upcomingGames.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingGames.map((game) => {
-                    const isHomeGame = game.homeTeam.id === team.id;
+                    const isHomeGame = String(game.homeTeam.id) === String(team.id);
                     const opponent = isHomeGame ? game.awayTeam : game.homeTeam;
 
                     return (
@@ -417,7 +460,7 @@ export default function Time() {
                               />
                               <span className="text-gray-400 font-bold text-lg">VS</span>
                               <img 
-                                src={opponent.logo} 
+                                src={getLogo(opponent.logo)}
                                 alt={opponent.name}
                                 className="w-10 h-10 object-contain"
                               />
