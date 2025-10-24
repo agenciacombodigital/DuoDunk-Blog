@@ -43,15 +43,28 @@ export default function Times() {
                       alt={team.name}
                       className="w-16 h-16 object-contain"
                       onError={(e) => {
-                        // Tenta URL alternativa da ESPN
-                        const alternativeUrl = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png&h=200&w=200`;
+                        const img = e.currentTarget;
+                        const abbr = team.abbreviation.toLowerCase();
                         
-                        if (e.currentTarget.src !== alternativeUrl) {
-                          e.currentTarget.src = alternativeUrl;
+                        // Lista de URLs para tentar em ordem
+                        const alternatives = [
+                          `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${abbr}.png&h=200&w=200`,
+                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'uta' ? 'utah' : abbr}.png`,
+                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'nop' ? 'no' : abbr}.png`
+                        ];
+                        
+                        // Encontra a URL atual na lista de alternativas para tentar a próxima
+                        const currentSrcIndex = alternatives.findIndex(src => img.src.includes(src));
+                        const nextIndex = currentSrcIndex + 1;
+
+                        if (nextIndex < alternatives.length) {
+                          img.src = alternatives[nextIndex];
                         } else {
-                          // Se ainda falhar, mostra abreviação
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                          // Se todas falharem, mostra abreviação
+                          img.style.display = 'none';
+                          if (img.parentElement) {
+                            img.parentElement.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                          }
                         }
                       }}
                     />
@@ -86,15 +99,28 @@ export default function Times() {
                       alt={team.name}
                       className="w-16 h-16 object-contain"
                       onError={(e) => {
-                        // Tenta URL alternativa da ESPN
-                        const alternativeUrl = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png&h=200&w=200`;
+                        const img = e.currentTarget;
+                        const abbr = team.abbreviation.toLowerCase();
                         
-                        if (e.currentTarget.src !== alternativeUrl) {
-                          e.currentTarget.src = alternativeUrl;
+                        // Lista de URLs para tentar em ordem
+                        const alternatives = [
+                          `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${abbr}.png&h=200&w=200`,
+                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'uta' ? 'utah' : abbr}.png`,
+                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'nop' ? 'no' : abbr}.png`
+                        ];
+                        
+                        // Encontra a URL atual na lista de alternativas para tentar a próxima
+                        const currentSrcIndex = alternatives.findIndex(src => img.src.includes(src));
+                        const nextIndex = currentSrcIndex + 1;
+
+                        if (nextIndex < alternatives.length) {
+                          img.src = alternatives[nextIndex];
                         } else {
-                          // Se ainda falhar, mostra abreviação
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.parentElement!.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                          // Se todas falharem, mostra abreviação
+                          img.style.display = 'none';
+                          if (img.parentElement) {
+                            img.parentElement.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
+                          }
                         }
                       }}
                     />

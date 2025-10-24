@@ -34,13 +34,13 @@ export const NBA_TEAMS: NBATeam[] = [
   { id: '13', slug: 'lakers', name: 'Los Angeles Lakers', abbreviation: 'LAL', conference: 'West', division: 'Pacific' },
   { id: '29', slug: 'grizzlies', name: 'Memphis Grizzlies', abbreviation: 'MEM', conference: 'West', division: 'Southwest' },
   { id: '16', slug: 'timberwolves', name: 'Minnesota Timberwolves', abbreviation: 'MIN', conference: 'West', division: 'Northwest' },
-  { id: '3', slug: 'pelicans', name: 'New Orleans Pelicans', abbreviation: 'NOP', conference: 'West', division: 'Southwest' },
+  { id: '3', slug: 'pelicans', name: 'New Orleans Pelicans', abbreviation: 'NO', conference: 'West', division: 'Southwest' },
   { id: '25', slug: 'thunder', name: 'Oklahoma City Thunder', abbreviation: 'OKC', conference: 'West', division: 'Northwest' },
   { id: '21', slug: 'suns', name: 'Phoenix Suns', abbreviation: 'PHX', conference: 'West', division: 'Pacific' },
   { id: '22', slug: 'trail-blazers', name: 'Portland Trail Blazers', abbreviation: 'POR', conference: 'West', division: 'Northwest' },
   { id: '23', slug: 'kings', name: 'Sacramento Kings', abbreviation: 'SAC', conference: 'West', division: 'Pacific' },
   { id: '24', slug: 'spurs', name: 'San Antonio Spurs', abbreviation: 'SAS', conference: 'West', division: 'Southwest' },
-  { id: '26', slug: 'jazz', name: 'Utah Jazz', abbreviation: 'UTA', conference: 'West', division: 'Northwest' },
+  { id: '26', slug: 'jazz', name: 'Utah Jazz', abbreviation: 'UTAH', conference: 'West', division: 'Northwest' },
 ];
 
 export function getTeamBySlug(slug: string): NBATeam | undefined {
