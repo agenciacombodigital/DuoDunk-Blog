@@ -157,6 +157,18 @@ export default function Time() {
     return '';
   };
 
+  const getScoreDisplay = (score: any): string => {
+    if (typeof score === 'string' || typeof score === 'number') {
+      return String(score);
+    }
+    if (typeof score === 'object' && score !== null) {
+      if (score.displayValue) return score.displayValue;
+      if (score.display) return score.display;
+      if (score.value) return String(score.value);
+    }
+    return '?';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -386,8 +398,8 @@ export default function Time() {
                 <div className="space-y-4">
                   {pastGames.map((game) => {
                     const isHomeGame = String(game.homeTeam.id) === String(team.id);
-                    const teamScore = isHomeGame ? game.homeTeam.score : game.awayTeam.score;
-                    const opponentScore = isHomeGame ? game.awayTeam.score : game.homeTeam.score;
+                    const teamScore = getScoreDisplay(isHomeGame ? game.homeTeam.score : game.awayTeam.score);
+                    const opponentScore = getScoreDisplay(isHomeGame ? game.awayTeam.score : game.homeTeam.score);
                     const opponent = isHomeGame ? game.awayTeam : game.homeTeam;
                     const won = (isHomeGame ? game.homeTeam.winner : game.awayTeam.winner) === true;
 
