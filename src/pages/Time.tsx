@@ -89,6 +89,21 @@ interface TeamData {
   }>;
 }
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const mesesPT = [
+    'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+    'jul', 'ago', 'set', 'out', 'nov', 'dez'
+  ];
+  
+  const dia = date.getDate().toString().padStart(2, '0');
+  const mes = mesesPT[date.getMonth()];
+  const hora = date.getHours().toString().padStart(2, '0');
+  const min = date.getMinutes().toString().padStart(2, '0');
+  
+  return `${dia} ${mes}, ${hora}:${min}`;
+};
+
 export default function Time() {
   const { teamSlug } = useParams<{ teamSlug: string }>();
   const [teamData, setTeamData] = useState<TeamData | null>(null);
@@ -123,16 +138,6 @@ export default function Time() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
   };
 
   const getLogo = (logo: any, fallbackAbbr?: string): string => {
