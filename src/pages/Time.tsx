@@ -374,7 +374,7 @@ export default function Time() {
                     const teamScore = isHomeGame ? game.homeTeam.score : game.awayTeam.score;
                     const opponentScore = isHomeGame ? game.awayTeam.score : game.homeTeam.score;
                     const opponent = isHomeGame ? game.awayTeam : game.homeTeam;
-                    const won = isHomeGame ? game.homeTeam.winner : game.awayTeam.winner;
+                    const won = (isHomeGame ? game.homeTeam.winner : game.awayTeam.winner) === true;
 
                     return (
                       <div 
