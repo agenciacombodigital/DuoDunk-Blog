@@ -57,14 +57,14 @@ interface TeamData {
       id: string;
       name: string;
       logo: string;
-      score: string;
+      score: any; // Alterado para 'any' para acomodar objetos
       winner: boolean;
     };
     awayTeam: {
       id: string;
       name: string;
       logo: string;
-      score: string;
+      score: any; // Alterado para 'any' para acomodar objetos
       winner: boolean;
     };
     status: string;
@@ -135,25 +135,16 @@ export default function Time() {
     }).format(date);
   };
 
-  // 🔧 HELPER ROBUSTO PARA GARANTIR QUE LOGO É SEMPRE STRING
   const getLogo = (logo: any, fallbackAbbr?: string): string => {
-    // Se já for string, retorna
     if (typeof logo === 'string' && logo.length > 0) return logo;
-    
-    // Se tiver array de logos
     if (logo?.logos && Array.isArray(logo.logos) && logo.logos.length > 0) {
       return logo.logos[0].href || logo.logos[0].url || '';
     }
-    
-    // Se tiver objeto com href
     if (logo?.href) return logo.href;
     if (logo?.url) return logo.url;
-    
-    // Fallback: constrói URL do ESPN
     if (fallbackAbbr) {
       return `https://a.espncdn.com/i/teamlogos/nba/500/${fallbackAbbr.toLowerCase()}.png`;
     }
-    
     return '';
   };
 
@@ -398,10 +389,27 @@ export default function Time() {
                 <div className="space-y-4">
                   {pastGames.map((game) => {
                     const isHomeGame = String(game.homeTeam.id) === String(team.id);
-                    const teamScore = getScoreDisplay(isHomeGame ? game.homeTeam.score : game.awayTeam.score);
-                    const opponentScore = getScoreDisplay(isHomeGame ? game.awayTeam.score : game.homeTeam.score);
+                    
+                    const rawTeamScore = isHomeGame ? game.homeTeam.score : game.awayTeam.score;
+                    const rawOpponentScore = isHomeGame ? game.awayTeam.score : game.homeTeam.score;
+                    
+                    const teamScore = getScoreDisplay(rawTeamScore);
+                    const opponentScore = getScoreDisplay(rawOpponentScore);
+                    
                     const opponent = isHomeGame ? game.awayTeam : game.homeTeam;
-                    const won = (isHomeGame ? game.homeTeam.winner : game.awayTeam.winner) === true;
+                    const won = Boolean(isHomeGame ? game.homeTeam.winner : game.awayTeam.winner);
+
+                    // 🔍 DEBUG - REMOVER DEPOIS
+                    console.log('🎮 DEBUG JOGO:', {
+                      gameId: game.id,
+                      isHomeGame,
+                      rawTeamScore,
+                      rawOpponentScore,
+                      teamScore,
+                      opponentScore,
+                      homeTeam: game.homeTeam,
+                      awayTeam: game.awayTeam
+                    });
 
                     return (
                       <div 
