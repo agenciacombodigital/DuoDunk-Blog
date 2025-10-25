@@ -128,6 +128,28 @@ export default function NBAScoreboard() {
       if (error) throw error;
       if (data?.success) {
         setGameStats(data);
+        
+        // Sincronizar o placar principal com os dados frescos do modal
+        const freshStats = data.stats;
+        setGames(prevGames => 
+          prevGames.map(g => {
+            if (g.gameId === game.gameId) {
+              return {
+                ...g,
+                homeTeam: {
+                  ...g.homeTeam,
+                  score: freshStats.homeTeam.score,
+                },
+                awayTeam: {
+                  ...g.awayTeam,
+                  score: freshStats.awayTeam.score,
+                },
+                gameStatusText: freshStats.status,
+              };
+            }
+            return g;
+          })
+        );
       }
     } catch (err) {
       console.error('❌ Erro ao buscar stats:', err);
