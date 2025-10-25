@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Newspaper, Users, Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
+import { Menu, X, Home, Newspaper, Users, Trophy, Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +10,7 @@ export default function MobileMenu() {
     { path: '/', label: 'Home', icon: Home },
     { path: '/ultimas', label: 'Últimas', icon: Newspaper },
     { path: '/times', label: 'Times', icon: Users },
+    { path: '/classificacao', label: 'Classificação', icon: Trophy },
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
