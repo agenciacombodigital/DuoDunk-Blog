@@ -46,7 +46,15 @@ serve(async (req) => {
     }
 
     const apiUrl = `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json`;
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
 
     if (!response.ok) {
       throw new Error(`NBA API request failed with status ${response.status}`);
