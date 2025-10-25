@@ -394,12 +394,18 @@ export default function Time() {
                 <div className="space-y-4">
                   {pastGames.map((game) => {
                     const isHomeGame = String(game.homeTeam.id) === String(team.id);
+  
+                    // ✅ GARANTIR QUE SCORE É SEMPRE STRING SIMPLES
+                    const extractScore = (scoreData: any): string => {
+                      if (typeof scoreData === 'string') return scoreData;
+                      if (typeof scoreData === 'number') return String(scoreData);
+                      if (scoreData?.value) return String(scoreData.value);
+                      if (scoreData?.displayValue) return scoreData.displayValue;
+                      return '0';
+                    };
                     
-                    const rawTeamScore = isHomeGame ? game.homeTeam.score : game.awayTeam.score;
-                    const rawOpponentScore = isHomeGame ? game.awayTeam.score : game.homeTeam.score;
-                    
-                    const teamScore = getScoreDisplay(rawTeamScore);
-                    const opponentScore = getScoreDisplay(rawOpponentScore);
+                    const teamScore = extractScore(isHomeGame ? game.homeTeam.score : game.awayTeam.score);
+                    const opponentScore = extractScore(isHomeGame ? game.awayTeam.score : game.homeTeam.score);
                     
                     const opponent = isHomeGame ? game.awayTeam : game.homeTeam;
                     const won = Boolean(isHomeGame ? game.homeTeam.winner : game.awayTeam.winner);
@@ -408,8 +414,8 @@ export default function Time() {
                     console.log('🎮 DEBUG JOGO:', {
                       gameId: game.id,
                       isHomeGame,
-                      rawTeamScore,
-                      rawOpponentScore,
+                      rawTeamScore: isHomeGame ? game.homeTeam.score : game.awayTeam.score,
+                      rawOpponentScore: isHomeGame ? game.awayTeam.score : game.homeTeam.score,
                       teamScore,
                       opponentScore,
                       homeTeam: game.homeTeam,
