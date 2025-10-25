@@ -1,50 +1,48 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, X, TrendingUp, Clock, Trophy, Target, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, TrendingUp } from 'lucide-react';
+import GameStatsModal from './GameStatsModal';
 
 interface Game {
   gameId: string;
-  gameStatus: string;
+  gameStatus: number;
   gameStatusText: string;
   homeTeam: {
     teamName: string;
     teamTricode: string;
     score: string;
+    wins: number;
+    losses: number;
     logo: string;
   };
   awayTeam: {
     teamName: string;
     teamTricode: string;
     score: string;
+    wins: number;
+    losses: number;
     logo: string;
   };
 }
 
 interface GameStats {
   status: string;
+  gameState: string;
   homeTeam: {
     name: string;
     abbreviation: string;
     logo: string;
     score: string;
-    leaders: {
-      points: { displayName: string; value: string; } | null;
-      rebounds: { displayName: string; value: string; } | null;
-      assists: { displayName: string; value: string; } | null;
-    };
-    players: any[];
+    record: string;
+    performers: any;
   };
   awayTeam: {
     name: string;
     abbreviation: string;
     logo: string;
     score: string;
-    leaders: {
-      points: { displayName: string; value: string; } | null;
-      rebounds: { displayName: string; value: string; } | null;
-      assists: { displayName: string; value: string; } | null;
-    };
-    players: any[];
+    record: string;
+    performers: any;
   };
 }
 
@@ -53,7 +51,7 @@ export default function NBAScoreboard() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [gameStats, setGameStats] = useState<GameStats | null>(null);
+  const [gameStats, setGameStats] = useState<{ success: boolean, stats: GameStats } | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
@@ -62,10 +60,9 @@ export default function NBAScoreboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Carregar estatísticas quando selecionar jogo
   useEffect(() => {
     if (selectedGame) {
-      loadGameStats(selectedGame.gameId);
+      loadGameStats(selectedGame);
     }
   }, [selectedGame]);
 
@@ -79,41 +76,29 @@ export default function NBAScoreboard() {
         return;
       }
 
-      if (data?.games && Array.isArray(data.games) && data.games.length > 0) {
-        // Converter horários para Brasília (UTC-3)
-        const gamesWithBrasiliaTime = data.games.map((game: Game) => {
-          const utcTime = game.gameStatusText;
-          
-          // Extrair hora do formato "Tue, October 21st at 7:30 PM EDT"
-          const timeMatch = utcTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-          
-          if (timeMatch) {
-            let hours = parseInt(timeMatch[1]);
-            const minutes = timeMatch[2];
-            const period = timeMatch[3].toUpperCase();
-            
-            // Converter para 24h
-            if (period === 'PM' && hours !== 12) hours += 12;
-            if (period === 'AM' && hours === 12) hours = 0;
-            
-            // EDT é UTC-4, então soma 4 para ter UTC
-            // Depois subtrai 3 para ter Brasília (UTC-3)
-            // Resultado: +1 hora
-            hours += 1;
-            
-            // Formatar para horário de Brasília
-            const brasiliaTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
-            
-            return {
-              ...game,
-              gameStatusText: brasiliaTime
-            };
-          }
-          
-          return game;
-        });
-        
-        setGames(gamesWithBrasiliaTime);
+      if (data?.scoreboard?.games && Array.isArray(data.scoreboard.games) && data.scoreboard.games.length > 0) {
+        const processedGames = data.scoreboard.games.map((game: any) => ({
+          gameId: game.gameId,
+          gameStatus: game.gameStatus,
+          gameStatusText: game.gameStatusText,
+          homeTeam: {
+            teamName: game.homeTeam.teamName,
+            teamTricode: game.homeTeam.teamTricode,
+            score: game.homeTeam.score?.toString() || '0',
+            wins: game.homeTeam.wins,
+            losses: game.homeTeam.losses,
+            logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`,
+          },
+          awayTeam: {
+            teamName: game.awayTeam.teamName,
+            teamTricode: game.awayTeam.teamTricode,
+            score: game.awayTeam.score?.toString() || '0',
+            wins: game.awayTeam.wins,
+            losses: game.awayTeam.losses,
+            logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`,
+          },
+        }));
+        setGames(processedGames);
       } else {
         setGames([]);
       }
@@ -125,32 +110,24 @@ export default function NBAScoreboard() {
     }
   };
 
-  const loadGameStats = async (gameId: string) => {
+  const loadGameStats = async (game: Game) => {
     setLoadingStats(true);
+    setGameStats(null);
     try {
-      console.log('📊 Buscando estatísticas do jogo:', gameId);
-      
-      const { data, error } = await supabase.functions.invoke('nba-game-stats-v2', {
-        body: { gameId }
+      const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
+        body: { 
+          gameId: game.gameId,
+          homeRecord: `${game.homeTeam.wins}-${game.homeTeam.losses}`,
+          awayRecord: `${game.awayTeam.wins}-${game.awayTeam.losses}`,
+        }
       });
 
-      if (error) {
-        console.error('❌ Erro ao buscar stats:', error);
-        setGameStats(null);
-        return;
-      }
-
-      if (data?.success && data?.stats) {
-        console.log('✅ Estatísticas carregadas:', data.stats);
-        console.log('🔍 HOME LEADERS:', data.stats.homeTeam.leaders);
-        console.log('🔍 AWAY LEADERS:', data.stats.awayTeam.leaders);
-        setGameStats(data.stats);
-      } else {
-        console.log('ℹ️ Sem estatísticas disponíveis');
-        setGameStats(null);
+      if (error) throw error;
+      if (data?.success) {
+        setGameStats(data);
       }
     } catch (err) {
-      console.error('❌ Erro:', err);
+      console.error('❌ Erro ao buscar stats:', err);
       setGameStats(null);
     } finally {
       setLoadingStats(false);
@@ -190,7 +167,6 @@ export default function NBAScoreboard() {
   if (loading) {
     return (
       <div className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 py-6 border-b border-gray-700/50 backdrop-blur-sm">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE0YzMuMzE0IDAgNiAyLjY4NiA2IDZzLTIuNjg2IDYtNiA2LTYtMi42ODYtNi02IDIuNjg2LTYgNi02ek0yNCAzOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-3">
             <div className="relative">
@@ -217,7 +193,6 @@ export default function NBAScoreboard() {
     );
   }
 
-  // No mobile: 1 jogo por vez | No desktop: 2 jogos por vez
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const gamesPerView = isMobile ? 1 : 2;
   const visibleGames = games.slice(currentIndex, currentIndex + gamesPerView);
@@ -225,12 +200,10 @@ export default function NBAScoreboard() {
   return (
     <>
       <div className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 py-5 border-b border-gray-700/50 backdrop-blur-xl overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE0YzMuMzE0IDAgNiAyLjY4NiA2IDZzLTIuNjg2IDYtNiA2LTYtMi42ODYtNi02IDIuNjg2LTYgNi02ek0yNCAzOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex items-center justify-between gap-4">
-            {/* Botão Anterior */}
             {games.length > 1 && (
               <button
                 onClick={prevGames}
@@ -241,60 +214,34 @@ export default function NBAScoreboard() {
               </button>
             )}
 
-            {/* Lista de Jogos */}
             <div className="flex-1 flex gap-3 sm:gap-6 justify-start sm:justify-center overflow-x-auto px-2 sm:px-0 snap-x snap-mandatory scrollbar-hide">
               {visibleGames.map((game) => (
                 <button
                   key={game.gameId}
                   onClick={() => setSelectedGame(game)}
-                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl 
-                             px-4 sm:px-6 md:px-8 py-4 sm:py-5 
-                             flex items-center gap-3 sm:gap-4 md:gap-6 
-                             min-w-[calc(100vw-4rem)] sm:min-w-[480px] md:min-w-[520px] lg:min-w-[560px]
-                             max-w-[92vw] sm:max-w-[48%] md:max-w-[45%]
-                             flex-shrink-0 snap-center
-                             hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 
-                             border border-white/10 hover:border-pink-500/50 
-                             shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
+                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl px-4 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center gap-3 sm:gap-4 md:gap-6 min-w-[calc(100vw-4rem)] sm:min-w-[480px] md:min-w-[520px] lg:min-w-[560px] max-w-[92vw] sm:max-w-[48%] md:max-w-[45%] flex-shrink-0 snap-center hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 border border-white/10 hover:border-pink-500/50 shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
                 >
-                  {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                   
-                  {/* Time Visitante */}
                   <div className="relative flex items-center gap-2 sm:gap-3 flex-1">
                     <div className="relative flex-shrink-0">
                       <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.awayTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
-                      <img 
-                        src={game.awayTeam.logo} 
-                        alt={game.awayTeam.teamTricode}
-                        className="relative w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
-                      />
+                      <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="relative w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform" />
                     </div>
                     <div className="text-left min-w-0">
-                      <span className="block font-bold text-white text-sm sm:text-base md:text-lg tracking-tight">
-                        {game.awayTeam.teamTricode}
-                      </span>
-                      <span className="hidden sm:block text-[10px] md:text-xs text-gray-400 font-medium max-w-[80px] truncate">
-                        {game.awayTeam.teamName}
-                      </span>
+                      <span className="block font-bold text-white text-sm sm:text-base md:text-lg tracking-tight">{game.awayTeam.teamTricode}</span>
+                      <span className="hidden sm:block text-[10px] md:text-xs text-gray-400 font-medium max-w-[80px] truncate">{game.awayTeam.teamName}</span>
                     </div>
-                    <span className="ml-auto text-xl sm:text-2xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
-                      {game.awayTeam.score}
-                    </span>
+                    <span className="ml-auto text-xl sm:text-2xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">{game.awayTeam.score}</span>
                   </div>
 
-                  {/* Status */}
                   <div className="relative flex flex-col items-center px-3 sm:px-6 border-x border-white/10 flex-shrink-0">
                     <div className="flex items-center gap-1 sm:gap-2 mb-1">
                       <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-400" />
-                      <span className="text-xs sm:text-sm font-bold text-pink-400 tracking-wide whitespace-nowrap">
-                        {game.gameStatusText}
-                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-pink-400 tracking-wide whitespace-nowrap">{game.gameStatusText}</span>
                     </div>
-                    <span className="hidden sm:block text-xs text-gray-500 font-medium whitespace-nowrap">
-                      Horário de Brasília
-                    </span>
-                    {game.gameStatus === 'in' && (
+                    <span className="hidden sm:block text-xs text-gray-500 font-medium whitespace-nowrap">Horário de Brasília</span>
+                    {game.gameStatus === 2 && (
                       <div className="absolute -top-1 right-0">
                         <div className="relative">
                           <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full animate-pulse"></div>
@@ -304,30 +251,18 @@ export default function NBAScoreboard() {
                     )}
                   </div>
 
-                  {/* Time Mandante */}
                   <div className="relative flex items-center gap-2 sm:gap-3 flex-1 flex-row-reverse">
                     <div className="relative flex-shrink-0">
                       <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.homeTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
-                      <img 
-                        src={game.homeTeam.logo} 
-                        alt={game.homeTeam.teamTricode}
-                        className="relative w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform"
-                      />
+                      <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="relative w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-2xl group-hover:scale-110 transition-transform" />
                     </div>
                     <div className="text-right min-w-0">
-                      <span className="block font-bold text-white text-sm sm:text-base md:text-lg tracking-tight">
-                        {game.homeTeam.teamTricode}
-                      </span>
-                      <span className="hidden sm:block text-[10px] md:text-xs text-gray-400 font-medium max-w-[80px] truncate">
-                        {game.homeTeam.teamName}
-                      </span>
+                      <span className="block font-bold text-white text-sm sm:text-base md:text-lg tracking-tight">{game.homeTeam.teamTricode}</span>
+                      <span className="hidden sm:block text-[10px] md:text-xs text-gray-400 font-medium max-w-[80px] truncate">{game.homeTeam.teamName}</span>
                     </div>
-                    <span className="mr-auto text-xl sm:text-2xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">
-                      {game.homeTeam.score}
-                    </span>
+                    <span className="mr-auto text-xl sm:text-2xl font-black text-white group-hover:text-pink-400 transition-colors flex-shrink-0">{game.homeTeam.score}</span>
                   </div>
 
-                  {/* Click Indicator - Esconder no mobile */}
                   <div className="hidden sm:block absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-xs text-gray-500 font-medium">Clique para detalhes</span>
                   </div>
@@ -335,7 +270,6 @@ export default function NBAScoreboard() {
               ))}
             </div>
 
-            {/* Botão Próximo */}
             {games.length > 1 && (
               <button
                 onClick={nextGames}
@@ -349,229 +283,41 @@ export default function NBAScoreboard() {
         </div>
       </div>
 
-      {/* Modal de Detalhes */}
+      {/* Modal Logic */}
       {selectedGame && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setSelectedGame(null)}
-        >
-          <div 
-            className="bg-gradient-to-br from-gray-900 to-gray-800 
-             rounded-t-3xl sm:rounded-3xl 
-             max-w-4xl w-full 
-             max-h-[85vh] sm:max-h-[90vh] 
-             overflow-auto 
-             border border-white/10 
-             shadow-2xl 
-             animate-in zoom-in duration-300
-             mx-2 sm:mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="relative p-4 sm:p-8 border-b border-white/10">
-              <button
-                onClick={() => setSelectedGame(null)}
-                className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-400 hover:text-white" />
-              </button>
-              
-              <div className="flex items-center justify-between gap-8">
-                {/* Time Visitante */}
-                <div className="flex items-center gap-4 flex-1">
-                  <img 
-                    src={selectedGame.awayTeam.logo} 
-                    alt={selectedGame.awayTeam.teamTricode}
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-2xl"
-                  />
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl font-black text-white mb-1">
-                      {selectedGame.awayTeam.teamTricode}
-                    </h3>
-                    <p className="text-gray-400 font-medium text-sm sm:text-base">
-                      {selectedGame.awayTeam.teamName}
-                    </p>
-                  </div>
-                  <span className="ml-auto text-4xl sm:text-5xl font-black text-white">
-                    {selectedGame.awayTeam.score}
-                  </span>
-                </div>
-
-                {/* VS */}
-                <div className="text-center px-4 sm:px-8">
-                  <span className="text-xl sm:text-2xl font-bold text-gray-600">VS</span>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Clock className="w-4 h-4 text-pink-400" />
-                    <span className="text-xs sm:text-sm font-bold text-pink-400">
-                      {selectedGame.gameStatusText}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Time Mandante */}
-                <div className="flex items-center gap-4 flex-1 flex-row-reverse">
-                  <img 
-                    src={selectedGame.homeTeam.logo} 
-                    alt={selectedGame.homeTeam.teamTricode}
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-2xl"
-                  />
-                  <div className="text-right">
-                    <h3 className="text-2xl sm:text-3xl font-black text-white mb-1">
-                      {selectedGame.homeTeam.teamTricode}
-                    </h3>
-                    <p className="text-gray-400 font-medium text-sm sm:text-base">
-                      {selectedGame.homeTeam.teamName}
-                    </p>
-                  </div>
-                  <span className="mr-auto text-4xl sm:text-5xl font-black text-white">
-                    {selectedGame.homeTeam.score}
-                  </span>
-                </div>
-              </div>
+        loadingStats ? (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
+              <div className="absolute inset-0 rounded-full bg-pink-500/20 animate-ping"></div>
             </div>
-
-            {/* Body - Estatísticas */}
-            <div className="p-4 sm:p-8">
-              {loadingStats ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="relative">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-500 border-t-transparent"></div>
-                    <div className="absolute inset-0 rounded-full bg-pink-500/20 animate-ping"></div>
-                  </div>
-                  <span className="ml-4 text-gray-300">Carregando estatísticas...</span>
-                </div>
-              ) : gameStats ? (
-                <div className="space-y-6">
-                  {/* Top Performers */}
-                  <div>
-                    <h4 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                      <Trophy className="w-6 h-6 text-pink-400" />
-                      Top Performers
-                    </h4>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      {/* Pontos */}
-                      <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-xl p-6 border border-white/10">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Target className="w-5 h-5 text-pink-400" />
-                          <h5 className="font-bold text-white">Pontos</h5>
-                        </div>
-                        
-                        {/* Visitante - Pontos */}
-                        <div className="mb-3 p-3 bg-white/5 rounded-lg">
-                          <p className="text-sm text-gray-400 mb-1">{gameStats.awayTeam.abbreviation}</p>
-                          {gameStats.awayTeam.leaders.points ? (
-                            <>
-                              <p className="font-bold text-white text-sm">{gameStats.awayTeam.leaders.points.displayName}</p>
-                              <p className="text-2xl font-black text-pink-400">{gameStats.awayTeam.leaders.points.value} pts</p>
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
-                          )}
-                        </div>
-                        
-                        {/* Mandante - Pontos */}
-                        <div className="p-3 bg-white/5 rounded-lg">
-                          <p className="text-sm text-gray-400 mb-1">{gameStats.homeTeam.abbreviation}</p>
-                          {gameStats.homeTeam.leaders.points ? (
-                            <>
-                              <p className="font-bold text-white text-sm">{gameStats.homeTeam.leaders.points.displayName}</p>
-                              <p className="text-2xl font-black text-pink-400">{gameStats.homeTeam.leaders.points.value} pts</p>
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Rebotes */}
-                      <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-xl p-6 border border-white/10">
-                        <div className="flex items-center gap-2 mb-4">
-                          <TrendingUp className="w-5 h-5 text-blue-400" />
-                          <h5 className="font-bold text-white">Rebotes</h5>
-                        </div>
-                        
-                        {/* Visitante - Rebotes */}
-                        <div className="mb-3 p-3 bg-white/5 rounded-lg">
-                          <p className="text-sm text-gray-400 mb-1">{gameStats.awayTeam.abbreviation}</p>
-                          {gameStats.awayTeam.leaders.rebounds ? (
-                            <>
-                              <p className="font-bold text-white text-sm">{gameStats.awayTeam.leaders.rebounds.displayName}</p>
-                              <p className="text-2xl font-black text-blue-400">{gameStats.awayTeam.leaders.rebounds.value} reb</p>
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
-                          )}
-                        </div>
-                        
-                        {/* Mandante - Rebotes */}
-                        <div className="p-3 bg-white/5 rounded-lg">
-                          <p className="text-sm text-gray-400 mb-1">{gameStats.homeTeam.abbreviation}</p>
-                          {gameStats.homeTeam.leaders.rebounds ? (
-                            <>
-                              <p className="font-bold text-white text-sm">{gameStats.homeTeam.leaders.rebounds.displayName}</p>
-                              <p className="text-2xl font-black text-blue-400">{gameStats.homeTeam.leaders.rebounds.value} reb</p>
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Assistências */}
-                      <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-xl p-6 border border-white/10">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Users className="w-5 h-5 text-green-400" />
-                          <h5 className="font-bold text-white">Assistências</h5>
-                        </div>
-                        
-                        {/* Visitante - Assistências */}
-                        <div className="mb-3 p-3 bg-white/5 rounded-lg">
-                          <p className="text-sm text-gray-400 mb-1">{gameStats.awayTeam.abbreviation}</p>
-                          {gameStats.awayTeam.leaders.assists ? (
-                            <>
-                              <p className="font-bold text-white text-sm">{gameStats.awayTeam.leaders.assists.displayName}</p>
-                              <p className="text-2xl font-black text-green-400">{gameStats.awayTeam.leaders.assists.value} ast</p>
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
-                          )}
-                        </div>
-                        
-                        {/* Mandante - Assistências */}
-                        <div className="p-3 bg-white/5 rounded-lg">
-                          <p className="text-sm text-gray-400 mb-1">{gameStats.homeTeam.abbreviation}</p>
-                          {gameStats.homeTeam.leaders.assists ? (
-                            <>
-                              <p className="font-bold text-white text-sm">{gameStats.homeTeam.leaders.assists.displayName}</p>
-                              <p className="text-2xl font-black text-green-400">{gameStats.homeTeam.leaders.assists.value} ast</p>
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-xs italic">Aguardando dados...</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl p-8 border border-white/10 text-center">
+            <span className="ml-4 text-gray-300">Carregando estatísticas...</span>
+          </div>
+        ) : gameStats ? (
+          <GameStatsModal
+            isOpen={!!selectedGame}
+            onClose={() => setSelectedGame(null)}
+            stats={gameStats.stats}
+          />
+        ) : (
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedGame(null)}
+          >
+              <div 
+                  className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl max-w-md w-full p-8 border border-white/10 shadow-2xl text-center"
+                  onClick={(e) => e.stopPropagation()}
+              >
                   <TrendingUp className="w-16 h-16 text-pink-400 mx-auto mb-4" />
                   <h4 className="text-2xl font-bold text-white mb-2">
-                    Estatísticas em Breve
+                      Estatísticas em Breve
                   </h4>
                   <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                    As estatísticas detalhadas estarão disponíveis assim que o jogo começar!
+                      As estatísticas detalhadas estarão disponíveis assim que o jogo começar!
                   </p>
-                  <div className="inline-flex items-center gap-2 text-sm text-pink-400 font-medium">
-                    <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
-                    Aguardando início do jogo
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
           </div>
-        </div>
+        )
       )}
     </>
   );
