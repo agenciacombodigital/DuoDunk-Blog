@@ -109,11 +109,11 @@ export default function Classificacao() {
   };
 
   const isHotTeam = (team: Team) => {
-    return team.streak.startsWith('W') && parseInt(team.slice(1)) >= 4;
+    return team.streak.startsWith('W') && parseInt(team.streak.slice(1)) >= 4;
   };
 
   const isColdTeam = (team: Team) => {
-    return team.streak.startsWith('L') && parseInt(team.slice(1)) >= 4;
+    return team.streak.startsWith('L') && parseInt(team.streak.slice(1)) >= 4;
   };
 
   if (loading) {
