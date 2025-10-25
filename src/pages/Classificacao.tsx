@@ -55,12 +55,29 @@ export default function Classificacao() {
 
   const loadStandings = async () => {
     try {
-      // Simulating a fetch, replace with your actual Supabase function call
       const { data, error } = await supabase.functions.invoke('nba-standings');
       
       if (error) throw error;
       
-      if (data?.success) {
+      if (data?.success && data?.standings) {
+        console.log('Standings recebidos:', data.standings);
+        
+        // Verificar se as divisões têm times
+        const eastDivs = data.standings.eastern.divisions;
+        const westDivs = data.standings.western.divisions;
+        
+        console.log('Eastern Divisions:', {
+          atlantic: eastDivs.atlantic?.length || 0,
+          central: eastDivs.central?.length || 0,
+          southeast: eastDivs.southeast?.length || 0
+        });
+        
+        console.log('Western Divisions:', {
+          northwest: westDivs.northwest?.length || 0,
+          pacific: westDivs.pacific?.length || 0,
+          southwest: westDivs.southwest?.length || 0
+        });
+        
         setStandings(data.standings);
       }
     } catch (err) {
@@ -146,7 +163,7 @@ export default function Classificacao() {
             </h1>
           </div>
           <p className="text-lg text-gray-400">
-            Standings completo da temporada 2024-25
+            Classificação NBA 2025-26
           </p>
         </div>
 
@@ -270,33 +287,48 @@ export default function Classificacao() {
         {/* Divisions View */}
         {view === 'divisions' && currentStandings && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {Object.entries(currentStandings.divisions).map(([divisionName, teams]) => (
-              <div key={divisionName} className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
-                <h3 className="text-lg font-bold mb-4 text-center text-pink-400">{divisionName.replace(/([A-Z])/g, ' $1').trim()}</h3>
-                <div className="space-y-2">
-                  {teams.map((team, index) => (
-                    <div key={team.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/50">
-                      <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
-                        <span className="font-bold text-gray-500 w-5">{index + 1}</span>
-                        <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain" />
-                        <div>
-                          <div className="font-bold text-white flex items-center text-sm group-hover:text-pink-400 transition-colors">
-                            {team.abbreviation}
-                            {isHotTeam(team) && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
-                            {isColdTeam(team) && <Snowflake className="w-3 h-3 text-blue-400 ml-1" />}
+            {Object.entries(currentStandings.divisions).map(([divisionName, teams]) => {
+              // Pular divisões vazias
+              if (!teams || teams.length === 0) {
+                console.warn(`Divisão ${divisionName} está vazia`);
+                return null;
+              }
+              
+              return (
+                <div key={divisionName} className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+                  <h3 className="text-lg font-bold mb-4 text-center text-pink-400">
+                    {divisionName === 'atlantic' && 'Atlantic'}
+                    {divisionName === 'central' && 'Central'}
+                    {divisionName === 'southeast' && 'Southeast'}
+                    {divisionName === 'northwest' && 'Northwest'}
+                    {divisionName === 'pacific' && 'Pacific'}
+                    {divisionName === 'southwest' && 'Southwest'}
+                  </h3>
+                  <div className="space-y-2">
+                    {teams.map((team, index) => (
+                      <div key={team.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/50">
+                        <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
+                          <span className="font-bold text-gray-500 w-5">{index + 1}</span>
+                          <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain" />
+                          <div>
+                            <div className="font-bold text-white flex items-center text-sm group-hover:text-pink-400 transition-colors">
+                              {team.abbreviation}
+                              {isHotTeam(team) && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
+                              {isColdTeam(team) && <Snowflake className="w-3 h-3 text-blue-400 ml-1" />}
+                            </div>
+                            <div className="text-xs text-gray-500 font-mono">{team.wins}-{team.losses}</div>
                           </div>
-                          <div className="text-xs text-gray-500 font-mono">{team.wins}-{team.losses}</div>
+                        </Link>
+                        <div className={`flex items-center gap-1 text-xs font-mono font-bold ${getStreakColor(team.streak)}`}>
+                          {getStreakIcon(team.streak)}
+                          <span>{team.streak}</span>
                         </div>
-                      </Link>
-                      <div className={`flex items-center gap-1 text-xs font-mono font-bold ${getStreakColor(team.streak)}`}>
-                        {getStreakIcon(team.streak)}
-                        <span>{team.streak}</span>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
