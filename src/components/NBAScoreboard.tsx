@@ -50,7 +50,10 @@ export default function NBAScoreboard() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // State for modal
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [gameStats, setGameStats] = useState<{ success: boolean, stats: GameStats } | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
@@ -132,6 +135,17 @@ export default function NBAScoreboard() {
     } finally {
       setLoadingStats(false);
     }
+  };
+
+  const handleGameClick = (game: Game) => {
+    setSelectedGame(game);
+    setIsStatsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsStatsModalOpen(false);
+    setSelectedGame(null);
+    setGameStats(null);
   };
 
   const nextGames = () => {
@@ -218,7 +232,7 @@ export default function NBAScoreboard() {
               {visibleGames.map((game) => (
                 <button
                   key={game.gameId}
-                  onClick={() => setSelectedGame(game)}
+                  onClick={() => handleGameClick(game)}
                   className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl px-4 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center gap-3 sm:gap-4 md:gap-6 min-w-[calc(100vw-4rem)] sm:min-w-[480px] md:min-w-[520px] lg:min-w-[560px] max-w-[92vw] sm:max-w-[48%] md:max-w-[45%] flex-shrink-0 snap-center hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 border border-white/10 hover:border-pink-500/50 shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
@@ -284,7 +298,7 @@ export default function NBAScoreboard() {
       </div>
 
       {/* Modal Logic */}
-      {selectedGame && (
+      {isStatsModalOpen && selectedGame && (
         loadingStats ? (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="relative">
@@ -295,14 +309,14 @@ export default function NBAScoreboard() {
           </div>
         ) : gameStats ? (
           <GameStatsModal
-            isOpen={!!selectedGame}
-            onClose={() => setSelectedGame(null)}
+            isOpen={isStatsModalOpen}
+            onClose={handleCloseModal}
             stats={gameStats.stats}
           />
         ) : (
           <div 
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedGame(null)}
+            onClick={handleCloseModal}
           >
               <div 
                   className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl max-w-md w-full p-8 border border-white/10 shadow-2xl text-center"
