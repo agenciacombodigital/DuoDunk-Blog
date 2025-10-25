@@ -76,7 +76,7 @@ export default function MobileMenu() {
                   onClick={closeMenu}
                   className={`
                     flex items-center gap-4 px-4 py-4 rounded-xl
-                    transition-all duration-300 group text-lg font-bold opacity-0
+                    transition-all duration-300 group text-lg font-bold
                     ${isActive 
                       ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg' 
                       : 'text-gray-300 hover:bg-white/10 hover:text-white'
