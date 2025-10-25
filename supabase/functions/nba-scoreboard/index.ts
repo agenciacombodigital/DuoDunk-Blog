@@ -18,7 +18,8 @@ serve(async (req) => {
     const response = await fetch(nbaApiUrl, {
       headers: {
         'Accept': 'application/json',
-        // Adicionando headers para evitar cache e buscar dados sempre atualizados
+        // Adicionando User-Agent para simular um navegador e evitar bloqueios
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
@@ -26,10 +27,14 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      console.error(`[nba-scoreboard] NBA API request failed with status ${response.status}`);
       throw new Error(`NBA API request failed with status ${response.status}`);
     }
 
     const data = await response.json();
+    
+    const gameCount = data?.scoreboard?.games?.length || 0;
+    console.log(`[nba-scoreboard] Fetched data successfully. Found ${gameCount} games.`);
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders },
