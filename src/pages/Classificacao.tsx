@@ -79,6 +79,21 @@ export default function Classificacao() {
         });
         
         setStandings(data.standings);
+
+        // DEBUG: Mostrar estrutura dos dados
+        console.log('===== DEBUG STANDINGS =====');
+        console.log('Eastern Conference:', data.standings.eastern.conference.length, 'times');
+        console.log('Western Conference:', data.standings.western.conference.length, 'times');
+
+        // Mostrar primeiro time de cada divisão
+        Object.entries(data.standings.eastern.divisions).forEach(([div, teams]) => {
+          console.log(`Eastern ${div}:`, (teams as Team[]).length, 'times', (teams as Team[])[0]?.abbreviation || 'VAZIO');
+        });
+
+        Object.entries(data.standings.western.divisions).forEach(([div, teams]) => {
+          console.log(`Western ${div}:`, (teams as Team[]).length, 'times', (teams as Team[])[0]?.abbreviation || 'VAZIO');
+        });
+        console.log('===========================');
       }
     } catch (err) {
       console.error('Erro ao buscar standings:', err);
