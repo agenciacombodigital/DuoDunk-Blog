@@ -17,6 +17,7 @@ export default function Header() {
           <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
           <Link to="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
           <Link to="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
+          <Link to="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
         </nav>
 
         {/* Ícones de redes sociais e menu mobile */}
