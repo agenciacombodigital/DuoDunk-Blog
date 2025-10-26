@@ -275,8 +275,8 @@ export default function Classificacao() {
                 return null;
               }
               
-              // Capitaliza a primeira letra do nome da divisão para exibição
-              const displayDivisionName = divisionName.charAt(0).toUpperCase() + divisionName.slice(1);
+              // O nome da divisão já deve vir capitalizado da API (ex: Atlantic)
+              const displayDivisionName = divisionName;
 
               return (
                 <div key={divisionName} className="bg-white border border-gray-200 rounded-xl p-4 shadow-lg">
