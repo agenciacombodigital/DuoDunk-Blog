@@ -275,13 +275,10 @@ export default function Classificacao() {
                 return null;
               }
               
-              // O nome da divisão já deve vir capitalizado da API (ex: Atlantic)
-              const displayDivisionName = divisionName;
-
               return (
                 <div key={divisionName} className="bg-white border border-gray-200 rounded-xl p-4 shadow-lg">
                   <h3 className="text-lg font-bold mb-4 text-center text-pink-600">
-                    {displayDivisionName}
+                    {divisionName}
                   </h3>
                   <div className="space-y-2">
                     {teams.map((team, index) => (
