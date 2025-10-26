@@ -57,24 +57,14 @@ export default function NBAScoreboard() {
   const [gameStats, setGameStats] = useState<{ success: boolean, stats: GameStats } | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
-  useEffect(() => {
-    loadGames();
-    const interval = setInterval(loadGames, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (selectedGame) {
-      loadGameStats(selectedGame);
-    }
-  }, [selectedGame]);
-
   const loadGames = async () => {
     try {
+      console.log('[SCOREBOARD] Atualizando placares...');
+      
       const { data, error } = await supabase.functions.invoke('nba-scoreboard');
       
       if (error) {
-        console.error('❌ Erro:', error);
+        console.error('[SCOREBOARD] Erro:', error);
         setGames([]);
         return;
       }
@@ -101,17 +91,38 @@ export default function NBAScoreboard() {
             logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`,
           },
         }));
+        
+        console.log('[SCOREBOARD] Jogos atualizados:', processedGames.length);
         setGames(processedGames);
       } else {
+        console.log('[SCOREBOARD] Nenhum jogo encontrado');
         setGames([]);
       }
     } catch (err) {
-      console.error('❌ Erro:', err);
+      console.error('[SCOREBOARD] Erro:', err);
       setGames([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadGames();
+    
+    // Auto-refresh a cada 15 segundos (ideal para jogos ao vivo)
+    const interval = setInterval(() => {
+      console.log('[SCOREBOARD] Auto-refresh ativado');
+      loadGames();
+    }, 15000); // 15 segundos
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (selectedGame) {
+      loadGameStats(selectedGame);
+    }
+  }, [selectedGame]);
 
   const loadGameStats = async (game: Game) => {
     setLoadingStats(true);
