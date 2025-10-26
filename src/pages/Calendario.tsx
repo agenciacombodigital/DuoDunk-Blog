@@ -42,7 +42,8 @@ interface CalendarData {
 export default function Calendario() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [teamId, setTeamId] = useState<string>('');
+  // Alterado o estado inicial para 'all'
+  const [teamId, setTeamId] = useState<string>('all');
   const [calendarData, setCalendarData] = useState<CalendarData>({});
   const [loading, setLoading] = useState(true);
 
@@ -55,9 +56,12 @@ export default function Calendario() {
   async function getCalendar() {
     setLoading(true);
     try {
+      // Se teamId for 'all', passamos string vazia ou null para a função, ou tratamos na função
+      const teamFilter = teamId === 'all' ? '' : teamId; 
+      
       // NOTE: Assuming 'nba-calendar' Edge Function exists and returns CalendarData
       const { data, error } = await supabase.functions.invoke('nba-calendar', {
-        body: { month: apiMonth, teamId },
+        body: { month: apiMonth, teamId: teamFilter },
       });
 
       if (error) throw error;
@@ -195,7 +199,8 @@ export default function Calendario() {
                     <SelectValue placeholder="Filtrar por Time (Opcional)" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                    <SelectItem value="">Todos os Times</SelectItem>
+                    {/* Corrigido: value agora é 'all' */}
+                    <SelectItem value="all">Todos os Times</SelectItem>
                     {NBA_TEAMS.map(team => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name} ({team.abbreviation})
