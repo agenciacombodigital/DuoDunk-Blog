@@ -42,11 +42,12 @@ interface CalendarData {
 export default function Calendario() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  // Alterado o estado inicial para 'all'
+  // 'all' é o valor para não filtrar por time
   const [teamId, setTeamId] = useState<string>('all');
   const [calendarData, setCalendarData] = useState<CalendarData>({});
   const [loading, setLoading] = useState(true);
 
+  // Formato YYYYMM para a API
   const apiMonth = useMemo(() => format(currentMonth, 'yyyyMM'), [currentMonth]);
 
   useEffect(() => {
@@ -56,10 +57,10 @@ export default function Calendario() {
   async function getCalendar() {
     setLoading(true);
     try {
-      // Se teamId for 'all', passamos string vazia ou null para a função, ou tratamos na função
-      const teamFilter = teamId === 'all' ? '' : teamId; 
+      // Se teamId for 'all', passamos null para a Edge Function
+      const teamFilter = teamId === 'all' ? null : teamId; 
       
-      // NOTE: Assuming 'nba-calendar' Edge Function exists and returns CalendarData
+      // Chamada ao Supabase Functions
       const { data, error } = await supabase.functions.invoke('nba-calendar', {
         body: { month: apiMonth, teamId: teamFilter },
       });
@@ -67,6 +68,7 @@ export default function Calendario() {
       if (error) throw error;
       
       if (data?.success && data?.calendar) {
+        // 1. Salva o objeto de calendário completo
         setCalendarData(data.calendar);
       } else {
         setCalendarData({});
@@ -94,6 +96,7 @@ export default function Calendario() {
     setSelectedDate(undefined);
   };
 
+  // 2. Acessa os jogos do dia selecionado
   const selectedDayKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const gamesForSelectedDay = calendarData[selectedDayKey]?.games || [];
 
@@ -201,7 +204,6 @@ export default function Calendario() {
                     <SelectValue placeholder="Filtrar por Time (Opcional)" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                    {/* Corrigido: value agora é 'all' */}
                     <SelectItem value="all">Todos os Times</SelectItem>
                     {NBA_TEAMS.map(team => (
                       <SelectItem key={team.id} value={team.id}>
