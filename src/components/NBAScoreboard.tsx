@@ -7,6 +7,8 @@ interface Game {
   gameId: string;
   gameStatus: number;
   gameStatusText: string;
+  gameClock: string; // Adicionado
+  period: number; // Adicionado
   homeTeam: {
     teamName: string;
     teamTricode: string;
@@ -59,25 +61,28 @@ export default function NBAScoreboard() {
 
   const loadGames = async () => {
     try {
-      console.log('[SCOREBOARD] Atualizando placares...');
+      console.log('[SCOREBOARD-V2] Buscando placares em tempo real...');
       
-      const { data, error } = await supabase.functions.invoke('nba-scoreboard');
+      // Usar nova função com dados mais atualizados
+      const { data, error } = await supabase.functions.invoke('nba-scoreboard-v2');
       
       if (error) {
-        console.error('[SCOREBOARD] Erro:', error);
+        console.error('[SCOREBOARD-V2] Erro:', error);
         setGames([]);
         return;
       }
 
-      if (data?.scoreboard?.games && Array.isArray(data.scoreboard.games) && data.scoreboard.games.length > 0) {
+      if (data?.success && data?.scoreboard?.games) {
         const processedGames = data.scoreboard.games.map((game: any) => ({
           gameId: game.gameId,
           gameStatus: game.gameStatus,
           gameStatusText: game.gameStatusText,
+          gameClock: game.gameClock,
+          period: game.period,
           homeTeam: {
             teamName: game.homeTeam.teamName,
             teamTricode: game.homeTeam.teamTricode,
-            score: game.homeTeam.score?.toString() || '0',
+            score: String(game.homeTeam.score),
             wins: game.homeTeam.wins,
             losses: game.homeTeam.losses,
             logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`,
@@ -85,21 +90,21 @@ export default function NBAScoreboard() {
           awayTeam: {
             teamName: game.awayTeam.teamName,
             teamTricode: game.awayTeam.teamTricode,
-            score: game.awayTeam.score?.toString() || '0',
+            score: String(game.awayTeam.score),
             wins: game.awayTeam.wins,
             losses: game.awayTeam.losses,
             logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`,
           },
         }));
         
-        console.log('[SCOREBOARD] Jogos atualizados:', processedGames.length);
+        console.log(`[SCOREBOARD-V2] ✅ ${processedGames.length} jogos atualizados`);
         setGames(processedGames);
       } else {
-        console.log('[SCOREBOARD] Nenhum jogo encontrado');
+        console.log('[SCOREBOARD-V2] Nenhum jogo encontrado');
         setGames([]);
       }
     } catch (err) {
-      console.error('[SCOREBOARD] Erro:', err);
+      console.error('[SCOREBOARD-V2] Erro:', err);
       setGames([]);
     } finally {
       setLoading(false);
@@ -109,14 +114,19 @@ export default function NBAScoreboard() {
   useEffect(() => {
     loadGames();
     
-    // Auto-refresh a cada 15 segundos (ideal para jogos ao vivo)
+    // Intervalo dinâmico: 10s durante jogos ao vivo, 30s caso contrário
+    const getRefreshInterval = () => {
+      const hasLiveGames = games.some(g => g.gameStatus === 2);
+      return hasLiveGames ? 10000 : 30000; // 10s ou 30s
+    };
+    
     const interval = setInterval(() => {
-      console.log('[SCOREBOARD] Auto-refresh ativado');
+      console.log('[SCOREBOARD-V2] 🔄 Auto-refresh ativado');
       loadGames();
-    }, 15000); // 15 segundos
+    }, getRefreshInterval());
     
     return () => clearInterval(interval);
-  }, []);
+  }, [games]);
 
   useEffect(() => {
     if (selectedGame) {
@@ -270,6 +280,15 @@ export default function NBAScoreboard() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                   
+                  {/* Indicador AO VIVO */}
+                  {game.gameStatus === 2 && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <div className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+                        AO VIVO
+                      </div>
+                    </div>
+                  )}
+
                   <div className="relative flex items-center gap-2 sm:gap-3 flex-1">
                     <div className="relative flex-shrink-0">
                       <div className={`absolute inset-0 bg-gradient-to-r ${getTeamGradient(game.awayTeam.teamTricode)} opacity-20 blur-xl group-hover:opacity-40 transition-opacity`}></div>
@@ -285,7 +304,9 @@ export default function NBAScoreboard() {
                   <div className="relative flex flex-col items-center px-3 sm:px-6 border-x border-white/10 flex-shrink-0">
                     <div className="flex items-center gap-1 sm:gap-2 mb-1">
                       <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-400" />
-                      <span className="text-xs sm:text-sm font-bold text-pink-400 tracking-wide whitespace-nowrap">{game.gameStatusText}</span>
+                      <span className="text-xs sm:text-sm font-bold text-pink-400 tracking-wide whitespace-nowrap">
+                        {game.gameStatus === 2 ? `${game.gameClock} ${game.period}Q` : game.gameStatusText}
+                      </span>
                     </div>
                     <span className="hidden sm:block text-xs text-gray-500 font-medium whitespace-nowrap">Horário de Brasília</span>
                     {game.gameStatus === 2 && (
