@@ -270,14 +270,18 @@ export default function Classificacao() {
         {view === 'divisions' && currentStandings && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {Object.entries(currentStandings.divisions).map(([divisionName, teams]) => {
+              // Pular divisões vazias
               if (!teams || teams.length === 0) {
                 return null;
               }
               
+              // Capitaliza a primeira letra do nome da divisão para exibição
+              const displayDivisionName = divisionName.charAt(0).toUpperCase() + divisionName.slice(1);
+
               return (
                 <div key={divisionName} className="bg-white border border-gray-200 rounded-xl p-4 shadow-lg">
                   <h3 className="text-lg font-bold mb-4 text-center text-pink-600">
-                    {divisionName}
+                    {displayDivisionName}
                   </h3>
                   <div className="space-y-2">
                     {teams.map((team, index) => (
