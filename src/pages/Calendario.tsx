@@ -1,182 +1,128 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { format, addMonths, subMonths, startOfMonth, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, Tv, Clock, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Clock, Tv, ChevronLeft, ChevronRight, MapPin, Loader2 } from 'lucide-react';
 import { NBA_TEAMS } from '@/lib/nbaTeams';
-import { Calendar } from '@/components/ui/calendar';
 
-interface GameEvent {
+interface Game {
   id: string;
-  date: string; // ISO string
-  time: string; // HH:MM
-  status: string; // Ex: 'Final', '7:30 PM ET'
-  broadcast: string;
+  date: string;
+  timeBrasilia: string;
+  status: string;
+  name: string;
   homeTeam: {
     id: string;
-    abbreviation: string;
+    name: string;
     logo: string;
+    score: string;
   };
   awayTeam: {
     id: string;
-    abbreviation: string;
+    name: string;
     logo: string;
+    score: string;
   };
-  score?: {
-    home: string;
-    away: string;
-  };
-}
-
-interface CalendarDay {
-  date: string; // YYYY-MM-DD
-  games: GameEvent[];
+  whereToWatch: string;
 }
 
 interface CalendarData {
-  [key: string]: CalendarDay; // Key is YYYY-MM-DD
+  [date: string]: Game[];
 }
 
 export default function Calendario() {
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [teamId, setTeamId] = useState<string>('all');
-  const [calendarData, setCalendarData] = useState<CalendarData>({});
+  const [calendar, setCalendar] = useState<CalendarData>({});
   const [loading, setLoading] = useState(true);
+  const [selectedTeam, setSelectedTeam] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const apiMonth = useMemo(() => format(currentMonth, 'yyyyMM'), [currentMonth]);
+  // Helper to format month/year for API call (YYYYMM)
+  const getApiMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}${month}`;
+  };
 
   useEffect(() => {
-    getCalendar();
-  }, [apiMonth, teamId]);
+    loadCalendar();
+  }, [selectedTeam, currentMonth]); // Depend on currentMonth too
 
-  async function getCalendar() {
-    setLoading(true);
+  const loadCalendar = async () => {
     try {
-      const teamFilter = teamId === 'all' ? null : teamId; 
+      setLoading(true);
       
-      const { data, error } = await supabase.functions.invoke('nba-calendar', {
-        body: { month: apiMonth, teamId: teamFilter },
-      });
+      const body: any = {
+        month: getApiMonth(currentMonth)
+      };
+      if (selectedTeam) {
+        body.teamId = selectedTeam;
+      }
 
+      // NOTE: Assuming 'nba-calendar' Edge Function exists
+      const { data, error } = await supabase.functions.invoke('nba-calendar', {
+        body
+      });
+      
       if (error) throw error;
       
       if (data?.success && data?.calendar) {
-        setCalendarData(data.calendar);
-      } else {
-        setCalendarData({});
+        setCalendar(data.calendar);
       }
-    } catch (error) {
-      console.error('Erro ao buscar calendário:', error);
-      setCalendarData({});
+    } catch (err) {
+      console.error('Erro ao buscar calendário:', err);
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    // getDay() returns 0 for Sunday, 1 for Monday...
+    const startingDayOfWeek = firstDay.getDay(); 
+
+    return { daysInMonth, startingDayOfWeek, year, month };
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
 
   const handlePreviousMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
-    setSelectedDate(undefined);
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+    setSelectedDate(''); // Clear selected date on month change
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
-    setSelectedDate(undefined);
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+    setSelectedDate(''); // Clear selected date on month change
   };
 
-  const handleTeamChange = (value: string) => {
-    setTeamId(value);
-    setSelectedDate(undefined);
+  const handleDateClick = (day: number) => {
+    const year = currentMonth.getFullYear();
+    const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    const dateKey = `${year}-${month}-${dayStr}`;
+    setSelectedDate(dateKey);
   };
 
-  const selectedDayKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
-  const gamesForSelectedDay = calendarData[selectedDayKey]?.games || [];
-
-  const modifiers = {
-    hasGames: (date: Date) => {
-      const dateKey = format(date, 'yyyy-MM-dd');
-      const dayData = calendarData[dateKey];
-      return !!dayData && dayData.games && dayData.games.length > 0;
-    },
+  const hasGamesOnDate = (day: number) => {
+    const year = currentMonth.getFullYear();
+    const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    const dateKey = `${year}-${month}-${dayStr}`;
+    return calendar[dateKey] && calendar[dateKey].length > 0;
   };
 
-  const modifiersStyles = {
-    hasGames: {
-      fontWeight: 'bold',
-      color: '#FA007D', // Primary color
-      backgroundColor: '#FA007D1A', // Light background for games
-      borderRadius: '50%',
-    },
-  };
-
-  const GameCard = ({ game }: { game: GameEvent }) => {
-    const isLive = game.status.toLowerCase().includes('q') || game.status.toLowerCase().includes('half');
-    const isFinal = game.status.toLowerCase().includes('final');
-    
-    // Fallback logos
-    const homeLogo = game.homeTeam.logo || `https://cdn.nba.com/logos/nba/${game.homeTeam.id}/primary/L/logo.svg`;
-    const awayLogo = game.awayTeam.logo || `https://cdn.nba.com/logos/nba/${game.awayTeam.id}/primary/L/logo.svg`;
-
-    return (
-      // Card de jogo em modo claro
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <Clock className="w-3 h-3 text-gray-500" />
-            <span className="text-gray-700">{game.time} BRT</span>
-          </div>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-            isLive ? 'bg-red-600 text-white animate-pulse' : 
-            isFinal ? 'bg-green-600 text-white' : 
-            'bg-gray-200 text-gray-700'
-          }`}>
-            {game.status}
-          </span>
-        </div>
-
-        {/* Teams and Score */}
-        <div className="flex items-center justify-between">
-          {/* Away Team */}
-          <div className="flex items-center gap-3">
-            <img src={awayLogo} alt={game.awayTeam.abbreviation} className="w-8 h-8 object-contain" />
-            <span className="font-bold text-gray-900 text-lg">{game.awayTeam.abbreviation}</span>
-          </div>
-
-          {/* Score / VS */}
-          <div className="text-center">
-            {game.score ? (
-              <span className="text-2xl font-black text-pink-600">
-                {game.score.away} - {game.score.home}
-              </span>
-            ) : (
-              <span className="text-lg font-bold text-gray-500">VS</span>
-            )}
-          </div>
-
-          {/* Home Team */}
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-gray-900 text-lg">{game.homeTeam.abbreviation}</span>
-            <img src={homeLogo} alt={game.homeTeam.abbreviation} className="w-8 h-8 object-contain" />
-          </div>
-        </div>
-
-        {/* Broadcast Info */}
-        {game.broadcast && (
-          <div className="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2 text-xs text-gray-600">
-            <Tv className="w-3 h-3" />
-            <span>{game.broadcast}</span>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
+  const selectedGames = selectedDate ? calendar[selectedDate] || [] : [];
 
   return (
-    // Fundo principal branco
     <div className="min-h-screen bg-white text-gray-900 py-12">
       <div className="container mx-auto px-4 max-w-6xl">
+        {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-black text-gray-900 mb-2">
             📅 Calendário NBA
@@ -187,109 +133,172 @@ export default function Calendario() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Coluna Esquerda: Calendário e Filtros */}
+          {/* Coluna Esquerda: Filtros e Calendário */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Filtros - Fundo branco */}
+            {/* Filtro de Times */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Filtros</h2>
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Filtro por Time - Ajustando cores do Select */}
-                <Select onValueChange={handleTeamChange} value={teamId}>
-                  <SelectTrigger className="w-full bg-gray-50 border-gray-300 text-gray-900 hover:bg-gray-100">
-                    <SelectValue placeholder="Filtrar por Time (Opcional)" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-300 text-gray-900">
-                    <SelectItem value="all">Todos os Times</SelectItem>
-                    {NBA_TEAMS.map(team => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name} ({team.abbreviation})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 transition"
+              >
+                <option value="">Todos os Times</option>
+                {NBA_TEAMS.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} ({team.abbreviation})
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Calendário - Fundo branco */}
+            {/* Calendário */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <Button 
-                  variant="ghost" 
+              {/* Header do Calendário */}
+              <div className="flex justify-between items-center mb-6">
+                <button
                   onClick={handlePreviousMonth}
-                  className="text-gray-600 hover:text-pink-600"
+                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition"
                 >
-                  <ChevronLeft className="w-5 h-5" />
-                </Button>
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
                 <h3 className="text-xl font-bold text-gray-900">
-                  {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                  {formatMonthYear(currentMonth)}
                 </h3>
-                <Button 
-                  variant="ghost" 
+                <button
                   onClick={handleNextMonth}
-                  className="text-gray-600 hover:text-pink-600"
+                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition"
                 >
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
+                  <ChevronRight className="w-6 h-6" />
+                </button>
               </div>
 
-              <div className="flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  month={currentMonth}
-                  onMonthChange={setCurrentMonth}
-                  locale={ptBR}
-                  className="p-0"
-                  modifiers={modifiers}
-                  modifiersStyles={modifiersStyles}
-                  classNames={{
-                    day_selected: "bg-pink-600 text-white hover:bg-pink-700 hover:text-white focus:bg-pink-600 focus:text-white",
-                    day_today: "bg-cyan-600/20 text-cyan-800 border border-cyan-600", // Ajuste para light mode
-                    day_outside: "text-gray-400 opacity-50",
-                    day_hidden: "invisible",
-                    day: "text-gray-900 hover:bg-gray-100 rounded-full", // Ajuste para light mode
-                    caption_label: "text-gray-900 font-bold", // Ajuste para light mode
-                    nav_button: "text-gray-600 hover:text-gray-900", // Ajuste para light mode
-                    head_cell: "text-gray-600 font-semibold", // Ajuste para light mode
-                    row: "flex w-full mt-2",
-                    weeknumber: "text-gray-600",
-                    cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-gray-100 first:[&:has([aria-selected])]:rounded-l-full last:[&:has([aria-selected])]:rounded-r-full focus-within:relative focus-within:z-20",
-                    month: "space-y-4",
-                    caption: "flex justify-center pt-1 relative items-center",
-                    caption_dropdowns: "flex gap-1",
-                    vhidden: "hidden",
-                    nav_button_previous: "absolute left-1",
-                    nav_button_next: "absolute right-1",
-                  }}
-                />
+              {/* Dias da semana */}
+              <div className="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-2">
+                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                  <div key={day} className="py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Dias do mês */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Espaços vazios antes do primeiro dia */}
+                {Array.from({ length: startingDayOfWeek }).map((_, i) => (
+                  <div key={`empty-${i}`} className="aspect-square"></div>
+                ))}
+
+                {/* Dias do mês */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const hasGames = hasGamesOnDate(day);
+                  const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  const isSelected = selectedDate === dateKey;
+                  const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => handleDateClick(day)}
+                      className={`aspect-square rounded-xl font-semibold transition-all flex items-center justify-center text-lg
+                        ${isSelected
+                          ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-pink-500/30'
+                          : hasGames
+                            ? 'bg-pink-500/10 text-pink-700 hover:bg-pink-500/20'
+                            : isToday
+                              ? 'bg-cyan-500/10 text-cyan-700 hover:bg-cyan-500/20'
+                              : 'text-gray-800 hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Coluna Direita: Jogos do Dia */}
+          {/* Lista de Jogos do Dia Selecionado */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-lg sticky top-28">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900">
-                <CalendarIcon className="w-5 h-5 text-cyan-600" />
-                Jogos em {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : 'Nenhum dia selecionado'}
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900">
+                <Calendar className="w-5 h-5 text-cyan-600" />
+                {selectedDate
+                  ? `Jogos em ${new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
+                      day: 'numeric',
+                      month: 'long',
+                    })}`
+                  : 'Selecione uma data'}
               </h2>
 
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-10">
                   <Loader2 className="w-8 h-8 animate-spin text-pink-600" />
-                  <p className="text-gray-600 mt-3">Buscando jogos...</p>
+                  <p className="text-gray-600 mt-3">Carregando...</p>
                 </div>
-              ) : gamesForSelectedDay.length > 0 ? (
+              ) : selectedGames.length > 0 ? (
                 <div className="space-y-4">
-                  {gamesForSelectedDay.map((game, index) => (
-                    <GameCard key={index} game={game} />
+                  {selectedGames.map((game) => (
+                    <div key={game.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                      {/* Times e Placar */}
+                      <div className="flex items-center justify-between text-lg font-bold mb-3">
+                        {/* Away Team */}
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={game.awayTeam.logo || `https://a.espncdn.com/i/teamlogos/nba/500/${game.awayTeam.name.toLowerCase().replace(/\s+/g, '')}.png`}
+                            alt={game.awayTeam.name}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                          <span className="text-gray-900">{game.awayTeam.name}</span>
+                        </div>
+                        
+                        <span className="text-gray-500 text-sm">VS</span>
+                        
+                        {/* Home Team */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900">{game.homeTeam.name}</span>
+                          <img
+                            src={game.homeTeam.logo || `https://a.espncdn.com/i/teamlogos/nba/500/${game.homeTeam.name.toLowerCase().replace(/\s+/g, '')}.png`}
+                            alt={game.homeTeam.name}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Status e Horário */}
+                      <div className="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-3 mt-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span>{game.timeBrasilia}</span>
+                        </div>
+                        <span className={`font-bold ${game.status.includes('Final') ? 'text-green-600' : 'text-pink-600'}`}>
+                          {game.status}
+                        </span>
+                      </div>
+
+                      {/* Transmissão */}
+                      {game.whereToWatch && (
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                          <Tv className="w-3 h-3" />
+                          <span>{game.whereToWatch}</span>
+                        </div>
+                      )}
+                    </div>
                   ))}
+                </div>
+              ) : selectedDate ? (
+                <div className="text-center py-10 bg-gray-100 rounded-lg border border-gray-200">
+                  <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">Nenhum jogo agendado para esta data.</p>
                 </div>
               ) : (
                 <div className="text-center py-10 bg-gray-100 rounded-lg border border-gray-200">
-                  <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Nenhum jogo agendado para este dia.</p>
+                  <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">Selecione uma data no calendário.</p>
                 </div>
               )}
             </div>
