@@ -100,7 +100,9 @@ export default function Calendario() {
   const modifiers = {
     hasGames: (date: Date) => {
       const dateKey = format(date, 'yyyy-MM-dd');
-      return !!calendarData[dateKey] && calendarData[dateKey].games.length > 0;
+      const dayData = calendarData[dateKey];
+      // Verifica se dayData existe e se tem jogos
+      return !!dayData && dayData.games && dayData.games.length > 0;
     },
   };
 
