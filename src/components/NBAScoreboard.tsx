@@ -30,6 +30,8 @@ interface Game {
 interface GameStats {
   status: string;
   gameState: string;
+  gameClock?: string;
+  period?: number;
   homeTeam: {
     name: string;
     abbreviation: string;
@@ -114,14 +116,15 @@ export default function NBAScoreboard() {
   useEffect(() => {
     loadGames();
     
-    // Intervalo dinâmico: 10s durante jogos ao vivo, 30s caso contrário
+    // ⚡ INTERVALO AGRESSIVO: 5s durante jogos ao vivo, 30s caso contrário
     const getRefreshInterval = () => {
       const hasLiveGames = games.some(g => g.gameStatus === 2);
-      return hasLiveGames ? 10000 : 30000; // 10s ou 30s
+      return hasLiveGames ? 5000 : 30000; // 5s ou 30s
     };
     
     const interval = setInterval(() => {
-      console.log('[SCOREBOARD-V2] 🔄 Auto-refresh ativado');
+      const hasLive = games.some(g => g.gameStatus === 2);
+      console.log(`[SCOREBOARD-V2] 🔄 Auto-refresh (${hasLive ? '5s - AO VIVO' : '30s - AGENDADO'})`);
       loadGames();
     }, getRefreshInterval());
     
@@ -138,6 +141,8 @@ export default function NBAScoreboard() {
     setLoadingStats(true);
     setGameStats(null);
     try {
+      console.log('[MODAL] Buscando stats frescas para:', game.gameId);
+      
       const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
         body: { 
           gameId: game.gameId,
@@ -147,11 +152,14 @@ export default function NBAScoreboard() {
       });
 
       if (error) throw error;
+      
       if (data?.success) {
         setGameStats(data);
         
-        // Sincronizar o placar principal com os dados frescos do modal
+        // ✅ SINCRONIZAR PLACAR DO SCOREBOARD IMEDIATAMENTE
         const freshStats = data.stats;
+        console.log('[MODAL] Sincronizando placar:', freshStats.awayTeam.abbreviation, freshStats.awayTeam.score, 'x', freshStats.homeTeam.score, freshStats.homeTeam.abbreviation);
+        
         setGames(prevGames => 
           prevGames.map(g => {
             if (g.gameId === game.gameId) {
@@ -166,14 +174,22 @@ export default function NBAScoreboard() {
                   score: freshStats.awayTeam.score,
                 },
                 gameStatusText: freshStats.status,
+                gameClock: freshStats.gameClock || g.gameClock,
+                period: freshStats.period || g.period,
               };
             }
             return g;
           })
         );
+        
+        // ✅ FORÇAR REFRESH COMPLETO DO SCOREBOARD APÓS 2 SEGUNDOS
+        setTimeout(() => {
+          console.log('[MODAL] Forçando refresh completo do scoreboard...');
+          loadGames();
+        }, 2000);
       }
     } catch (err) {
-      console.error('❌ Erro ao buscar stats:', err);
+      console.error('[MODAL] Erro ao buscar stats:', err);
       setGameStats(null);
     } finally {
       setLoadingStats(false);
