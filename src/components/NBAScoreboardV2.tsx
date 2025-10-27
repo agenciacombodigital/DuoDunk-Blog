@@ -34,15 +34,6 @@ export default function NBAScoreboardV2() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadGames();
-    const interval = setInterval(() => {
-      const hasLive = games.some(g => g.gameStatus === 2);
-      loadGames();
-    }, hasLive ? 5000 : 30000);
-    return () => clearInterval(interval);
-  }, [games]);
-
   const loadGames = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('nba-scoreboard-v2');
@@ -80,6 +71,26 @@ export default function NBAScoreboardV2() {
       setLoading(false);
     }
   };
+
+  // Efeito para carregar os jogos apenas uma vez, quando o componente é montado.
+  useEffect(() => {
+    loadGames();
+  }, []); // O array de dependências vazio garante que isso rode apenas uma vez.
+
+  // Este efeito gerencia o intervalo de atualização.
+  // Ele será re-executado sempre que a lista de 'games' mudar.
+  useEffect(() => {
+    const hasLive = games.some(g => g.gameStatus === 2);
+    const intervalDuration = hasLive ? 5000 : 30000; // 5s se ao vivo, 30s senão
+
+    const interval = setInterval(() => {
+      loadGames();
+    }, intervalDuration);
+
+    // A função de limpeza é crucial: ela remove o intervalo antigo
+    // antes que o efeito rode novamente para criar um novo com a duração correta.
+    return () => clearInterval(interval);
+  }, [games]); // A dependência em 'games' ajusta o polling dinamicamente.
 
   if (loading || games.length === 0) {
     return (
