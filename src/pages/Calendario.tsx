@@ -49,7 +49,7 @@ export default function Calendario() {
   const loadCalendar = async () => {
     try {
       setLoading(true);
-      console.log('[CALENDARIO] Buscando jogos...', { selectedTeam });
+      console.log('[CALENDARIO] Buscando jogos...', { selectedTeam, currentMonth });
       
       // Montar body da requisição
       const body: any = {};
@@ -61,7 +61,9 @@ export default function Calendario() {
       }
       
       // Adicionar mês atual (formato YYYYMM)
-      body.month = getApiMonth(currentMonth);
+      const year = currentMonth.getFullYear();
+      const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+      body.month = `${year}${month}`;
       console.log('[CALENDARIO] Buscando mês:', body.month);
 
       const { data, error } = await supabase.functions.invoke('nba-calendar', {
@@ -70,7 +72,8 @@ export default function Calendario() {
       
       if (error) {
         console.error('[CALENDARIO] Erro na requisição:', error);
-        throw error;
+        setCalendar({});
+        return;
       }
       
       console.log('[CALENDARIO] Resposta recebida:', data);
@@ -78,8 +81,19 @@ export default function Calendario() {
       if (data?.success && data?.calendar) {
         const totalDays = Object.keys(data.calendar).length;
         console.log('[CALENDARIO] ✅ Jogos encontrados:', totalDays, 'dias');
+        console.log('[CALENDARIO] Total de jogos:', data.totalGames);
+        
+        // Log dos primeiros 3 dias com jogos
+        Object.keys(data.calendar).slice(0, 3).forEach(dateKey => {
+          console.log(`[CALENDARIO] ${dateKey}: ${data.calendar[dateKey].length} jogos`);
+        });
         
         setCalendar(data.calendar);
+        
+        // Se nenhum dia tiver jogos, avisar
+        if (Object.keys(data.calendar).length === 0) {
+          console.warn('[CALENDARIO] ⚠️ Nenhum jogo encontrado para o mês', body.month);
+        }
       } else {
         console.warn('[CALENDARIO] Resposta sem dados:', data);
         setCalendar({});
@@ -321,7 +335,7 @@ export default function Calendario() {
                       </div>
 
                       {/* Transmissão */}
-                      {game.whereToWatch && (
+                      {game.whereToWatch && game.whereToWatch !== 'N/D' && (
                         <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                           <Tv className="w-3 h-3" />
                           <span>{game.whereToWatch}</span>
