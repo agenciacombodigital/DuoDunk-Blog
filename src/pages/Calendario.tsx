@@ -49,26 +49,44 @@ export default function Calendario() {
   const loadCalendar = async () => {
     try {
       setLoading(true);
+      console.log('[CALENDARIO] Buscando jogos...', { selectedTeam });
       
-      const body: any = {
-        month: getApiMonth(currentMonth)
-      };
-      if (selectedTeam) {
+      // Montar body da requisição
+      const body: any = {};
+      
+      // Adicionar filtro de time se selecionado
+      if (selectedTeam && selectedTeam !== '') {
         body.teamId = selectedTeam;
+        console.log('[CALENDARIO] Filtrando por time:', selectedTeam);
       }
+      
+      // Adicionar mês atual (formato YYYYMM)
+      body.month = getApiMonth(currentMonth);
+      console.log('[CALENDARIO] Buscando mês:', body.month);
 
-      // NOTE: Assuming 'nba-calendar' Edge Function exists
       const { data, error } = await supabase.functions.invoke('nba-calendar', {
         body
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('[CALENDARIO] Erro na requisição:', error);
+        throw error;
+      }
+      
+      console.log('[CALENDARIO] Resposta recebida:', data);
       
       if (data?.success && data?.calendar) {
+        const totalDays = Object.keys(data.calendar).length;
+        console.log('[CALENDARIO] ✅ Jogos encontrados:', totalDays, 'dias');
+        
         setCalendar(data.calendar);
+      } else {
+        console.warn('[CALENDARIO] Resposta sem dados:', data);
+        setCalendar({});
       }
     } catch (err) {
-      console.error('Erro ao buscar calendário:', err);
+      console.error('[CALENDARIO] Erro ao buscar calendário:', err);
+      setCalendar({});
     } finally {
       setLoading(false);
     }
@@ -113,7 +131,15 @@ export default function Calendario() {
     const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
     const dayStr = String(day).padStart(2, '0');
     const dateKey = `${year}-${month}-${dayStr}`;
-    return calendar[dateKey] && calendar[dateKey].length > 0;
+    
+    const hasGames = calendar[dateKey] && calendar[dateKey].length > 0;
+    
+    // Debug apenas para os primeiros 3 dias
+    if (day <= 3) {
+      console.log(`[CALENDARIO] Dia ${day} (${dateKey}):`, hasGames ? `${calendar[dateKey].length} jogos` : 'sem jogos');
+    }
+    
+    return hasGames;
   };
 
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
@@ -242,34 +268,48 @@ export default function Calendario() {
                 <div className="space-y-4">
                   {selectedGames.map((game) => (
                     <div key={game.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
-                      {/* Times e Placar */}
+                      {/* Times */}
                       <div className="flex items-center justify-between text-lg font-bold mb-3">
                         {/* Away Team */}
                         <div className="flex items-center gap-2">
                           <img
-                            src={game.awayTeam.logo || `https://a.espncdn.com/i/teamlogos/nba/500/${game.awayTeam.name.toLowerCase().replace(/\s+/g, '')}.png`}
+                            src={game.awayTeam.logo}
                             alt={game.awayTeam.name}
-                            className="w-8 h-8 object-contain"
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                            className="w-12 h-12 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://via.placeholder.com/48?text=?';
+                            }}
                           />
-                          <span className="text-gray-900">{game.awayTeam.name}</span>
+                          <div className="text-left">
+                            <span className="text-gray-900 block text-sm">{game.awayTeam.name}</span>
+                            {game.awayTeam.score && (
+                              <span className="text-xl font-black text-gray-900">{game.awayTeam.score}</span>
+                            )}
+                          </div>
                         </div>
                         
-                        <span className="text-gray-500 text-sm">VS</span>
+                        <span className="text-gray-500 text-sm font-bold">@</span>
                         
                         {/* Home Team */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-900">{game.homeTeam.name}</span>
+                        <div className="flex items-center gap-2 flex-row-reverse">
                           <img
-                            src={game.homeTeam.logo || `https://a.espncdn.com/i/teamlogos/nba/500/${game.homeTeam.name.toLowerCase().replace(/\s+/g, '')}.png`}
+                            src={game.homeTeam.logo}
                             alt={game.homeTeam.name}
-                            className="w-8 h-8 object-contain"
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                            className="w-12 h-12 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://via.placeholder.com/48?text=?';
+                            }}
                           />
+                          <div className="text-right">
+                            <span className="text-gray-900 block text-sm">{game.homeTeam.name}</span>
+                            {game.homeTeam.score && (
+                              <span className="text-xl font-black text-gray-900">{game.homeTeam.score}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
-                      {/* Status e Horário */}
+                      {/* Horário e Status */}
                       <div className="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-3 mt-3">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-gray-500" />
@@ -293,12 +333,12 @@ export default function Calendario() {
               ) : selectedDate ? (
                 <div className="text-center py-10 bg-gray-100 rounded-lg border border-gray-200">
                   <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Nenhum jogo agendado para esta data.</p>
+                  <p className="text-gray-600">Nenhum jogo nesta data</p>
                 </div>
               ) : (
                 <div className="text-center py-10 bg-gray-100 rounded-lg border border-gray-200">
                   <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Selecione uma data no calendário.</p>
+                  <p className="text-gray-600">Selecione uma data no calendário</p>
                 </div>
               )}
             </div>
