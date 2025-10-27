@@ -12,7 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import EditArticle from "./pages/EditArticle";
 import AdminManual from "./pages/AdminManual";
 import AdminRodadaNBA from "./pages/AdminRodadaNBA";
-import NBAScoreboard from "./components/NBAScoreboard";
+import NBAScoreboardV2 from "./components/NBAScoreboardV2";
 import Times from "./pages/Times";
 import Time from "./pages/Time";
 import Classificacao from './pages/Classificacao';
@@ -28,7 +28,7 @@ const AppContent = () => {
       {!isAdminRoute && (
         <>
           <Header />
-          <NBAScoreboard />
+          <NBAScoreboardV2 />
         </>
       )}
       <main className="flex-grow">
