@@ -75,22 +75,19 @@ export default function NBAScoreboardV2() {
   // Efeito para carregar os jogos apenas uma vez, quando o componente é montado.
   useEffect(() => {
     loadGames();
-  }, []); // O array de dependências vazio garante que isso rode apenas uma vez.
+  }, []);
 
   // Este efeito gerencia o intervalo de atualização.
-  // Ele será re-executado sempre que a lista de 'games' mudar.
   useEffect(() => {
     const hasLive = games.some(g => g.gameStatus === 2);
-    const intervalDuration = hasLive ? 5000 : 30000; // 5s se ao vivo, 30s senão
+    const intervalDuration = hasLive ? 5000 : 30000;
 
     const interval = setInterval(() => {
       loadGames();
     }, intervalDuration);
 
-    // A função de limpeza é crucial: ela remove o intervalo antigo
-    // antes que o efeito rode novamente para criar um novo com a duração correta.
     return () => clearInterval(interval);
-  }, [games]); // A dependência em 'games' ajusta o polling dinamicamente.
+  }, [games]);
 
   if (loading || games.length === 0) {
     return (
@@ -102,23 +99,24 @@ export default function NBAScoreboardV2() {
     );
   }
 
-  const visibleGames = games.slice(currentIndex, currentIndex + 3);
+  // Mostrar apenas 2 jogos por vez
+  const visibleGames = games.slice(currentIndex, currentIndex + 2);
 
   return (
     <>
-      <div className="bg-gray-900 py-3 border-b border-gray-700/50">
+      <div className="bg-gray-900 py-4 border-b border-gray-700/50">
         <div className="container mx-auto px-4 flex items-center gap-4">
-          {games.length > 3 && (
+          {games.length > 2 && (
             <button
               onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-              className="p-1.5 hover:bg-white/5 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30"
               disabled={currentIndex === 0}
             >
-              <ChevronLeft className={`w-5 h-5 ${currentIndex === 0 ? 'text-gray-600' : 'text-gray-400'}`} />
+              <ChevronLeft className={`w-6 h-6 ${currentIndex === 0 ? 'text-gray-600' : 'text-gray-400'}`} />
             </button>
           )}
 
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {visibleGames.map((game) => (
               <button
                 key={game.gameId}
@@ -126,58 +124,71 @@ export default function NBAScoreboardV2() {
                   setSelectedGame(game);
                   setIsModalOpen(true);
                 }}
-                className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-3 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02]"
+                className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-4 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
               >
                 {/* Badge AO VIVO */}
                 {game.gameStatus === 2 && (
-                  <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+                  <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
                     AO VIVO
                   </div>
                 )}
 
                 {/* Placar Compacto */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {/* Away Team */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-6 h-6" />
-                      <span className="font-bold text-white text-sm">{game.awayTeam.teamTricode}</span>
-                      <span className="text-xs text-gray-400">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={game.awayTeam.logo} 
+                        alt={game.awayTeam.teamTricode} 
+                        className="w-8 h-8 drop-shadow-lg" 
+                      />
+                      <div className="text-left">
+                        <span className="font-bold text-white text-base block">{game.awayTeam.teamTricode}</span>
+                        <span className="text-xs text-gray-400">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                      </div>
                     </div>
-                    <span className="font-black text-white text-lg">{game.awayTeam.score}</span>
+                    <span className="font-black text-white text-2xl tabular-nums">{game.awayTeam.score}</span>
                   </div>
 
                   {/* Home Team */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-6 h-6" />
-                      <span className="font-bold text-white text-sm">{game.homeTeam.teamTricode}</span>
-                      <span className="text-xs text-gray-400">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={game.homeTeam.logo} 
+                        alt={game.homeTeam.teamTricode} 
+                        className="w-8 h-8 drop-shadow-lg" 
+                      />
+                      <div className="text-left">
+                        <span className="font-bold text-white text-base block">{game.homeTeam.teamTricode}</span>
+                        <span className="text-xs text-gray-400">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                      </div>
                     </div>
-                    <span className="font-black text-white text-lg">{game.homeTeam.score}</span>
+                    <span className="font-black text-white text-2xl tabular-nums">{game.homeTeam.score}</span>
                   </div>
                 </div>
 
                 {/* Status/Horário */}
-                <div className="border-t border-gray-700 mt-2 pt-2 flex items-center justify-between text-xs">
+                <div className="border-t border-gray-700 mt-3 pt-3 flex items-center justify-between text-xs">
                   <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
-                    {game.gameStatus === 2 ? `${game.period}Q ${game.gameClock}` : game.gameStatusText}
+                    {game.gameStatus === 2 ? `${game.period}º Quarto • ${game.gameClock}` : game.gameStatusText}
                   </span>
                   <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1">
-                    Ver Jogo <Play className="w-3 h-3" />
+                    Ver Estatísticas <Play className="w-3 h-3" />
                   </span>
                 </div>
               </button>
             ))}
           </div>
 
-          {games.length > 3 && (
+          {games.length > 2 && (
             <button
-              onClick={() => setCurrentIndex(Math.min(games.length - 3, currentIndex + 1))}
-              className="p-1.5 hover:bg-white/5 rounded-lg transition-colors"
-              disabled={currentIndex >= games.length - 3}
+              onClick={() => setCurrentIndex(Math.min(games.length - 2, currentIndex + 1))}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30"
+              disabled={currentIndex >= games.length - 2}
             >
-              <ChevronRight className={`w-5 h-5 ${currentIndex >= games.length - 3 ? 'text-gray-600' : 'text-gray-400'}`} />
+              <ChevronRight className={`w-6 h-6 ${currentIndex >= games.length - 2 ? 'text-gray-600' : 'text-gray-400'}`} />
             </button>
           )}
         </div>
