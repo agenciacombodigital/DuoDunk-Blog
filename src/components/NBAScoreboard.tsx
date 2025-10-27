@@ -292,14 +292,14 @@ export default function NBAScoreboard() {
                 <button
                   key={game.gameId}
                   onClick={() => handleGameClick(game)}
-                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl px-4 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center gap-3 sm:gap-4 md:gap-6 min-w-[calc(100vw-4rem)] sm:min-w-[480px] md:min-w-[520px] lg:min-w-[560px] max-w-[92vw] sm:max-w-[48%] md:max-w-[45%] flex-shrink-0 snap-center hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 border border-white/10 hover:border-pink-500/50 shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
+                  className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-2xl px-3 sm:px-6 md:px-8 py-3 sm:py-5 flex items-center gap-2 sm:gap-4 md:gap-6 min-w-[280px] sm:min-w-[480px] md:min-w-[520px] lg:min-w-[560px] w-[90vw] sm:w-auto max-w-[90vw] sm:max-w-[48%] md:max-w-[45%] flex-shrink-0 snap-center hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300 border border-white/10 hover:border-pink-500/50 shadow-2xl hover:shadow-pink-500/20 cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                   
                   {/* Indicador AO VIVO */}
                   {game.gameStatus === 2 && (
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <div className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+                      <div className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse border border-white/20">
                         AO VIVO
                       </div>
                     </div>
@@ -321,7 +321,14 @@ export default function NBAScoreboard() {
                     <div className="flex items-center gap-1 sm:gap-2 mb-1">
                       <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-400" />
                       <span className="text-xs sm:text-sm font-bold text-pink-400 tracking-wide whitespace-nowrap">
-                        {game.gameStatus === 2 ? `${game.gameClock} ${game.period}Q` : game.gameStatusText}
+                        {game.gameStatus === 2 ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">{game.period}Q</span>
+                            <span className="text-xs">{game.gameClock}</span>
+                          </div>
+                        ) : (
+                          game.gameStatusText
+                        )}
                       </span>
                     </div>
                     <span className="hidden sm:block text-xs text-gray-500 font-medium whitespace-nowrap">Horário de Brasília</span>
