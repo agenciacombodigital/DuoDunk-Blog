@@ -18,6 +18,7 @@ serve(async (req) => {
     const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
     
     const response = await fetch(nbaApiUrl, {
+      cache: "no-store", // Força a busca por dados novos
       headers: {
         'Accept': 'application/json',
         // Adicionando User-Agent para simular um navegador e evitar bloqueios
