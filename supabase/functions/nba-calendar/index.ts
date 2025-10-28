@@ -94,16 +94,19 @@ serve(async (req) => {
           date: game.gameDateTimeUTC,
           timeBrasilia: convertToBrasiliaTime(game.gameDateTimeUTC),
           status: game.gameStatusText,
+          gameStatus: game.gameStatus, // Status numérico
           name: `${awayTeam.teamName} @ ${homeTeam.teamName}`,
           homeTeam: {
             id: String(homeTeam.teamId),
             name: homeTeam.teamName,
+            tricode: homeTeam.teamTricode,
             logo: `https://cdn.nba.com/logos/nba/${homeTeam.teamId}/primary/L/logo.svg`,
             score: game.homeTeam.score?.toString() || '',
           },
           awayTeam: {
             id: String(awayTeam.teamId),
             name: awayTeam.teamName,
+            tricode: awayTeam.teamTricode,
             logo: `https://cdn.nba.com/logos/nba/${awayTeam.teamId}/primary/L/logo.svg`,
             score: game.awayTeam.score?.toString() || '',
           },

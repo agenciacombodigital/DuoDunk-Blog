@@ -8,16 +8,19 @@ interface Game {
   date: string;
   timeBrasilia: string;
   status: string;
+  gameStatus: number;
   name: string;
   homeTeam: {
     id: string;
     name: string;
+    tricode: string;
     logo: string;
     score: string;
   };
   awayTeam: {
     id: string;
     name: string;
+    tricode: string;
     logo: string;
     score: string;
   };
@@ -35,71 +38,44 @@ export default function Calendario() {
   const [selectedDate, setSelectedDate] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Helper to format month/year for API call (YYYYMM)
-  const getApiMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${year}${month}`;
-  };
-
   useEffect(() => {
     loadCalendar();
-  }, [selectedTeam, currentMonth]); // Depend on currentMonth too
+  }, [selectedTeam, currentMonth]);
 
   const loadCalendar = async () => {
     try {
       setLoading(true);
       console.log('[CALENDARIO] Buscando jogos...', { selectedTeam, currentMonth });
       
-      // Montar body da requisição
-      const body: any = {};
-      
-      // Adicionar filtro de time se selecionado
-      if (selectedTeam && selectedTeam !== '') {
-        body.teamId = selectedTeam;
-        console.log('[CALENDARIO] Filtrando por time:', selectedTeam);
-      }
-      
-      // Adicionar mês atual (formato YYYYMM)
       const year = currentMonth.getFullYear();
       const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-      body.month = `${year}${month}`;
-      console.log('[CALENDARIO] Buscando mês:', body.month);
-
-      const { data, error } = await supabase.functions.invoke('nba-calendar', {
-        body
-      });
+      const body: any = { month: `${year}${month}` };
+      
+      if (selectedTeam && selectedTeam !== '') {
+        body.teamId = selectedTeam;
+      }
+  
+      console.log('[CALENDARIO] Requisição:', body);
+  
+      const { data, error } = await supabase.functions.invoke('nba-calendar', { body });
       
       if (error) {
-        console.error('[CALENDARIO] Erro na requisição:', error);
+        console.error('[CALENDARIO] Erro:', error);
         setCalendar({});
         return;
       }
-      
-      console.log('[CALENDARIO] Resposta recebida:', data);
-      
+  
+      console.log('[CALENDARIO] Resposta:', data);
+  
       if (data?.success && data?.calendar) {
-        const totalDays = Object.keys(data.calendar).length;
-        console.log('[CALENDARIO] ✅ Jogos encontrados:', totalDays, 'dias');
-        console.log('[CALENDARIO] Total de jogos:', data.totalGames);
-        
-        // Log dos primeiros 3 dias com jogos
-        Object.keys(data.calendar).slice(0, 3).forEach(dateKey => {
-          console.log(`[CALENDARIO] ${dateKey}: ${data.calendar[dateKey].length} jogos`);
-        });
-        
+        console.log('[CALENDARIO] ✅', Object.keys(data.calendar).length, 'dias com jogos');
         setCalendar(data.calendar);
-        
-        // Se nenhum dia tiver jogos, avisar
-        if (Object.keys(data.calendar).length === 0) {
-          console.warn('[CALENDARIO] ⚠️ Nenhum jogo encontrado para o mês', body.month);
-        }
       } else {
-        console.warn('[CALENDARIO] Resposta sem dados:', data);
+        console.warn('[CALENDARIO] Sem dados');
         setCalendar({});
       }
     } catch (err) {
-      console.error('[CALENDARIO] Erro ao buscar calendário:', err);
+      console.error('[CALENDARIO] Erro:', err);
       setCalendar({});
     } finally {
       setLoading(false);
@@ -112,7 +88,6 @@ export default function Calendario() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    // getDay() returns 0 for Sunday, 1 for Monday...
     const startingDayOfWeek = firstDay.getDay(); 
 
     return { daysInMonth, startingDayOfWeek, year, month };
@@ -124,12 +99,12 @@ export default function Calendario() {
 
   const handlePreviousMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
-    setSelectedDate(''); // Clear selected date on month change
+    setSelectedDate('');
   };
 
   const handleNextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
-    setSelectedDate(''); // Clear selected date on month change
+    setSelectedDate('');
   };
 
   const handleDateClick = (day: number) => {
@@ -145,15 +120,7 @@ export default function Calendario() {
     const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
     const dayStr = String(day).padStart(2, '0');
     const dateKey = `${year}-${month}-${dayStr}`;
-    
-    const hasGames = calendar[dateKey] && calendar[dateKey].length > 0;
-    
-    // Debug apenas para os primeiros 3 dias
-    if (day <= 3) {
-      console.log(`[CALENDARIO] Dia ${day} (${dateKey}):`, hasGames ? `${calendar[dateKey].length} jogos` : 'sem jogos');
-    }
-    
-    return hasGames;
+    return calendar[dateKey] && calendar[dateKey].length > 0;
   };
 
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
@@ -162,7 +129,6 @@ export default function Calendario() {
   return (
     <div className="min-h-screen bg-white text-gray-900 py-12">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-black text-gray-900 mb-2">
             📅 Calendário NBA
@@ -173,9 +139,7 @@ export default function Calendario() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Coluna Esquerda: Filtros e Calendário */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Filtro de Times */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
               <h2 className="text-xl font-bold mb-4 text-gray-900">Filtros</h2>
               <select
@@ -192,9 +156,7 @@ export default function Calendario() {
               </select>
             </div>
 
-            {/* Calendário */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
-              {/* Header do Calendário */}
               <div className="flex justify-between items-center mb-6">
                 <button
                   onClick={handlePreviousMonth}
@@ -213,23 +175,16 @@ export default function Calendario() {
                 </button>
               </div>
 
-              {/* Dias da semana */}
               <div className="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-2">
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                  <div key={day} className="py-2">
-                    {day}
-                  </div>
+                  <div key={day} className="py-2">{day}</div>
                 ))}
               </div>
 
-              {/* Dias do mês */}
               <div className="grid grid-cols-7 gap-1">
-                {/* Espaços vazios antes do primeiro dia */}
                 {Array.from({ length: startingDayOfWeek }).map((_, i) => (
                   <div key={`empty-${i}`} className="aspect-square"></div>
                 ))}
-
-                {/* Dias do mês */}
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
                   const hasGames = hasGamesOnDate(day);
@@ -260,7 +215,6 @@ export default function Calendario() {
             </div>
           </div>
 
-          {/* Lista de Jogos do Dia Selecionado */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-lg sticky top-28">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900">
@@ -281,66 +235,59 @@ export default function Calendario() {
               ) : selectedGames.length > 0 ? (
                 <div className="space-y-4">
                   {selectedGames.map((game) => (
-                    <div key={game.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
-                      {/* Times */}
-                      <div className="flex items-center justify-between text-lg font-bold mb-3">
-                        {/* Away Team */}
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={game.awayTeam.logo}
-                            alt={game.awayTeam.name}
-                            className="w-12 h-12 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://via.placeholder.com/48?text=?';
-                            }}
-                          />
-                          <div className="text-left">
-                            <span className="text-gray-900 block text-sm">{game.awayTeam.name}</span>
-                            {game.awayTeam.score && (
-                              <span className="text-xl font-black text-gray-900">{game.awayTeam.score}</span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <span className="text-gray-500 text-sm font-bold">@</span>
-                        
-                        {/* Home Team */}
-                        <div className="flex items-center gap-2 flex-row-reverse">
-                          <img
-                            src={game.homeTeam.logo}
-                            alt={game.homeTeam.name}
-                            className="w-12 h-12 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://via.placeholder.com/48?text=?';
-                            }}
-                          />
-                          <div className="text-right">
-                            <span className="text-gray-900 block text-sm">{game.homeTeam.name}</span>
-                            {game.homeTeam.score && (
-                              <span className="text-xl font-black text-gray-900">{game.homeTeam.score}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Horário e Status */}
-                      <div className="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-3 mt-3">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <span>{game.timeBrasilia}</span>
-                        </div>
-                        <span className={`font-bold ${game.status.includes('Final') ? 'text-green-600' : 'text-pink-600'}`}>
-                          {game.status}
-                        </span>
-                      </div>
-
-                      {/* Transmissão */}
-                      {game.whereToWatch && game.whereToWatch !== 'N/D' && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
-                          <Tv className="w-3 h-3" />
-                          <span>{game.whereToWatch}</span>
+                    <div key={game.id} className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-black text-white rounded-2xl p-6 border border-gray-700 shadow-2xl shadow-pink-500/10 overflow-hidden transition-all hover:border-pink-500/50 hover:scale-[1.02]">
+                      {game.gameStatus === 2 && (
+                        <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1.5">
+                          <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
+                          AO VIVO
                         </div>
                       )}
+                      {game.gameStatus === 3 && (
+                        <div className="absolute top-4 right-4 bg-green-500/20 text-green-300 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                          <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                          FINAL
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 text-left flex-1">
+                          <img src={game.awayTeam.logo} alt={game.awayTeam.name} className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-lg" />
+                          <div>
+                            <p className="text-lg md:text-xl font-black">{game.awayTeam.tricode}</p>
+                            <p className="text-xs text-gray-400 hidden md:block">{game.awayTeam.name}</p>
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          {game.awayTeam.score && game.homeTeam.score ? (
+                            <div className="flex items-center gap-4">
+                              <span className="text-3xl md:text-4xl font-black tabular-nums">{game.awayTeam.score}</span>
+                              <span className="text-xl text-gray-500 font-light">×</span>
+                              <span className="text-3xl md:text-4xl font-black tabular-nums">{game.homeTeam.score}</span>
+                            </div>
+                          ) : (
+                            <span className="text-2xl font-bold text-gray-600">VS</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-right flex-1 justify-end">
+                          <div>
+                            <p className="text-lg md:text-xl font-black">{game.homeTeam.tricode}</p>
+                            <p className="text-xs text-gray-400 hidden md:block">{game.homeTeam.name}</p>
+                          </div>
+                          <img src={game.homeTeam.logo} alt={game.homeTeam.name} className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-lg" />
+                        </div>
+                      </div>
+                      <div className="border-t border-gray-700/50 mt-4 pt-3 flex items-center justify-between text-xs text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>{game.timeBrasilia}</span>
+                        </div>
+                        <span className="font-bold text-gray-300">{game.status}</span>
+                        {game.whereToWatch && game.whereToWatch !== 'N/D' && (
+                          <div className="flex items-center gap-2">
+                            <Tv className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>{game.whereToWatch}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
