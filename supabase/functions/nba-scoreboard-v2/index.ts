@@ -13,8 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    // Usando a URL padrão da NBA para placares de hoje
-    const nbaApiUrl = 'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json';
+    // Adiciona um parâmetro para evitar cache
+    const cacheBuster = new Date().getTime();
+    const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
     
     const response = await fetch(nbaApiUrl, {
       headers: {

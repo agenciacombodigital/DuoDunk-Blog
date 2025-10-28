@@ -45,7 +45,9 @@ serve(async (req) => {
       throw new Error('gameId is required');
     }
 
-    const apiUrl = `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json`;
+    const cacheBuster = new Date().getTime();
+    const apiUrl = `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json?_=${cacheBuster}`;
+    
     const response = await fetch(apiUrl, {
       headers: {
         'Accept': 'application/json',
