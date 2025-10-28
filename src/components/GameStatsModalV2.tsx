@@ -37,13 +37,8 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
   const [showAllHome, setShowAllHome] = useState(false);
   const [showAllAway, setShowAllAway] = useState(false);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   const loadStats = async () => {
     try {
-      setLoading(true);
       console.log('[MODAL] Buscando stats para:', game.gameId);
       
       const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
@@ -71,10 +66,23 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
       }
     } catch (err) {
       console.error('[MODAL] Erro ao carregar stats:', err);
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      setLoading(true);
+      await loadStats();
+      setLoading(false);
+    };
+
+    initialLoad();
+
+    if (game.gameStatus === 2) {
+      const interval = setInterval(loadStats, 5000); // Refresh without showing loader
+      return () => clearInterval(interval);
+    }
+  }, [game.gameId, game.gameStatus]);
 
   if (loading) {
     return (
