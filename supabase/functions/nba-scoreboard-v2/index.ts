@@ -71,15 +71,22 @@ serve(async (req) => {
       });
     }
 
-    // Identify live games to fetch real-time data
-    const liveGameIds = scoreboard.games
-      .filter((game: any) => game.gameStatus === 2) // gameStatus 2 is "in-progress"
+    // Identify games that are potentially live to fetch real-time data
+    const now = new Date();
+    const potentiallyLiveGameIds = scoreboard.games
+      .filter((game: any) => {
+        const gameTime = new Date(game.gameTimeUTC);
+        const isOfficiallyLive = game.gameStatus === 2;
+        // If game status is 1 (not started) but start time is in the past, it might be live
+        const mightBeLive = game.gameStatus === 1 && gameTime <= now;
+        return isOfficiallyLive || mightBeLive;
+      })
       .map((game: any) => game.gameId);
 
-    if (liveGameIds.length > 0) {
-      console.log(`[nba-scoreboard-v2] Found ${liveGameIds.length} live games. Fetching real-time boxscores...`);
+    if (potentiallyLiveGameIds.length > 0) {
+      console.log(`[nba-scoreboard-v2] Found ${potentiallyLiveGameIds.length} potentially live games. Fetching real-time boxscores...`);
       
-      const boxscorePromises = liveGameIds.map(fetchBoxscore);
+      const boxscorePromises = potentiallyLiveGameIds.map(fetchBoxscore);
       const boxscoreResults = await Promise.all(boxscorePromises);
 
       const liveGameDataMap = new Map();
@@ -93,20 +100,28 @@ serve(async (req) => {
       scoreboard.games.forEach((game: any) => {
         if (liveGameDataMap.has(game.gameId)) {
           const liveData = liveGameDataMap.get(game.gameId);
-          const clock = liveData.gameClock;
-          let formattedClock = '';
-          const match = clock.match(/PT(\d+)M([\d.]+)S/);
-          if (match) {
-              const minutes = match[1].padStart(2, '0');
-              const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
-              formattedClock = `${minutes}:${seconds}`;
-          }
-
+          
+          // Update everything from the more reliable boxscore source
           game.homeTeam.score = liveData.homeTeam.score;
           game.awayTeam.score = liveData.awayTeam.score;
-          game.gameStatusText = `${liveData.period}º Quarto • ${formattedClock}`;
+          game.gameStatus = liveData.gameStatus; // IMPORTANT: Update the status
           game.gameClock = liveData.gameClock;
           game.period = liveData.period;
+
+          // Re-create the status text based on live data
+          if (liveData.gameStatus === 2) {
+              const clock = liveData.gameClock;
+              let formattedClock = '';
+              const match = clock.match(/PT(\d+)M([\d.]+)S/);
+              if (match) {
+                  const minutes = match[1].padStart(2, '0');
+                  const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
+                  formattedClock = `${minutes}:${seconds}`;
+              }
+              game.gameStatusText = `${liveData.period}º Quarto • ${formattedClock}`;
+          } else {
+              game.gameStatusText = liveData.gameStatusText; // Use the text from boxscore (e.g., "Final")
+          }
         }
       });
     }
