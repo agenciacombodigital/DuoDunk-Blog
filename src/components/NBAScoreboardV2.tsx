@@ -85,7 +85,7 @@ export default function NBAScoreboardV2() {
           gameId: g.gameId,
           gameStatus: g.gameStatus,
           gameStatusText: g.gameStatusText,
-          gameTimeBrasilia: convertToBrasiliaTime(g.gameDateTimeUTC),
+          gameTimeBrasilia: convertToBrasiliaTime(g.gameTimeUTC),
           gameClock: g.gameClock,
           period: g.period,
           homeTeam: {
