@@ -27,12 +27,39 @@ interface Game {
   };
 }
 
+// Helper para converter tempo da NBA para formato brasileiro
+const formatGameClock = (clock: string): string => {
+  if (!clock || clock === '') return '';
+  
+  // Formato NBA: "PT04M20.00S" = 4 minutos e 20 segundos
+  const match = clock.match(/PT(\d+)M([\d.]+)S/);
+  if (match) {
+    const minutes = match[1].padStart(2, '0');
+    const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+  
+  return clock;
+};
+
 export default function NBAScoreboardV2() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [gamesPerView, setGamesPerView] = useState(3);
+
+  useEffect(() => {
+    const updateGamesPerView = () => {
+      setGamesPerView(window.innerWidth < 768 ? 1 : 3);
+    };
+
+    window.addEventListener('resize', updateGamesPerView);
+    updateGamesPerView(); // Call on initial mount
+
+    return () => window.removeEventListener('resize', updateGamesPerView);
+  }, []);
 
   const loadGames = async () => {
     try {
@@ -72,12 +99,10 @@ export default function NBAScoreboardV2() {
     }
   };
 
-  // Efeito para carregar os jogos apenas uma vez, quando o componente é montado.
   useEffect(() => {
     loadGames();
   }, []);
 
-  // Este efeito gerencia o intervalo de atualização.
   useEffect(() => {
     const hasLive = games.some(g => g.gameStatus === 2);
     const intervalDuration = hasLive ? 5000 : 30000;
@@ -99,24 +124,24 @@ export default function NBAScoreboardV2() {
     );
   }
 
-  // Mostrar apenas 2 jogos por vez
-  const visibleGames = games.slice(currentIndex, currentIndex + 2);
+  const visibleGames = games.slice(currentIndex, currentIndex + gamesPerView);
 
   return (
     <>
-      <div className="bg-gray-900 py-4 border-b border-gray-700/50">
-        <div className="container mx-auto px-4 flex items-center gap-4">
-          {games.length > 2 && (
+      <div className="bg-gray-900 py-3 border-b border-gray-700/50">
+        <div className="container mx-auto px-4 flex items-center gap-2 md:gap-4">
+          {games.length > gamesPerView && (
             <button
               onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30"
+              className="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 flex-shrink-0"
               disabled={currentIndex === 0}
             >
-              <ChevronLeft className={`w-6 h-6 ${currentIndex === 0 ? 'text-gray-600' : 'text-gray-400'}`} />
+              <ChevronLeft className={`w-5 h-5 md:w-6 md:h-6 ${currentIndex === 0 ? 'text-gray-600' : 'text-gray-400'}`} />
             </button>
           )}
 
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Grid responsivo: 1 coluna no mobile, 3 no desktop */}
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {visibleGames.map((game) => (
               <button
                 key={game.gameId}
@@ -124,71 +149,74 @@ export default function NBAScoreboardV2() {
                   setSelectedGame(game);
                   setIsModalOpen(true);
                 }}
-                className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-4 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
+                className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-3 md:p-4 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
               >
-                {/* Badge AO VIVO */}
+                {/* Badge AO VIVO - Centralizado e acima do placar */}
                 {game.gameStatus === 2 && (
-                  <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1">
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1 z-10">
                     <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
                     AO VIVO
                   </div>
                 )}
 
                 {/* Placar Compacto */}
-                <div className="space-y-2">
+                <div className="space-y-2 mt-6">
                   {/* Away Team */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                       <img 
                         src={game.awayTeam.logo} 
                         alt={game.awayTeam.teamTricode} 
-                        className="w-8 h-8 drop-shadow-lg" 
+                        className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
                       />
-                      <div className="text-left">
-                        <span className="font-bold text-white text-base block">{game.awayTeam.teamTricode}</span>
-                        <span className="text-xs text-gray-400">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                      <div className="text-left min-w-0">
+                        <span className="font-bold text-white text-sm md:text-base block truncate">{game.awayTeam.teamTricode}</span>
+                        <span className="text-xs text-gray-400 block truncate">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
                       </div>
                     </div>
-                    <span className="font-black text-white text-2xl tabular-nums">{game.awayTeam.score}</span>
+                    <span className="font-black text-white text-xl md:text-2xl tabular-nums flex-shrink-0 ml-2">{game.awayTeam.score}</span>
                   </div>
 
                   {/* Home Team */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                       <img 
                         src={game.homeTeam.logo} 
                         alt={game.homeTeam.teamTricode} 
-                        className="w-8 h-8 drop-shadow-lg" 
+                        className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
                       />
-                      <div className="text-left">
-                        <span className="font-bold text-white text-base block">{game.homeTeam.teamTricode}</span>
-                        <span className="text-xs text-gray-400">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                      <div className="text-left min-w-0">
+                        <span className="font-bold text-white text-sm md:text-base block truncate">{game.homeTeam.teamTricode}</span>
+                        <span className="text-xs text-gray-400 block truncate">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
                       </div>
                     </div>
-                    <span className="font-black text-white text-2xl tabular-nums">{game.homeTeam.score}</span>
+                    <span className="font-black text-white text-xl md:text-2xl tabular-nums flex-shrink-0 ml-2">{game.homeTeam.score}</span>
                   </div>
                 </div>
 
-                {/* Status/Horário */}
-                <div className="border-t border-gray-700 mt-3 pt-3 flex items-center justify-between text-xs">
+                {/* Status/Horário - Formato brasileiro */}
+                <div className="border-t border-gray-700 mt-3 pt-2 flex items-center justify-between text-xs">
                   <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
-                    {game.gameStatus === 2 ? `${game.period}º Quarto • ${game.gameClock}` : game.gameStatusText}
+                    {game.gameStatus === 2 
+                      ? `${game.period}º Quarto • ${formatGameClock(game.gameClock)}`
+                      : game.gameStatusText
+                    }
                   </span>
-                  <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1">
-                    Ver Estatísticas <Play className="w-3 h-3" />
+                  <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
+                    Ver Stats <Play className="w-3 h-3" />
                   </span>
                 </div>
               </button>
             ))}
           </div>
 
-          {games.length > 2 && (
+          {games.length > gamesPerView && (
             <button
-              onClick={() => setCurrentIndex(Math.min(games.length - 2, currentIndex + 1))}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30"
-              disabled={currentIndex >= games.length - 2}
+              onClick={() => setCurrentIndex(Math.min(games.length - gamesPerView, currentIndex + 1))}
+              className="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 flex-shrink-0"
+              disabled={currentIndex >= games.length - gamesPerView}
             >
-              <ChevronRight className={`w-6 h-6 ${currentIndex >= games.length - 2 ? 'text-gray-600' : 'text-gray-400'}`} />
+              <ChevronRight className={`w-5 h-5 md:w-6 md:h-6 ${currentIndex >= games.length - gamesPerView ? 'text-gray-600' : 'text-gray-400'}`} />
             </button>
           )}
         </div>
