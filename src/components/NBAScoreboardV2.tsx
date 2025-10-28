@@ -7,6 +7,7 @@ interface Game {
   gameId: string;
   gameStatus: number;
   gameStatusText: string;
+  gameTimeBrasilia: string;
   gameClock: string;
   period: number;
   homeTeam: {
@@ -42,6 +43,19 @@ const formatGameClock = (clock: string): string => {
   return clock;
 };
 
+const convertToBrasiliaTime = (dateString: string) => {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      timeZone: 'America/Sao_Paulo' 
+    });
+  } catch (e) {
+    return 'N/D';
+  }
+};
+
 export default function NBAScoreboardV2() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,10 +81,11 @@ export default function NBAScoreboardV2() {
       if (error) throw error;
       
       if (data?.success && data?.scoreboard?.games) {
-        const processed = data.scoreboard.games.map((g: any) => ({
+        const processed = data.scoreboard.games.map((g: any): Game => ({
           gameId: g.gameId,
           gameStatus: g.gameStatus,
           gameStatusText: g.gameStatusText,
+          gameTimeBrasilia: convertToBrasiliaTime(g.gameDateTimeUTC),
           gameClock: g.gameClock,
           period: g.period,
           homeTeam: {
@@ -199,11 +214,13 @@ export default function NBAScoreboardV2() {
                   <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
                     {game.gameStatus === 2 
                       ? `${game.period}º Quarto • ${formatGameClock(game.gameClock)}`
-                      : game.gameStatusText
+                      : game.gameStatus === 1
+                        ? game.gameTimeBrasilia
+                        : game.gameStatusText
                     }
                   </span>
                   <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
-                    Ver Stats <Play className="w-3 h-3" />
+                    Estatísticas <Play className="w-3 h-3" />
                   </span>
                 </div>
               </button>

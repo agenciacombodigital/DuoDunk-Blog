@@ -12,12 +12,15 @@ import {
   MapPin,
   UsersRound,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Calendar
 } from 'lucide-react';
 
 interface Game {
   gameId: string;
   gameStatus: number;
+  gameTimeBrasilia: string;
+  gameStatusText: string;
   homeTeam: { teamTricode: string; wins: number; losses: number };
   awayTeam: { teamTricode: string; wins: number; losses: number };
 }
@@ -40,11 +43,13 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
 
   const loadStats = async () => {
     try {
+      setLoading(true);
       console.log('[MODAL] Buscando stats para:', game.gameId);
       
       const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
         body: {
           gameId: game.gameId,
+          gameStatus: game.gameStatus,
           homeRecord: `${game.homeTeam.wins}-${game.homeTeam.losses}`,
           awayRecord: `${game.awayTeam.wins}-${game.awayTeam.losses}`,
         }
@@ -53,6 +58,11 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
       if (error) {
         console.error('[MODAL] Erro:', error);
         throw error;
+      }
+      
+      if (data?.isScheduled) {
+        setStats({ isScheduled: true });
+        return;
       }
       
       if (data?.success) {
@@ -77,18 +87,32 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
     );
   }
 
-  if (!stats) {
+  if (!stats || stats.isScheduled) {
     return (
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="text-center">
-          <X className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-white text-lg font-bold mb-4">Erro ao carregar estatísticas</p>
+      <div
+        className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <div className="bg-gray-900 rounded-3xl p-8 max-w-md text-center relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg font-bold transition-colors"
+            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors z-20"
           >
-            Fechar
+            <X className="w-6 h-6 text-gray-400 hover:text-white" />
           </button>
+          <Calendar className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Jogo Agendado
+          </h2>
+          <p className="text-gray-400 mb-6">
+            As estatísticas estarão disponíveis assim que o jogo começar.
+          </p>
+          <div className="bg-gray-800 rounded-xl p-4">
+            <p className="text-sm text-gray-500 mb-1">Horário de Início</p>
+            <p className="text-lg font-bold text-white">
+              {game.gameTimeBrasilia || game.gameStatusText}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -256,7 +280,7 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
             <div className="space-y-8">
               <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-2">
                 <Trophy className="w-7 h-7 text-yellow-400" />
-                Top Performers
+                Destaques
               </h3>
 
               {/* Pontos */}
@@ -386,7 +410,7 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                 <div className="bg-gray-800/30 rounded-2xl p-6 border border-gray-700/50">
                   <h4 className="font-bold text-white mb-4 flex items-center gap-2">
                     <Shield className="w-5 h-5 text-purple-400" />
-                    Tocos (Blocks)
+                    Tocos
                   </h4>
                   <div className="space-y-2">
                     {[...stats.homeTeam.performers?.blocks?.slice(0, 3) || [], ...stats.awayTeam.performers?.blocks?.slice(0, 3) || []].map((p: any, i: number) => (
@@ -447,19 +471,19 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                   {stats.homeTeam.teamStats && (
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-3 bg-gray-900/70 rounded-lg">
-                        <span className="text-gray-400 text-sm">Field Goals</span>
+                        <span className="text-gray-400 text-sm">Cestas de Quadra</span>
                         <span className="text-white font-bold">
                           {stats.homeTeam.teamStats.fieldGoals} ({stats.homeTeam.teamStats.fieldGoalPct}%)
                         </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-900/70 rounded-lg">
-                        <span className="text-gray-400 text-sm">3-Pointers</span>
+                        <span className="text-gray-400 text-sm">3 Pontos</span>
                         <span className="text-white font-bold">
                           {stats.homeTeam.teamStats.threePointers} ({stats.homeTeam.teamStats.threePointerPct}%)
                         </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-900/70 rounded-lg">
-                        <span className="text-gray-400 text-sm">Free Throws</span>
+                        <span className="text-gray-400 text-sm">Lances Livres</span>
                         <span className="text-white font-bold">
                           {stats.homeTeam.teamStats.freeThrows} ({stats.homeTeam.teamStats.freeThrowPct}%)
                         </span>
@@ -505,19 +529,19 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                   {stats.awayTeam.teamStats && (
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-3 bg-gray-900/70 rounded-lg">
-                        <span className="text-gray-400 text-sm">Field Goals</span>
+                        <span className="text-gray-400 text-sm">Cestas de Quadra</span>
                         <span className="text-white font-bold">
                           {stats.awayTeam.teamStats.fieldGoals} ({stats.awayTeam.teamStats.fieldGoalPct}%)
                         </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-900/70 rounded-lg">
-                        <span className="text-gray-400 text-sm">3-Pointers</span>
+                        <span className="text-gray-400 text-sm">3 Pontos</span>
                         <span className="text-white font-bold">
                           {stats.awayTeam.teamStats.threePointers} ({stats.awayTeam.teamStats.threePointerPct}%)
                         </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-900/70 rounded-lg">
-                        <span className="text-gray-400 text-sm">Free Throws</span>
+                        <span className="text-gray-400 text-sm">Lances Livres</span>
                         <span className="text-white font-bold">
                           {stats.awayTeam.teamStats.freeThrows} ({stats.awayTeam.teamStats.freeThrowPct}%)
                         </span>
@@ -784,10 +808,10 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                   <div><span className="font-bold text-white">STL</span> = Roubos de Bola</div>
                   <div><span className="font-bold text-white">BLK</span> = Tocos</div>
                   <div><span className="font-bold text-white">TO</span> = Turnovers</div>
-                  <div><span className="font-bold text-white">FG</span> = Field Goals (Cestas de Quadra)</div>
+                  <div><span className="font-bold text-white">FG</span> = Cestas de Quadra</div>
                   <div><span className="font-bold text-white">3P</span> = Três Pontos</div>
                   <div><span className="font-bold text-white">FT</span> = Lances Livres</div>
-                  <div><span className="font-bold text-white">+/-</span> = Plus/Minus (Diferença de pontos)</div>
+                  <div><span className="font-bold text-white">+/-</span> = Plus/Minus</div>
                 </div>
               </div>
             </div>
