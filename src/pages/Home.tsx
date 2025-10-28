@@ -433,29 +433,157 @@ export default function Home() {
 
         {/* Artigos Restantes: Grid 3 Colunas */}
         {remaining.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">📚 Arquivo</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {remaining.map((article) => (
-                <Link
-                  key={article.id}
-                  to={`/artigos/${article.slug}`}
-                  className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
-                >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
-                  </div>
-                </Link>
-              ))}
+          <section className="mt-20">
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-3xl font-black text-black">📚 ARQUIVO</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-pink-500 to-transparent"></div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {remaining.map((article, index) => {
+                // Layout alternado: horizontal, vertical, destaque
+                const layoutType = index % 6; // Ciclo de 6 layouts
+
+                if (layoutType === 0 || layoutType === 3) {
+                  // LAYOUT HORIZONTAL
+                  return (
+                    <div key={article.id} className="md:col-span-2 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                      <div className="flex flex-col sm:flex-row">
+                        <div className="sm:w-2/5 relative">
+                          <img
+                            src={article.image_url}
+                            alt={article.title}
+                            className="w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        </div>
+                        <div className="sm:w-3/5 p-6 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-xs font-bold text-pink-500 uppercase">
+                                {article.tags?.[0] || 'NBA'}
+                              </span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
+                              {article.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 line-clamp-3">{article.summary}</p>
+                          </div>
+                          
+                          <Link
+                            to={`/artigos/${article.slug}`}
+                            className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link"
+                          >
+                            Ler mais
+                            <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (layoutType === 2 || layoutType === 5) {
+                  // LAYOUT DESTAQUE (maior)
+                  return (
+                    <div key={article.id} className="md:col-span-2 lg:col-span-3 group relative bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl overflow-hidden shadow-2xl hover:shadow-pink-500/50 transition-all duration-300">
+                      <div className="grid lg:grid-cols-2 gap-6 p-8">
+                        <div className="relative rounded-xl overflow-hidden">
+                          <img
+                            src={article.image_url}
+                            alt={article.title}
+                            className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="flex flex-col justify-center text-white">
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold uppercase">
+                              {article.tags?.[0] || 'NBA'}
+                            </span>
+                            <span className="text-xs opacity-80">
+                              {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                          <h3 className="text-3xl font-black mb-4 leading-tight">
+                            {article.title}
+                          </h3>
+                          {article.subtitle && (
+                            <p className="text-lg opacity-90 mb-4">{article.subtitle}</p>
+                          )}
+                          <p className="text-sm opacity-80 mb-6 line-clamp-4">{article.summary}</p>
+                          
+                          <Link
+                            to={`/artigos/${article.slug}`}
+                            className="inline-flex items-center gap-2 bg-white text-pink-600 font-bold px-6 py-3 rounded-full hover:bg-pink-50 transition-colors group/btn w-fit"
+                          >
+                            Ler Matéria Completa
+                            <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // LAYOUT VERTICAL (padrão)
+                return (
+                  <div key={article.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={article.image_url}
+                        alt={article.title}
+                        className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+                          {article.tags?.[0] || 'NBA'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 line-clamp-3 mb-4">{article.summary}</p>
+                      
+                      <Link
+                        to={`/artigos/${article.slug}`}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 group/link"
+                      >
+                        Leia mais
+                        <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Botão Ver Mais (se houver mais artigos) */}
+            {remaining.length >= 20 && (
+              <div className="text-center mt-12">
+                <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold px-8 py-4 rounded-full hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                  Carregar Mais Artigos
+                </button>
+              </div>
+            )}
           </section>
         )}
       </div>
