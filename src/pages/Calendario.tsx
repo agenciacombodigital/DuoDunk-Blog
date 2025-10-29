@@ -8,6 +8,7 @@ interface Game {
   date: string;
   timeBrasilia: string;
   status: string;
+  statusTextPt: string;
   gameStatus: number;
   name: string;
   homeTeam: {
@@ -45,8 +46,6 @@ export default function Calendario() {
   const loadCalendar = async () => {
     try {
       setLoading(true);
-      console.log('[CALENDARIO] Buscando jogos...', { selectedTeam, currentMonth });
-      
       const year = currentMonth.getFullYear();
       const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
       const body: any = { month: `${year}${month}` };
@@ -54,8 +53,6 @@ export default function Calendario() {
       if (selectedTeam && selectedTeam !== '') {
         body.teamId = selectedTeam;
       }
-  
-      console.log('[CALENDARIO] Requisição:', body);
   
       const { data, error } = await supabase.functions.invoke('nba-calendar', { body });
       
@@ -65,13 +62,9 @@ export default function Calendario() {
         return;
       }
   
-      console.log('[CALENDARIO] Resposta:', data);
-  
       if (data?.success && data?.calendar) {
-        console.log('[CALENDARIO] ✅', Object.keys(data.calendar).length, 'dias com jogos');
         setCalendar(data.calendar);
       } else {
-        console.warn('[CALENDARIO] Sem dados');
         setCalendar({});
       }
     } catch (err) {
@@ -258,13 +251,13 @@ export default function Calendario() {
                         </div>
                         <div className="text-center">
                           {game.awayTeam.score && game.homeTeam.score ? (
-                            <div className="flex items-center gap-4">
-                              <span className="text-3xl md:text-4xl font-black tabular-nums">{game.awayTeam.score}</span>
-                              <span className="text-xl text-gray-500 font-light">×</span>
-                              <span className="text-3xl md:text-4xl font-black tabular-nums">{game.homeTeam.score}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl font-black tabular-nums">{game.awayTeam.score}</span>
+                              <span className="text-lg text-gray-500 font-light">×</span>
+                              <span className="text-2xl font-black tabular-nums">{game.homeTeam.score}</span>
                             </div>
                           ) : (
-                            <span className="text-2xl font-bold text-gray-600">VS</span>
+                            <span className="text-xl font-bold text-gray-600">VS</span>
                           )}
                         </div>
                         <div className="flex items-center gap-4 text-right flex-1 justify-end">
@@ -280,7 +273,7 @@ export default function Calendario() {
                           <Clock className="w-3.5 h-3.5 text-cyan-400" />
                           <span>{game.timeBrasilia}</span>
                         </div>
-                        <span className="font-bold text-gray-300">{game.status}</span>
+                        <span className="font-bold text-gray-300">{game.statusTextPt}</span>
                         {game.whereToWatch && game.whereToWatch !== 'N/D' && (
                           <div className="flex items-center gap-2">
                             <Tv className="w-3.5 h-3.5 text-cyan-400" />

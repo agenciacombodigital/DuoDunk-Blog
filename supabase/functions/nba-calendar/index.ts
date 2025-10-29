@@ -6,7 +6,6 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-// Helper para formatar a data para o formato YYYY-MM-DD
 const formatDateKey = (dateString: string) => {
   const date = new Date(dateString);
   const year = date.getFullYear();
@@ -15,11 +14,9 @@ const formatDateKey = (dateString: string) => {
   return `${year}-${month}-${day}`;
 };
 
-// Helper para converter UTC para horário de Brasília (BRT/BRST)
 const convertToBrasiliaTime = (dateString: string) => {
   try {
     const date = new Date(dateString);
-    // Formato: HH:MM
     return date.toLocaleTimeString('pt-BR', { 
       hour: '2-digit', 
       minute: '2-digit', 
@@ -36,37 +33,23 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { month, teamId } = body; // month format YYYYMM
-    
+    const { month, teamId } = await req.json();
     if (!month) {
       return new Response(JSON.stringify({ success: false, error: 'Month (YYYYMM) is required' }), {
-        headers: { ...corsHeaders },
-        status: 400,
+        headers: { ...corsHeaders }, status: 400
       });
     }
 
-    // URL da API da NBA para o calendário mensal
     const apiUrl = `https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json`;
-    
-    const response = await fetch(apiUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`NBA API request failed with status ${response.status}`);
-    }
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error(`NBA API request failed with status ${response.status}`);
 
     const data = await response.json();
     const leagueSchedule = data?.leagueSchedule;
     
     if (!leagueSchedule || !leagueSchedule.gameDates) {
       return new Response(JSON.stringify({ success: true, calendar: {}, totalGames: 0 }), {
-        headers: { ...corsHeaders },
-        status: 200,
+        headers: { ...corsHeaders }, status: 200
       });
     }
 
@@ -75,62 +58,61 @@ serve(async (req) => {
 
     leagueSchedule.gameDates.forEach((dateEntry: any) => {
       const dateKey = formatDateKey(dateEntry.gameDate);
-      const monthKey = dateKey.substring(0, 7).replace('-', ''); // YYYYMM
+      const monthKey = dateKey.substring(0, 7).replace('-', '');
       
-      // Filtra apenas jogos do mês solicitado
       if (monthKey !== month) return;
 
-      dateEntry.games.forEach((game: any) => {
-        const homeTeam = game.homeTeam;
-        const awayTeam = game.awayTeam;
-        
-        // Aplica filtro de time, se houver
-        if (teamId && teamId !== String(homeTeam.teamId) && teamId !== String(awayTeam.teamId)) {
-          return;
-        }
-
-        const gameData = {
-          id: game.gameId,
-          date: game.gameDateTimeUTC,
-          timeBrasilia: convertToBrasiliaTime(game.gameDateTimeUTC),
-          status: game.gameStatusText,
-          gameStatus: game.gameStatus, // Status numérico
-          name: `${awayTeam.teamName} @ ${homeTeam.teamName}`,
-          homeTeam: {
-            id: String(homeTeam.teamId),
-            name: homeTeam.teamName,
-            tricode: homeTeam.teamTricode,
-            logo: `https://cdn.nba.com/logos/nba/${homeTeam.teamId}/primary/L/logo.svg`,
-            score: game.homeTeam.score?.toString() || '',
-          },
-          awayTeam: {
-            id: String(awayTeam.teamId),
-            name: awayTeam.teamName,
-            tricode: awayTeam.teamTricode,
-            logo: `https://cdn.nba.com/logos/nba/${awayTeam.teamId}/primary/L/logo.svg`,
-            score: game.awayTeam.score?.toString() || '',
-          },
-          whereToWatch: game.broadcasters?.map((b: any) => b.broadcasterName).join(', ') || 'N/D',
-        };
-
-        if (!calendar[dateKey]) {
-          calendar[dateKey] = [];
-        }
-        calendar[dateKey].push(gameData);
-        totalGames++;
+      const gamesForDate = dateEntry.games.filter((game: any) => {
+        if (!teamId || teamId === '') return true; // No filter, include all games
+        const homeId = String(game.homeTeam.teamId);
+        const awayId = String(game.awayTeam.teamId);
+        return teamId === homeId || teamId === awayId;
       });
+
+      if (gamesForDate.length > 0) {
+        calendar[dateKey] = gamesForDate.map((game: any) => {
+          totalGames++;
+          const gameStatus = game.gameStatus;
+          let statusTextPt = 'Agendado';
+          if (gameStatus === 2) statusTextPt = 'AO VIVO';
+          else if (gameStatus === 3) statusTextPt = 'FINAL';
+
+          return {
+            id: game.gameId,
+            date: game.gameDateTimeUTC,
+            timeBrasilia: convertToBrasiliaTime(game.gameDateTimeUTC),
+            status: game.gameStatusText,
+            statusTextPt,
+            gameStatus,
+            name: `${game.awayTeam.teamName} @ ${game.homeTeam.teamName}`,
+            homeTeam: {
+              id: String(game.homeTeam.teamId),
+              name: game.homeTeam.teamName,
+              tricode: game.homeTeam.teamTricode,
+              logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`,
+              score: game.homeTeam.score?.toString() || '',
+            },
+            awayTeam: {
+              id: String(game.awayTeam.teamId),
+              name: game.awayTeam.teamName,
+              tricode: game.awayTeam.teamTricode,
+              logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`,
+              score: game.awayTeam.score?.toString() || '',
+            },
+            whereToWatch: game.broadcasters?.national?.map((b: any) => b.broadcasterDisplay).join(', ') || 'N/D',
+          };
+        });
+      }
     });
 
     return new Response(JSON.stringify({ success: true, calendar, totalGames }), {
-      headers: { ...corsHeaders },
-      status: 200,
+      headers: { ...corsHeaders }, status: 200
     });
 
   } catch (error) {
     console.error('Error in nba-calendar function:', error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
-      headers: { ...corsHeaders },
-      status: 500,
+      headers: { ...corsHeaders }, status: 500
     });
   }
 });
