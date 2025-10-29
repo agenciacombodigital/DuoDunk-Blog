@@ -16,7 +16,7 @@ import NBAScoreboardV2 from "./components/NBAScoreboardV2";
 import Times from "./pages/Times";
 import Time from "./pages/Time";
 import Classificacao from './pages/Classificacao';
-import CalendarioNBA from './pages/CalendarioNBA';
+import Calendario from './pages/Calendario';
 
 const AppContent = () => {
   const location = useLocation();
@@ -40,7 +40,7 @@ const AppContent = () => {
           <Route path="/times" element={<Times />} />
           <Route path="/times/:teamSlug" element={<Time />} />
           <Route path="/classificacao" element={<Classificacao />} />
-          <Route path="/calendario" element={<CalendarioNBA />} />
+          <Route path="/calendario" element={<Calendario />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
