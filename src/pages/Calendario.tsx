@@ -11,6 +11,8 @@ interface Game {
   statusTextPt: string;
   gameStatus: number;
   name: string;
+  period?: number;
+  gameClock?: string;
   homeTeam: {
     id: string;
     name: string;
@@ -228,59 +230,109 @@ export default function Calendario() {
               ) : selectedGames.length > 0 ? (
                 <div className="space-y-4">
                   {selectedGames.map((game) => (
-                    <div key={game.id} className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-black text-white rounded-2xl p-6 border border-gray-700 shadow-2xl shadow-pink-500/10 overflow-hidden transition-all hover:border-pink-500/50 hover:scale-[1.02]">
-                      {game.gameStatus === 2 && (
-                        <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1.5">
-                          <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
-                          AO VIVO
-                        </div>
-                      )}
-                      {game.gameStatus === 3 && (
-                        <div className="absolute top-4 right-4 bg-green-500/20 text-green-300 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
-                          <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                          FINAL
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 text-left flex-1">
-                          <img src={game.awayTeam.logo} alt={game.awayTeam.name} className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-lg" />
-                          <div>
-                            <p className="text-lg md:text-xl font-black">{game.awayTeam.tricode}</p>
-                            <p className="text-xs text-gray-400 hidden md:block">{game.awayTeam.name}</p>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          {game.awayTeam.score && game.homeTeam.score ? (
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl font-black tabular-nums">{game.awayTeam.score}</span>
-                              <span className="text-lg text-gray-500 font-light">×</span>
-                              <span className="text-2xl font-black tabular-nums">{game.homeTeam.score}</span>
-                            </div>
-                          ) : (
-                            <span className="text-xl font-bold text-gray-600">VS</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-right flex-1 justify-end">
-                          <div>
-                            <p className="text-lg md:text-xl font-black">{game.homeTeam.tricode}</p>
-                            <p className="text-xs text-gray-400 hidden md:block">{game.homeTeam.name}</p>
-                          </div>
-                          <img src={game.homeTeam.logo} alt={game.homeTeam.name} className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-lg" />
-                        </div>
-                      </div>
-                      <div className="border-t border-gray-700/50 mt-4 pt-3 flex items-center justify-between text-xs text-gray-400">
+                    <div
+                      key={game.id}
+                      className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300"
+                    >
+                      {/* Badge de Status */}
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>{game.timeBrasilia}</span>
+                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-sm text-gray-600">{game.timeBrasilia}</span>
                         </div>
-                        <span className="font-bold text-gray-300">{game.statusTextPt}</span>
-                        {game.whereToWatch && game.whereToWatch !== 'N/D' && (
-                          <div className="flex items-center gap-2">
-                            <Tv className="w-3.5 h-3.5 text-cyan-400" />
-                            <span>{game.whereToWatch}</span>
-                          </div>
+                        
+                        {game.gameStatus === 2 && (
+                          <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1">
+                            <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
+                            AO VIVO
+                          </span>
+                        )}
+                        
+                        {game.gameStatus === 3 && (
+                          <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                            FINAL
+                          </span>
+                        )}
+                        
+                        {game.gameStatus === 1 && (
+                          <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">
+                            AGENDADO
+                          </span>
                         )}
                       </div>
+
+                      {/* Placar */}
+                      <div className="space-y-4">
+                        {/* Time Visitante */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 flex-1">
+                            <img 
+                              src={game.awayTeam.logo} 
+                              alt={game.awayTeam.tricode} 
+                              className="w-10 h-10" 
+                            />
+                            <div className="flex-1">
+                              <p className="font-bold text-gray-900 text-sm">{game.awayTeam.tricode}</p>
+                              <p className="text-xs text-gray-500">{game.awayTeam.name}</p>
+                            </div>
+                          </div>
+                          
+                          {game.awayTeam.score ? (
+                            <span className="text-3xl font-black text-gray-900 tabular-nums">
+                              {game.awayTeam.score}
+                            </span>
+                          ) : (
+                            <span className="text-lg font-bold text-gray-300">-</span>
+                          )}
+                        </div>
+
+                        {/* Separador */}
+                        <div className="border-t border-gray-100"></div>
+
+                        {/* Time da Casa */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 flex-1">
+                            <img 
+                              src={game.homeTeam.logo} 
+                              alt={game.homeTeam.tricode} 
+                              className="w-10 h-10" 
+                            />
+                            <div className="flex-1">
+                              <p className="font-bold text-gray-900 text-sm">{game.homeTeam.tricode}</p>
+                              <p className="text-xs text-gray-500">{game.homeTeam.name}</p>
+                            </div>
+                          </div>
+                          
+                          {game.homeTeam.score ? (
+                            <span className="text-3xl font-black text-gray-900 tabular-nums">
+                              {game.homeTeam.score}
+                            </span>
+                          ) : (
+                            <span className="text-lg font-bold text-gray-300">-</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Período/Relógio (se ao vivo) */}
+                      {game.gameStatus === 2 && game.period && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <p className="text-xs text-center text-gray-600 font-medium">
+                            {game.period}º Quarto {game.gameClock && `• ${game.gameClock}`}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Onde Assistir */}
+                      {game.whereToWatch && game.whereToWatch !== 'N/D' && (
+                        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-xs text-gray-600">{game.whereToWatch}</p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

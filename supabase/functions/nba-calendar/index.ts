@@ -27,6 +27,17 @@ const convertToBrasiliaTime = (dateString: string) => {
   }
 };
 
+const formatGameClock = (clock: string): string => {
+  if (!clock || clock === '') return '';
+  const match = clock.match(/PT(\d+)M([\d.]+)S/);
+  if (match) {
+    const minutes = match[1].padStart(2, '0');
+    const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+  return clock;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -40,15 +51,13 @@ serve(async (req) => {
       });
     }
 
-    // A API da NBA divide o calendário em vários arquivos (00 a 08).
-    // Precisamos buscar todos para ter a temporada completa.
     const scheduleParts = ['00', '01', '02', '03', '04', '05', '06', '07', '08'];
     const baseUrl = 'https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_';
 
     const fetchPromises = scheduleParts.map(part => 
       fetch(`${baseUrl}${part}.json`).catch(e => {
         console.error(`Failed to fetch part ${part}:`, e.message);
-        return null; // Retorna nulo em caso de falha de rede
+        return null;
       })
     );
 
@@ -72,15 +81,12 @@ serve(async (req) => {
 
     const calendar: { [key: string]: any[] } = {};
     let totalGames = 0;
-
-    // Extrai o componente do mês do pedido (ex: "10" de "202510")
     const requestedMonthComponent = month.substring(4, 6);
 
     allGameDates.forEach((dateEntry: any) => {
-      const dateKey = formatDateKey(dateEntry.gameDate); // ex: "2024-10-28"
-      const gameDateMonthComponent = dateKey.substring(5, 7); // ex: "10"
+      const dateKey = formatDateKey(dateEntry.gameDate);
+      const gameDateMonthComponent = dateKey.substring(5, 7);
       
-      // Compara apenas o componente do mês, ignorando a incompatibilidade de anos
       if (gameDateMonthComponent !== requestedMonthComponent) return;
 
       const gamesForDate = dateEntry.games.filter((game: any) => {
@@ -109,6 +115,8 @@ serve(async (req) => {
             status: game.gameStatusText,
             statusTextPt,
             gameStatus,
+            period: game.period,
+            gameClock: formatGameClock(game.gameClock),
             name: `${game.awayTeam.teamName} @ ${game.homeTeam.teamName}`,
             homeTeam: {
               id: String(game.homeTeam.teamId),
