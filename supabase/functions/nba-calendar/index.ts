@@ -84,7 +84,6 @@ serve(async (req) => {
       if (gameDateMonthComponent !== requestedMonthComponent) return;
 
       const dayComponent = String(gameDate.getUTCDate()).padStart(2, '0');
-      // **CORREÇÃO:** Usar o ano do pedido para criar a chave, não o ano da API.
       const dateKey = `${requestedYear}-${gameDateMonthComponent}-${dayComponent}`;
 
       const gamesForDate = dateEntry.games.filter((game: any) => {
@@ -116,12 +115,17 @@ serve(async (req) => {
             period: game.period,
             gameClock: formatGameClock(game.gameClock),
             name: `${game.awayTeam.teamName} @ ${game.homeTeam.teamName}`,
+            arena: game.arena.arenaName || 'N/D',
+            city: game.arena.arenaCity || 'N/D',
+            state: game.arena.arenaState || 'N/D',
             homeTeam: {
               id: String(game.homeTeam.teamId),
               name: game.homeTeam.teamName,
               tricode: game.homeTeam.teamTricode,
               logo: `https://cdn.nba.com/logos/nba/${game.homeTeam.teamId}/primary/L/logo.svg`,
               score: game.homeTeam.score?.toString() || '',
+              wins: game.homeTeam.wins || 0,
+              losses: game.homeTeam.losses || 0,
             },
             awayTeam: {
               id: String(game.awayTeam.teamId),
@@ -129,8 +133,13 @@ serve(async (req) => {
               tricode: game.awayTeam.teamTricode,
               logo: `https://cdn.nba.com/logos/nba/${game.awayTeam.teamId}/primary/L/logo.svg`,
               score: game.awayTeam.score?.toString() || '',
+              wins: game.awayTeam.wins || 0,
+              losses: game.awayTeam.losses || 0,
             },
-            whereToWatch: game.broadcasters?.national?.map((b: any) => b.broadcasterDisplay).join(', ') || 'N/D',
+            broadcasters: {
+              national: game.broadcasters?.national?.map((b: any) => b.broadcasterDisplay).join(', ') || 'N/D',
+              regional: game.broadcasters?.regional?.map((b: any) => b.broadcasterDisplay).join(', ') || 'N/D',
+            }
           };
         });
         

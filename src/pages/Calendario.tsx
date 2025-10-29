@@ -13,12 +13,17 @@ interface Game {
   name: string;
   period?: number;
   gameClock?: string;
+  arena: string;
+  city: string;
+  state: string;
   homeTeam: {
     id: string;
     name: string;
     tricode: string;
     logo: string;
     score: string;
+    wins: number;
+    losses: number;
   };
   awayTeam: {
     id: string;
@@ -26,8 +31,13 @@ interface Game {
     tricode: string;
     logo: string;
     score: string;
+    wins: number;
+    losses: number;
   };
-  whereToWatch: string;
+  broadcasters: {
+    national: string;
+    regional: string;
+  };
 }
 
 interface CalendarData {
@@ -232,117 +242,167 @@ export default function Calendario() {
                   {selectedGames.map((game) => (
                     <div
                       key={game.id}
-                      className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300"
+                      className="bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300"
                     >
-                      {/* Badge de Status */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-sm text-gray-600">{game.timeBrasilia}</span>
+                      {/* Header com Status */}
+                      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-gray-50">
+                        <div className="flex items-center gap-4">
+                          {/* Status Badge */}
+                          {game.gameStatus === 3 && (
+                            <span className="bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-md">
+                              {game.statusTextPt}
+                            </span>
+                          )}
+                          {game.gameStatus === 2 && (
+                            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-md animate-pulse flex items-center gap-1.5">
+                              <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
+                              {game.statusTextPt}
+                            </span>
+                          )}
+                          {game.gameStatus === 1 && (
+                            <span className="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1 rounded-md">
+                              {game.timeBrasilia}
+                            </span>
+                          )}
+
+                          {/* Período e Relógio (se ao vivo) */}
+                          {game.gameStatus === 2 && game.period && (
+                            <span className="text-xs font-medium text-gray-600">
+                              {game.period}º Quarto {game.gameClock && `• ${game.gameClock}`}
+                            </span>
+                          )}
                         </div>
-                        
-                        {game.gameStatus === 2 && (
-                          <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1">
-                            <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
-                            AO VIVO
-                          </span>
-                        )}
-                        
-                        {game.gameStatus === 3 && (
-                          <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                            FINAL
-                          </span>
-                        )}
-                        
-                        {game.gameStatus === 1 && (
-                          <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">
-                            AGENDADO
-                          </span>
-                        )}
+
+                        {/* Arena */}
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span>{game.arena}</span>
+                          {game.city !== 'N/D' && <span>• {game.city}, {game.state}</span>}
+                        </div>
                       </div>
 
-                      {/* Placar */}
-                      <div className="space-y-4">
-                        {/* Time Visitante */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
+                      {/* Placar Principal */}
+                      <div className="px-6 py-6">
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-8 items-center">
+                          {/* Time Visitante */}
+                          <div className="flex items-center gap-4">
                             <img 
                               src={game.awayTeam.logo} 
                               alt={game.awayTeam.tricode} 
-                              className="w-10 h-10" 
+                              className="w-16 h-16" 
                             />
                             <div className="flex-1">
-                              <p className="font-bold text-gray-900 text-sm">{game.awayTeam.tricode}</p>
-                              <p className="text-xs text-gray-500">{game.awayTeam.name}</p>
+                              <h3 className="font-bold text-gray-900 text-lg">{game.awayTeam.tricode}</h3>
+                              <p className="text-sm text-gray-500">{game.awayTeam.name}</p>
+                              {game.awayTeam.wins > 0 && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {game.awayTeam.wins}-{game.awayTeam.losses}
+                                </p>
+                              )}
                             </div>
+                            {game.awayTeam.score ? (
+                              <span className="text-4xl font-black text-gray-900 tabular-nums">
+                                {game.awayTeam.score}
+                              </span>
+                            ) : (
+                              <span className="text-2xl font-bold text-gray-300">-</span>
+                            )}
                           </div>
-                          
-                          {game.awayTeam.score ? (
-                            <span className="text-3xl font-black text-gray-900 tabular-nums">
-                              {game.awayTeam.score}
-                            </span>
-                          ) : (
-                            <span className="text-lg font-bold text-gray-300">-</span>
-                          )}
-                        </div>
 
-                        {/* Separador */}
-                        <div className="border-t border-gray-100"></div>
+                          {/* VS/@ */}
+                          <div className="flex items-center justify-center">
+                            <span className="text-2xl font-bold text-gray-400">@</span>
+                          </div>
 
-                        {/* Time da Casa */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
+                          {/* Time da Casa */}
+                          <div className="flex items-center gap-4">
+                            {game.homeTeam.score ? (
+                              <span className="text-4xl font-black text-gray-900 tabular-nums">
+                                {game.homeTeam.score}
+                              </span>
+                            ) : (
+                              <span className="text-2xl font-bold text-gray-300">-</span>
+                            )}
+                            <div className="flex-1 text-right">
+                              <h3 className="font-bold text-gray-900 text-lg">{game.homeTeam.tricode}</h3>
+                              <p className="text-sm text-gray-500">{game.homeTeam.name}</p>
+                              {game.homeTeam.wins > 0 && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {game.homeTeam.wins}-{game.homeTeam.losses}
+                                </p>
+                              )}
+                            </div>
                             <img 
                               src={game.homeTeam.logo} 
                               alt={game.homeTeam.tricode} 
-                              className="w-10 h-10" 
+                              className="w-16 h-16" 
                             />
-                            <div className="flex-1">
-                              <p className="font-bold text-gray-900 text-sm">{game.homeTeam.tricode}</p>
-                              <p className="text-xs text-gray-500">{game.homeTeam.name}</p>
-                            </div>
                           </div>
-                          
-                          {game.homeTeam.score ? (
-                            <span className="text-3xl font-black text-gray-900 tabular-nums">
-                              {game.homeTeam.score}
-                            </span>
-                          ) : (
-                            <span className="text-lg font-bold text-gray-300">-</span>
-                          )}
                         </div>
                       </div>
 
-                      {/* Período/Relógio (se ao vivo) */}
-                      {game.gameStatus === 2 && game.period && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                          <p className="text-xs text-center text-gray-600 font-medium">
-                            {game.period}º Quarto {game.gameClock && `• ${game.gameClock}`}
-                          </p>
+                      {/* Footer com Transmissão e Ações */}
+                      <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+                        {/* Transmissão */}
+                        <div className="flex flex-col gap-1">
+                          {game.broadcasters?.national !== 'N/D' && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-gray-600 font-medium">Nacional:</span>
+                              <span className="text-gray-900 font-bold">{game.broadcasters.national}</span>
+                            </div>
+                          )}
+                          {game.broadcasters?.regional !== 'N/D' && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-gray-600 font-medium">Regional:</span>
+                              <span className="text-gray-900 font-bold">{game.broadcasters.regional}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
 
-                      {/* Onde Assistir */}
-                      {game.whereToWatch && game.whereToWatch !== 'N/D' && (
-                        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          <p className="text-xs text-gray-600">{game.whereToWatch}</p>
+                        {/* Botões de Ação */}
+                        <div className="flex items-center gap-3">
+                          {game.gameStatus === 2 && (
+                            <button className="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                              </svg>
+                              ASSISTIR AO VIVO
+                            </button>
+                          )}
+                          
+                          {(game.gameStatus === 2 || game.gameStatus === 3) && (
+                            <button className="bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition-colors">
+                              ESTATÍSTICAS
+                            </button>
+                          )}
+
+                          {game.gameStatus === 1 && (
+                            <button className="bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition-colors">
+                              PREVIEW
+                            </button>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : selectedDate ? (
-                <div className="text-center py-10 bg-gray-100 rounded-lg border border-gray-200">
+                <div className="text-center py-12 bg-gray-100 rounded-lg border border-gray-200">
                   <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-600">Nenhum jogo nesta data</p>
                 </div>
               ) : (
-                <div className="text-center py-10 bg-gray-100 rounded-lg border border-gray-200">
+                <div className="text-center py-12 bg-gray-100 rounded-lg border border-gray-200">
                   <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-600">Selecione uma data no calendário</p>
                 </div>
