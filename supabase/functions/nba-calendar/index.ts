@@ -6,17 +6,9 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-const formatDateKey = (dateString: string) => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const convertToBrasiliaTime = (dateString: string) => {
   try {
-    const date = new Date(dateString);
+    const date = new new Date(dateString)();
     return date.toLocaleTimeString('pt-BR', { 
       hour: '2-digit', 
       minute: '2-digit', 
@@ -81,13 +73,19 @@ serve(async (req) => {
 
     const calendar: { [key: string]: any[] } = {};
     let totalGames = 0;
+    
+    const requestedYear = month.substring(0, 4);
     const requestedMonthComponent = month.substring(4, 6);
 
     allGameDates.forEach((dateEntry: any) => {
-      const dateKey = formatDateKey(dateEntry.gameDate);
-      const gameDateMonthComponent = dateKey.substring(5, 7);
+      const gameDate = new Date(dateEntry.gameDate);
+      const gameDateMonthComponent = String(gameDate.getUTCMonth() + 1).padStart(2, '0');
       
       if (gameDateMonthComponent !== requestedMonthComponent) return;
+
+      const dayComponent = String(gameDate.getUTCDate()).padStart(2, '0');
+      // **CORREÇÃO:** Usar o ano do pedido para criar a chave, não o ano da API.
+      const dateKey = `${requestedYear}-${gameDateMonthComponent}-${dayComponent}`;
 
       const gamesForDate = dateEntry.games.filter((game: any) => {
         if (!teamId || teamId === '') return true;
