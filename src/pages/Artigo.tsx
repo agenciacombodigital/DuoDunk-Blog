@@ -105,15 +105,18 @@ export default function Artigo() {
               {article.summary}
             </p>
 
-            {/* Vídeo ou Imagem Hero */}
-            {article.video_url ? (
-              <VideoEmbed url={article.video_url} />
-            ) : (
-              article.image_url && <img
+            {/* Imagem de Destaque (Hero) */}
+            {article.image_url && (
+              <img
                 src={article.image_url}
                 alt={article.title}
                 className="w-full h-auto rounded-2xl mb-10 shadow-lg"
               />
+            )}
+
+            {/* Vídeo Embed (se existir) */}
+            {article.video_url && (
+              <VideoEmbed url={article.video_url} />
             )}
 
             {/* Links para times mencionados nas tags */}
