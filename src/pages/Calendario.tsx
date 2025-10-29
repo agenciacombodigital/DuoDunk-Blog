@@ -48,13 +48,13 @@ export default function Calendario() {
       setLoading(true);
       const year = currentMonth.getFullYear();
       const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-      const body: any = { month: `${year}${month}` };
       
-      if (selectedTeam && selectedTeam !== '') {
-        body.teamId = selectedTeam;
-      }
-  
-      const { data, error } = await supabase.functions.invoke('nba-calendar', { body });
+      const { data, error } = await supabase.functions.invoke('nba-calendar', {
+        body: {
+          month: `${year}${month}`,
+          teamId: selectedTeam || null,
+        },
+      });
       
       if (error) {
         console.error('[CALENDARIO] Erro:', error);
