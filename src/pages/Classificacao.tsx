@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Trophy, TrendingUp, TrendingDown, Minus, Flame, Snowflake, Loader2 } from 'lucide-react';
+import { Trophy, Flame, Snowflake, Minus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Team {
@@ -20,6 +20,7 @@ interface Team {
   division: string;
   playoffSeed: number;
   slug: string;
+  conference?: 'Leste' | 'Oeste';
 }
 
 interface Standings {
@@ -44,8 +45,7 @@ interface Standings {
 export default function Classificacao() {
   const [standings, setStandings] = useState<Standings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('conference');
-  const [selectedConference, setSelectedConference] = useState('eastern');
+  const [viewType, setViewType] = useState('geral');
 
   useEffect(() => {
     loadStandings();
@@ -67,6 +67,22 @@ export default function Classificacao() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Combinar todos os times e ordenar por vitórias
+  const getGeralStandings = () => {
+    if (!standings) return [];
+    
+    const allTeams = [
+      ...standings.eastern.conference.map(team => ({ ...team, conference: 'Leste' as const })),
+      ...standings.western.conference.map(team => ({ ...team, conference: 'Oeste' as const }))
+    ];
+    
+    // Ordenar por vitórias (decrescente)
+    return allTeams.sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return parseFloat(b.winPercent) - parseFloat(a.winPercent);
+    });
   };
 
   const getStreakIcon = (streak: string) => {
@@ -129,10 +145,6 @@ export default function Classificacao() {
     );
   }
 
-  const currentStandings = selectedConference === 'eastern' 
-    ? standings?.eastern 
-    : standings?.western;
-
   return (
     <div className="min-h-screen bg-white text-gray-900 py-12">
       <div className="container mx-auto px-4">
@@ -150,13 +162,22 @@ export default function Classificacao() {
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 p-3 bg-gray-100 border border-gray-200 rounded-xl">
-          {/* Conference Toggle */}
+        <div className="flex items-center justify-center gap-4 mb-8 p-3 bg-gray-100 border border-gray-200 rounded-xl">
           <div className="bg-gray-200 p-1.5 rounded-lg flex">
             <button
-              onClick={() => setSelectedConference('eastern')}
+              onClick={() => setViewType('geral')}
               className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
-                selectedConference === 'eastern'
+                viewType === 'geral'
+                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-pink-500/30'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-white/50'
+              }`}
+            >
+              Classificação Geral
+            </button>
+            <button
+              onClick={() => setViewType('leste')}
+              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
+                viewType === 'leste'
                   ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-white/50'
               }`}
@@ -164,38 +185,14 @@ export default function Classificacao() {
               Leste
             </button>
             <button
-              onClick={() => setSelectedConference('western')}
+              onClick={() => setViewType('oeste')}
               className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
-                selectedConference === 'western'
+                viewType === 'oeste'
                   ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/30'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-white/50'
               }`}
             >
               Oeste
-            </button>
-          </div>
-
-          {/* View Toggle */}
-          <div className="bg-gray-200 p-1.5 rounded-lg flex">
-            <button
-              onClick={() => setView('conference')}
-              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
-                view === 'conference'
-                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-pink-500/30'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-white/50'
-              }`}
-            >
-              Conferência
-            </button>
-            <button
-              onClick={() => setView('divisions')}
-              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${
-                view === 'divisions'
-                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-pink-500/30'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-white/50'
-              }`}
-            >
-              Divisões
             </button>
           </div>
         </div>
@@ -208,8 +205,65 @@ export default function Classificacao() {
           <div className="flex items-center gap-2"><Snowflake className="w-4 h-4 text-blue-400" />Time frio (4+ derrotas)</div>
         </div>
 
-        {/* Conference View */}
-        {view === 'conference' && currentStandings && (
+        {viewType === 'geral' && (
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-800 text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left">#</th>
+                  <th className="px-4 py-3 text-left">TIME</th>
+                  <th className="px-4 py-3 text-center">CONF</th>
+                  <th className="px-4 py-3 text-center">V</th>
+                  <th className="px-4 py-3 text-center">D</th>
+                  <th className="px-4 py-3 text-center">%</th>
+                  <th className="px-4 py-3 text-center">GB</th>
+                  <th className="px-4 py-3 text-center">SEQ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getGeralStandings().map((team, index) => (
+                  <tr 
+                    key={team.id} 
+                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 py-3 font-bold text-gray-700">{index + 1}</td>
+                    <td className="px-4 py-3">
+                      <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
+                        <img src={team.logo} alt={team.abbreviation} className="w-8 h-8" />
+                        <div>
+                          <p className="font-bold text-gray-900 group-hover:text-pink-600 transition-colors">{team.abbreviation}</p>
+                          <p className="text-xs text-gray-500">{team.name}</p>
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        team.conference === 'Leste' 
+                          ? 'bg-blue-100 text-blue-700' 
+                          : 'bg-pink-100 text-pink-700'
+                      }`}>
+                        {team.conference}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center font-bold text-green-600">{team.wins}</td>
+                    <td className="px-4 py-3 text-center font-bold text-red-600">{team.losses}</td>
+                    <td className="px-4 py-3 text-center">{team.winPercent}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{team.gamesBehind}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-bold ${
+                        team.streak.startsWith('W') ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {team.streak}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {(viewType === 'leste' || viewType === 'oeste') && (
           <div className="overflow-x-auto bg-white border border-gray-200 rounded-xl p-2 shadow-lg">
             <table className="w-full min-w-[800px] text-sm text-left">
               <thead className="text-xs text-gray-500 uppercase">
@@ -225,7 +279,7 @@ export default function Classificacao() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                  {currentStandings.conference.map((team, index) => (
+                  {(viewType === 'leste' ? standings?.eastern.conference : standings?.western.conference)?.map((team, index) => (
                     <tr key={team.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-bold text-gray-400 text-center">
                         <div className="relative w-8 h-8 flex items-center justify-center">
@@ -263,48 +317,6 @@ export default function Classificacao() {
                   ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Divisions View */}
-        {view === 'divisions' && currentStandings && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {Object.entries(currentStandings.divisions).map(([divisionName, teams]) => {
-              // Pular divisões vazias
-              if (!teams || teams.length === 0) {
-                return null;
-              }
-              
-              return (
-                <div key={divisionName} className="bg-white border border-gray-200 rounded-xl p-4 shadow-lg">
-                  <h3 className="text-lg font-bold mb-4 text-center text-pink-600">
-                    {divisionName}
-                  </h3>
-                  <div className="space-y-2">
-                    {teams.map((team, index) => (
-                      <div key={team.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100">
-                        <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
-                          <span className="font-bold text-gray-400 w-5">{index + 1}</span>
-                          <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain" />
-                          <div>
-                            <div className="font-bold text-gray-800 flex items-center text-sm group-hover:text-pink-600 transition-colors">
-                              {team.abbreviation}
-                              {isHotTeam(team) && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
-                              {isColdTeam(team) && <Snowflake className="w-3 h-3 text-blue-400 ml-1" />}
-                            </div>
-                            <div className="text-xs text-gray-500 font-mono">{team.wins}-{team.losses}</div>
-                          </div>
-                        </Link>
-                        <div className={`flex items-center gap-1 text-xs font-mono font-bold ${getStreakColor(team.streak)}`}>
-                          {getStreakIcon(team.streak)}
-                          <span>{team.streak}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         )}
       </div>
