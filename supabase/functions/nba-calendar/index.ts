@@ -73,11 +73,15 @@ serve(async (req) => {
     const calendar: { [key: string]: any[] } = {};
     let totalGames = 0;
 
+    // Extrai o componente do mês do pedido (ex: "10" de "202510")
+    const requestedMonthComponent = month.substring(4, 6);
+
     allGameDates.forEach((dateEntry: any) => {
-      const dateKey = formatDateKey(dateEntry.gameDate);
-      const monthKey = dateKey.substring(0, 7).replace('-', '');
+      const dateKey = formatDateKey(dateEntry.gameDate); // ex: "2024-10-28"
+      const gameDateMonthComponent = dateKey.substring(5, 7); // ex: "10"
       
-      if (monthKey !== month) return;
+      // Compara apenas o componente do mês, ignorando a incompatibilidade de anos
+      if (gameDateMonthComponent !== requestedMonthComponent) return;
 
       const gamesForDate = dateEntry.games.filter((game: any) => {
         if (!teamId || teamId === '') return true;
