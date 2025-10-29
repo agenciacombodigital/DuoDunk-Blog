@@ -40,14 +40,31 @@ serve(async (req) => {
       });
     }
 
-    const apiUrl = `https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json`;
-    const response = await fetch(apiUrl);
-    if (!response.ok) throw new Error(`NBA API request failed with status ${response.status}`);
+    // A API da NBA divide o calendário em vários arquivos (00 a 08).
+    // Precisamos buscar todos para ter a temporada completa.
+    const scheduleParts = ['00', '01', '02', '03', '04', '05', '06', '07', '08'];
+    const baseUrl = 'https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_';
 
-    const data = await response.json();
-    const leagueSchedule = data?.leagueSchedule;
+    const fetchPromises = scheduleParts.map(part => 
+      fetch(`${baseUrl}${part}.json`).catch(e => {
+        console.error(`Failed to fetch part ${part}:`, e.message);
+        return null; // Retorna nulo em caso de falha de rede
+      })
+    );
+
+    const responses = await Promise.all(fetchPromises);
+    let allGameDates: any[] = [];
+
+    for (const response of responses) {
+      if (response && response.ok) {
+        const data = await response.json();
+        if (data?.leagueSchedule?.gameDates) {
+          allGameDates = allGameDates.concat(data.leagueSchedule.gameDates);
+        }
+      }
+    }
     
-    if (!leagueSchedule || !leagueSchedule.gameDates) {
+    if (allGameDates.length === 0) {
       return new Response(JSON.stringify({ success: true, calendar: {}, totalGames: 0 }), {
         headers: { ...corsHeaders }, status: 200
       });
@@ -56,21 +73,25 @@ serve(async (req) => {
     const calendar: { [key: string]: any[] } = {};
     let totalGames = 0;
 
-    leagueSchedule.gameDates.forEach((dateEntry: any) => {
+    allGameDates.forEach((dateEntry: any) => {
       const dateKey = formatDateKey(dateEntry.gameDate);
       const monthKey = dateKey.substring(0, 7).replace('-', '');
       
       if (monthKey !== month) return;
 
       const gamesForDate = dateEntry.games.filter((game: any) => {
-        if (!teamId || teamId === '') return true; // No filter, include all games
+        if (!teamId || teamId === '') return true;
         const homeId = String(game.homeTeam.teamId);
         const awayId = String(game.awayTeam.teamId);
         return teamId === homeId || teamId === awayId;
       });
 
       if (gamesForDate.length > 0) {
-        calendar[dateKey] = gamesForDate.map((game: any) => {
+        if (!calendar[dateKey]) {
+          calendar[dateKey] = [];
+        }
+        
+        const newGames = gamesForDate.map((game: any) => {
           totalGames++;
           const gameStatus = game.gameStatus;
           let statusTextPt = 'Agendado';
@@ -102,6 +123,8 @@ serve(async (req) => {
             whereToWatch: game.broadcasters?.national?.map((b: any) => b.broadcasterDisplay).join(', ') || 'N/D',
           };
         });
+        
+        calendar[dateKey].push(...newGames);
       }
     });
 
