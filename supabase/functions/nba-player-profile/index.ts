@@ -30,21 +30,33 @@ serve(async (req) => {
     if (gamelogResponse.ok) {
         const gamelogData = await gamelogResponse.json();
         if (gamelogData.gamelog) {
-            lastGames = gamelogData.gamelog.slice(0, 10).map((game: any) => ({
-                id: game.gameId,
-                date: new Date(game.gameDate).toLocaleDateString('pt-BR'),
-                opponent: game.opponent.abbreviation,
-                opponentLogo: game.opponent.logo,
-                result: game.gameResult,
-                score: game.teamScore ? `${game.teamScore}-${game.opponentScore}` : 'N/A',
-                points: parseInt(game.stats[0].stats[6]),
-                rebounds: parseInt(game.stats[0].stats[7]),
-                assists: parseInt(game.stats[0].stats[8]),
-                minutes: game.stats[0].stats[0],
-                fieldGoals: game.stats[0].stats[1],
-                threePointers: game.stats[0].stats[2],
-                freeThrows: game.stats[0].stats[3],
-            }));
+            lastGames = gamelogData.gamelog.slice(0, 10).map((game: any) => {
+                // Robust stat parsing
+                const statKeys = game.stats[0]?.keys || [];
+                const statValues = game.stats[0]?.stats || [];
+
+                const getStat = (key: string) => {
+                    const index = statKeys.indexOf(key);
+                    // Return 'N/A' or a default for stats that might not be present (like for DNP)
+                    return index !== -1 ? statValues[index] : '0';
+                };
+
+                return {
+                    id: game.gameId,
+                    date: new Date(game.gameDate).toLocaleDateString('pt-BR'),
+                    opponent: game.opponent.abbreviation,
+                    opponentLogo: game.opponent.logo,
+                    result: game.gameResult,
+                    score: game.teamScore ? `${game.teamScore}-${game.opponentScore}` : 'N/A',
+                    points: parseInt(getStat('PTS') || '0'),
+                    rebounds: parseInt(getStat('REB') || '0'),
+                    assists: parseInt(getStat('AST') || '0'),
+                    minutes: getStat('MIN'),
+                    fieldGoals: getStat('FGM-A'),
+                    threePointers: getStat('3PM-A'),
+                    freeThrows: getStat('FTM-A'),
+                };
+            });
         }
     }
 
@@ -52,36 +64,36 @@ serve(async (req) => {
       id: player.id,
       name: player.displayName,
       fullName: player.fullName,
-      position: player.position.abbreviation,
+      position: player.position?.abbreviation || 'N/A',
       jersey: player.jersey,
       height: player.displayHeight,
       weight: player.displayWeight,
       age: player.age,
       birthDate: new Date(player.dateOfBirth).toLocaleDateString('pt-BR'),
-      birthPlace: `${player.birthPlace.city}, ${player.birthPlace.state || player.birthPlace.country}`,
+      birthPlace: [player.birthPlace?.city, player.birthPlace?.state || player.birthPlace?.country].filter(Boolean).join(', '),
       college: player.college?.name || 'N/A',
-      experience: player.experience.years,
+      experience: player.experience?.years || 0,
       team: {
-        id: team.id,
-        name: team.displayName,
-        abbreviation: team.abbreviation,
-        logo: team.logos[0].href,
-        color: team.color,
+        id: team?.id,
+        name: team?.displayName,
+        abbreviation: team?.abbreviation,
+        logo: team?.logos?.[0]?.href || '',
+        color: team?.color || '000000',
       },
-      headshotLarge: player.headshot.href,
+      headshotLarge: player.headshot?.href || '',
       stats: {
-        season: playerData.season.displayName,
-        gamesPlayed: player.statsSummary.statistics.find((s: any) => s.name === 'gamesPlayed')?.value || 0,
-        minutes: player.statsSummary.statistics.find((s: any) => s.name === 'minutes')?.value || 0,
-        points: player.statsSummary.statistics.find((s: any) => s.name === 'points')?.value || 0,
-        rebounds: player.statsSummary.statistics.find((s: any) => s.name === 'rebounds')?.value || 0,
-        assists: player.statsSummary.statistics.find((s: any) => s.name === 'assists')?.value || 0,
-        steals: player.statsSummary.statistics.find((s: any) => s.name === 'steals')?.value || 0,
-        blocks: player.statsSummary.statistics.find((s: any) => s.name === 'blocks')?.value || 0,
-        turnovers: player.statsSummary.statistics.find((s: any) => s.name === 'turnovers')?.value || 0,
-        fieldGoalPct: (player.statsSummary.statistics.find((s: any) => s.name === 'fieldGoalPct')?.value || 0) * 100,
-        threePointPct: (player.statsSummary.statistics.find((s: any) => s.name === 'threePointPct')?.value || 0) * 100,
-        freeThrowPct: (player.statsSummary.statistics.find((s: any) => s.name === 'freeThrowPct')?.value || 0) * 100,
+        season: playerData.season?.displayName || 'N/A',
+        gamesPlayed: player.statsSummary?.statistics.find((s: any) => s.name === 'gamesPlayed')?.value || 0,
+        minutes: player.statsSummary?.statistics.find((s: any) => s.name === 'minutes')?.value || 0,
+        points: player.statsSummary?.statistics.find((s: any) => s.name === 'points')?.value || 0,
+        rebounds: player.statsSummary?.statistics.find((s: any) => s.name === 'rebounds')?.value || 0,
+        assists: player.statsSummary?.statistics.find((s: any) => s.name === 'assists')?.value || 0,
+        steals: player.statsSummary?.statistics.find((s: any) => s.name === 'steals')?.value || 0,
+        blocks: player.statsSummary?.statistics.find((s: any) => s.name === 'blocks')?.value || 0,
+        turnovers: player.statsSummary?.statistics.find((s: any) => s.name === 'turnovers')?.value || 0,
+        fieldGoalPct: (player.statsSummary?.statistics.find((s: any) => s.name === 'fieldGoalPct')?.value || 0) * 100,
+        threePointPct: (player.statsSummary?.statistics.find((s: any) => s.name === 'threePointPct')?.value || 0) * 100,
+        freeThrowPct: (player.statsSummary?.statistics.find((s: any) => s.name === 'freeThrowPct')?.value || 0) * 100,
         plusMinus: 0, // This stat is not in the summary
       },
       lastGames: lastGames,
