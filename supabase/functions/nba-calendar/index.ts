@@ -77,11 +77,10 @@ serve(async (req) => {
     const requestedYear = month.substring(0, 4);
     const requestedMonthComponent = month.substring(4, 6);
 
-    // FIX: Map the requested month to the correct season year (2023-2024)
-    // to handle the static nature of the NBA schedule API.
+    // Lógica para mapear o mês solicitado para o ano correto da temporada (2023-2024)
     const getSeasonYear = (month: string) => {
         const monthNum = parseInt(month, 10);
-        // NBA season runs from Oct (e.g., 2023) to Jun (e.g., 2024)
+        // A temporada da NBA vai de Outubro (ex: 2023) a Junho (ex: 2024)
         return monthNum >= 10 ? '2023' : '2024';
     };
     const seasonYear = getSeasonYear(requestedMonthComponent);
@@ -91,13 +90,13 @@ serve(async (req) => {
       const gameYear = String(gameDate.getUTCFullYear());
       const gameDateMonthComponent = String(gameDate.getUTCMonth() + 1).padStart(2, '0');
       
-      // MODIFIED CHECK: Match month from request and year from our calculated season year.
+      // Verifica se o jogo corresponde ao mês solicitado E ao ano correto da temporada
       if (gameDateMonthComponent !== requestedMonthComponent || gameYear !== seasonYear) {
         return;
       }
 
       const dayComponent = String(gameDate.getUTCDate()).padStart(2, '0');
-      // Use the originally requested year for the dateKey so the client-side calendar displays it correctly.
+      // Usa o ano que o frontend pediu para criar a chave, para que o calendário exiba corretamente
       const dateKey = `${requestedYear}-${gameDateMonthComponent}-${dayComponent}`;
 
       const gamesForDate = dateEntry.games.filter((game: any) => {
