@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Clock } from 'lucide-react';
-import NewsSidebar from '@/components/NewsSidebar';
 import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
@@ -70,8 +69,8 @@ export default function Artigo() {
   return (
     <div className="bg-white">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-12 gap-y-16">
-          <article className="lg:col-span-2">
+        <div className="max-w-4xl mx-auto">
+          <article>
             {/* Botão Voltar */}
             <Link 
               to="/"
@@ -168,10 +167,6 @@ export default function Artigo() {
               </div>
             )}
           </article>
-          
-          <aside className="lg:col-span-1">
-            <NewsSidebar />
-          </aside>
         </div>
       </div>
 
