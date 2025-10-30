@@ -1,7 +1,84 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Calendar, Clock, Tv, ChevronLeft, ChevronRight, MapPin, Loader2 } from 'lucide-react';
-import { NBA_TEAMS } from '@/lib/nbaTeams';
+import { Calendar, ChevronLeft, ChevronRight, Loader2, MapPin, Tv } from 'lucide-react';
+import { NBA_TEAMS, NBATeam } from '@/lib/nbaTeams';
+
+// --- INÍCIO DA LÓGICA DE SIMULAÇÃO ---
+
+// Função para gerar um número pseudo-aleatório baseado em uma semente (a data)
+const seededRandom = (seed: number) => {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+// Função para gerar jogos simulados para uma data específica
+const generateMockGames = (dateStr: string): Game[] => {
+  if (!dateStr) return [];
+
+  const dateSeed = new Date(dateStr).getTime();
+  const numGames = Math.floor(seededRandom(dateSeed) * 6) + 5; // Entre 5 e 10 jogos
+  const games: Game[] = [];
+  const usedTeamIds = new Set<string>();
+
+  const availableTeams = [...NBA_TEAMS];
+
+  for (let i = 0; i < numGames; i++) {
+    // Garante que não fiquemos sem times
+    if (availableTeams.length < 2) break;
+
+    // Seleciona time da casa
+    const homeTeamIndex = Math.floor(seededRandom(dateSeed + i * 10) * availableTeams.length);
+    const homeTeam = availableTeams.splice(homeTeamIndex, 1)[0];
+    usedTeamIds.add(homeTeam.id);
+
+    // Seleciona time visitante
+    const awayTeamIndex = Math.floor(seededRandom(dateSeed + i * 20) * availableTeams.length);
+    const awayTeam = availableTeams.splice(awayTeamIndex, 1)[0];
+    usedTeamIds.add(awayTeam.id);
+
+    const gameHour = Math.floor(seededRandom(dateSeed + i * 30) * 5) + 19; // Jogos entre 19h e 23h
+    const gameMinutes = seededRandom(dateSeed + i * 40) > 0.5 ? '30' : '00';
+    const timeBrasilia = `${gameHour}:${gameMinutes}`;
+
+    games.push({
+      id: `mock-${dateSeed}-${i}`,
+      date: new Date(dateStr).toISOString(),
+      timeBrasilia,
+      status: 'Agendado',
+      statusTextPt: 'Agendado',
+      gameStatus: 1, // 1 = Agendado
+      name: `${awayTeam.name} @ ${homeTeam.name}`,
+      arena: `${homeTeam.name} Arena`,
+      city: 'Cidade Simulada',
+      state: 'ES',
+      homeTeam: {
+        id: homeTeam.id,
+        name: homeTeam.name,
+        tricode: homeTeam.abbreviation,
+        logo: `https://cdn.nba.com/logos/nba/${homeTeam.id}/primary/L/logo.svg`,
+        score: '',
+        wins: 0,
+        losses: 0,
+      },
+      awayTeam: {
+        id: awayTeam.id,
+        name: awayTeam.name,
+        tricode: awayTeam.abbreviation,
+        logo: `https://cdn.nba.com/logos/nba/${awayTeam.id}/primary/L/logo.svg`,
+        score: '',
+        wins: 0,
+        losses: 0,
+      },
+      broadcasters: {
+        national: seededRandom(dateSeed + i * 50) > 0.6 ? 'ESPN' : 'League Pass',
+        regional: 'N/D',
+      },
+    });
+  }
+
+  return games.sort((a, b) => a.timeBrasilia.localeCompare(b.timeBrasilia));
+};
+
+// --- FIM DA LÓGICA DE SIMULAÇÃO ---
 
 interface Game {
   id: string;
@@ -10,9 +87,9 @@ interface Game {
   status: string;
   statusTextPt: string;
   gameStatus: number;
-  name: string;
   period?: number;
   gameClock?: string;
+  name: string;
   arena: string;
   city: string;
   state: string;
@@ -40,69 +117,24 @@ interface Game {
   };
 }
 
-interface CalendarData {
-  [date: string]: Game[];
-}
-
 export default function Calendario() {
-  const [calendar, setCalendar] = useState<CalendarData>({});
-  const [loading, setLoading] = useState(true);
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Inicia com a data de hoje
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [mockCalendar, setMockCalendar] = useState<{[key: string]: Game[]}>({});
 
-  const loadCalendar = async (isBackgroundRefresh = false) => {
-    if (!isBackgroundRefresh) {
-      setLoading(true);
-    }
-    try {
-      const year = currentMonth.getFullYear();
-      const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-      
-      const { data, error } = await supabase.functions.invoke('nba-calendar', {
-        body: {
-          month: `${year}${month}`,
-          teamId: selectedTeam || null,
-        },
-      });
-      
-      if (error) {
-        console.error('[CALENDARIO] Erro:', error);
-        setCalendar({});
-        return;
-      }
-  
-      if (data?.success && data?.calendar) {
-        setCalendar(data.calendar);
-      } else {
-        setCalendar({});
-      }
-    } catch (err) {
-      console.error('[CALENDARIO] Erro:', err);
-      setCalendar({});
-    } finally {
-      if (!isBackgroundRefresh) {
-        setLoading(false);
-      }
-    }
-  };
-
-  // Efeito para carregar dados quando o time ou mês muda
+  // Gera o calendário para o mês inteiro ao carregar ou mudar de mês
   useEffect(() => {
-    loadCalendar(false);
-  }, [selectedTeam, currentMonth]);
+    const { year, month } = getDaysInMonth(currentMonth);
+    const newCalendar: {[key: string]: Game[]} = {};
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Efeito para auto-refresh
-  useEffect(() => {
-    const hasLiveGames = Object.values(calendar).flat().some(game => game.gameStatus === 2);
-    const intervalDuration = hasLiveGames ? 5000 : 60000; // 5s para ao vivo, 1min para outros
-
-    const interval = setInterval(() => {
-      loadCalendar(true); // Refresh em segundo plano
-    }, intervalDuration);
-
-    return () => clearInterval(interval);
-  }, [calendar]); // Dependência no estado do calendário para reavaliar o intervalo
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      newCalendar[dateKey] = generateMockGames(dateKey);
+    }
+    setMockCalendar(newCalendar);
+  }, [currentMonth]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -142,11 +174,15 @@ export default function Calendario() {
     const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
     const dayStr = String(day).padStart(2, '0');
     const dateKey = `${year}-${month}-${dayStr}`;
-    return calendar[dateKey] && calendar[dateKey].length > 0;
+    return mockCalendar[dateKey] && mockCalendar[dateKey].length > 0;
   };
 
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
-  const selectedGames = selectedDate ? calendar[selectedDate] || [] : [];
+  
+  const selectedGames = (selectedDate ? mockCalendar[selectedDate] || [] : []).filter(game => {
+    if (!selectedTeam) return true;
+    return game.homeTeam.id === selectedTeam || game.awayTeam.id === selectedTeam;
+  });
 
   return (
     <div className="min-h-screen bg-white text-gray-900 py-12">
@@ -249,58 +285,26 @@ export default function Calendario() {
                   : 'Selecione uma data'}
               </h2>
 
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-10">
-                  <Loader2 className="w-8 h-8 animate-spin text-pink-600" />
-                  <p className="text-gray-600 mt-3">Carregando...</p>
-                </div>
-              ) : selectedGames.length > 0 ? (
+              {selectedGames.length > 0 ? (
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                   {selectedGames.map((game) => (
                     <div
                       key={game.id}
                       className="bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300"
                     >
-                      {/* Header com Status */}
                       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-gray-50">
                         <div className="flex items-center gap-4">
-                          {/* Status Badge */}
-                          {game.gameStatus === 3 && (
-                            <span className="bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-md">
-                              {game.statusTextPt}
-                            </span>
-                          )}
-                          {game.gameStatus === 2 && (
-                            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-md animate-pulse flex items-center gap-1.5">
-                              <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
-                              {game.statusTextPt}
-                            </span>
-                          )}
-                          {game.gameStatus === 1 && (
-                            <span className="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1 rounded-md">
-                              {game.timeBrasilia}
-                            </span>
-                          )}
-
-                          {/* Período e Relógio (se ao vivo) */}
-                          {game.gameStatus === 2 && game.period && (
-                            <span className="text-xs font-medium text-gray-600">
-                              {game.period}º Quarto {game.gameClock && `• ${game.gameClock}`}
-                            </span>
-                          )}
+                          <span className="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1 rounded-md">
+                            {game.timeBrasilia}
+                          </span>
                         </div>
-
-                        {/* Arena */}
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <MapPin className="w-4 h-4" />
                           <span>{game.arena}</span>
                         </div>
                       </div>
-
-                      {/* Placar Principal */}
                       <div className="px-6 py-6">
                         <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                          {/* Time Visitante */}
                           <div className="flex items-center gap-3">
                             <img 
                               src={game.awayTeam.logo} 
@@ -309,34 +313,14 @@ export default function Calendario() {
                             />
                             <div className="flex-1">
                               <h3 className="font-bold text-gray-900 text-base">{game.awayTeam.tricode}</h3>
-                              <p className="text-xs text-gray-500">{game.awayTeam.name}</p>
                             </div>
-                            {game.awayTeam.score ? (
-                              <span className="text-3xl font-black text-gray-900 tabular-nums">
-                                {game.awayTeam.score}
-                              </span>
-                            ) : (
-                              <span className="text-2xl font-bold text-gray-300">-</span>
-                            )}
                           </div>
-
-                          {/* VS/@ */}
                           <div className="flex items-center justify-center">
                             <span className="text-xl font-bold text-gray-400">@</span>
                           </div>
-
-                          {/* Time da Casa */}
                           <div className="flex items-center gap-3">
-                            {game.homeTeam.score ? (
-                              <span className="text-3xl font-black text-gray-900 tabular-nums">
-                                {game.homeTeam.score}
-                              </span>
-                            ) : (
-                              <span className="text-2xl font-bold text-gray-300">-</span>
-                            )}
                             <div className="flex-1 text-right">
                               <h3 className="font-bold text-gray-900 text-base">{game.homeTeam.tricode}</h3>
-                              <p className="text-xs text-gray-500">{game.homeTeam.name}</p>
                             </div>
                             <img 
                               src={game.homeTeam.logo} 
@@ -346,15 +330,13 @@ export default function Calendario() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Footer com Transmissão */}
-                      {(game.broadcasters?.national !== 'N/D' || game.broadcasters?.regional !== 'N/D') && (
+                      {(game.broadcasters?.national !== 'N/D') && (
                         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
                           <div className="flex items-center gap-2 text-xs">
                             <Tv className="w-4 h-4 text-gray-400" />
                             <span className="text-gray-600 font-medium">Transmissão:</span>
                             <span className="text-gray-900 font-bold">
-                              {game.broadcasters.national !== 'N/D' ? game.broadcasters.national : game.broadcasters.regional}
+                              {game.broadcasters.national}
                             </span>
                           </div>
                         </div>
