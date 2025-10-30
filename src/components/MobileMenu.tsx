@@ -11,6 +11,7 @@ export default function MobileMenu() {
     { path: '/ultimas', label: 'Últimas', icon: Newspaper },
     { path: '/times', label: 'Times', icon: Users },
     { path: '/classificacao', label: 'Classificação', icon: Trophy },
+    { path: '/jogadores', label: 'Jogadores', icon: Users },
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
