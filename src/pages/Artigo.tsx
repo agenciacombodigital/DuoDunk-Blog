@@ -5,6 +5,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import NewsSidebar from '@/components/NewsSidebar';
 import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
+import LatestNews from '@/components/LatestNews';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -176,6 +177,12 @@ export default function Artigo() {
 
       {/* Sistema de Comentários */}
       <div className="container mx-auto px-4 max-w-4xl pb-12">
+        <div className="mt-12 mb-12">
+          <h2 className="text-2xl font-black text-gray-900 mb-6 pb-3 border-b-2 border-gray-200">
+            📰 Últimas Notícias
+          </h2>
+          <LatestNews currentPostId={article.id} limit={3} />
+        </div>
         <DisqusComments
           identifier={article.slug}
           title={article.title}
