@@ -95,39 +95,41 @@ export default function Home() {
               {/* Notícia Principal */}
               <Link 
                 to={`/artigos/${featuredArticle.slug}`}
-                className="group relative block rounded-2xl overflow-hidden h-[400px] shadow-xl hover:shadow-2xl transition-shadow"
+                className="group block"
               >
-                <img
-                  src={featuredArticle.image_url}
-                  alt={featuredArticle.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-                
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-white" />
-                      DESTAQUE
-                    </span>
-                    <span className="text-white/80 text-sm flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Há {getTimeAgo(featuredArticle.published_at)}
-                    </span>
-                  </div>
+                <div className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                  <img
+                    src={featuredArticle.image_url}
+                    alt={featuredArticle.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   
-                  <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-white group-hover:text-pink-400 transition line-clamp-2">
-                    {featuredArticle.title}
-                  </h1>
-                  
-                  <p className="text-lg text-white/90 line-clamp-2 mb-3">
-                    {featuredArticle.summary}
-                  </p>
-                  
-                  <div className="flex items-center gap-2 text-sm text-white/70">
-                    <span className="font-medium">{featuredArticle.source}</span>
-                    <span>•</span>
-                    <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                  <div className="absolute bottom-0 left-0 right-0 p-8">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-white" />
+                        DESTAQUE
+                      </span>
+                      <span className="text-white/80 text-sm flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Há {getTimeAgo(featuredArticle.published_at)}
+                      </span>
+                    </div>
+                    
+                    <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-white group-hover:text-pink-400 transition line-clamp-2">
+                      {featuredArticle.title}
+                    </h1>
+                    
+                    <p className="text-lg text-white/90 line-clamp-2 mb-3">
+                      {featuredArticle.summary}
+                    </p>
+                    
+                    <div className="flex items-center gap-2 text-sm text-white/70">
+                      <span className="font-medium">{featuredArticle.source}</span>
+                      <span>•</span>
+                      <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -140,11 +142,13 @@ export default function Home() {
                     to={`/artigos/${article.slug}`}
                     className="group bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition"
                   >
-                    <img
-                      src={article.image_url}
-                      alt={article.title}
-                      className="w-full h-40 object-cover"
-                    />
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <img
+                        src={article.image_url}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
                     <div className="p-4">
                       <h3 className="font-bold text-gray-900 text-base mb-2 group-hover:text-pink-600 transition line-clamp-2">
                         {article.title}
@@ -196,11 +200,13 @@ export default function Home() {
                   to={`/artigos/${section1[6].slug}`}
                   className="group block bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition"
                 >
-                  <img
-                    src={section1[6].image_url}
-                    alt={section1[6].title}
-                    className="w-full h-48 object-cover"
-                  />
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={section1[6].image_url}
+                      alt={section1[6].title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                   <div className="p-4">
                     <span className="inline-block bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-2">
                       5
@@ -260,11 +266,13 @@ export default function Home() {
                   to={`/artigos/${article.slug}`}
                   className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-64 object-cover"
-                  />
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                   <div className="p-6">
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
@@ -293,11 +301,13 @@ export default function Home() {
                   to={`/artigos/${article.slug}`}
                   className="group bg-gray-50 rounded-lg overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-32 object-cover"
-                  />
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                   <div className="p-3">
                     <h3 className="font-bold text-sm group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
@@ -350,11 +360,13 @@ export default function Home() {
                   to={`/artigos/${article.slug}`}
                   className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-48 object-cover"
-                  />
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                   <div className="p-6">
                     <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
@@ -409,11 +421,13 @@ export default function Home() {
                   to={`/artigos/${article.slug}`}
                   className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
                 >
-                  <img
-                    src={article.image_url}
-                    alt={article.title}
-                    className="w-full h-64 object-cover"
-                  />
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                   <div className="p-6">
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
@@ -536,11 +550,11 @@ export default function Home() {
                 // LAYOUT VERTICAL (padrão)
                 return (
                   <div key={article.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                    <div className="relative overflow-hidden">
+                    <div className="relative overflow-hidden aspect-[4/3]">
                       <img
                         src={article.image_url}
                         alt={article.title}
-                        className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                       <div className="absolute bottom-0 left-0 right-0 p-4">
