@@ -64,20 +64,25 @@ const VideoEmbed = ({ url }: { url: string }) => {
 
     // Lógica para Instagram
     if (isInstagram) {
-      const renderInstagram = () => {
-        if (window.instgrm) {
+      const scriptId = 'instagram-embed-script';
+      let script = document.getElementById(scriptId) as HTMLScriptElement;
+
+      const processInstagram = () => {
+        if (window.instgrm && typeof window.instgrm.Embeds.process === 'function') {
           window.instgrm.Embeds.process();
         }
       };
 
-      if (!window.instgrm) {
-        const script = document.createElement('script');
-        script.src = '//www.instagram.com/embed.js';
+      if (!script) {
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.src = 'https://www.instagram.com/embed.js';
         script.async = true;
-        script.onload = renderInstagram;
+        script.defer = true;
+        script.onload = processInstagram;
         document.body.appendChild(script);
       } else {
-        renderInstagram();
+        processInstagram();
       }
     }
   }, [isTwitter, isInstagram, url]);
