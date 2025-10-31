@@ -190,17 +190,17 @@ export default function AdminManual() {
           {/* Campo de Vídeo (Opcional) */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              🎬 Vídeo (Opcional) - YouTube ou Twitter
+              🎬 Vídeo (Opcional) - YouTube, Twitter ou Instagram
             </label>
             <input
               type="url"
               value={form.video_url || ''}
               onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-              placeholder="https://www.youtube.com/watch?v=... ou https://twitter.com/..."
+              placeholder="https://... (YouTube, Twitter ou Instagram)"
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20"
             />
             <p className="mt-2 text-xs text-gray-400">
-              Cole o link do YouTube ou Twitter. O vídeo aparecerá no topo da notícia.
+              Cole o link do YouTube, Twitter ou Instagram. O vídeo aparecerá no topo da notícia.
             </p>
           </div>
 

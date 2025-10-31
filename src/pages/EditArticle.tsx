@@ -260,14 +260,14 @@ export default function EditArticle() {
             {/* Vídeo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2">
-                🎬 Vídeo (Opcional) - YouTube ou Twitter
+                🎬 Vídeo (Opcional) - YouTube, Twitter ou Instagram
               </label>
               <input
                 type="url"
                 value={formData.video_url || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                placeholder="https://www.youtube.com/watch?v=... ou https://twitter.com/..."
+                placeholder="https://... (YouTube, Twitter ou Instagram)"
               />
               <p className="text-xs text-gray-500 mt-2">
                 Se preenchido, o vídeo substituirá a imagem de destaque.

@@ -469,7 +469,7 @@ export default function AdminPage() {
                   value={editingArticle.video_url || ''}
                   onChange={(e) => setEditingArticle({ ...editingArticle, video_url: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Link do YouTube ou Twitter"
+                  placeholder="Link do YouTube, Twitter ou Instagram"
                 />
               </div>
 
