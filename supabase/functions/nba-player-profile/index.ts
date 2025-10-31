@@ -16,28 +16,30 @@ serve(async (req) => {
     if (!playerId) throw new Error('playerId is required');
 
     const playerUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/players/${playerId}`;
-    const playerResponse = await fetch(playerUrl);
+    const gamelogUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/players/${playerId}/gamelog`;
+
+    // Busca os dados do jogador e o histórico de jogos em paralelo para mais velocidade
+    const [playerResponse, gamelogResponse] = await Promise.all([
+      fetch(playerUrl),
+      fetch(gamelogUrl)
+    ]);
+
     if (!playerResponse.ok) throw new Error(`Failed to fetch player data for ID ${playerId}`);
     const playerData = await playerResponse.json();
 
     const player = playerData.athlete;
     const team = player.team;
 
-    // Fetch gamelog for last games
-    const gamelogUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/players/${playerId}/gamelog`;
-    const gamelogResponse = await fetch(gamelogUrl);
     let lastGames = [];
     if (gamelogResponse.ok) {
         const gamelogData = await gamelogResponse.json();
         if (gamelogData.gamelog) {
             lastGames = gamelogData.gamelog.slice(0, 10).map((game: any) => {
-                // Robust stat parsing
                 const statKeys = game.stats[0]?.keys || [];
                 const statValues = game.stats[0]?.stats || [];
 
                 const getStat = (key: string) => {
                     const index = statKeys.indexOf(key);
-                    // Return 'N/A' or a default for stats that might not be present (like for DNP)
                     return index !== -1 ? statValues[index] : '0';
                 };
 
