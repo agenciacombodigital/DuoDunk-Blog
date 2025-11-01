@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Calendar, Loader2, Clock, Eye, Star } from 'lucide-react';
-import { getObjectPositionClass } from '@/lib/utils';
+import { getObjectPositionStyle } from '@/lib/utils';
 
 // Função para calcular tempo atrás
 function getTimeAgo(dateString: string): string {
@@ -97,7 +97,8 @@ export default function Home() {
                   <img
                     src={featuredArticle.image_url}
                     alt={featuredArticle.title}
-                    className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(featuredArticle.image_focal_point)}`}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    style={getObjectPositionStyle(featuredArticle.image_focal_point)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   
@@ -141,7 +142,8 @@ export default function Home() {
                       <img
                         src={article.image_url}
                         alt={article.title}
-                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        style={getObjectPositionStyle(article.image_focal_point)}
                       />
                     </div>
                     <div className="p-4">
@@ -169,7 +171,8 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className={`w-full h-full object-cover ${getObjectPositionClass(article.image_focal_point)}`}
+                      className="w-full h-full object-cover"
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                     <span className="absolute top-2 left-2 bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                       {index + 2}
@@ -196,7 +199,8 @@ export default function Home() {
                     <img
                       src={section1[6].image_url}
                       alt={section1[6].title}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(section1[6].image_focal_point)}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={getObjectPositionStyle(section1[6].image_focal_point)}
                     />
                   </div>
                   <div className="p-4">
@@ -228,7 +232,8 @@ export default function Home() {
                   <img
                     src={article.image_url}
                     alt={article.title}
-                    className={`w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0 ${getObjectPositionClass(article.image_focal_point)}`}
+                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                    style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
@@ -260,7 +265,8 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
                   <div className="p-6">
@@ -294,7 +300,8 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
                   <div className="p-3">
@@ -323,7 +330,8 @@ export default function Home() {
                   <img
                     src={article.image_url}
                     alt={article.title}
-                    className={`w-full md:w-1/3 h-48 object-cover flex-shrink-0 ${getObjectPositionClass(article.image_focal_point)}`}
+                    className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
+                    style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
                     <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
@@ -351,7 +359,8 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
                   <div className="p-6">
@@ -379,7 +388,8 @@ export default function Home() {
                   <img
                     src={article.image_url}
                     alt={article.title}
-                    className={`w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0 ${getObjectPositionClass(article.image_focal_point)}`}
+                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                    style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
@@ -410,7 +420,8 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
                   <div className="p-6">
@@ -449,7 +460,8 @@ export default function Home() {
                           <img
                             src={article.image_url}
                             alt={article.title}
-                            className={`w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500 ${getObjectPositionClass(article.image_focal_point)}`}
+                            className="w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            style={getObjectPositionStyle(article.image_focal_point)}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                         </div>
@@ -493,7 +505,8 @@ export default function Home() {
                           <img
                             src={article.image_url}
                             alt={article.title}
-                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${getObjectPositionClass(article.image_focal_point)}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            style={getObjectPositionStyle(article.image_focal_point)}
                           />
                         </div>
                         <div className="flex flex-col justify-center p-8">
@@ -534,7 +547,8 @@ export default function Home() {
                       <img
                         src={article.image_url}
                         alt={article.title}
-                        className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${getObjectPositionClass(article.image_focal_point)}`}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        style={getObjectPositionStyle(article.image_focal_point)}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                       <div className="absolute bottom-0 left-0 right-0 p-4">

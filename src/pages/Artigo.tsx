@@ -5,7 +5,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
-import { getObjectPositionClass } from '@/lib/utils';
+import { getObjectPositionStyle } from '@/lib/utils';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -107,7 +107,8 @@ export default function Artigo() {
                 <img
                   src={article.image_url}
                   alt={article.title}
-                  className={`w-full h-full object-cover ${getObjectPositionClass(article.image_focal_point)}`}
+                  className="w-full h-full object-cover"
+                  style={getObjectPositionStyle(article.image_focal_point)}
                 />
               </div>
             )}

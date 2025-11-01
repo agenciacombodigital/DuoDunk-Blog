@@ -3,7 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { logout, isAuthenticated } from '@/lib/auth';
 import { toast } from "sonner";
-import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star, X, Save } from 'lucide-react';
+import { RefreshCw, Bot, Loader2, Trash2, AlertTriangle, CheckCircle, Edit, Edit3, Calendar, Star, X, Save, Upload } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { getObjectPositionStyle } from '@/lib/utils';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -15,7 +17,6 @@ export default function AdminPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   
-  // Novos estados para edição
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingArticle, setEditingArticle] = useState<any>(null);
 
@@ -164,7 +165,7 @@ export default function AdminPage() {
         published_at: new Date().toISOString(),
         is_featured: article.is_featured || false,
         video_url: article.video_url || null,
-        image_focal_point: article.image_focal_point || 'center',
+        image_focal_point: article.image_focal_point || '50%',
       });
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       toast.success('Artigo publicado!', { id: toastId });
@@ -286,6 +287,15 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
+    if (!focalPoint) return 50;
+    if (focalPoint === 'top') return 0;
+    if (focalPoint === 'center') return 50;
+    if (focalPoint === 'bottom') return 100;
+    if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+    return 50;
   };
 
   const isLoading = isScraping || isProcessing || isDeleting || loading;
@@ -517,34 +527,57 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">URL da Imagem</label>
+                <label className="block text-sm font-bold text-gray-300 mb-2">Imagem</label>
                 {editingArticle.image_url && (
-                  <img src={editingArticle.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" />
+                  <div className="w-full h-48 rounded-lg mb-3 overflow-hidden bg-gray-700">
+                    <img 
+                      src={editingArticle.image_url} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                      style={getObjectPositionStyle(editingArticle.image_focal_point)}
+                    />
+                  </div>
                 )}
-                <input
-                  type="url"
-                  value={editingArticle.image_url || ''}
-                  onChange={(e) => setEditingArticle({ ...editingArticle, image_url: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  placeholder="URL da imagem"
-                />
-                 <div className="mt-3">
-                  <label className="text-sm font-semibold text-gray-300">Foco da Imagem:</label>
-                  <div className="flex gap-2 mt-1">
-                    {['top', 'center', 'bottom'].map(pos => (
-                      <button
-                        key={pos}
-                        type="button"
-                        onClick={() => setEditingArticle({ ...editingArticle, image_focal_point: pos })}
-                        className={`px-4 py-2 text-sm rounded-lg font-semibold transition ${
-                          (editingArticle.image_focal_point || 'center') === pos
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        {pos === 'top' ? 'Topo' : pos === 'center' ? 'Centro' : 'Baixo'}
-                      </button>
-                    ))}
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="url"
+                    value={editingArticle.image_url || ''}
+                    onChange={(e) => setEditingArticle({ ...editingArticle, image_url: e.target.value })}
+                    className="flex-1 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    placeholder="Cole a URL ou faça upload"
+                  />
+                  <input
+                    type="file"
+                    id="modal-image-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(editingArticle.id, file);
+                    }}
+                    disabled={uploadingImage === editingArticle.id}
+                  />
+                  <label
+                    htmlFor="modal-image-upload"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer"
+                  >
+                    <Upload className="w-5 h-5" />
+                  </label>
+                </div>
+                <div className="mt-4">
+                  <label className="text-sm font-semibold text-gray-300">Foco Vertical da Imagem</label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className="text-xs text-gray-400">Topo</span>
+                    <Slider
+                      value={[focalPointToPercentage(editingArticle.image_focal_point)]}
+                      onValueChange={(value) => {
+                          setEditingArticle({ ...editingArticle, image_focal_point: `${value[0]}%` })
+                      }}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                    <span className="text-xs text-gray-400">Baixo</span>
                   </div>
                 </div>
               </div>
