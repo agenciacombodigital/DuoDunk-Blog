@@ -7,23 +7,34 @@ interface PlayerComparisonProps {
   onClose: () => void;
 }
 
+interface PlayerStats {
+  points: number;
+  rebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  turnovers: number;
+  fieldGoalPct: number;
+  threePointPct: number;
+  freeThrowPct: number;
+}
+
+interface PlayerData {
+  id: string;
+  name: string;
+  position: string;
+  team: {
+    name: string;
+    abbreviation: string;
+    logo: string;
+  };
+  headshot: string;
+  stats: PlayerStats;
+}
+
 interface ComparisonData {
-  player1: {
-    id: string;
-    name: string;
-    team: string;
-    teamLogo: string;
-    position: string;
-    headshot: string;
-  };
-  player2: {
-    id: string;
-    name: string;
-    team: string;
-    teamLogo: string;
-    position: string;
-    headshot: string;
-  };
+  player1: PlayerData;
+  player2: PlayerData;
   categories: Array<{
     name: string;
     label: string;
@@ -34,6 +45,43 @@ interface ComparisonData {
   }>;
 }
 
+const STAT_CATEGORIES = [
+  { name: 'points', label: 'Pontos por Jogo', higherIsBetter: true },
+  { name: 'rebounds', label: 'Rebotes por Jogo', higherIsBetter: true },
+  { name: 'assists', label: 'Assistências por Jogo', higherIsBetter: true },
+  { name: 'steals', label: 'Roubos por Jogo', higherIsBetter: true },
+  { name: 'blocks', label: 'Tocos por Jogo', higherIsBetter: true },
+  { name: 'turnovers', label: 'Turnovers por Jogo', higherIsBetter: false },
+  { name: 'fieldGoalPct', label: 'FG%', higherIsBetter: true },
+  { name: 'threePointPct', label: '3P%', higherIsBetter: true },
+  { name: 'freeThrowPct', label: 'FT%', higherIsBetter: true },
+];
+
+// Função para buscar dados de um jogador usando a nova API local
+const fetchPlayerData = async (playerId: string): Promise<PlayerData> => {
+  const response = await fetch("http://localhost:8000/nba-profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ playerId })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch player data for ID ${playerId}`);
+  }
+
+  const data = await response.json();
+  
+  // Mapeando a resposta para o formato PlayerData
+  return {
+    id: data.id,
+    name: data.name,
+    position: data.position,
+    team: data.team,
+    headshot: `https://cdn.nba.com/headshots/nba/latest/1040x760/${data.id}.png`, // Tentativa de headshot
+    stats: data.stats,
+  };
+};
+
 export default function PlayerComparison({ player1Id, onClose }: PlayerComparisonProps) {
   const [players, setPlayers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +91,7 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
   const [loadingPlayers, setLoadingPlayers] = useState(false);
 
   useEffect(() => {
+    // Mantemos a busca da lista de jogadores via Edge Function, pois a nova API local não fornece a lista completa.
     loadPlayers();
   }, []);
 
@@ -50,6 +99,7 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
     try {
       setLoadingPlayers(true);
       
+      // Usando a Edge Function existente para a lista de jogadores
       const { data, error } = await supabase.functions.invoke('nba-players', {
         body: { search: '', teamId: null, position: null }
       });
@@ -59,7 +109,7 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
         setPlayers(filteredPlayers);
       }
     } catch (err) {
-      console.error('[COMPARISON] Erro ao carregar jogadores:', err);
+      console.error('[COMPARISON] Erro ao carregar lista de jogadores:', err);
     } finally {
       setLoadingPlayers(false);
     }
@@ -71,23 +121,44 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('nba-player-comparison', {
-        body: {
-          player1Id,
-          player2Id: selectedPlayer2
+      const [p1Data, p2Data] = await Promise.all([
+        fetchPlayerData(player1Id),
+        fetchPlayerData(selectedPlayer2)
+      ]);
+
+      const categories = STAT_CATEGORIES.map(cat => {
+        const p1Value = p1Data.stats[cat.name as keyof PlayerStats];
+        const p2Value = p2Data.stats[cat.name as keyof PlayerStats];
+        
+        let winner: 1 | 2 | 'tie' = 'tie';
+        if (p1Value !== p2Value) {
+          if (cat.higherIsBetter) {
+            winner = p1Value > p2Value ? 1 : 2;
+          } else {
+            winner = p1Value < p2Value ? 1 : 2;
+          }
         }
+
+        return {
+          name: cat.name,
+          label: cat.label,
+          player1Value: p1Value,
+          player2Value: p2Value,
+          winner,
+          higherIsBetter: cat.higherIsBetter,
+        };
       });
 
-      if (error) {
-        console.error('[COMPARISON] Erro:', error);
-        return;
-      }
+      const comparisonResult: ComparisonData = {
+        player1: p1Data,
+        player2: p2Data,
+        categories,
+      };
 
-      if (data?.success && data?.comparison) {
-        setComparison(data.comparison);
-      }
+      setComparison(comparisonResult);
     } catch (err) {
-      console.error('[COMPARISON] Erro:', err);
+      console.error('[COMPARISON] Erro ao realizar comparação:', err);
+      toast.error('Erro ao carregar dados para comparação.');
     } finally {
       setLoading(false);
     }
@@ -191,7 +262,7 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
                     className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-pink-500 shadow-lg"
                   />
                   <h3 className="text-2xl font-black text-gray-900">{comparison.player1.name}</h3>
-                  <p className="text-gray-600 font-semibold">{comparison.player1.team}</p>
+                  <p className="text-gray-600 font-semibold">{comparison.player1.team.name}</p>
                   <p className="text-sm text-gray-500">{comparison.player1.position}</p>
                 </div>
 
@@ -206,7 +277,7 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
                     className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-purple-500 shadow-lg"
                   />
                   <h3 className="text-2xl font-black text-gray-900">{comparison.player2.name}</h3>
-                  <p className="text-gray-600 font-semibold">{comparison.player2.team}</p>
+                  <p className="text-gray-600 font-semibold">{comparison.player2.team.name}</p>
                   <p className="text-sm text-gray-500">{comparison.player2.position}</p>
                 </div>
               </div>

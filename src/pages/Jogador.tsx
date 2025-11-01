@@ -1,31 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Loader2, TrendingUp, Award, Calendar } from 'lucide-react';
 import PerformanceChart from '@/components/PerformanceChart';
 import PlayerComparison from '@/components/PlayerComparison';
 
+// Definindo a interface de perfil baseada na nova API local
 interface PlayerProfile {
   id: string;
   name: string;
-  fullName: string;
+  fullName?: string; // Opcional, pois a nova API não retorna
   position: string;
-  jersey: string;
+  jersey?: string; // Opcional
   height: string;
   weight: string;
-  age: number;
+  age: number | string; // Pode ser string vazia
   birthDate: string;
-  birthPlace: string;
-  college: string;
-  experience: number;
+  birthPlace?: string; // Opcional
+  college?: string; // Opcional
+  experience?: number; // Opcional
   team: {
-    id: string;
     name: string;
     abbreviation: string;
     logo: string;
-    color: string;
+    color?: string; // Opcional
   };
-  headshotLarge: string;
+  headshotLarge?: string; // Opcional
   stats: {
     season: string;
     gamesPlayed: number;
@@ -39,24 +38,11 @@ interface PlayerProfile {
     fieldGoalPct: number;
     threePointPct: number;
     freeThrowPct: number;
-    plusMinus: number;
+    plusMinus?: number; // Opcional
   };
-  lastGames: Array<{
-    id: string;
-    date: string;
-    opponent: string;
-    opponentLogo: string;
-    result: string;
-    score: string;
-    points: number;
-    rebounds: number;
-    assists: number;
-    minutes: string;
-    fieldGoals: string;
-    threePointers: string;
-    freeThrows: string;
-  }>;
-  awards: string[];
+  // Removendo lastGames e awards, pois a nova API não os fornece
+  lastGames?: Array<any>;
+  awards?: string[];
 }
 
 export default function Jogador() {
@@ -75,20 +61,42 @@ export default function Jogador() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.functions.invoke('nba-player-profile', {
-        body: { playerId: id }
+      const response = await fetch("http://localhost:8000/nba-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId: id })
       });
 
-      if (error) {
-        console.error('[JOGADOR] Erro:', error);
-        return;
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar dados do jogador: ${response.statusText}`);
       }
 
-      if (data?.success && data?.player) {
-        setPlayer(data.player);
-      }
+      const data = await response.json();
+      
+      // A nova API retorna dados mais simples, ajustamos o estado
+      const profileData: PlayerProfile = {
+        ...data,
+        // Adicionando valores padrão para campos que a API antiga fornecia, mas a nova não
+        fullName: data.name,
+        jersey: 'N/A',
+        age: data.age || 'N/A',
+        birthPlace: 'N/A',
+        college: 'N/A',
+        experience: 0,
+        headshotLarge: `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`, // Tentativa de headshot
+        team: {
+          ...data.team,
+          color: '000000', // Cor padrão
+        },
+        // Como a nova API não fornece gamelog/awards, definimos como vazio
+        lastGames: [],
+        awards: [],
+      };
+
+      setPlayer(profileData);
     } catch (err) {
-      console.error('[JOGADOR] Erro:', err);
+      console.error('[JOGADOR] Erro ao carregar perfil:', err);
+      setPlayer(null);
     } finally {
       setLoading(false);
     }
@@ -235,7 +243,7 @@ export default function Jogador() {
               Conquistas
             </h2>
 
-            {player.awards.length > 0 ? (
+            {player.awards && player.awards.length > 0 ? (
               <div className="space-y-3">
                 {player.awards.map((award, index) => (
                   <div
@@ -255,7 +263,7 @@ export default function Jogador() {
           </div>
         </div>
 
-        {player.lastGames.length > 0 && (
+        {player.lastGames && player.lastGames.length > 0 && (
           <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200 mb-8">
             <h2 className="text-2xl font-black text-gray-900 mb-6">
               📈 Evolução de Desempenho (Últimos 10 Jogos)
@@ -264,7 +272,7 @@ export default function Jogador() {
           </div>
         )}
 
-        {player.lastGames.length > 0 && (
+        {player.lastGames && player.lastGames.length > 0 && (
           <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
             <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
               <Calendar className="w-6 h-6 text-cyan-600" />
