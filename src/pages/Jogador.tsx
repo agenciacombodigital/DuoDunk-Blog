@@ -126,10 +126,14 @@ export default function Jogador() {
       };
 
       if (stats) {
+        // A Edge Function retorna 'min' como "MM:SS"
+        const [min, sec] = stats.min.split(':').map(Number);
+        const totalMinutes = min + sec / 60;
+
         profile.stats = {
           season: String(stats.season),
           gamesPlayed: stats.games_played,
-          minutes: parseFloat(stats.min.split(':')[0]) + parseFloat(stats.min.split(':')[1]) / 60, // Convertendo "MM:SS" para float
+          minutes: totalMinutes, 
           points: stats.pts,
           rebounds: stats.reb,
           assists: stats.ast,
