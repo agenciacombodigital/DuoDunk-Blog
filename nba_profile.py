@@ -1,9 +1,19 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from nba_api.stats.endpoints import playercareerstats, commonplayerinfo
 import pandas as pd
 
 app = FastAPI()
+
+# Adiciona CORS para permitir acesso do frontend (localhost:32100)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Para desenvolvimento/localhost. Troque por domínio real em produção!
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class PlayerRequest(BaseModel):
     playerId: str
@@ -18,7 +28,6 @@ def get_nba_profile(data: PlayerRequest):
     row = info_dict['resultSets'][0]['rowSet'][0]
     columns = info_dict['resultSets'][0]['headers']
 
-    # Parse infos básicas
     player_info = {col: val for col, val in zip(columns, row)}
 
     # Busca dados de stats de carreira
@@ -26,7 +35,6 @@ def get_nba_profile(data: PlayerRequest):
     df = stats.get_data_frames()[0]
     latest = df.sort_values('SEASON_ID', ascending=False).iloc[0]
 
-    # Monta resposta compatível com frontend Dyad
     response = {
         "id": player_id,
         "name": player_info.get("DISPLAY_FIRST_LAST", ""),

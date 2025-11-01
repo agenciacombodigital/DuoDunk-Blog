@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { X, Loader2, Search } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PlayerComparisonProps {
   player1Id: string;
@@ -57,28 +58,67 @@ const STAT_CATEGORIES = [
   { name: 'freeThrowPct', label: 'FT%', higherIsBetter: true },
 ];
 
-// Função para buscar dados de um jogador usando a nova API local
+// Estrutura de dados mockada para o perfil (já que a Edge Function só retorna stats)
+const MOCK_PLAYER_PROFILE_BASE = (id: string, name: string, teamAbbr: string) => ({
+  id: id,
+  name: name,
+  position: 'N/A',
+  team: {
+    name: teamAbbr,
+    abbreviation: teamAbbr,
+    logo: `https://cdn.nba.com/logos/nba/1610612737/global/L/logo.svg`, // Exemplo de logo
+  },
+  headshot: `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`,
+  stats: {
+    points: 0,
+    rebounds: 0,
+    assists: 0,
+    steals: 0,
+    blocks: 0,
+    turnovers: 0,
+    fieldGoalPct: 0,
+    threePointPct: 0,
+    freeThrowPct: 0,
+  },
+});
+
+// Função para buscar dados de um jogador usando a nova Edge Function
 const fetchPlayerData = async (playerId: string): Promise<PlayerData> => {
-  const response = await fetch("http://localhost:8000/nba-profile", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ playerId })
+  // 1. Buscar estatísticas sazonais (usando a nova Edge Function)
+  const currentSeason = 2025; 
+  
+  const { data: statsData, error: statsError } = await supabase.functions.invoke('player-stats', {
+    body: { playerId, season: currentSeason }
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch player data for ID ${playerId}`);
+  if (statsError) {
+    console.error('[COMPARISON] Erro ao buscar stats:', statsError);
+    throw new Error('Erro ao buscar estatísticas do jogador.');
+  }
+  
+  const stats = statsData?.stats;
+  
+  if (!stats) {
+    throw new Error('Estatísticas não encontradas para o jogador na temporada atual.');
   }
 
-  const data = await response.json();
-  
+  // 2. Simular o perfil base (em um cenário real, buscaríamos isso de outra API)
+  const profileBase = MOCK_PLAYER_PROFILE_BASE(playerId, stats.player_name || `Jogador ID ${playerId}`, 'NBA');
+
   // Mapeando a resposta para o formato PlayerData
   return {
-    id: data.id,
-    name: data.name,
-    position: data.position,
-    team: data.team,
-    headshot: `https://cdn.nba.com/headshots/nba/latest/1040x760/${data.id}.png`, // Tentativa de headshot
-    stats: data.stats,
+    ...profileBase,
+    stats: {
+      points: stats.pts,
+      rebounds: stats.reb,
+      assists: stats.ast,
+      steals: stats.stl,
+      blocks: stats.blk,
+      turnovers: stats.turnover,
+      fieldGoalPct: stats.fg_pct,
+      threePointPct: stats.fg3_pct,
+      freeThrowPct: stats.ft_pct,
+    },
   };
 };
 
@@ -91,7 +131,6 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
   const [loadingPlayers, setLoadingPlayers] = useState(false);
 
   useEffect(() => {
-    // Mantemos a busca da lista de jogadores via Edge Function, pois a nova API local não fornece a lista completa.
     loadPlayers();
   }, []);
 
@@ -120,13 +159,16 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
 
     try {
       setLoading(true);
+      toast.loading('Buscando dados para comparação...', { id: 'compare-toast' });
 
+      // Para o Player 1, precisamos buscar os dados novamente, pois o componente Jogador.tsx não passa o perfil completo.
       const [p1Data, p2Data] = await Promise.all([
         fetchPlayerData(player1Id),
         fetchPlayerData(selectedPlayer2)
       ]);
 
       const categories = STAT_CATEGORIES.map(cat => {
+        // Usamos 100 para porcentagens, mas a Edge Function já retorna o valor correto (ex: 34.0)
         const p1Value = p1Data.stats[cat.name as keyof PlayerStats];
         const p2Value = p2Data.stats[cat.name as keyof PlayerStats];
         
@@ -156,9 +198,10 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
       };
 
       setComparison(comparisonResult);
-    } catch (err) {
+      toast.success('Comparação concluída!', { id: 'compare-toast' });
+    } catch (err: any) {
       console.error('[COMPARISON] Erro ao realizar comparação:', err);
-      toast.error('Erro ao carregar dados para comparação.');
+      toast.error('Erro ao realizar comparação', { id: 'compare-toast', description: err.message });
     } finally {
       setLoading(false);
     }

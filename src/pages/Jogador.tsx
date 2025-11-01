@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, TrendingUp, Award, Calendar } from 'lucide-react';
 import PerformanceChart from '@/components/PerformanceChart';
 import PlayerComparison from '@/components/PlayerComparison';
+import { supabase } from '@/lib/supabase'; // Importando supabase
 
 // Definindo a interface de perfil baseada na nova API local
 interface PlayerProfile {
@@ -45,6 +46,42 @@ interface PlayerProfile {
   awards?: string[];
 }
 
+// Estrutura de dados mockada para o perfil (já que a Edge Function só retorna stats)
+// Em um cenário real, precisaríamos de uma segunda Edge Function para o perfil completo.
+const MOCK_PLAYER_PROFILE = {
+  id: 'N/A',
+  name: 'Jogador Desconhecido',
+  position: 'N/A',
+  jersey: 'N/A',
+  height: 'N/A',
+  weight: 'N/A',
+  age: 'N/A',
+  birthDate: 'N/A',
+  team: {
+    name: 'NBA',
+    abbreviation: 'NBA',
+    logo: 'https://cdn.nba.com/logos/nba/1610612737/global/L/logo.svg', // Exemplo de logo
+    color: '000000',
+  },
+  headshotLarge: 'https://via.placeholder.com/300x300?text=No+Photo',
+  stats: {
+    season: '2025-26',
+    gamesPlayed: 0,
+    minutes: 0,
+    points: 0,
+    rebounds: 0,
+    assists: 0,
+    steals: 0,
+    blocks: 0,
+    turnovers: 0,
+    fieldGoalPct: 0,
+    threePointPct: 0,
+    freeThrowPct: 0,
+  },
+  lastGames: [],
+  awards: [],
+};
+
 export default function Jogador() {
   const { id } = useParams<{ id: string }>();
   const [player, setPlayer] = useState<PlayerProfile | null>(null);
@@ -58,42 +95,59 @@ export default function Jogador() {
   }, [id]);
 
   const loadPlayer = async () => {
+    if (!id) return;
+    
     try {
       setLoading(true);
-
-      const response = await fetch("http://localhost:8000/nba-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: id })
+      
+      // 1. Buscar estatísticas sazonais (usando a nova Edge Function)
+      // Usamos a temporada atual (2025) como exemplo
+      const currentSeason = 2025; 
+      
+      const { data: statsData, error: statsError } = await supabase.functions.invoke('player-stats', {
+        body: { playerId: id, season: currentSeason }
       });
 
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar dados do jogador: ${response.statusText}`);
+      if (statsError) {
+        console.error('[JOGADOR] Erro ao buscar stats:', statsError);
+        throw new Error('Erro ao buscar estatísticas do jogador.');
       }
-
-      const data = await response.json();
       
-      // A nova API retorna dados mais simples, ajustamos o estado
-      const profileData: PlayerProfile = {
-        ...data,
-        // Adicionando valores padrão para campos que a API antiga fornecia, mas a nova não
-        fullName: data.name,
-        jersey: 'N/A',
-        age: data.age || 'N/A',
-        birthPlace: 'N/A',
-        college: 'N/A',
-        experience: 0,
-        headshotLarge: `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`, // Tentativa de headshot
-        team: {
-          ...data.team,
-          color: '000000', // Cor padrão
-        },
-        // Como a nova API não fornece gamelog/awards, definimos como vazio
-        lastGames: [],
-        awards: [],
+      const stats = statsData?.stats;
+
+      // 2. Simular o perfil base (em um cenário real, buscaríamos isso de outra API)
+      // Para fins de demonstração, vamos usar um perfil mockado e preencher as stats
+      const profile: PlayerProfile = {
+        ...MOCK_PLAYER_PROFILE,
+        id: id,
+        name: `Jogador ID ${id}`, // Nome temporário
+        headshotLarge: `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`,
+        // Aqui você faria a lógica para buscar o nome, time, etc.
       };
 
-      setPlayer(profileData);
+      if (stats) {
+        profile.stats = {
+          season: String(stats.season),
+          gamesPlayed: stats.games_played,
+          minutes: parseFloat(stats.min.split(':')[0]) + parseFloat(stats.min.split(':')[1]) / 60, // Convertendo "MM:SS" para float
+          points: stats.pts,
+          rebounds: stats.reb,
+          assists: stats.ast,
+          steals: stats.stl,
+          blocks: stats.blk,
+          turnovers: stats.turnover,
+          fieldGoalPct: stats.fg_pct,
+          threePointPct: stats.fg3_pct,
+          freeThrowPct: stats.ft_pct,
+        };
+        
+        // Atualizar nome e time se a Edge Function de stats tivesse retornado (mockado)
+        if (statsData.stats.player_name) {
+            profile.name = statsData.stats.player_name;
+        }
+      }
+
+      setPlayer(profile);
     } catch (err) {
       console.error('[JOGADOR] Erro ao carregar perfil:', err);
       setPlayer(null);
