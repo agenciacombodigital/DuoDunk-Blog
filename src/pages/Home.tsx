@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Calendar, Loader2, Clock, Eye, Star } from 'lucide-react';
+import { getObjectPositionClass } from '@/lib/utils';
 
 // Função para calcular tempo atrás
 function getTimeAgo(dateString: string): string {
@@ -64,24 +65,21 @@ export default function Home() {
   }
 
   // Separar artigos por seções
-  // Priorizar notícias marcadas como destaque
   const featuredArticle = articles.find(a => a.is_featured) || articles[0];
-  // Filtrar o artigo em destaque das outras seções
   const section1 = articles
     .filter(a => a.id !== featuredArticle?.id)
-    .slice(0, 7); // 7 notícias: 3 direita + 3 abaixo + 1 grande
-  const section2 = articles.slice(8, 14); // Lista horizontal
-  const section3 = articles.slice(14, 16); // Grid 2 colunas
-  const section4 = articles.slice(16, 20); // Grid 4 colunas
-  const section5 = articles.slice(20, 26); // Layout alternado
-  const section6 = articles.slice(26, 29); // Grid 3 colunas
-  const section7 = articles.slice(29, 35); // Lista horizontal
-  const section8 = articles.slice(35, 37); // Grid 2 colunas
-  const remaining = articles.slice(37); // Resto
+    .slice(0, 7);
+  const section2 = articles.slice(8, 14);
+  const section3 = articles.slice(14, 16);
+  const section4 = articles.slice(16, 20);
+  const section5 = articles.slice(20, 26);
+  const section6 = articles.slice(26, 29);
+  const section7 = articles.slice(29, 35);
+  const section8 = articles.slice(35, 37);
+  const remaining = articles.slice(37);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      {/* Hero Section - Layout Exato do Print */}
       {featuredArticle && (
         <section className="container mx-auto px-4 py-8">
           <h2 className="text-sm font-bold text-pink-600 mb-4 uppercase tracking-wide flex items-center gap-2">
@@ -90,9 +88,7 @@ export default function Home() {
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* ESQUERDA: Notícia em Destaque Retangular */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Notícia Principal */}
               <Link 
                 to={`/artigos/${featuredArticle.slug}`}
                 className="group block"
@@ -101,7 +97,7 @@ export default function Home() {
                   <img
                     src={featuredArticle.image_url}
                     alt={featuredArticle.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(featuredArticle.image_focal_point)}`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   
@@ -134,7 +130,6 @@ export default function Home() {
                 </div>
               </Link>
 
-              {/* 3 Notícias Abaixo (Grid 3 Colunas) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {section1.slice(3, 6).map((article) => (
                   <Link
@@ -146,7 +141,7 @@ export default function Home() {
                       <img
                         src={article.image_url}
                         alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
                       />
                     </div>
                     <div className="p-4">
@@ -163,9 +158,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DIREITA: 3 Notícias Verticais + 1 Grande */}
             <div className="lg:col-span-4 space-y-4">
-              {/* 3 Cards Pequenos */}
               {section1.slice(0, 3).map((article, index) => (
                 <Link
                   key={article.id}
@@ -176,7 +169,7 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover ${getObjectPositionClass(article.image_focal_point)}`}
                     />
                     <span className="absolute top-2 left-2 bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                       {index + 2}
@@ -194,7 +187,6 @@ export default function Home() {
                 </Link>
               ))}
 
-              {/* Card Grande no Final */}
               {section1[6] && (
                 <Link
                   to={`/artigos/${section1[6].slug}`}
@@ -204,7 +196,7 @@ export default function Home() {
                     <img
                       src={section1[6].image_url}
                       alt={section1[6].title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(section1[6].image_focal_point)}`}
                     />
                   </div>
                   <div className="p-4">
@@ -223,7 +215,6 @@ export default function Home() {
       )}
 
       <div className="container mx-auto px-4 space-y-16">
-        {/* SEÇÃO 2: Lista Horizontal */}
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
             <h2 className="text-2xl font-bold mb-6">📰 Notícias em Destaque</h2>
@@ -237,7 +228,7 @@ export default function Home() {
                   <img
                     src={article.image_url}
                     alt={article.title}
-                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                    className={`w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0 ${getObjectPositionClass(article.image_focal_point)}`}
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
@@ -255,7 +246,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* SEÇÃO 3: Grid 2 Colunas Grandes */}
         {section3.length > 0 && (
           <section>
             <h2 className="text-2xl font-bold mb-6">🔥 Análises Profundas</h2>
@@ -270,7 +260,7 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
                     />
                   </div>
                   <div className="p-6">
@@ -290,7 +280,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* SEÇÃO 4: Grid 4 Colunas Compactas */}
         {section4.length > 0 && (
           <section>
             <h2 className="text-2xl font-bold mb-6">⚡ Destaques Rápidos</h2>
@@ -305,7 +294,7 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
                     />
                   </div>
                   <div className="p-3">
@@ -319,7 +308,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* SEÇÃO 5: Layout Alternado (Zebra) */}
         {section5.length > 0 && (
           <section>
             <h2 className="text-2xl font-bold mb-6">📊 Mais Lidas</h2>
@@ -335,7 +323,7 @@ export default function Home() {
                   <img
                     src={article.image_url}
                     alt={article.title}
-                    className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
+                    className={`w-full md:w-1/3 h-48 object-cover flex-shrink-0 ${getObjectPositionClass(article.image_focal_point)}`}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
                     <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
@@ -349,7 +337,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* SEÇÃO 6: Grid 3 Colunas (Repetição) */}
         {section6.length > 0 && (
           <section>
             <h2 className="text-2xl font-bold mb-6">🏀 Mais da NBA</h2>
@@ -364,7 +351,7 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
                     />
                   </div>
                   <div className="p-6">
@@ -379,7 +366,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* SEÇÃO 7: Lista Horizontal (Repetição) */}
         {section7.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
             <h2 className="text-2xl font-bold mb-6">📌 Não Perca</h2>
@@ -393,7 +379,7 @@ export default function Home() {
                   <img
                     src={article.image_url}
                     alt={article.title}
-                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                    className={`w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0 ${getObjectPositionClass(article.image_focal_point)}`}
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
@@ -411,7 +397,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* SEÇÃO 8: Grid 2 Colunas (Repetição) */}
         {section8.length > 0 && (
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -425,7 +410,7 @@ export default function Home() {
                     <img
                       src={article.image_url}
                       alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${getObjectPositionClass(article.image_focal_point)}`}
                     />
                   </div>
                   <div className="p-6">
@@ -445,7 +430,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* Artigos Restantes: Grid 3 Colunas */}
         {remaining.length > 0 && (
           <section className="mt-20">
             <div className="flex items-center gap-4 mb-8">
@@ -455,11 +439,9 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {remaining.map((article, index) => {
-                // Layout alternado: horizontal, vertical, destaque
-                const layoutType = index % 6; // Ciclo de 6 layouts
+                const layoutType = index % 6;
 
                 if (layoutType === 0 || layoutType === 3) {
-                  // LAYOUT HORIZONTAL
                   return (
                     <div key={article.id} className="md:col-span-2 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
                       <div className="flex flex-col sm:flex-row">
@@ -467,7 +449,7 @@ export default function Home() {
                           <img
                             src={article.image_url}
                             alt={article.title}
-                            className="w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className={`w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500 ${getObjectPositionClass(article.image_focal_point)}`}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                         </div>
@@ -504,7 +486,6 @@ export default function Home() {
                 }
 
                 if (layoutType === 2 || layoutType === 5) {
-                  // LAYOUT DESTAQUE (maior) - SEM GRADIENTE
                   return (
                     <div key={article.id} className="md:col-span-2 lg:col-span-3 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
                       <div className="grid lg:grid-cols-2">
@@ -512,7 +493,7 @@ export default function Home() {
                           <img
                             src={article.image_url}
                             alt={article.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${getObjectPositionClass(article.image_focal_point)}`}
                           />
                         </div>
                         <div className="flex flex-col justify-center p-8">
@@ -547,14 +528,13 @@ export default function Home() {
                   );
                 }
 
-                // LAYOUT VERTICAL (padrão)
                 return (
                   <div key={article.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
                     <div className="relative overflow-hidden aspect-[4/3]">
                       <img
                         src={article.image_url}
                         alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${getObjectPositionClass(article.image_focal_point)}`}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                       <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -590,7 +570,6 @@ export default function Home() {
               })}
             </div>
 
-            {/* Botão Ver Mais (se houver mais artigos) */}
             {remaining.length >= 20 && (
               <div className="text-center mt-12">
                 <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold px-8 py-4 rounded-full hover:shadow-2xl hover:scale-105 transition-all duration-300">
@@ -602,7 +581,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Espaçamento final */}
       <div className="h-20" />
     </div>
   );

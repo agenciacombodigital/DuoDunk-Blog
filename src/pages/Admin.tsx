@@ -111,7 +111,6 @@ export default function AdminPage() {
       const { data } = supabase.storage.from('article-images').getPublicUrl(fileName);
       if (!data.publicUrl) throw new Error("URL da imagem não encontrada.");
       
-      // Atualiza o artigo na fila ou no modal de edição
       const { error: updateError } = await supabase.from('articles_queue').update({ image_url: data.publicUrl }).eq('id', articleId);
       if (updateError) throw updateError;
 
@@ -125,6 +124,24 @@ export default function AdminPage() {
       toast.error('Erro no upload', { id: toastId, description: error.message });
     } finally {
       setUploadingImage(null);
+    }
+  };
+
+  const handleFocalPointChange = async (articleId: string, focalPoint: string) => {
+    setQueue(prevQueue =>
+      prevQueue.map(a =>
+        a.id === articleId ? { ...a, image_focal_point: focalPoint } : a
+      )
+    );
+
+    const { error } = await supabase
+      .from('articles_queue')
+      .update({ image_focal_point: focalPoint })
+      .eq('id', articleId);
+
+    if (error) {
+      toast.error('Erro ao salvar o foco da imagem.');
+      loadQueue();
     }
   };
 
@@ -147,6 +164,7 @@ export default function AdminPage() {
         published_at: new Date().toISOString(),
         is_featured: article.is_featured || false,
         video_url: article.video_url || null,
+        image_focal_point: article.image_focal_point || 'center',
       });
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       toast.success('Artigo publicado!', { id: toastId });
@@ -254,6 +272,7 @@ export default function AdminPage() {
           image_url: editingArticle.image_url,
           video_url: editingArticle.video_url,
           is_featured: editingArticle.is_featured,
+          image_focal_point: editingArticle.image_focal_point,
         })
         .eq('id', editingArticle.id);
 
@@ -319,6 +338,25 @@ export default function AdminPage() {
                       {article.image_url && <img src={article.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" />}
                       <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(article.id, file); }} disabled={uploadingImage === article.id} className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 file:cursor-pointer cursor-pointer" />
                       {uploadingImage === article.id && <p className="text-xs text-cyan-400 mt-2 animate-pulse flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" />Fazendo upload...</p>}
+                      <div className="mt-3">
+                        <label className="text-xs font-semibold text-gray-400">Foco da Imagem:</label>
+                        <div className="flex gap-2 mt-1">
+                          {['top', 'center', 'bottom'].map(pos => (
+                            <button
+                              key={pos}
+                              type="button"
+                              onClick={() => handleFocalPointChange(article.id, pos)}
+                              className={`px-3 py-1 text-xs rounded-md font-semibold transition ${
+                                (article.image_focal_point || 'center') === pos
+                                  ? 'bg-cyan-500 text-white'
+                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              }`}
+                            >
+                              {pos === 'top' ? 'Topo' : pos === 'center' ? 'Centro' : 'Baixo'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2">{article.title}</h3>
                     <p className="text-gray-400 text-sm mb-4 leading-relaxed">{article.summary}</p>
@@ -338,7 +376,6 @@ export default function AdminPage() {
                         {article.is_featured ? 'Em Destaque' : 'Destacar'}
                       </button>
                       
-                      {/* NOVO BOTÃO DE EDIÇÃO */}
                       <button
                         onClick={() => {
                           setEditingArticle(article);
@@ -402,7 +439,6 @@ export default function AdminPage() {
         )}
       </div>
       
-      {/* Modal de Edição */}
       {showEditModal && editingArticle && (
         <div 
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
@@ -412,7 +448,6 @@ export default function AdminPage() {
             className="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto border border-gray-700 shadow-2xl animate-in zoom-in duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header do Modal */}
             <div className="sticky top-0 bg-gray-900 p-6 border-b border-gray-700 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                 <Edit className="w-6 h-6 text-blue-400" />
@@ -426,9 +461,7 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Formulário de Edição */}
             <div className="p-6 space-y-6">
-              {/* Título */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Título</label>
                 <input
@@ -439,7 +472,6 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Resumo */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Resumo</label>
                 <textarea
@@ -450,7 +482,6 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Corpo do Artigo */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Conteúdo (HTML)</label>
                 <textarea
@@ -461,7 +492,6 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Vídeo URL */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Vídeo URL (Opcional)</label>
                 <input
@@ -473,7 +503,6 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Tags */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Tags (separadas por vírgula)</label>
                 <input
@@ -487,7 +516,6 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Imagem (Apenas URL para simplificar o modal) */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">URL da Imagem</label>
                 {editingArticle.image_url && (
@@ -500,10 +528,28 @@ export default function AdminPage() {
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="URL da imagem"
                 />
+                 <div className="mt-3">
+                  <label className="text-sm font-semibold text-gray-300">Foco da Imagem:</label>
+                  <div className="flex gap-2 mt-1">
+                    {['top', 'center', 'bottom'].map(pos => (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => setEditingArticle({ ...editingArticle, image_focal_point: pos })}
+                        className={`px-4 py-2 text-sm rounded-lg font-semibold transition ${
+                          (editingArticle.image_focal_point || 'center') === pos
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {pos === 'top' ? 'Topo' : pos === 'center' ? 'Centro' : 'Baixo'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Footer do Modal */}
             <div className="p-6 border-t border-gray-700 flex justify-end gap-3">
               <button
                 onClick={() => setShowEditModal(false)}

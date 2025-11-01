@@ -5,6 +5,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
+import { getObjectPositionClass } from '@/lib/utils';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -71,7 +72,6 @@ export default function Artigo() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <article>
-            {/* Botão Voltar */}
             <Link 
               to="/"
               className="inline-flex items-center gap-2 text-gray-600 hover:text-[#FA007D] transition-colors mb-8 font-semibold"
@@ -80,7 +80,6 @@ export default function Artigo() {
               Voltar
             </Link>
 
-            {/* Meta Info */}
             <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap">
               <span className="tag-cyan">
                 {article.source}
@@ -95,29 +94,26 @@ export default function Artigo() {
               </span>
             </div>
 
-            {/* Título */}
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
               {article.title}
             </h1>
 
-            {/* Resumo */}
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               {article.summary}
             </p>
 
-            {/* Imagem de Destaque */}
             {article.image_url && (
-              <img
-                src={article.image_url}
-                alt={article.title}
-                className="w-full h-auto rounded-2xl mb-10 shadow-lg"
-              />
+              <div className="w-full rounded-2xl mb-10 shadow-lg overflow-hidden aspect-video">
+                <img
+                  src={article.image_url}
+                  alt={article.title}
+                  className={`w-full h-full object-cover ${getObjectPositionClass(article.image_focal_point)}`}
+                />
+              </div>
             )}
 
-            {/* Vídeo Embed */}
             {article.video_url && <VideoEmbed url={article.video_url} />}
 
-            {/* Links para times mencionados nas tags */}
             {article.tags && article.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-8">
                 {article.tags
@@ -142,13 +138,11 @@ export default function Artigo() {
               </div>
             )}
 
-            {/* Corpo do Artigo */}
             <div 
               className="prose prose-lg max-w-none mb-12"
               dangerouslySetInnerHTML={{ __html: article.body }}
             />
 
-            {/* Tags */}
             {article.tags && article.tags.length > 0 && (
               <div className="pt-8 border-t border-gray-200 mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags:</h3>
@@ -168,7 +162,6 @@ export default function Artigo() {
         </div>
       </div>
 
-      {/* Sistema de Comentários */}
       <div className="container mx-auto px-4 max-w-4xl pb-12">
         <div className="mt-12 mb-12">
           <h2 className="text-2xl font-black text-gray-900 mb-6 pb-3 border-b-2 border-gray-200">

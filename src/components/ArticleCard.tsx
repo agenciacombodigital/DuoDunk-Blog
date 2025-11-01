@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { getObjectPositionClass } from '@/lib/utils';
 
 interface Article {
   id: string;
@@ -9,6 +10,7 @@ interface Article {
   source: string;
   tags: string[];
   published_at: string;
+  image_focal_point?: string;
 }
 
 export default function ArticleCard({ article, index = 0 }: { article: Article, index?: number }) {
@@ -23,7 +25,7 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
         <img
           src={article.image_url}
           alt={article.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${getObjectPositionClass(article.image_focal_point)}`}
         />
       </div>
       
