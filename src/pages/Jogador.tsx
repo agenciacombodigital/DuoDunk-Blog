@@ -29,7 +29,7 @@ interface PlayerProfile {
   stats: {
     season: string;
     gamesPlayed: number;
-    minutes: number;
+    minutes: number; // Minutos por jogo (float)
     points: number;
     rebounds: number;
     assists: number;
@@ -100,7 +100,7 @@ export default function Jogador() {
     try {
       setLoading(true);
       
-      // 1. Buscar estatísticas sazonais (usando a nova Edge Function)
+      // 1. Buscar estatísticas sazonais (usando a Edge Function)
       // Usamos a temporada atual (2025) como exemplo
       const currentSeason = 2025; 
       
@@ -116,7 +116,6 @@ export default function Jogador() {
       const stats = statsData?.stats;
 
       // 2. Simular o perfil base (em um cenário real, buscaríamos isso de outra API)
-      // Para fins de demonstração, vamos usar um perfil mockado e preencher as stats
       const profile: PlayerProfile = {
         ...MOCK_PLAYER_PROFILE,
         id: id,
