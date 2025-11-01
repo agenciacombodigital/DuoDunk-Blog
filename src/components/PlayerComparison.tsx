@@ -99,6 +99,7 @@ const fetchPlayerData = async (playerId: string): Promise<PlayerData> => {
   const stats = statsData?.stats;
   
   if (!stats) {
+    // Se stats for null, lançamos um erro específico para ser capturado
     throw new Error('Estatísticas não encontradas para o jogador na temporada atual.');
   }
 
@@ -168,7 +169,6 @@ export default function PlayerComparison({ player1Id, onClose }: PlayerCompariso
       ]);
 
       const categories = STAT_CATEGORIES.map(cat => {
-        // Usamos 100 para porcentagens, mas a Edge Function já retorna o valor correto (ex: 34.0)
         const p1Value = p1Data.stats[cat.name as keyof PlayerStats];
         const p2Value = p2Data.stats[cat.name as keyof PlayerStats];
         

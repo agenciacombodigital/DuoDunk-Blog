@@ -40,7 +40,7 @@ interface PlayerProfile {
     threePointPct: number;
     freeThrowPct: number;
     plusMinus?: number; // Opcional
-  };
+  } | null; // Pode ser null
   // Removendo lastGames e awards, pois a nova API não os fornece
   lastGames?: Array<any>;
   awards?: string[];
@@ -64,20 +64,7 @@ const MOCK_PLAYER_PROFILE = {
     color: '000000',
   },
   headshotLarge: 'https://via.placeholder.com/300x300?text=No+Photo',
-  stats: {
-    season: '2025-26',
-    gamesPlayed: 0,
-    minutes: 0,
-    points: 0,
-    rebounds: 0,
-    assists: 0,
-    steals: 0,
-    blocks: 0,
-    turnovers: 0,
-    fieldGoalPct: 0,
-    threePointPct: 0,
-    freeThrowPct: 0,
-  },
+  stats: null, // Inicialmente null
   lastGames: [],
   awards: [],
 };
@@ -121,7 +108,7 @@ export default function Jogador() {
         id: id,
         name: `Jogador ID ${id}`, // Nome temporário
         headshotLarge: `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`,
-        // Aqui você faria a lógica para buscar o nome, time, etc.
+        stats: null,
       };
 
       if (stats) {
@@ -185,6 +172,7 @@ export default function Jogador() {
   }
 
   const teamColor = `#${player.team.color || '000000'}`;
+  const stats = player.stats; // Acessando stats de forma segura
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
@@ -264,34 +252,44 @@ export default function Jogador() {
           <div className="lg:col-span-2 bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
             <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-pink-600" />
-              Estatísticas {player.stats.season}
+              Estatísticas {stats?.season || 'da Temporada'}
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { label: 'PTS', value: player.stats.points.toFixed(1), icon: '🏀' },
-                { label: 'REB', value: player.stats.rebounds.toFixed(1), icon: '💪' },
-                { label: 'AST', value: player.stats.assists.toFixed(1), icon: '🎯' },
-                { label: 'FG%', value: player.stats.fieldGoalPct.toFixed(1) + '%', icon: '🎯' },
-                { label: '3P%', value: player.stats.threePointPct.toFixed(1) + '%', icon: '🔥' },
-                { label: 'FT%', value: player.stats.freeThrowPct.toFixed(1) + '%', icon: '🎪' },
-                { label: 'STL', value: player.stats.steals.toFixed(1), icon: '🤚' },
-                { label: 'BLK', value: player.stats.blocks.toFixed(1), icon: '🚫' }
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border-2 border-gray-200 hover:border-pink-500 transition-all hover:scale-105"
-                >
-                  <div className="text-3xl mb-2">{stat.icon}</div>
-                  <p className="text-4xl font-black text-gray-900 mb-1">{stat.value}</p>
-                  <p className="text-sm text-gray-600 font-bold">{stat.label}</p>
+            {stats ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {[
+                    { label: 'PTS', value: stats.points.toFixed(1), icon: '🏀' },
+                    { label: 'REB', value: stats.rebounds.toFixed(1), icon: '💪' },
+                    { label: 'AST', value: stats.assists.toFixed(1), icon: '🎯' },
+                    { label: 'FG%', value: stats.fieldGoalPct.toFixed(1) + '%', icon: '🎯' },
+                    { label: '3P%', value: stats.threePointPct.toFixed(1) + '%', icon: '🔥' },
+                    { label: 'FT%', value: stats.freeThrowPct.toFixed(1) + '%', icon: '🎪' },
+                    { label: 'STL', value: stats.steals.toFixed(1), icon: '🤚' },
+                    { label: 'BLK', value: stats.blocks.toFixed(1), icon: '🚫' }
+                  ].map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border-2 border-gray-200 hover:border-pink-500 transition-all hover:scale-105"
+                    >
+                      <div className="text-3xl mb-2">{stat.icon}</div>
+                      <p className="text-4xl font-black text-gray-900 mb-1">{stat.value}</p>
+                      <p className="text-sm text-gray-600 font-bold">{stat.label}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-6 text-center text-sm text-gray-500">
-              {player.stats.gamesPlayed} jogos • {player.stats.minutes.toFixed(1)} min/jogo
-            </div>
+                <div className="mt-6 text-center text-sm text-gray-500">
+                  {stats.gamesPlayed} jogos • {stats.minutes.toFixed(1)} min/jogo
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-lg text-red-500 font-semibold">
+                  Estatísticas não encontradas para este jogador nesta temporada.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
