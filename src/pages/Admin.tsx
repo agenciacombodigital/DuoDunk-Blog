@@ -128,13 +128,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleFocalPointChange = async (articleId: string, focalPoint: string) => {
-    setQueue(prevQueue =>
-      prevQueue.map(a =>
-        a.id === articleId ? { ...a, image_focal_point: focalPoint } : a
-      )
-    );
-
+  const handleFocalPointCommit = async (articleId: string, focalPoint: string) => {
     const { error } = await supabase
       .from('articles_queue')
       .update({ image_focal_point: focalPoint })
@@ -142,7 +136,7 @@ export default function AdminPage() {
 
     if (error) {
       toast.error('Erro ao salvar o foco da imagem.');
-      loadQueue();
+      loadQueue(); // Recarrega para reverter a alteração visual em caso de erro
     }
   };
 
@@ -345,26 +339,28 @@ export default function AdminPage() {
                   <div className="p-6">
                     <div className="mb-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
                       <label className="block text-sm text-gray-400 mb-2 font-semibold">📸 Imagem do Artigo:</label>
-                      {article.image_url && <img src={article.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" />}
+                      {article.image_url && <img src={article.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" style={getObjectPositionStyle(article.image_focal_point)} />}
                       <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(article.id, file); }} disabled={uploadingImage === article.id} className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 file:cursor-pointer cursor-pointer" />
                       {uploadingImage === article.id && <p className="text-xs text-cyan-400 mt-2 animate-pulse flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" />Fazendo upload...</p>}
-                      <div className="mt-3">
-                        <label className="text-xs font-semibold text-gray-400">Foco da Imagem:</label>
-                        <div className="flex gap-2 mt-1">
-                          {['top', 'center', 'bottom'].map(pos => (
-                            <button
-                              key={pos}
-                              type="button"
-                              onClick={() => handleFocalPointChange(article.id, pos)}
-                              className={`px-3 py-1 text-xs rounded-md font-semibold transition ${
-                                (article.image_focal_point || 'center') === pos
-                                  ? 'bg-cyan-500 text-white'
-                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                              }`}
-                            >
-                              {pos === 'top' ? 'Topo' : pos === 'center' ? 'Centro' : 'Baixo'}
-                            </button>
-                          ))}
+                      <div className="mt-4">
+                        <label className="text-xs font-semibold text-gray-400">Foco Vertical da Imagem</label>
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="text-xs text-gray-400">Topo</span>
+                          <Slider
+                            value={[focalPointToPercentage(article.image_focal_point)]}
+                            onValueChange={(value) => {
+                              setQueue(prevQueue =>
+                                prevQueue.map(a =>
+                                  a.id === article.id ? { ...a, image_focal_point: `${value[0]}%` } : a
+                                )
+                              );
+                            }}
+                            onValueCommit={(value) => handleFocalPointCommit(article.id, `${value[0]}%`)}
+                            max={100}
+                            step={1}
+                            className="w-full"
+                          />
+                          <span className="text-xs text-gray-400">Baixo</span>
                         </div>
                       </div>
                     </div>
