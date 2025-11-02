@@ -22,12 +22,6 @@ export default defineConfig(() => ({
           'supabase': ['@supabase/supabase-js']
         }
       }
-    },
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.logs em produção
-      }
     }
   }
 }));
