@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 import { TrendingUp, Calendar, Loader2, Clock, Eye, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 
 // Função para calcular tempo atrás
 function getTimeAgo(dateString: string): string {
@@ -95,8 +96,16 @@ export default function Home() {
               >
                 <div className="relative w-full aspect-[4/3] lg:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
-                    src={featuredArticle.image_url}
+                    src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
+                    srcSet={`
+                      ${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w,
+                      ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w,
+                      ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w
+                    `}
+                    sizes="(max-width: 1023px) 100vw, 800px"
                     alt={featuredArticle.title}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     style={getObjectPositionStyle(featuredArticle.image_focal_point)}
                   />
@@ -138,8 +147,10 @@ export default function Home() {
                   >
                     <div className="aspect-[4/3] overflow-hidden">
                       <img
-                        src={article.image_url}
+                        src={getOptimizedImageUrl(article.image_url, 400)}
                         alt={article.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         style={getObjectPositionStyle(article.image_focal_point)}
                       />
@@ -167,8 +178,10 @@ export default function Home() {
                 >
                   <div className="relative w-2/5 flex-shrink-0">
                     <img
-                      src={article.image_url}
+                      src={getOptimizedImageUrl(article.image_url, 200)}
                       alt={article.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
@@ -195,8 +208,10 @@ export default function Home() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={section1[6].image_url}
+                      src={getOptimizedImageUrl(section1[6].image_url, 400)}
                       alt={section1[6].title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       style={getObjectPositionStyle(section1[6].image_focal_point)}
                     />
@@ -228,8 +243,10 @@ export default function Home() {
                   className="flex flex-col md:flex-row gap-4 group hover:bg-gray-100 p-4 rounded-lg transition"
                 >
                   <img
-                    src={article.image_url}
+                    src={getOptimizedImageUrl(article.image_url, 200)}
                     alt={article.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
@@ -261,8 +278,10 @@ export default function Home() {
                 >
                   <div className="aspect-[16/9] overflow-hidden">
                     <img
-                      src={article.image_url}
+                      src={getOptimizedImageUrl(article.image_url, 600)}
                       alt={article.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
@@ -294,8 +313,10 @@ export default function Home() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={article.image_url}
+                      src={getOptimizedImageUrl(article.image_url, 300)}
                       alt={article.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
@@ -324,8 +345,10 @@ export default function Home() {
                   }`}
                 >
                   <img
-                    src={article.image_url}
+                    src={getOptimizedImageUrl(article.image_url, 400)}
                     alt={article.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
@@ -353,8 +376,10 @@ export default function Home() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={article.image_url}
+                      src={getOptimizedImageUrl(article.image_url, 400)}
                       alt={article.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
@@ -382,8 +407,10 @@ export default function Home() {
                   className="flex flex-col md:flex-row gap-4 group hover:bg-gray-100 p-4 rounded-lg transition"
                 >
                   <img
-                    src={article.image_url}
+                    src={getOptimizedImageUrl(article.image_url, 200)}
                     alt={article.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
@@ -414,8 +441,10 @@ export default function Home() {
                 >
                   <div className="aspect-[16/9] overflow-hidden">
                     <img
-                      src={article.image_url}
+                      src={getOptimizedImageUrl(article.image_url, 600)}
                       alt={article.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
@@ -452,8 +481,10 @@ export default function Home() {
                       <div className="flex flex-col sm:flex-row">
                         <div className="sm:w-2/5 relative">
                           <img
-                            src={article.image_url}
+                            src={getOptimizedImageUrl(article.image_url, 400)}
                             alt={article.title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             style={getObjectPositionStyle(article.image_focal_point)}
                           />
@@ -497,8 +528,10 @@ export default function Home() {
                       <div className="grid lg:grid-cols-2">
                         <div className="relative rounded-xl overflow-hidden">
                           <img
-                            src={article.image_url}
+                            src={getOptimizedImageUrl(article.image_url, 600)}
                             alt={article.title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             style={getObjectPositionStyle(article.image_focal_point)}
                           />
@@ -539,8 +572,10 @@ export default function Home() {
                   <div key={article.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
                     <div className="relative overflow-hidden aspect-[4/3]">
                       <img
-                        src={article.image_url}
+                        src={getOptimizedImageUrl(article.image_url, 400)}
                         alt={article.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         style={getObjectPositionStyle(article.image_focal_point)}
                       />

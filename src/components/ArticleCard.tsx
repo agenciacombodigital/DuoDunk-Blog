@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { getObjectPositionStyle } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 
 interface Article {
   id: string;
@@ -23,8 +24,15 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
       {/* Imagem */}
       <div className="relative overflow-hidden h-48">
         <img
-          src={article.image_url}
+          src={getOptimizedImageUrl(article.image_url, 400)}
+          srcSet={`
+            ${getOptimizedImageUrl(article.image_url, 400)} 400w,
+            ${getOptimizedImageUrl(article.image_url, 800)} 800w
+          `}
+          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 33vw, 25vw"
           alt={article.title}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           style={getObjectPositionStyle(article.image_focal_point)}
         />

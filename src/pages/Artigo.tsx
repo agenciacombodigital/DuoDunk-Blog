@@ -7,6 +7,7 @@ import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
 import DOMPurify from 'dompurify';
+import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -102,8 +103,16 @@ export default function Artigo() {
 
             {article.image_url && (
               <img
-                src={article.image_url}
+                src={getOptimizedImageUrl(article.image_url, 800)}
+                srcSet={`
+                  ${getOptimizedImageUrl(article.image_url, 400)} 400w,
+                  ${getOptimizedImageUrl(article.image_url, 800)} 800w,
+                  ${getOptimizedImageUrl(article.image_url, 1200)} 1200w
+                `}
+                sizes="(max-width: 1023px) 100vw, 800px"
                 alt={article.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto rounded-2xl object-cover mb-10 shadow-lg"
                 style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point) }}
               />
