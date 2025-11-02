@@ -6,6 +6,7 @@ import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
+import DOMPurify from 'dompurify';
 
 export default function Artigo() {
   const { slug } = useParams();
@@ -81,9 +82,6 @@ export default function Artigo() {
             </Link>
 
             <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap">
-              <span className="tag-cyan">
-                {article.source}
-              </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 {new Date(article.published_at).toLocaleDateString('pt-BR', {
@@ -139,7 +137,7 @@ export default function Artigo() {
 
             <div 
               className="prose prose-lg max-w-none mb-12"
-              dangerouslySetInnerHTML={{ __html: article.body }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
             />
 
             {article.tags && article.tags.length > 0 && (

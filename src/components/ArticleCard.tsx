@@ -36,7 +36,7 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
           {article.title}
         </h3>
         
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed flex-grow">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
           {article.summary}
         </p>
         

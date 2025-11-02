@@ -123,8 +123,6 @@ export default function Home() {
                     </p>
                     
                     <div className="flex items-center gap-2 text-sm text-white/70">
-                      <span className="font-medium">{featuredArticle.source}</span>
-                      <span>•</span>
                       <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                     </div>
                   </div>
@@ -273,10 +271,8 @@ export default function Home() {
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{article.summary}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{article.summary}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>{article.source}</span>
-                      <span>•</span>
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
@@ -428,10 +424,8 @@ export default function Home() {
                     <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 line-clamp-3">{article.summary}</p>
+                    <p className="text-gray-600 line-clamp-2">{article.summary}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>{article.source}</span>
-                      <span>•</span>
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
@@ -479,7 +473,7 @@ export default function Home() {
                             <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
                               {article.title}
                             </h3>
-                            <p className="text-sm text-gray-600 line-clamp-3">{article.summary}</p>
+                            <p className="text-sm text-gray-600 line-clamp-2">{article.summary}</p>
                           </div>
                           
                           <Link
@@ -524,7 +518,7 @@ export default function Home() {
                           {article.subtitle && (
                             <p className="text-lg text-gray-700 mb-4">{article.subtitle}</p>
                           )}
-                          <p className="text-sm text-gray-600 mb-6 line-clamp-4">{article.summary}</p>
+                          <p className="text-sm text-gray-600 mb-6 line-clamp-2">{article.summary}</p>
                           
                           <Link
                             to={`/artigos/${article.slug}`}
@@ -567,7 +561,7 @@ export default function Home() {
                       <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-sm text-gray-600 line-clamp-3 mb-4">{article.summary}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-4">{article.summary}</p>
                       
                       <Link
                         to={`/artigos/${article.slug}`}
