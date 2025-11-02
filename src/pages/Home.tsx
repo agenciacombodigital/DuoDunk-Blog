@@ -93,7 +93,7 @@ export default function Home() {
                 to={`/artigos/${featuredArticle.slug}`}
                 className="group block"
               >
-                <div className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="relative w-full aspect-[4/3] lg:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
                     src={featuredArticle.image_url}
                     alt={featuredArticle.title}
