@@ -4,7 +4,7 @@ import MobileMenu from './MobileMenu';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b">
+    <header className="sticky top-0 z-50 border-b overflow-x-hidden">
       <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
         <Link to="/">
           {/* Logo: h-12 no mobile, h-16 no desktop */}

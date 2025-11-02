@@ -103,14 +103,12 @@ export default function Artigo() {
             </p>
 
             {article.image_url && (
-              <div className="w-full rounded-2xl mb-10 shadow-lg overflow-hidden aspect-video">
-                <img
-                  src={article.image_url}
-                  alt={article.title}
-                  className="w-full h-full object-cover"
-                  style={getObjectPositionStyle(article.image_focal_point)}
-                />
-              </div>
+              <img
+                src={article.image_url}
+                alt={article.title}
+                className="w-full h-auto rounded-2xl object-cover mb-10 shadow-lg"
+                style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point) }}
+              />
             )}
 
             {article.video_url && <VideoEmbed url={article.video_url} />}
