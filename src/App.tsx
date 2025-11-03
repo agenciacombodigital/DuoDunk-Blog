@@ -25,10 +25,10 @@ const AppContent = () => {
   return (
     <div className={`min-h-screen flex flex-col ${isAdminRoute ? 'bg-black' : 'bg-white'}`}>
       {!isAdminRoute && (
-        <div className="sticky top-0 z-50">
+        <>
           <Header />
           <NBAScoreboardV2 />
-        </div>
+        </>
       )}
       <main className="flex-grow">
         <Routes>
