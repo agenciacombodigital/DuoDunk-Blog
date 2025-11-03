@@ -612,14 +612,6 @@ export default function Home() {
                 );
               })}
             </div>
-
-            {remaining.length >= 20 && (
-              <div className="text-center mt-12">
-                <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold px-8 py-4 rounded-full hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                  Carregar Mais Artigos
-                </button>
-              </div>
-            )}
           </section>
         )}
       </div>
