@@ -7,9 +7,30 @@ export default function Footer() {
         <Link to="/">
           <img src="/images/duodunk-logoV2.svg" alt="Duo Dunk Logo" className="h-8 opacity-80 hover:opacity-100 transition-opacity" />
         </Link>
-        <p className="text-gray-400">
-          © {new Date().getFullYear()} Duo Dunk. O Jogo Dentro do Jogo.
-        </p>
+        
+        <div className="border-t border-gray-800 mt-8 pt-8 w-full">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-400">
+              © {new Date().getFullYear()} Duo Dunk. O Jogo Dentro do Jogo.
+            </p>
+            
+            <div className="flex gap-4 text-sm">
+              <Link 
+                to="/privacidade" 
+                className="text-gray-400 hover:text-[#FA007D] transition-colors"
+              >
+                Política de Privacidade
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link 
+                to="/cookies" 
+                className="text-gray-400 hover:text-[#FA007D] transition-colors"
+              >
+                Política de Cookies
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   );
