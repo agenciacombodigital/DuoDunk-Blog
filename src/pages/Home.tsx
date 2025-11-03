@@ -127,9 +127,7 @@ export default function Home() {
                       {featuredArticle.title}
                     </h1>
                     
-                    <p className="text-lg text-white/90 line-clamp-2 mb-3">
-                      {featuredArticle.summary}
-                    </p>
+                    {/* REMOVIDO: featuredArticle.summary */}
                     
                     <div className="flex items-center gap-2 text-sm text-white/70">
                       <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>

@@ -16,6 +16,7 @@ export default function AdminRodadaNBA() {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [intro, setIntro] = useState('');
+  const [customSummary, setCustomSummary] = useState(''); // Novo campo de resumo
   const [isFeatured, setIsFeatured] = useState(true);
 
   const handleImageUpload = async (file: File) => {
@@ -98,7 +99,14 @@ export default function AdminRodadaNBA() {
       const dateObj = new Date(`${date}T12:00:00Z`);
       const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
 
+      // Construção do corpo do artigo (body)
       let body = '<div class="schedule-post" style="font-family: system-ui, -apple-system, sans-serif;">';
+      
+      // Adiciona o resumo personalizado no topo do corpo do artigo
+      if (customSummary.trim()) {
+        body += `<p style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 20px;">${customSummary.trim()}</p>`;
+      }
+      
       const paragraphs = intro.split('\n').map(p => `<p style="color: #333; line-height: 1.8; margin: 0 0 15px 0;">${p}</p>`).join('');
       body += `<div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 12px; border-left: 4px solid #e91e63;">${paragraphs}</div>`;
       body += '<div style="margin-top: 30px; padding: 15px; background: #fff3f8; border-left: 4px solid #e91e63; border-radius: 4px;"><p style="margin: 0; color: #666; font-size: 14px;"><strong>💬 Participe!</strong> Deixe seu comentário e palpite para os jogos de hoje!</p></div>';
@@ -110,10 +118,11 @@ export default function AdminRodadaNBA() {
       const { error: insertError } = await supabase.from('articles').insert({
         title: title.trim(),
         subtitle: subtitle.trim() || `Confira os jogos, horários e transmissões`,
-        summary: intro.substring(0, 240) || `Confira a rodada de hoje da NBA.`,
+        // Enviamos o summary vazio para não poluir a imagem de destaque na Home
+        summary: '', 
         body,
         slug,
-        meta_description: intro.substring(0, 160),
+        meta_description: customSummary.substring(0, 160) || title.substring(0, 160),
         tags: ['nba', 'rodada', 'jogos-de-hoje', 'horarios', 'onde-assistir'],
         image_url: imageUrl,
         source: 'DuoDunk - Rodada NBA',
@@ -208,6 +217,22 @@ export default function AdminRodadaNBA() {
               placeholder="Ex: Confira horários e onde assistir cada confronto"
             />
             <p className="text-xs text-gray-500 mt-1">{subtitle.length}/100 caracteres</p>
+          </div>
+          
+          {/* NOVO CAMPO: Resumo Personalizado (Aparece apenas no Artigo) */}
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <label className="block text-sm font-medium mb-2">
+              ✨ Resumo do Artigo (Máx. 2 linhas)
+            </label>
+            <textarea
+              value={customSummary}
+              onChange={(e) => setCustomSummary(e.target.value)}
+              rows={2}
+              maxLength={200}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white resize-none"
+              placeholder="Breve introdução para a página do artigo (não aparece na imagem de destaque da Home)."
+            />
+            <p className="text-xs text-gray-500 mt-1">{customSummary.length}/200 caracteres</p>
           </div>
 
           {/* Conteúdo */}
