@@ -69,6 +69,41 @@ export default function Artigo() {
     );
   }
 
+  // Se o corpo do artigo for texto puro (sem tags <p>), usamos a lógica de split.
+  // Se for HTML (gerado pela IA), precisamos usar dangerouslySetInnerHTML.
+  // Como o prompt da IA pede HTML, vamos manter o dangerouslySetInnerHTML, mas
+  // se o usuário está vendo quebras de linha incorretas, pode ser que o conteúdo
+  // esteja vindo como texto puro.
+  // Para resolver o problema de quebra de linha em texto puro, mas ainda permitir HTML,
+  // vamos usar uma abordagem híbrida: se o conteúdo for HTML, renderizamos como HTML.
+  // Se for texto puro, usamos a lógica de split.
+  
+  const isHtmlContent = /<[a-z][\s\S]*>/i.test(article.body);
+  
+  const renderBody = () => {
+    if (isHtmlContent) {
+      // Se for HTML (como esperado da IA), usamos dangerouslySetInnerHTML
+      return (
+        <div 
+          className="prose prose-lg max-w-none mb-12"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
+        />
+      );
+    }
+    
+    // Se for texto puro (como pode acontecer em posts manuais ou rodadas NBA),
+    // usamos a lógica de split para criar parágrafos.
+    return (
+      <div className="prose prose-lg max-w-none mb-12">
+        {article.body.split('\n\n').map((paragraph: string, index: number) => (
+          <p key={index} className="mb-4">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white">
       <div className="container mx-auto px-4 py-12">
@@ -144,10 +179,7 @@ export default function Artigo() {
               </div>
             )}
 
-            <div 
-              className="prose prose-lg max-w-none mb-12"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
-            />
+            {renderBody()}
 
             {article.tags && article.tags.length > 0 && (
               <div className="pt-8 border-t border-gray-200 mb-8">
