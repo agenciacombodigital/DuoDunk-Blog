@@ -6,20 +6,18 @@ export default function Header() {
   return (
     <header className="border-b overflow-x-hidden bg-black relative z-50">
       <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
-        {/* Logo visível em todas as telas */}
+        {/* Logo com a tag <picture> para responsividade */}
         <Link to="/" className="relative z-50">
-          {/* Logo Mobile (Usando V2 para debug) */}
-          <img 
-            src="/images/duodunk-logoV2.svg" 
-            alt="Duo Dunk Logo Mobile" 
-            className="h-10 md:hidden" 
-          />
-          {/* Logo Completo para Desktop (h-16 md:h-20) */}
-          <img 
-            src="/images/duodunk-logoV2.svg" 
-            alt="Duo Dunk Logo" 
-            className="h-16 md:h-20 hidden md:block" 
-          />
+          <picture>
+            {/* Imagem para telas maiores (desktop) */}
+            <source media="(min-width: 768px)" srcSet="/images/duodunk-logoV2.svg" />
+            {/* Imagem padrão (mobile) */}
+            <img 
+              src="/images/duodunk-logo-mobile.svg" 
+              alt="Duo Dunk Logo" 
+              className="h-12 md:h-20" // h-12 no mobile, h-20 no desktop
+            />
+          </picture>
         </Link>
         
         {/* Navegação principal e ícones sociais (Desktop Only) */}
