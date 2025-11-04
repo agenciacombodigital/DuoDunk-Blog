@@ -132,19 +132,14 @@ export default function Classificacao() {
     return team.streak.startsWith('L') && parseInt(team.streak.slice(1)) >= 4;
   };
 
-  // Função para aplicar o estilo de cor da linha (Preenchimento total)
+  // Função para aplicar o estilo de cor da linha (Borda vertical)
   const getRowStyle = (abbreviation: string) => {
     const colors = getTeamColors(abbreviation);
     
-    // Cor de fundo primária com 10% de opacidade para não ser muito forte
-    const primaryColor10 = `${colors.primary}1A`; 
-    
     return {
-      backgroundColor: primaryColor10,
-      // Cor do texto: se a cor primária for escura, o texto deve ser claro (branco), caso contrário, escuro.
-      // Usamos a cor 'text' definida no mapa de cores para garantir o contraste.
-      color: colors.text, 
-      borderLeft: `4px solid ${colors.primary}`,
+      backgroundColor: '#ffffff', // Fundo branco
+      color: '#1f2937', // Texto escuro
+      borderLeft: `4px solid ${colors.primary}`, // Borda colorida
     };
   };
   
@@ -256,7 +251,7 @@ export default function Classificacao() {
                         <img src={team.logo} alt={team.abbreviation} className="w-8 h-8" />
                         <div>
                           <p className="font-bold group-hover:underline transition-colors" style={getPrimaryColorStyle(team.abbreviation)}>{team.abbreviation}</p>
-                          <p className="text-xs" style={{ color: getTeamColors(team.abbreviation).text === '#FFFFFF' ? '#e5e7eb' : '#6b7280' }}>{team.name}</p>
+                          <p className="text-xs text-gray-600">{team.name}</p>
                         </div>
                       </Link>
                     </td>
@@ -324,7 +319,7 @@ export default function Classificacao() {
                               {isHotTeam(team) && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
                               {isColdTeam(team) && <Snowflake className="w-3 h-3 text-blue-400 ml-1" />}
                             </div>
-                            <div className="text-xs" style={{ color: getTeamColors(team.abbreviation).text === '#FFFFFF' ? '#e5e7eb' : '#6b7280' }}>{team.division}</div>
+                            <div className="text-xs text-gray-600">{team.division}</div>
                           </div>
                         </Link>
                       </td>
