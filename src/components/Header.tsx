@@ -39,16 +39,16 @@ export default function Header() {
         <div className="md:hidden w-full flex items-center justify-between h-full">
           {/* Botão do Menu à Esquerda */}
           <MobileMenu />
-          
-          {/* Logo Centralizado */}
+
+          {/* Logo Centralizado Menor */}
           <Link to="/" className="flex-1 flex justify-center">
             <img 
               src="/images/duodunk-logoV2.svg" 
               alt="Duo Dunk Logo" 
-              className="h-10"
+              className="h-8"
             />
           </Link>
-          
+
           {/* Placeholder à direita para manter centralização */}
           <div className="w-10"></div>
         </div>
