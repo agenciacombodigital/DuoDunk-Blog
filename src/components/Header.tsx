@@ -1,47 +1,84 @@
-import { Link } from "react-router-dom";
-import { Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
-import MobileMenu from './MobileMenu';
+import { Link } from 'react-router-dom';
+import { Menu } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <header className="border-b overflow-x-hidden bg-black relative z-50">
-      <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
-        {/* Logo com a tag <picture> para responsividade */}
-        <Link to="/" className="relative z-50">
-          <picture>
-            {/* Imagem para telas maiores (desktop) */}
-            <source media="(min-width: 768px)" srcSet="/images/duodunk-logoV2.svg" />
-            {/* Imagem padrão (mobile) */}
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* LOGO - SEMPRE VISÍVEL */}
+          <Link to="/" className="flex items-center gap-2 z-50 flex-shrink-0">
             <img 
-              src="/images/duodunk-logo-mobile.svg" 
-              alt="Duo Dunk Logo" 
-              className="h-12 md:h-20" // h-12 no mobile, h-20 no desktop
+              src="/images/logo.svg" 
+              alt="DuoDunk Logo" 
+              className="h-10 w-auto sm:h-12" 
+              style={{ display: 'block', maxWidth: '150px' }}
             />
-          </picture>
-        </Link>
-        
-        {/* Navegação principal e ícones sociais (Desktop Only) */}
-        <div className="hidden lg:flex items-center flex-grow justify-end">
-          {/* Navegação Centralizada */}
-          <nav className="flex items-center gap-8 text-sm uppercase tracking-widest flex-grow justify-center">
-            <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
-            <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
-            <Link to="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
-            <Link to="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
+          </Link>
+
+          {/* MENU DESKTOP - Oculto no mobile */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/" className="text-gray-700 hover:text-[#FA007D] font-semibold">
+              HOME
+            </Link>
+            <Link to="/ultimas" className="text-gray-700 hover:text-[#FA007D] font-semibold">
+              ÚLTIMAS
+            </Link>
+            <Link to="/times" className="text-gray-700 hover:text-[#FA007D] font-semibold">
+              TIMES
+            </Link>
+            <Link to="/classificacao" className="text-gray-700 hover:text-[#FA007D] font-semibold">
+              CLASSIFICAÇÃO
+            </Link>
           </nav>
-          
-          {/* Ícones Sociais */}
-          <div className="flex items-center gap-4 flex-shrink-0">
-            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={20} /></a>
-            <a href="https://www.instagram.com/duodunk/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
-            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
-            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitch size={20} /></a>
-          </div>
+
+          {/* BOTÃO MENU MOBILE */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-700 hover:text-[#FA007D]"
+            aria-label="Menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
         </div>
 
-        {/* Menu mobile (Mobile Only) */}
-        <MobileMenu />
+        {/* MENU MOBILE - Dropdown */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden py-4 border-t border-gray-200">
+            <Link 
+              to="/" 
+              className="block py-2 text-gray-700 hover:text-[#FA007D] font-semibold"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              HOME
+            </Link>
+            <Link 
+              to="/ultimas" 
+              className="block py-2 text-gray-700 hover:text-[#FA007D] font-semibold"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ÚLTIMAS
+            </Link>
+            <Link 
+              to="/times" 
+              className="block py-2 text-gray-700 hover:text-[#FA007D] font-semibold"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              TIMES
+            </Link>
+            <Link 
+              to="/classificacao" 
+              className="block py-2 text-gray-700 hover:text-[#FA007D] font-semibold"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              CLASSIFICAÇÃO
+            </Link>
+          </nav>
+        )}
       </div>
     </header>
-  )
+  );
 }
