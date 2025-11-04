@@ -37,20 +37,17 @@ export default function Header() {
 
         {/* --- LAYOUT MOBILE (abaixo de md) --- */}
         <div className="md:hidden w-full flex items-center justify-between h-full">
-          {/* Botão do Menu à Esquerda */}
-          <MobileMenu />
-
-          {/* Logo Centralizado Menor */}
-          <Link to="/" className="flex-1 flex justify-center">
+          {/* Logo à Esquerda */}
+          <Link to="/">
             <img 
-              src="/images/duodunk-logoV2.svg" 
+              src="/images/duodunk-logo-mobile.svg"
               alt="Duo Dunk Logo" 
-              className="h-8"
+              className="h-10"
             />
           </Link>
 
-          {/* Placeholder à direita para manter centralização */}
-          <div className="w-10"></div>
+          {/* Menu à Direita */}
+          <MobileMenu />
         </div>
 
       </div>
