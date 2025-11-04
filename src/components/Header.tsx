@@ -18,8 +18,8 @@ export default function Header() {
             />
           </Link>
           
-          {/* Navegação (Aparece em telas grandes, some em tablet) */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm uppercase tracking-widest">
+          {/* Navegação (Visível a partir de md) */}
+          <nav className="flex items-center gap-8 text-sm uppercase tracking-widest">
             <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
             <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
             <Link to="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
@@ -42,7 +42,7 @@ export default function Header() {
             <img 
               src="/images/duodunk-logo-mobile.svg"
               alt="Duo Dunk Logo" 
-              className="h-8 w-auto block"
+              className="h-10 w-auto block"
             />
           </Link>
 
