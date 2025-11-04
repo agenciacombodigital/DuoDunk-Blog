@@ -29,7 +29,7 @@ export default function MobileMenu() {
   }, [isOpen]);
 
   return (
-    <div className="md:hidden">
+    <>
       {/* Botão hambúrguer */}
       <button
         onClick={toggleMenu}
@@ -98,6 +98,6 @@ export default function MobileMenu() {
           </div>
         </div>
       </aside>
-    </div>
+    </>
   );
 }
