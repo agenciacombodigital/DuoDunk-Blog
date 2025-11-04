@@ -8,13 +8,13 @@ export default function Header() {
       <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
         {/* Logo visível em todas as telas */}
         <Link to="/" className="relative z-50">
-          {/* Logo Mobile (duodunk-logo-mobile.svg) */}
+          {/* Logo Mobile (duodunk-logo-mobile.svg) - Aumentado para h-12 */}
           <img 
             src="/images/duodunk-logo-mobile.svg" 
             alt="Duo Dunk Logo Mobile" 
-            className="h-10 md:hidden" 
+            className="h-12 md:hidden" 
           />
-          {/* Logo Completo para Desktop (Aumentado para h-16 md:h-20) */}
+          {/* Logo Completo para Desktop (h-16 md:h-20) */}
           <img 
             src="/images/duodunk-logoV2.svg" 
             alt="Duo Dunk Logo" 
