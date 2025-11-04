@@ -124,6 +124,7 @@ export default function Time() {
     if (!teamInfo) return;
 
     try {
+      // NOTE: A função 'nba-team-info' não existe no schema, mas assumimos que ela retorna TeamData
       const { data, error } = await supabase.functions.invoke('nba-team-info', {
         body: { teamId: teamInfo.id }
       });
@@ -195,6 +196,12 @@ export default function Time() {
   }
 
   const { team, record, roster, pastGames, upcomingGames } = teamData;
+  
+  // Cálculo e formatação da porcentagem de vitórias
+  const winPercentage = parseFloat(record.winPercent);
+  const winPercentageDisplay = isNaN(winPercentage) 
+    ? 'N/D' 
+    : `${(winPercentage * 100).toFixed(1)}%`;
 
   return (
     <div className="min-h-screen bg-white">
@@ -273,7 +280,7 @@ export default function Time() {
               <span className="text-xs sm:text-sm font-medium text-blue-900">% Vitórias</span>
             </div>
             <p className="text-3xl sm:text-4xl font-black text-blue-600">
-              {(parseFloat(record.winPercent) * 100).toFixed(1)}%
+              {winPercentageDisplay}
             </p>
           </div>
 
