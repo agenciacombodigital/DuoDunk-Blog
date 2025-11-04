@@ -50,9 +50,9 @@ export default function MobileMenu() {
       {/* Menu lateral */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-4/5 max-w-xs bg-gray-900/90 backdrop-blur-lg
+          fixed top-0 right-0 h-full w-4/5 max-w-xs bg-gray-900/90 backdrop-blur-lg
           shadow-2xl z-[90] transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
         <div className="p-6 pt-24 flex flex-col h-full">
