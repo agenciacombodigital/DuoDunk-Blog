@@ -132,13 +132,18 @@ export default function Classificacao() {
     return team.streak.startsWith('L') && parseInt(team.streak.slice(1)) >= 4;
   };
 
-  // Função para aplicar o estilo de cor da linha
+  // Função para aplicar o estilo de cor da linha (Preenchimento total)
   const getRowStyle = (abbreviation: string) => {
     const colors = getTeamColors(abbreviation);
-    // Usamos um gradiente sutil para dar um toque de cor sem sobrecarregar
+    
+    // Cor de fundo primária com 10% de opacidade para não ser muito forte
+    const primaryColor10 = `${colors.primary}1A`; 
+    
     return {
-      background: `linear-gradient(to right, ${colors.primary}08, #ffffff00 10%)`,
-      color: colors.text === '#FFFFFF' ? '#1f2937' : colors.text, // Mantém o texto escuro na tabela branca
+      backgroundColor: primaryColor10,
+      // Cor do texto: se a cor primária for escura, o texto deve ser claro (branco), caso contrário, escuro.
+      // Usamos a cor 'text' definida no mapa de cores para garantir o contraste.
+      color: colors.text, 
       borderLeft: `4px solid ${colors.primary}`,
     };
   };
@@ -242,16 +247,16 @@ export default function Classificacao() {
                 {getGeralStandings().map((team, index) => (
                   <tr 
                     key={team.id} 
-                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                    className="border-b border-gray-200 transition-colors"
                     style={getRowStyle(team.abbreviation)} // Aplicando estilo dinâmico
                   >
-                    <td className="px-4 py-3 font-bold text-gray-700">{index + 1}</td>
+                    <td className="px-4 py-3 font-bold" style={getPrimaryColorStyle(team.abbreviation)}>{index + 1}</td>
                     <td className="px-4 py-3">
                       <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
                         <img src={team.logo} alt={team.abbreviation} className="w-8 h-8" />
                         <div>
-                          <p className="font-bold text-gray-900 group-hover:text-pink-600 transition-colors">{team.abbreviation}</p>
-                          <p className="text-xs text-gray-500">{team.name}</p>
+                          <p className="font-bold group-hover:underline transition-colors" style={getPrimaryColorStyle(team.abbreviation)}>{team.abbreviation}</p>
+                          <p className="text-xs" style={{ color: getTeamColors(team.abbreviation).text === '#FFFFFF' ? '#e5e7eb' : '#6b7280' }}>{team.name}</p>
                         </div>
                       </Link>
                     </td>
@@ -266,8 +271,8 @@ export default function Classificacao() {
                     </td>
                     <td className="px-4 py-3 text-center font-bold text-green-600">{team.wins}</td>
                     <td className="px-4 py-3 text-center font-bold text-red-600">{team.losses}</td>
-                    <td className="px-4 py-3 text-center text-gray-600">{team.winPercent}</td>
-                    <td className="px-4 py-3 text-center text-gray-600">{team.gamesBehind}</td>
+                    <td className="px-4 py-3 text-center">{team.winPercent}</td>
+                    <td className="px-4 py-3 text-center">{team.gamesBehind}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`font-bold ${
                         team.streak.startsWith('W') ? 'text-green-600' : 'text-red-600'
@@ -301,10 +306,10 @@ export default function Classificacao() {
                   {(viewType === 'leste' ? standings?.eastern.conference : standings?.western.conference)?.map((team, index) => (
                     <tr 
                       key={team.id} 
-                      className="hover:bg-gray-50 transition-colors"
+                      className="transition-colors"
                       style={getRowStyle(team.abbreviation)} // Aplicando estilo dinâmico
                     >
-                      <td className="px-4 py-3 font-bold text-gray-400 text-center">
+                      <td className="px-4 py-3 font-bold text-center" style={getPrimaryColorStyle(team.abbreviation)}>
                         <div className="relative w-8 h-8 flex items-center justify-center">
                           {getPlayoffSeedBadge(index + 1)}
                           {index + 1}
@@ -314,19 +319,19 @@ export default function Classificacao() {
                         <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
                           <img src={team.logo} alt={team.name} className="w-8 h-8 object-contain" />
                           <div>
-                            <div className="font-bold text-gray-800 flex items-center group-hover:text-pink-600 transition-colors">
+                            <div className="font-bold flex items-center group-hover:underline transition-colors" style={getPrimaryColorStyle(team.abbreviation)}>
                               {team.abbreviation}
                               {isHotTeam(team) && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
                               {isColdTeam(team) && <Snowflake className="w-3 h-3 text-blue-400 ml-1" />}
                             </div>
-                            <div className="text-xs text-gray-500">{team.division}</div>
+                            <div className="text-xs" style={{ color: getTeamColors(team.abbreviation).text === '#FFFFFF' ? '#e5e7eb' : '#6b7280' }}>{team.division}</div>
                           </div>
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-center font-mono text-gray-700">{team.wins}</td>
-                      <td className="px-4 py-3 text-center font-mono text-gray-700">{team.losses}</td>
-                      <td className="px-4 py-3 text-center font-mono text-gray-700">{team.winPercent}</td>
-                      <td className="px-4 py-3 text-center font-mono text-gray-700">{team.gamesBehind}</td>
+                      <td className="px-4 py-3 text-center font-mono">{team.wins}</td>
+                      <td className="px-4 py-3 text-center font-mono">{team.losses}</td>
+                      <td className="px-4 py-3 text-center font-mono">{team.winPercent}</td>
+                      <td className="px-4 py-3 text-center font-mono">{team.gamesBehind}</td>
                       <td className={`px-4 py-3 text-center font-mono font-bold ${parseInt(team.differential) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {team.differential}
                       </td>
