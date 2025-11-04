@@ -7,8 +7,8 @@ export default function Header() {
     <header className="border-b overflow-x-hidden bg-black relative z-50">
       <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
         
-        {/* --- LAYOUT DESKTOP (lg e acima) --- */}
-        <div className="hidden lg:flex items-center justify-between w-full">
+        {/* --- LAYOUT DESKTOP (md e acima) --- */}
+        <div className="hidden md:flex items-center justify-between w-full">
           {/* Logo no Desktop */}
           <Link to="/" className="relative z-50 flex-shrink-0">
             <img 
@@ -36,8 +36,8 @@ export default function Header() {
           </div>
         </div>
 
-        {/* --- LAYOUT MOBILE (abaixo de lg) --- */}
-        <div className="lg:hidden w-full flex items-center justify-between">
+        {/* --- LAYOUT MOBILE (abaixo de md) --- */}
+        <div className="md:hidden w-full flex items-center justify-between">
           {/* Botão do Menu à Esquerda */}
           <div className="z-50">
             <MobileMenu />
