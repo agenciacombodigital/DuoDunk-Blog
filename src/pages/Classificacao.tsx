@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Flame, Snowflake, Minus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getTeamColors } from '@/lib/nbaTeamColors'; // Importando as cores
 
 interface Team {
   id: string;
@@ -131,6 +132,23 @@ export default function Classificacao() {
     return team.streak.startsWith('L') && parseInt(team.streak.slice(1)) >= 4;
   };
 
+  // Função para aplicar o estilo de cor da linha
+  const getRowStyle = (abbreviation: string) => {
+    const colors = getTeamColors(abbreviation);
+    // Usamos um gradiente sutil para dar um toque de cor sem sobrecarregar
+    return {
+      background: `linear-gradient(to right, ${colors.primary}08, #ffffff00 10%)`,
+      color: colors.text === '#FFFFFF' ? '#1f2937' : colors.text, // Mantém o texto escuro na tabela branca
+      borderLeft: `4px solid ${colors.primary}`,
+    };
+  };
+  
+  // Função para obter a cor primária para destaque de texto
+  const getPrimaryColorStyle = (abbreviation: string) => {
+    const colors = getTeamColors(abbreviation);
+    return { color: colors.primary };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -225,6 +243,7 @@ export default function Classificacao() {
                   <tr 
                     key={team.id} 
                     className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                    style={getRowStyle(team.abbreviation)} // Aplicando estilo dinâmico
                   >
                     <td className="px-4 py-3 font-bold text-gray-700">{index + 1}</td>
                     <td className="px-4 py-3">
@@ -247,7 +266,7 @@ export default function Classificacao() {
                     </td>
                     <td className="px-4 py-3 text-center font-bold text-green-600">{team.wins}</td>
                     <td className="px-4 py-3 text-center font-bold text-red-600">{team.losses}</td>
-                    <td className="px-4 py-3 text-center">{team.winPercent}</td>
+                    <td className="px-4 py-3 text-center text-gray-600">{team.winPercent}</td>
                     <td className="px-4 py-3 text-center text-gray-600">{team.gamesBehind}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`font-bold ${
@@ -280,7 +299,11 @@ export default function Classificacao() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                   {(viewType === 'leste' ? standings?.eastern.conference : standings?.western.conference)?.map((team, index) => (
-                    <tr key={team.id} className="hover:bg-gray-50 transition-colors">
+                    <tr 
+                      key={team.id} 
+                      className="hover:bg-gray-50 transition-colors"
+                      style={getRowStyle(team.abbreviation)} // Aplicando estilo dinâmico
+                    >
                       <td className="px-4 py-3 font-bold text-gray-400 text-center">
                         <div className="relative w-8 h-8 flex items-center justify-center">
                           {getPlayoffSeedBadge(index + 1)}
