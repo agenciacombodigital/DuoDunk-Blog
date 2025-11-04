@@ -8,7 +8,18 @@ export default function Header() {
       <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
         {/* Logo visível em todas as telas */}
         <Link to="/" className="relative z-50">
-          <img src="/images/duodunk-logoV2.svg" alt="Duo Dunk Logo" className="h-12 md:h-16" />
+          {/* Logo Ícone para Mobile */}
+          <img 
+            src="/images/logo-icon.svg" 
+            alt="Duo Dunk Icon" 
+            className="h-10 md:hidden" 
+          />
+          {/* Logo Completo para Desktop */}
+          <img 
+            src="/images/duodunk-logoV2.svg" 
+            alt="Duo Dunk Logo" 
+            className="h-12 md:h-16 hidden md:block" 
+          />
         </Link>
         
         {/* Navegação principal e ícones sociais (Desktop Only) */}
