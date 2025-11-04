@@ -56,11 +56,11 @@ export default function MobileMenu() {
         `}
       >
         <div className="p-6 flex flex-col h-full">
-          {/* Logo no menu */}
-          <div className="pb-6 border-b border-white/10">
-            <Link to="/" onClick={closeMenu}>
-              <img src="/images/duodunk-logoV2.svg" alt="Duo Dunk Logo" className="h-12" />
-            </Link>
+          {/* Logo no menu (Mantido, mas o logo principal já está no Header) */}
+          <div className="pb-6 border-b border-white/10 flex justify-end">
+            <button onClick={closeMenu} className="text-gray-400 hover:text-white transition-colors">
+              <X className="w-7 h-7" />
+            </button>
           </div>
 
           {/* Items do menu */}
@@ -78,15 +78,15 @@ export default function MobileMenu() {
                     flex items-center gap-4 px-4 py-4 rounded-xl
                     transition-all duration-300 group text-lg font-bold
                     ${isActive 
-                      ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg' 
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                      ? 'bg-gray-800 text-white border-l-4 border-pink-600' // Estilo minimalista ativo
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white' // Estilo minimalista hover
                     }
                   `}
                   style={{
                     animation: isOpen ? `slideInRight 0.5s ease-out ${100 + index * 100}ms forwards` : 'none'
                   }}
                 >
-                  <Icon className={`w-6 h-6 transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+                  <Icon className={`w-6 h-6 transition-colors ${isActive ? 'text-pink-500' : 'text-gray-400 group-hover:text-pink-500'}`} />
                   {item.label}
                 </Link>
               );
