@@ -38,18 +38,18 @@ export default function Header() {
         {/* --- LAYOUT MOBILE (abaixo de md) --- */}
         <div className="md:hidden w-full flex items-center justify-between h-full">
           {/* Logo à Esquerda */}
-          <Link to="/">
+          <Link to="/" className="flex-shrink-0">
             <img 
-              src="/images/duodunk-logo-mobile.svg"
+              src="/images/duodunk-logoV2.svg"
               alt="Duo Dunk Logo" 
-              className="h-10"
+              className="h-8"
             />
           </Link>
 
           {/* Menu à Direita */}
           <MobileMenu />
         </div>
-
+        
       </div>
     </header>
   )
