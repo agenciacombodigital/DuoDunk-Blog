@@ -45,7 +45,7 @@ export default function Header() {
             <img 
               src="/images/duodunk-logoV2.svg" 
               alt="Duo Dunk Logo" 
-              className="h-12"
+              className="h-10"
             />
           </Link>
           
