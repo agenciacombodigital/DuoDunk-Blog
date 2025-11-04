@@ -55,16 +55,9 @@ export default function MobileMenu() {
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
-        <div className="p-6 flex flex-col h-full">
-          {/* Logo no menu (Mantido, mas o logo principal já está no Header) */}
-          <div className="pb-6 border-b border-white/10 flex justify-end">
-            <button onClick={closeMenu} className="text-gray-400 hover:text-white transition-colors">
-              <X className="w-7 h-7" />
-            </button>
-          </div>
-
+        <div className="p-6 pt-24 flex flex-col h-full">
           {/* Items do menu */}
-          <nav className="flex-grow mt-8 space-y-2">
+          <nav className="flex-grow space-y-2">
             {menuItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -78,8 +71,8 @@ export default function MobileMenu() {
                     flex items-center gap-4 px-4 py-4 rounded-xl
                     transition-all duration-300 group text-lg font-bold
                     ${isActive 
-                      ? 'bg-gray-800 text-white border-l-4 border-pink-600' // Estilo minimalista ativo
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white' // Estilo minimalista hover
+                      ? 'bg-gray-800 text-white border-l-4 border-pink-600'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }
                   `}
                   style={{
