@@ -40,9 +40,9 @@ export default function Header() {
           {/* Logo à Esquerda */}
           <Link to="/" className="flex-shrink-0">
             <img 
-              src="/images/duodunk-logoV2.svg"
+              src="/images/duodunk-logo-mobile.svg"
               alt="Duo Dunk Logo" 
-              className="h-10"
+              className="h-12"
             />
           </Link>
 
