@@ -5,7 +5,7 @@ import MobileMenu from './MobileMenu';
 export default function Header() {
   return (
     <header className="border-b overflow-x-hidden bg-black relative z-50">
-      <div className="container mx-auto px-4 flex items-center justify-between h-20 md:h-24">
+      <div className="container mx-auto px-4 flex items-center justify-between h-24">
         
         {/* --- LAYOUT DESKTOP (md e acima) --- */}
         <div className="hidden md:flex items-center justify-between w-full">
@@ -37,25 +37,17 @@ export default function Header() {
         </div>
 
         {/* --- LAYOUT MOBILE (abaixo de md) --- */}
-        <div className="md:hidden w-full grid grid-cols-3 items-center h-full">
-          {/* Coluna Esquerda: Menu */}
-          <div className="justify-self-start">
-            <MobileMenu />
-          </div>
-
-          {/* Coluna Central: Logo */}
-          <div className="justify-self-center">
-            <Link to="/">
-              <img 
-                src="/images/duodunk-logo-mobile.svg" 
-                alt="Duo Dunk Logo" 
-                className="h-12"
-              />
-            </Link>
-          </div>
-
-          {/* Coluna Direita: Vazia para balancear */}
-          <div></div>
+        <div className="md:hidden w-full flex items-center justify-between">
+          <MobileMenu />
+          <Link to="/">
+            <img 
+              src="/images/duodunk-logo-mobile.svg" 
+              alt="Duo Dunk Logo" 
+              className="h-12"
+            />
+          </Link>
+          {/* Placeholder para centralizar o logo corretamente */}
+          <div className="w-7 h-7" />
         </div>
 
       </div>
