@@ -12,6 +12,7 @@ import PendingApprovalSection from '@/components/admin/PendingApprovalSection';
 import PendingProcessingSection from '@/components/admin/PendingProcessingSection';
 import PublishedArticlesSection from '@/components/admin/PublishedArticlesSection';
 import EditArticleModal from '@/components/admin/EditArticleModal';
+import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -330,6 +331,11 @@ export default function AdminPage() {
           onEdit={(article) => { setEditingArticle(article); setShowEditModal(true); }}
           onApprove={approveArticle}
           onReject={rejectArticle}
+          onDelete={deleteFromQueue}
+        />
+        <AutoApprovedSection 
+          articles={autoApproved}
+          onProcess={processOneWithAI}
           onDelete={deleteFromQueue}
         />
         <PendingProcessingSection articles={pendingProcessing} onDelete={deleteFromQueue} />
