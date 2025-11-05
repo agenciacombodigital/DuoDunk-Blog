@@ -135,11 +135,16 @@ export default function AdminPage() {
     }
   };
 
-  const handleFocalPointCommit = async (articleId: string, value: number[]) => {
-    const focalPoint = `${value[0]}%`;
+  // Recebe [focalPointDesktop, focalPointMobile]
+  const handleFocalPointCommit = async (articleId: string, focalPoints: [string, string]) => {
+    const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
+    
     const { error } = await supabase
       .from('articles_queue')
-      .update({ image_focal_point: focalPoint })
+      .update({ 
+        image_focal_point: desktopFocalPoint,
+        image_focal_point_mobile: mobileFocalPoint,
+      })
       .eq('id', articleId);
 
     if (error) {
@@ -148,10 +153,17 @@ export default function AdminPage() {
     }
   };
   
-  const handleFocalPointChange = (articleId: string, value: number[]) => {
+  // Recebe [focalPointDesktop, focalPointMobile]
+  const handleFocalPointChange = (articleId: string, focalPoints: [string, string]) => {
+    const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
+
     setQueue(prevQueue =>
       prevQueue.map(a =>
-        a.id === articleId ? { ...a, image_focal_point: `${value[0]}%` } : a
+        a.id === articleId ? { 
+          ...a, 
+          image_focal_point: desktopFocalPoint,
+          image_focal_point_mobile: mobileFocalPoint,
+        } : a
       )
     );
   };
@@ -176,6 +188,7 @@ export default function AdminPage() {
         is_featured: article.is_featured || false,
         video_url: article.video_url || null,
         image_focal_point: article.image_focal_point || '50%',
+        image_focal_point_mobile: article.image_focal_point_mobile || '50%',
       });
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       toast.success('Artigo publicado!', { id: toastId });
@@ -284,6 +297,7 @@ export default function AdminPage() {
           video_url: articleToSave.video_url,
           is_featured: articleToSave.is_featured,
           image_focal_point: articleToSave.image_focal_point,
+          image_focal_point_mobile: articleToSave.image_focal_point_mobile,
         })
         .eq('id', articleToSave.id);
 

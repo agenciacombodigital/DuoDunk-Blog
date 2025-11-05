@@ -4,6 +4,17 @@ import { supabase } from '@/lib/supabase';
 import { isAuthenticated } from '@/lib/auth';
 import { Save, X, Upload, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { Slider } from '@/components/ui/slider';
+import { getObjectPositionStyle } from '@/lib/utils';
+
+const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
+  if (!focalPoint) return 50;
+  if (focalPoint === 'top') return 0;
+  if (focalPoint === 'center') return 50;
+  if (focalPoint === 'bottom') return 100;
+  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  return 50;
+};
 
 export default function EditArticle() {
   const { slug } = useParams();
@@ -21,6 +32,8 @@ export default function EditArticle() {
     meta_description: '',
     tags: [] as string[],
     video_url: '',
+    image_focal_point: '50%', // Foco para desktop/16:9
+    image_focal_point_mobile: '50%', // Novo foco para mobile/3:4
   });
 
   useEffect(() => {
@@ -50,6 +63,8 @@ export default function EditArticle() {
         meta_description: data.meta_description || '',
         tags: data.tags || [],
         video_url: data.video_url || '',
+        image_focal_point: data.image_focal_point || '50%',
+        image_focal_point_mobile: data.image_focal_point_mobile || '50%',
       });
     } catch (error: any) {
       console.error('Erro ao carregar artigo:', error);
@@ -109,6 +124,8 @@ export default function EditArticle() {
           meta_description: formData.meta_description,
           tags: formData.tags,
           video_url: formData.video_url,
+          image_focal_point: formData.image_focal_point,
+          image_focal_point_mobile: formData.image_focal_point_mobile,
         })
         .eq('id', article.id);
 
@@ -175,8 +192,8 @@ export default function EditArticle() {
                 <ArrowLeft className="w-6 h-6 text-gray-400" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold">Editar Notícia</h1>
-                <p className="text-sm text-gray-400 mt-1">
+                <h1 className="text-3xl font-bold font-oswald uppercase">Editar Notícia</h1>
+                <p className="text-sm text-gray-400 mt-1 font-inter">
                   Publicado em {new Date(article.published_at).toLocaleDateString('pt-BR')}
                 </p>
               </div>
@@ -217,59 +234,59 @@ export default function EditArticle() {
           <div className="lg:col-span-2 space-y-6">
             {/* Título */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Título da Notícia
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg font-bold"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg font-oswald uppercase font-bold"
                 placeholder="Digite o título..."
               />
             </div>
 
             {/* Resumo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Resumo
               </label>
               <textarea
                 value={formData.summary}
                 onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))}
                 rows={4}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-inter"
                 placeholder="Escreva um resumo atrativo..."
               />
             </div>
 
             {/* Conteúdo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Conteúdo Completo (HTML)
               </label>
               <textarea
                 value={formData.body}
                 onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
                 rows={20}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-mono text-sm"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-mono text-sm font-inter"
                 placeholder="<p>Parágrafo 1.</p><p>Parágrafo 2.</p>"
               />
             </div>
 
             {/* Vídeo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 🎬 Vídeo (Opcional) - YouTube, Twitter ou Instagram
               </label>
               <input
                 type="url"
                 value={formData.video_url || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent font-inter"
                 placeholder="https://... (YouTube, Twitter ou Instagram)"
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2 font-inter">
                 Se preenchido, o vídeo substituirá a imagem de destaque.
               </p>
             </div>
@@ -279,7 +296,7 @@ export default function EditArticle() {
           <div className="space-y-6">
             {/* Imagem */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-4">
+              <label className="block text-sm font-bold text-gray-300 mb-4 font-inter">
                 Imagem de Destaque
               </label>
 
@@ -289,6 +306,7 @@ export default function EditArticle() {
                     src={formData.image_url}
                     alt="Preview"
                     className="w-full h-full object-cover"
+                    style={getObjectPositionStyle(formData.image_focal_point)}
                   />
                   <button
                     onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
@@ -319,22 +337,79 @@ export default function EditArticle() {
                 {uploadingImage ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin text-pink-500" />
-                    <span className="text-sm font-semibold text-gray-400">Enviando...</span>
+                    <span className="text-sm font-semibold text-gray-400 font-inter">Enviando...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-400">
+                    <span className="text-sm font-semibold text-gray-400 font-inter">
                       {formData.image_url ? 'Trocar Imagem' : 'Upload de Imagem'}
                     </span>
                   </>
                 )}
               </label>
+              
+              {/* Foco Vertical Mobile (3:4) */}
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                  Foco Vertical (Mobile 3:4)
+                </label>
+                <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50">
+                  <img
+                    src={formData.image_url}
+                    alt="Preview Mobile"
+                    className="w-full h-full object-cover"
+                    style={getObjectPositionStyle(formData.image_focal_point_mobile)}
+                  />
+                  <div className="absolute inset-0 border-4 border-dashed border-white/50 pointer-events-none flex items-center justify-center">
+                    <span className="text-white text-xs bg-black/50 p-1 rounded font-inter">Corte Mobile (3:4)</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="text-xs text-gray-400 font-inter">Topo</span>
+                  <Slider
+                    value={[focalPointToPercentage(formData.image_focal_point_mobile)]}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` }));
+                    }}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <span className="text-xs text-gray-400 font-inter">Baixo</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 font-inter">
+                  Ajuste para garantir que o assunto principal apareça no corte vertical (3:4) da Home.
+                </p>
+              </div>
+              
+              {/* Foco Horizontal (Desktop 16:9) - Mantido */}
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                  Foco Horizontal (Desktop 16:9)
+                </label>
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="text-xs text-gray-400 font-inter">Esquerda</span>
+                  <Slider
+                    value={[focalPointToPercentage(formData.image_focal_point)]}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, image_focal_point: `${value[0]}% 50%` })); // Mantém o vertical no centro
+                    }}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <span className="text-xs text-gray-400 font-inter">Direita</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 font-inter">
+                  Ajuste para garantir que o assunto principal apareça no corte horizontal (16:9).
+                </p>
+              </div>
             </div>
 
             {/* Tags */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Tags
               </label>
               <input
@@ -344,24 +419,24 @@ export default function EditArticle() {
                   ...prev,
                   tags: e.target.value.split(',').map(t => t.trim()).filter(t => t)
                 }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm font-inter"
                 placeholder="nba, basquete, lakers..."
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 mt-2 font-inter">
                 Separe as tags por vírgula
               </p>
             </div>
 
             {/* Meta Description */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Meta Description (SEO)
               </label>
               <textarea
                 value={formData.meta_description}
                 onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))}
                 rows={4}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none text-sm"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none text-sm font-inter"
                 placeholder="Descrição para mecanismos de busca..."
               />
             </div>

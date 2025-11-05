@@ -94,7 +94,7 @@ export default function Home() {
                 to={`/artigos/${featuredArticle.slug}`}
                 className="group block"
               >
-                <div className="relative w-full aspect-[3/4] md:aspect-square lg:aspect-[4/3] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="relative w-full aspect-[3/4] md:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
                     src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                     srcSet={`
@@ -107,7 +107,7 @@ export default function Home() {
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    style={getObjectPositionStyle(featuredArticle.image_focal_point)}
+                    style={getObjectPositionStyle(featuredArticle.image_focal_point_mobile)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   
