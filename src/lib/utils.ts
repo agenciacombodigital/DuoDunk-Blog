@@ -6,24 +6,22 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getObjectPositionStyle(focalPoint?: string | null): object {
-  const getPosition = () => {
-    if (!focalPoint) return 'center';
-    
-    // Se for um par de coordenadas (ex: '30% 70%')
-    if (focalPoint.includes(' ')) return focalPoint;
-
-    // Se for um valor percentual único (ex: '50%', '0%', '100%') - Usado para foco vertical mobile
-    if (focalPoint.endsWith('%')) {
-      // Assumimos que é o foco vertical (Y), mantendo o horizontal no centro (X=50%)
-      return `50% ${focalPoint}`;
-    }
-    
-    // Se for uma palavra-chave
-    if (focalPoint === 'top') return '50% 0%';
-    if (focalPoint === 'center') return '50% 50%';
-    if (focalPoint === 'bottom') return '50% 100%';
-    
-    return 'center';
+  if (!focalPoint) {
+    return { objectPosition: 'center 40%' }; // ✅ Padrão melhor para mobile
   }
-  return { objectPosition: getPosition() };
+  
+  // Normaliza o focalPoint para comparação
+  const normalizedFocalPoint = focalPoint.toLowerCase().replace(/ /g, '');
+
+  // Se for apenas "center", "50%", ou "center50%", ajusta para 40%
+  if (normalizedFocalPoint === 'center' || normalizedFocalPoint === '50%' || normalizedFocalPoint === 'center50%') {
+    return { objectPosition: 'center 40%' };
+  }
+  
+  // Se for um valor percentual único (Y%), garante que o X seja 'center'
+  if (focalPoint.endsWith('%') && !focalPoint.includes(' ')) {
+    return { objectPosition: `center ${focalPoint}` };
+  }
+  
+  return { objectPosition: focalPoint };
 }
