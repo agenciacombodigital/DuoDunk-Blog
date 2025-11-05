@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Flame, Snowflake, Minus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getTeamColors } from '@/lib/nbaTeamColors'; // Importando as cores
+import { getTeamColors } from '@/lib/nbaTeamColors';
+import { NBA_TEAMS } from '@/lib/nbaTeams';
 
 interface Team {
   id: string;
@@ -61,7 +62,38 @@ export default function Classificacao() {
       if (error) throw error;
       
       if (data?.success && data?.standings) {
-        setStandings(data.standings);
+        // Helper para adicionar o slug aos times
+        const addSlugToTeams = (teams: any[]): Team[] => {
+          return teams.map(team => {
+            const teamInfo = NBA_TEAMS.find(t => t.abbreviation.toUpperCase() === team.abbreviation.toUpperCase());
+            return {
+              ...team,
+              slug: teamInfo?.slug || team.abbreviation.toLowerCase() // Fallback para abreviação
+            };
+          });
+        };
+
+        // Processar os dados para incluir o slug
+        const processedStandings: Standings = {
+          eastern: {
+            conference: addSlugToTeams(data.standings.eastern.conference),
+            divisions: {
+              Atlantic: addSlugToTeams(data.standings.eastern.divisions.Atlantic),
+              Central: addSlugToTeams(data.standings.eastern.divisions.Central),
+              Southeast: addSlugToTeams(data.standings.eastern.divisions.Southeast),
+            },
+          },
+          western: {
+            conference: addSlugToTeams(data.standings.western.conference),
+            divisions: {
+              Northwest: addSlugToTeams(data.standings.western.divisions.Northwest),
+              Pacific: addSlugToTeams(data.standings.western.divisions.Pacific),
+              Southwest: addSlugToTeams(data.standings.western.divisions.Southwest),
+            },
+          },
+        };
+
+        setStandings(processedStandings);
       }
     } catch (err) {
       console.error('Erro ao buscar standings:', err);
