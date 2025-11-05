@@ -5,19 +5,24 @@ import { getObjectPositionStyle } from '@/lib/utils';
 
 const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
   if (!focalPoint) return 50;
-  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o segundo valor (vertical)
-  if (focalPoint.includes(' ')) {
-    const parts = focalPoint.split(' ');
-    const vertical = parts.length > 1 ? parts[1] : '50%';
-    return parseInt(vertical.replace('%', ''));
+  
+  const cleanFocalPoint = focalPoint.replace(/px|em/g, '').trim();
+
+  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o primeiro valor (horizontal)
+  if (cleanFocalPoint.includes(' ')) {
+    const parts = cleanFocalPoint.split(' ');
+    // Para o slider horizontal, queremos o primeiro valor (X)
+    const horizontal = parts[0];
+    if (horizontal.endsWith('%')) return parseInt(horizontal.replace('%', ''));
   }
-  // Se for apenas a porcentagem vertical (ex: '50%')
-  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  
+  // Se for apenas a porcentagem (vertical ou horizontal)
+  if (cleanFocalPoint.endsWith('%')) return parseInt(cleanFocalPoint.replace('%', ''));
   
   // Se for palavra-chave
-  if (focalPoint === 'top') return 0;
-  if (focalPoint === 'center') return 50;
-  if (focalPoint === 'bottom') return 100;
+  if (cleanFocalPoint === 'top' || cleanFocalPoint === 'left') return 0;
+  if (cleanFocalPoint === 'center') return 50;
+  if (cleanFocalPoint === 'bottom' || cleanFocalPoint === 'right') return 100;
   
   return 50;
 };
@@ -49,9 +54,9 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
   if (!isOpen || !editedArticle) return null;
   
   // Extrair o valor X do foco horizontal para o slider
-  const currentHorizontalFocalPoint = editedArticle.image_focal_point.includes(' ') 
-    ? focalPointToPercentage(editedArticle.image_focal_point.split(' ')[0]) 
-    : focalPointToPercentage(editedArticle.image_focal_point);
+  const currentHorizontalFocalPoint = focalPointToPercentage(editedArticle.image_focal_point.split(' ')[0]);
+  // Extrair o valor Y do foco mobile para o slider
+  const currentMobileFocalPoint = focalPointToPercentage(editedArticle.image_focal_point_mobile);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -111,7 +116,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
               <div className="flex items-center gap-4 mt-2">
                 <span className="text-xs text-gray-400 font-inter">Topo</span>
                 <Slider 
-                  value={[focalPointToPercentage(editedArticle.image_focal_point_mobile)]} 
+                  value={[currentMobileFocalPoint]} 
                   onValueChange={(value) => { 
                     setEditedArticle({ ...editedArticle, image_focal_point_mobile: `${value[0]}%` }) 
                   }} 

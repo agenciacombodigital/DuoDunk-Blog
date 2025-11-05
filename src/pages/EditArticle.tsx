@@ -9,19 +9,25 @@ import { getObjectPositionStyle } from '@/lib/utils';
 
 const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
   if (!focalPoint) return 50;
-  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o segundo valor (vertical)
-  if (focalPoint.includes(' ')) {
-    const parts = focalPoint.split(' ');
-    const vertical = parts.length > 1 ? parts[1] : '50%';
-    return parseInt(vertical.replace('%', ''));
+  
+  // Remove 'px' ou 'em' se houver (improvável, mas seguro)
+  const cleanFocalPoint = focalPoint.replace(/px|em/g, '').trim();
+
+  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o primeiro valor (horizontal)
+  if (cleanFocalPoint.includes(' ')) {
+    const parts = cleanFocalPoint.split(' ');
+    // Para o slider horizontal, queremos o primeiro valor (X)
+    const horizontal = parts[0];
+    if (horizontal.endsWith('%')) return parseInt(horizontal.replace('%', ''));
   }
-  // Se for apenas a porcentagem vertical (ex: '50%')
-  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  
+  // Se for apenas a porcentagem (vertical ou horizontal)
+  if (cleanFocalPoint.endsWith('%')) return parseInt(cleanFocalPoint.replace('%', ''));
   
   // Se for palavra-chave
-  if (focalPoint === 'top') return 0;
-  if (focalPoint === 'center') return 50;
-  if (focalPoint === 'bottom') return 100;
+  if (cleanFocalPoint === 'top' || cleanFocalPoint === 'left') return 0;
+  if (cleanFocalPoint === 'center') return 50;
+  if (cleanFocalPoint === 'bottom' || cleanFocalPoint === 'right') return 100;
   
   return 50;
 };
@@ -136,9 +142,7 @@ export default function EditArticle() {
           meta_description: formData.meta_description,
           tags: formData.tags,
           video_url: formData.video_url,
-          // Salvamos o foco horizontal (X Y)
           image_focal_point: formData.image_focal_point,
-          // Salvamos o foco vertical (Y)
           image_focal_point_mobile: formData.image_focal_point_mobile,
         })
         .eq('id', article.id);
@@ -193,9 +197,9 @@ export default function EditArticle() {
   }
   
   // Extrair o valor X do foco horizontal para o slider
-  const currentHorizontalFocalPoint = formData.image_focal_point.includes(' ') 
-    ? focalPointToPercentage(formData.image_focal_point.split(' ')[0]) 
-    : focalPointToPercentage(formData.image_focal_point);
+  const currentHorizontalFocalPoint = focalPointToPercentage(formData.image_focal_point.split(' ')[0]);
+  // Extrair o valor Y do foco mobile para o slider
+  const currentMobileFocalPoint = focalPointToPercentage(formData.image_focal_point_mobile);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white py-12">
@@ -387,7 +391,7 @@ export default function EditArticle() {
                 <div className="flex items-center gap-4 mt-2">
                   <span className="text-xs text-gray-400 font-inter">Topo</span>
                   <Slider
-                    value={[focalPointToPercentage(formData.image_focal_point_mobile)]}
+                    value={[currentMobileFocalPoint]}
                     onValueChange={(value) => {
                       setFormData(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` }));
                     }}
