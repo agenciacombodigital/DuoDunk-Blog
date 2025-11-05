@@ -94,7 +94,7 @@ export default function Home() {
                 to={`/artigos/${featuredArticle.slug}`}
                 className="group block"
               >
-                <div className="relative w-full aspect-[4/3] lg:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="relative w-full aspect-[3/4] lg:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
                     src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                     srcSet={`
@@ -111,7 +111,7 @@ export default function Home() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   
-                  <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                         <Star className="w-3 h-3 fill-white" />
@@ -123,7 +123,7 @@ export default function Home() {
                       </span>
                     </div>
                     
-                    <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-white group-hover:text-pink-400 transition line-clamp-2">
+                    <h1 className="text-4xl md:text-5xl font-heading font-bold mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
                       {featuredArticle.title}
                     </h1>
                     
