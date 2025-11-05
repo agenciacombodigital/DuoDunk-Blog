@@ -16,7 +16,7 @@ export default function AdminRodadaNBA() {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [intro, setIntro] = useState('');
-  const [customSummary, setCustomSummary] = useState(''); // Novo campo de resumo
+  const [customSummary, setCustomSummary] = useState('');
   const [isFeatured, setIsFeatured] = useState(true);
 
   const handleImageUpload = async (file: File) => {
@@ -35,9 +35,7 @@ export default function AdminRodadaNBA() {
       const fileName = `rodada-${Date.now()}.${fileExt}`;
       const filePath = `public/${fileName}`;
 
-      console.log('📤 Enviando imagem:', fileName);
-
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('article-images')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -45,12 +43,7 @@ export default function AdminRodadaNBA() {
           contentType: file.type
         });
 
-      if (uploadError) {
-        console.error('❌ Erro no upload:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('✅ Upload concluído:', data);
+      if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('article-images')
@@ -58,7 +51,7 @@ export default function AdminRodadaNBA() {
 
       return publicUrl;
     } catch (error) {
-      console.error('❌ Erro ao fazer upload:', error);
+      console.error('Erro ao fazer upload:', error);
       throw error;
     }
   };
@@ -68,7 +61,7 @@ export default function AdminRodadaNBA() {
     if (file) {
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setError(null); // Limpa o erro ao selecionar nova imagem
+      setError(null);
     }
   };
 
@@ -79,30 +72,18 @@ export default function AdminRodadaNBA() {
     const toastId = toast.loading('Publicando rodada...');
 
     try {
-      if (!imageFile) {
-        throw new Error('Selecione uma imagem de capa para a rodada.');
-      }
-      if (!title.trim()) {
-        throw new Error('O título da rodada é obrigatório.');
-      }
-      if (!intro.trim()) {
-        throw new Error('O conteúdo da rodada é obrigatório.');
-      }
+      if (!imageFile) throw new Error('Selecione uma imagem de capa para a rodada.');
+      if (!title.trim()) throw new Error('O título da rodada é obrigatório.');
+      if (!intro.trim()) throw new Error('O conteúdo da rodada é obrigatório.');
 
-      console.log('🚀 Iniciando publicação...');
       const imageUrl = await handleImageUpload(imageFile);
-      if (!imageUrl) {
-        throw new Error('Falha ao obter URL da imagem após o upload.');
-      }
-      console.log('✅ Imagem enviada:', imageUrl);
+      if (!imageUrl) throw new Error('Falha ao obter URL da imagem após o upload.');
 
       const dateObj = new Date(`${date}T12:00:00Z`);
       const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
 
-      // Construção do corpo do artigo (body)
       let body = '<div class="schedule-post" style="font-family: system-ui, -apple-system, sans-serif;">';
       
-      // Adiciona o resumo personalizado no topo do corpo do artigo
       if (customSummary.trim()) {
         body += `<p style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 20px;">${customSummary.trim()}</p>`;
       }
@@ -113,12 +94,10 @@ export default function AdminRodadaNBA() {
       body += '</div>';
 
       const slug = `rodada-nba-${dateStr.replace(/\//g, '-')}-${Date.now()}`;
-      console.log('📄 Slug gerado:', slug);
 
       const { error: insertError } = await supabase.from('articles').insert({
         title: title.trim(),
         subtitle: subtitle.trim() || `Confira os jogos, horários e transmissões`,
-        // Enviamos o summary vazio para não poluir a imagem de destaque na Home
         summary: '', 
         body,
         slug,
@@ -132,12 +111,8 @@ export default function AdminRodadaNBA() {
         is_featured: isFeatured,
       });
 
-      if (insertError) {
-        console.error('❌ Erro ao salvar no banco:', insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
-      console.log('✅ Rodada publicada com sucesso!');
       toast.success('Post de rodada criado com sucesso!', { id: toastId });
       navigate('/admin');
 
@@ -145,7 +120,6 @@ export default function AdminRodadaNBA() {
       const errorMessage = error.message || 'Ocorreu um erro desconhecido.';
       setError(errorMessage);
       toast.error('Erro ao criar post', { id: toastId, description: errorMessage });
-      console.error(error);
     } finally {
       setIsPublishing(false);
     }
@@ -172,7 +146,6 @@ export default function AdminRodadaNBA() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Data */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               📅 Data dos Jogos *
@@ -186,7 +159,6 @@ export default function AdminRodadaNBA() {
             />
           </div>
 
-          {/* Título */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               📰 Título da Rodada *
@@ -203,7 +175,6 @@ export default function AdminRodadaNBA() {
             <p className="text-xs text-gray-500 mt-1">{title.length}/80 caracteres</p>
           </div>
 
-          {/* Subtítulo */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               📝 Subtítulo (opcional)
@@ -219,7 +190,6 @@ export default function AdminRodadaNBA() {
             <p className="text-xs text-gray-500 mt-1">{subtitle.length}/100 caracteres</p>
           </div>
           
-          {/* NOVO CAMPO: Resumo Personalizado (Aparece apenas no Artigo) */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               ✨ Resumo do Artigo (Máx. 2 linhas)
@@ -235,7 +205,6 @@ export default function AdminRodadaNBA() {
             <p className="text-xs text-gray-500 mt-1">{customSummary.length}/200 caracteres</p>
           </div>
 
-          {/* Conteúdo */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               ✍️ Conteúdo da Rodada (Inclua os jogos aqui) *
@@ -252,7 +221,6 @@ export default function AdminRodadaNBA() {
             <p className="text-xs text-gray-500 mt-1">{intro.length}/2000 caracteres</p>
           </div>
 
-          {/* Imagem */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <label className="block text-sm font-medium mb-2">
               🖼️ Imagem da Capa *
@@ -283,7 +251,6 @@ export default function AdminRodadaNBA() {
             )}
           </div>
           
-          {/* Marcar como Destaque */}
           <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
             <input
               type="checkbox"
@@ -303,7 +270,6 @@ export default function AdminRodadaNBA() {
             </label>
           </div>
 
-          {/* Mensagem de Erro */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium p-4 rounded-xl flex items-center gap-3">
               <AlertTriangle className="w-5 h-5" />
@@ -311,7 +277,6 @@ export default function AdminRodadaNBA() {
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isPublishing}
