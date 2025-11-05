@@ -11,14 +11,14 @@ function getTimeAgo(dateString: string): string {
   const now = new Date();
   const diffInMs = now.getTime() - date.getTime();
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  
+
   if (diffInHours < 1) return 'menos de 1h';
   if (diffInHours < 24) return `${diffInHours}h`;
-  
+
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays === 1) return '1 dia';
   if (diffInDays < 7) return `${diffInDays} dias`;
-  
+
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
@@ -32,7 +32,6 @@ export default function Home() {
 
   const loadArticles = async () => {
     try {
-      // Buscamos 100 artigos para preencher as seções
       const { data, error } = await supabase
         .from('articles')
         .select('*')
@@ -65,11 +64,8 @@ export default function Home() {
     );
   }
 
-  // Separar artigos por seções
   const featuredArticle = articles.find(a => a.is_featured) || articles[0];
-  const section1 = articles
-    .filter(a => a.id !== featuredArticle?.id)
-    .slice(0, 7);
+  const section1 = articles.filter(a => a.id !== featuredArticle?.id).slice(0, 7);
   const section2 = articles.slice(8, 14);
   const section3 = articles.slice(14, 16);
   const section4 = articles.slice(16, 20);
@@ -90,48 +86,56 @@ export default function Home() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
-              <Link 
-                to={`/artigos/${featuredArticle.slug}`}
-                className="group block"
-              >
-                <div className="relative w-full aspect-[3/4] md:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
-                  <img
-                    src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
-                    srcSet={`
-                      ${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w,
-                      ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w,
-                      ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w
-                    `}
-                    sizes="(max-width: 1023px) 100vw, 800px"
-                    alt={featuredArticle.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    style={getObjectPositionStyle(featuredArticle.image_focal_point_mobile)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-                  
-                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-white" />
-                        DESTAQUE
-                      </span>
-                      <span className="text-white/80 text-sm font-inter flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Há {getTimeAgo(featuredArticle.published_at)}
-                      </span>
-                    </div>
-                    
-                    <h1 className="font-oswald text-4xl md:text-5xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
-                      {featuredArticle.title}
-                    </h1>
-                    
-                    <div className="flex items-center gap-2 text-sm text-white/70 font-inter">
-                      <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+              <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
+                {/* ===================== CORREÇÃO FEITA AQUI ===================== */}
+                <div className="w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                  <div className="relative aspect-[3/4] md:aspect-[16/9]">
+                    <img
+                      src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
+                      srcSet={`
+                        ${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w,
+                        ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w,
+                        ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w
+                      `}
+                      sizes="(max-width: 1023px) 100vw, 800px"
+                      alt={featuredArticle.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={getObjectPositionStyle(featuredArticle.image_focal_point_mobile)}
+                    />
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-white" />
+                          DESTAQUE
+                        </span>
+                        <span className="text-white/80 text-sm font-inter flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Há {getTimeAgo(featuredArticle.published_at)}
+                        </span>
+                      </div>
+
+                      <h1 className="font-oswald text-4xl md:text-5xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
+                        {featuredArticle.title}
+                      </h1>
+
+                      <div className="flex items-center gap-2 text-sm text-white/70 font-inter">
+                        <span>
+                          {new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
+                {/* ================================================================ */}
               </Link>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
