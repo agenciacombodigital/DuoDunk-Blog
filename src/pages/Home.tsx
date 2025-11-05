@@ -204,7 +204,7 @@ export default function Home() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={getOptimizedImageUrl(article.image_url, 400)}
+                      src={getOptimizedImageUrl(section1[6].image_url, 400)}
                       alt={section1[6].title}
                       loading="lazy"
                       decoding="async"
