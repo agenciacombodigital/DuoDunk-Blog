@@ -33,50 +33,55 @@ const getVerticalFocalPoint = (focalPoint: string | null | undefined): number =>
 };
 
 export default function PendingApprovalCard({ article, uploadingImage, onImageUpload, onFocalPointChange, onFocalPointCommit, onToggleFeatured, onEdit, onApprove, onReject, onDelete }: any) {
-  // Inicializa os estados de foco com fallback para '50%'
-  // Usamos o valor do article diretamente, mas garantimos que ele não seja null/undefined
-  const [focalPointDesktop, setFocalPointDesktop] = useState(getHorizontalFocalPoint(article?.image_focal_point));
-  const [focalPointMobile, setFocalPointMobile] = useState(getVerticalFocalPoint(article?.image_focal_point_mobile));
+  // Estado local para o preview do slider
+  const [localFocalPointDesktop, setLocalFocalPointDesktop] = useState(article.image_focal_point || '50% 50%');
+  const [localFocalPointMobile, setLocalFocalPointMobile] = useState(article.image_focal_point_mobile || '50%');
 
-  // Função auxiliar para lidar com a mudança de foco
-  const handleFocalPointChangeWrapper = (type: 'desktop' | 'mobile', value: number[]) => {
-    const percentage = `${value[0]}%`;
-    
-    if (type === 'desktop') {
-      setFocalPointDesktop(value[0]);
-      // O foco desktop (16:9) usa o eixo X (horizontal). Mantemos o Y atual.
-      const currentVertical = getVerticalFocalPoint(article.image_focal_point);
-      onFocalPointChange(article.id, [`${percentage} ${currentVertical}%`, article.image_focal_point_mobile]);
-    } else {
-      setFocalPointMobile(value[0]);
-      // O foco mobile (3:4) usa o eixo Y (vertical).
-      onFocalPointChange(article.id, [article.image_focal_point, percentage]);
-    }
+  // Atualiza o estado local quando o artigo muda (ex: após upload de imagem)
+  if (article.image_focal_point !== localFocalPointDesktop && article.image_focal_point) {
+    setLocalFocalPointDesktop(article.image_focal_point);
+  }
+  if (article.image_focal_point_mobile !== localFocalPointMobile && article.image_focal_point_mobile) {
+    setLocalFocalPointMobile(article.image_focal_point_mobile);
+  }
+
+  // Handlers para o Slider
+  const handleDesktopChange = (value: number[]) => {
+    const newX = `${value[0]}%`;
+    const currentY = getVerticalFocalPoint(localFocalPointDesktop);
+    const newFocalPoint = `${newX} ${currentY}%`;
+    setLocalFocalPointDesktop(newFocalPoint);
+    onFocalPointChange(article.id, [newFocalPoint, localFocalPointMobile]);
   };
 
-  // Função auxiliar para lidar com o commit (salvar no DB)
-  const handleFocalPointCommitWrapper = (type: 'desktop' | 'mobile', value: number[]) => {
-    const percentage = `${value[0]}%`;
-    
-    if (type === 'desktop') {
-      const currentVertical = getVerticalFocalPoint(article.image_focal_point);
-      onFocalPointCommit(article.id, [`${percentage} ${currentVertical}%`, article.image_focal_point_mobile]);
-    } else {
-      onFocalPointCommit(article.id, [article.image_focal_point, percentage]);
-    }
+  const handleMobileChange = (value: number[]) => {
+    const newY = `${value[0]}%`;
+    setLocalFocalPointMobile(newY);
+    onFocalPointChange(article.id, [localFocalPointDesktop, newY]);
+  };
+
+  const handleDesktopCommit = (value: number[]) => {
+    const newX = `${value[0]}%`;
+    const currentY = getVerticalFocalPoint(localFocalPointDesktop);
+    const newFocalPoint = `${newX} ${currentY}%`;
+    onFocalPointCommit(article.id, [newFocalPoint, localFocalPointMobile]);
+  };
+
+  const handleMobileCommit = (value: number[]) => {
+    const newY = `${value[0]}%`;
+    onFocalPointCommit(article.id, [localFocalPointDesktop, newY]);
   };
   
-  // Extrair o valor X do foco horizontal para o slider
-  const currentHorizontalFocalPoint = getHorizontalFocalPoint(article.image_focal_point);
-  // Extrair o valor Y do foco mobile para o slider
-  const currentMobileFocalPoint = getVerticalFocalPoint(article.image_focal_point_mobile);
+  // Valores para o Slider
+  const currentHorizontalFocalPoint = getHorizontalFocalPoint(localFocalPointDesktop);
+  const currentMobileFocalPoint = getVerticalFocalPoint(localFocalPointMobile);
 
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
       <div className="p-6">
         <div className="mb-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
           <label className="block text-sm text-gray-400 mb-2 font-semibold font-inter">📸 Imagem do Artigo:</label>
-          {article.image_url && <img src={article.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" style={getObjectPositionStyle(article.image_focal_point)} />}
+          {article.image_url && <img src={article.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" style={getObjectPositionStyle(localFocalPointDesktop)} />}
           <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) onImageUpload(article.id, file); }} disabled={uploadingImage === article.id} className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 file:cursor-pointer cursor-pointer font-inter" />
           {uploadingImage === article.id && <p className="text-xs text-cyan-400 mt-2 animate-pulse flex items-center gap-2 font-inter"><Loader2 className="w-3 h-3 animate-spin" />Fazendo upload...</p>}
           
@@ -88,7 +93,7 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
                 src={article.image_url}
                 alt="Preview Mobile"
                 className="w-full h-full object-cover"
-                style={getObjectPositionStyle(article.image_focal_point_mobile)}
+                style={getObjectPositionStyle(localFocalPointMobile)}
               />
               <div className="absolute inset-0 border-4 border-dashed border-white/50 pointer-events-none flex items-center justify-center">
                 <span className="text-white text-xs bg-black/50 p-1 rounded font-inter">Corte Mobile (3:4)</span>
@@ -98,8 +103,8 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
               <span className="text-xs text-gray-400 font-inter">Topo</span>
               <Slider
                 value={[currentMobileFocalPoint]}
-                onValueChange={(value) => handleFocalPointChangeWrapper('mobile', value)}
-                onValueCommit={(value) => handleFocalPointCommitWrapper('mobile', value)}
+                onValueChange={handleMobileChange}
+                onValueCommit={handleMobileCommit}
                 max={100}
                 step={1}
                 className="w-full"
@@ -115,8 +120,8 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
               <span className="text-xs text-gray-400 font-inter">Esquerda</span>
               <Slider
                 value={[currentHorizontalFocalPoint]}
-                onValueChange={(value) => handleFocalPointChangeWrapper('desktop', value)}
-                onValueCommit={(value) => handleFocalPointCommitWrapper('desktop', value)}
+                onValueChange={handleDesktopChange}
+                onValueCommit={handleDesktopCommit}
                 max={100}
                 step={1}
                 className="w-full"

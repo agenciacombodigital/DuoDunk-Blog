@@ -47,20 +47,33 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
   const [editedArticle, setEditedArticle] = useState(article);
 
   useEffect(() => {
-    // Garantir que o foco horizontal tenha X e Y para o preview 16:9
-    const initialArticle = {
-      ...article,
-      image_focal_point: article?.image_focal_point || '50% 50%',
-      image_focal_point_mobile: article?.image_focal_point_mobile || '50%',
-    };
-    setEditedArticle(initialArticle);
+    if (article) {
+      // Garantir que o foco horizontal tenha X e Y para o preview 16:9
+      const initialArticle = {
+        ...article,
+        image_focal_point: article?.image_focal_point || '50% 50%',
+        image_focal_point_mobile: article?.image_focal_point_mobile || '50%',
+      };
+      setEditedArticle(initialArticle);
+    }
   }, [article]);
 
   if (!isOpen || !editedArticle) return null;
   
-  // Extrair o valor X do foco horizontal para o slider
+  // Handlers para o Slider
+  const handleDesktopChange = (value: number[]) => {
+    const newX = `${value[0]}%`;
+    const currentY = getVerticalFocalPoint(editedArticle.image_focal_point);
+    setEditedArticle(prev => ({ ...prev, image_focal_point: `${newX} ${currentY}%` }));
+  };
+
+  const handleMobileChange = (value: number[]) => {
+    const newY = `${value[0]}%`;
+    setEditedArticle(prev => ({ ...prev, image_focal_point_mobile: newY }));
+  };
+  
+  // Valores para o Slider
   const currentHorizontalFocalPoint = getHorizontalFocalPoint(editedArticle.image_focal_point);
-  // Extrair o valor Y do foco mobile para o slider
   const currentMobileFocalPoint = getVerticalFocalPoint(editedArticle.image_focal_point_mobile);
 
   return (
@@ -122,9 +135,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
                 <span className="text-xs text-gray-400 font-inter">Topo</span>
                 <Slider 
                   value={[currentMobileFocalPoint]} 
-                  onValueChange={(value) => { 
-                    setEditedArticle(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` })) 
-                  }} 
+                  onValueChange={handleMobileChange} 
                   max={100} 
                   step={1} 
                   className="w-full" 
@@ -142,10 +153,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
                 <span className="text-xs text-gray-400 font-inter">Esquerda</span>
                 <Slider 
                   value={[currentHorizontalFocalPoint]} 
-                  onValueChange={(value) => { 
-                    const currentVertical = getVerticalFocalPoint(editedArticle.image_focal_point);
-                    setEditedArticle(prev => ({ ...prev, image_focal_point: `${value[0]}% ${currentVertical}%` })) 
-                  }} 
+                  onValueChange={handleDesktopChange} 
                   max={100} 
                   step={1} 
                   className="w-full" 

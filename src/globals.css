@@ -305,6 +305,11 @@ html {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
   }
+  
+  /* Forçar object-fit: cover para preencher o container 3:4 */
+  .aspect-\[3\/4\] img {
+    object-fit: cover !important;
+  }
 }
 
 /* Responsividade mobile para Bebas */
