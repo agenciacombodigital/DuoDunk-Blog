@@ -5,14 +5,25 @@ import { getObjectPositionStyle } from '@/lib/utils';
 
 const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
   if (!focalPoint) return 50;
+  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o segundo valor (vertical)
+  if (focalPoint.includes(' ')) {
+    const parts = focalPoint.split(' ');
+    const vertical = parts.length > 1 ? parts[1] : '50%';
+    return parseInt(vertical.replace('%', ''));
+  }
+  // Se for apenas a porcentagem vertical (ex: '50%')
+  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  
+  // Se for palavra-chave
   if (focalPoint === 'top') return 0;
   if (focalPoint === 'center') return 50;
   if (focalPoint === 'bottom') return 100;
-  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  
   return 50;
 };
 
 export default function PendingApprovalCard({ article, uploadingImage, onImageUpload, onFocalPointChange, onFocalPointCommit, onToggleFeatured, onEdit, onApprove, onReject, onDelete }: any) {
+  // Inicializa os estados de foco com fallback para '50%'
   const [focalPointDesktop, setFocalPointDesktop] = useState(focalPointToPercentage(article.image_focal_point));
   const [focalPointMobile, setFocalPointMobile] = useState(focalPointToPercentage(article.image_focal_point_mobile));
 
@@ -41,6 +52,11 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
       onFocalPointCommit(article.id, [article.image_focal_point, percentage]);
     }
   };
+  
+  // Extrair o valor X do foco horizontal para o slider
+  const currentHorizontalFocalPoint = article.image_focal_point?.includes(' ') 
+    ? focalPointToPercentage(article.image_focal_point.split(' ')[0]) 
+    : focalPointToPercentage(article.image_focal_point);
 
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
@@ -85,7 +101,7 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
             <div className="flex items-center gap-4 mt-2">
               <span className="text-xs text-gray-400 font-inter">Esquerda</span>
               <Slider
-                value={[focalPointDesktop]}
+                value={[currentHorizontalFocalPoint]}
                 onValueChange={(value) => handleFocalPointChangeWrapper('desktop', value)}
                 onValueCommit={(value) => handleFocalPointCommitWrapper('desktop', value)}
                 max={100}
@@ -105,7 +121,6 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
           <button onClick={() => onEdit(article)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter" title="Editar antes de publicar"><Edit className="w-5 h-5" />Editar</button>
           <button onClick={() => onApprove(article)} className="btn-success flex-1 flex items-center justify-center gap-2 font-inter"><CheckCircle className="w-5 h-5" />Aprovar</button>
           <button onClick={() => onReject(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-6 py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2 font-inter"><Trash2 className="w-5 h-5" />Rejeitar</button>
-          <button onClick={() => onDelete(article.id)} className="btn-danger flex-1 flex items-center justify-center gap-2 font-inter"><Trash2 className="w-5 h-5" />Deletar</button>
         </div>
       </div>
     </div>

@@ -5,10 +5,20 @@ import { getObjectPositionStyle } from '@/lib/utils';
 
 const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
   if (!focalPoint) return 50;
+  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o segundo valor (vertical)
+  if (focalPoint.includes(' ')) {
+    const parts = focalPoint.split(' ');
+    const vertical = parts.length > 1 ? parts[1] : '50%';
+    return parseInt(vertical.replace('%', ''));
+  }
+  // Se for apenas a porcentagem vertical (ex: '50%')
+  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  
+  // Se for palavra-chave
   if (focalPoint === 'top') return 0;
   if (focalPoint === 'center') return 50;
   if (focalPoint === 'bottom') return 100;
-  if (focalPoint.endsWith('%')) return parseInt(focalPoint.replace('%', ''));
+  
   return 50;
 };
 
@@ -27,10 +37,21 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
   const [editedArticle, setEditedArticle] = useState(article);
 
   useEffect(() => {
-    setEditedArticle(article);
+    // Garantir que o foco horizontal tenha X e Y para o preview 16:9
+    const initialArticle = {
+      ...article,
+      image_focal_point: article.image_focal_point || '50% 50%',
+      image_focal_point_mobile: article.image_focal_point_mobile || '50%',
+    };
+    setEditedArticle(initialArticle);
   }, [article]);
 
   if (!isOpen || !editedArticle) return null;
+  
+  // Extrair o valor X do foco horizontal para o slider
+  const currentHorizontalFocalPoint = editedArticle.image_focal_point.includes(' ') 
+    ? focalPointToPercentage(editedArticle.image_focal_point.split(' ')[0]) 
+    : focalPointToPercentage(editedArticle.image_focal_point);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -110,7 +131,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
               <div className="flex items-center gap-4 mt-2">
                 <span className="text-xs text-gray-400 font-inter">Esquerda</span>
                 <Slider 
-                  value={[focalPointToPercentage(editedArticle.image_focal_point)]} 
+                  value={[currentHorizontalFocalPoint]} 
                   onValueChange={(value) => { 
                     setEditedArticle({ ...editedArticle, image_focal_point: `${value[0]}% 50%` }) 
                   }} 
