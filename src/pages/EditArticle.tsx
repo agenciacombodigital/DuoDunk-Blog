@@ -381,7 +381,7 @@ export default function EditArticle() {
                 <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                   Foco Vertical (Mobile 3:4)
                 </label>
-                <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50">
+                <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-96 mx-auto max-w-xs">
                   <img
                     src={formData.image_url}
                     alt="Preview Mobile"

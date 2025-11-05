@@ -83,7 +83,7 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
           {/* Foco Vertical Mobile (3:4) */}
           <div className="mt-4 pt-4 border-t border-gray-700">
             <label className="text-sm font-semibold text-gray-400 font-inter">Foco Vertical (Mobile 3:4)</label>
-            <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2">
+            <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-96 mx-auto max-w-xs">
               <img
                 src={article.image_url}
                 alt="Preview Mobile"
@@ -126,7 +126,8 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
           </div>
         </div>
         <h3 className="font-oswald text-xl font-bold uppercase text-white mb-2">{article.title}</h3>
-        <p className="text-gray-400 text-sm mb-4 leading-relaxed font-inter">{article.summary}</p>
+        {/* NOVO: Resumo Curto */}
+        <p className="text-cyan-400 text-sm mb-4 line-clamp-2 leading-snug font-inter">{article.summary}</p>
         <details className="mb-4"><summary className="cursor-pointer text-secondary hover:text-cyan-300 text-sm font-semibold font-inter">📄 Ver conteúdo completo</summary><div className="mt-4 prose prose-invert prose-sm max-w-none bg-black p-4 rounded-lg overflow-auto max-h-96 font-inter" dangerouslySetInnerHTML={{ __html: article.body }} /></details>
         {article.tags && <div className="flex flex-wrap gap-2 mb-4">{article.tags.map((tag: string) => (<span key={tag} className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded font-inter">#{tag}</span>))}</div>}
         <div className="flex gap-3">
