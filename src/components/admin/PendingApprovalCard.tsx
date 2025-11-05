@@ -34,6 +34,7 @@ const getVerticalFocalPoint = (focalPoint: string | null | undefined): number =>
 
 export default function PendingApprovalCard({ article, uploadingImage, onImageUpload, onFocalPointChange, onFocalPointCommit, onToggleFeatured, onEdit, onApprove, onReject, onDelete }: any) {
   // Inicializa os estados de foco com fallback para '50%'
+  // Usamos o valor do article diretamente, mas garantimos que ele não seja null/undefined
   const [focalPointDesktop, setFocalPointDesktop] = useState(getHorizontalFocalPoint(article?.image_focal_point));
   const [focalPointMobile, setFocalPointMobile] = useState(getVerticalFocalPoint(article?.image_focal_point_mobile));
 

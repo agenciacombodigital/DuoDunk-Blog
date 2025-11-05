@@ -397,6 +397,7 @@ export default function EditArticle() {
                   <Slider
                     value={[currentMobileFocalPoint]}
                     onValueChange={(value) => {
+                      // Atualiza o foco vertical (Y)
                       setFormData(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` }));
                     }}
                     max={100}
@@ -410,7 +411,7 @@ export default function EditArticle() {
                 </p>
               </div>
               
-              {/* Foco Horizontal (Desktop 16:9) - CORRIGIDO */}
+              {/* Foco Horizontal (Desktop 16:9) */}
               <div className="mt-6 pt-4 border-t border-gray-700">
                 <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                   Foco Horizontal (Desktop 16:9)

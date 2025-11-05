@@ -123,7 +123,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
                 <Slider 
                   value={[currentMobileFocalPoint]} 
                   onValueChange={(value) => { 
-                    setEditedArticle({ ...editedArticle, image_focal_point_mobile: `${value[0]}%` }) 
+                    setEditedArticle(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` })) 
                   }} 
                   max={100} 
                   step={1} 
@@ -144,7 +144,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
                   value={[currentHorizontalFocalPoint]} 
                   onValueChange={(value) => { 
                     const currentVertical = getVerticalFocalPoint(editedArticle.image_focal_point);
-                    setEditedArticle({ ...editedArticle, image_focal_point: `${value[0]}% ${currentVertical}%` }) 
+                    setEditedArticle(prev => ({ ...prev, image_focal_point: `${value[0]}% ${currentVertical}%` })) 
                   }} 
                   max={100} 
                   step={1} 
