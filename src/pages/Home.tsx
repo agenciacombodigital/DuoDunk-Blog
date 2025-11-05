@@ -94,7 +94,7 @@ export default function Home() {
                 to={`/artigos/${featuredArticle.slug}`}
                 className="group block"
               >
-                <div className="relative w-full aspect-[3/4] lg:aspect-[16/9] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                <div className="relative w-full aspect-[3/4] md:aspect-square lg:aspect-[4/3] overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
                     src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                     srcSet={`
@@ -154,7 +154,7 @@ export default function Home() {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold text-gray-900 text-base mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                      <h3 className="font-heading tracking-wide text-xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                         {article.title}
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -188,7 +188,7 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    <h3 className="font-bold text-gray-900 text-sm group-hover:text-pink-600 transition line-clamp-3">
+                    <h3 className="font-heading tracking-wide text-lg font-bold text-gray-900 group-hover:text-pink-600 transition line-clamp-3">
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -218,7 +218,7 @@ export default function Home() {
                     <span className="inline-block bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-2">
                       5
                     </span>
-                    <h3 className="font-bold text-gray-900 text-base mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                       {section1[6].title}
                     </h3>
                   </div>
@@ -249,7 +249,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
@@ -285,7 +285,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-3xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 mb-4 line-clamp-2">{article.summary}</p>
@@ -320,7 +320,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="font-bold text-sm group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-lg font-bold group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                   </div>
@@ -351,7 +351,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    <h3 className="text-xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2">{article.summary}</p>
@@ -383,7 +383,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
@@ -413,7 +413,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
@@ -448,7 +448,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-heading tracking-wide text-3xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2">{article.summary}</p>
@@ -499,7 +499,7 @@ export default function Home() {
                                 {new Date(article.published_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
+                            <h3 className="font-heading tracking-wide text-2xl font-bold text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
                               {article.title}
                             </h3>
                             <p className="text-sm text-gray-600 line-clamp-2">{article.summary}</p>
@@ -543,7 +543,7 @@ export default function Home() {
                               {new Date(article.published_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
-                          <h3 className="text-3xl font-black text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
+                          <h3 className="font-heading text-4xl font-black text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
                             {article.title}
                           </h3>
                           {article.subtitle && (
@@ -591,7 +591,7 @@ export default function Home() {
                         </svg>
                         <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
+                      <h3 className="font-heading tracking-wide text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
                         {article.title}
                       </h3>
                       <p className="text-sm text-gray-600 line-clamp-2 mb-4">{article.summary}</p>

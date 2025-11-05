@@ -53,7 +53,7 @@ export default function LatestNews({ currentPostId, limit = 3 }: LatestNewsProps
             />
           )}
           <div className="p-4">
-            <h3 className="font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-2">
+            <h3 className="font-heading text-lg tracking-wide font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-2">
               {post.title}
             </h3>
             <p className="text-xs text-gray-500 mt-2">

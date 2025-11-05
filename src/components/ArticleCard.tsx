@@ -40,7 +40,7 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
       
       {/* Conteúdo */}
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-[#FA007D] transition-colors">
+        <h3 className="font-heading text-2xl tracking-wide font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-[#FA007D] transition-colors">
           {article.title}
         </h3>
         

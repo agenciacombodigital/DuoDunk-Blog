@@ -128,7 +128,7 @@ export default function Artigo() {
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="font-heading text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-wide">
               {article.title}
             </h1>
 
