@@ -61,34 +61,35 @@ export default function Classificacao() {
       
       if (error) throw error;
       
-      if (data?.success && data?.standings) {
-        // Helper para adicionar o slug aos times
+      // Corrigido: A verificação de `data.success` era o problema.
+      // Agora verificamos diretamente se `data.standings` existe.
+      if (data?.standings) {
         const addSlugToTeams = (teams: any[]): Team[] => {
+          if (!Array.isArray(teams)) return []; // Adicionada verificação de segurança
           return teams.map(team => {
             const teamInfo = NBA_TEAMS.find(t => t.abbreviation.toUpperCase() === team.abbreviation.toUpperCase());
             return {
               ...team,
-              slug: teamInfo?.slug || team.abbreviation.toLowerCase() // Fallback para abreviação
+              slug: teamInfo?.slug || team.abbreviation.toLowerCase()
             };
           });
         };
 
-        // Processar os dados para incluir o slug
         const processedStandings: Standings = {
           eastern: {
-            conference: addSlugToTeams(data.standings.eastern.conference),
+            conference: addSlugToTeams(data.standings.eastern?.conference),
             divisions: {
-              Atlantic: addSlugToTeams(data.standings.eastern.divisions.Atlantic),
-              Central: addSlugToTeams(data.standings.eastern.divisions.Central),
-              Southeast: addSlugToTeams(data.standings.eastern.divisions.Southeast),
+              Atlantic: addSlugToTeams(data.standings.eastern?.divisions?.Atlantic),
+              Central: addSlugToTeams(data.standings.eastern?.divisions?.Central),
+              Southeast: addSlugToTeams(data.standings.eastern?.divisions?.Southeast),
             },
           },
           western: {
-            conference: addSlugToTeams(data.standings.western.conference),
+            conference: addSlugToTeams(data.standings.western?.conference),
             divisions: {
-              Northwest: addSlugToTeams(data.standings.western.divisions.Northwest),
-              Pacific: addSlugToTeams(data.standings.western.divisions.Pacific),
-              Southwest: addSlugToTeams(data.standings.western.divisions.Southwest),
+              Northwest: addSlugToTeams(data.standings.western?.divisions?.Northwest),
+              Pacific: addSlugToTeams(data.standings.western?.divisions?.Pacific),
+              Southwest: addSlugToTeams(data.standings.western?.divisions?.Southwest),
             },
           },
         };
