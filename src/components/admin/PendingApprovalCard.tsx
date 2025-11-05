@@ -3,35 +3,39 @@ import { CheckCircle, Edit, Loader2, Star, Trash2, Upload } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle } from '@/lib/utils';
 
-const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
-  if (!focalPoint) return 50;
-  
-  const cleanFocalPoint = focalPoint.replace(/px|em/g, '').trim();
-
-  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o primeiro valor (horizontal)
-  if (cleanFocalPoint.includes(' ')) {
-    const parts = cleanFocalPoint.split(' ');
-    // Para o slider horizontal, queremos o primeiro valor (X)
-    const horizontal = parts[0];
-    if (horizontal.endsWith('%')) return parseInt(horizontal.replace('%', ''));
-  }
-  
-  // Se for apenas a porcentagem (vertical ou horizontal)
-  if (cleanFocalPoint.endsWith('%')) return parseInt(cleanFocalPoint.replace('%', ''));
-  
-  // Se for palavra-chave
-  if (cleanFocalPoint === 'top' || cleanFocalPoint === 'left') return 0;
-  if (cleanFocalPoint === 'center') return 50;
-  if (cleanFocalPoint === 'bottom' || cleanFocalPoint === 'right') return 100;
-  
+// Helper para converter valor de foco (X% ou Y%) para número (0-100)
+const percentageToNumber = (value: string | null | undefined): number => {
+  if (!value) return 50;
+  if (value.endsWith('%')) return parseInt(value.replace('%', ''));
+  if (value === 'top' || value === 'left') return 0;
+  if (value === 'center') return 50;
+  if (value === 'bottom' || value === 'right') return 100;
   return 50;
+};
+
+// Extrai o foco horizontal (X) de uma string de posição (X% Y%)
+const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => {
+  if (!focalPoint) return 50;
+  const parts = focalPoint.split(' ');
+  return percentageToNumber(parts[0]);
+};
+
+// Extrai o foco vertical (Y) de uma string de posição (X% Y% ou Y%)
+const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => {
+  if (!focalPoint) return 50;
+  const parts = focalPoint.split(' ');
+  // Se for um par (desktop), pegamos o segundo valor (Y)
+  if (parts.length > 1) {
+    return percentageToNumber(parts[1]);
+  }
+  // Se for apenas um valor (mobile), pegamos ele mesmo (Y)
+  return percentageToNumber(parts[0]);
 };
 
 export default function PendingApprovalCard({ article, uploadingImage, onImageUpload, onFocalPointChange, onFocalPointCommit, onToggleFeatured, onEdit, onApprove, onReject, onDelete }: any) {
   // Inicializa os estados de foco com fallback para '50%'
-  // Usamos o valor do article diretamente, mas garantimos que ele não seja null/undefined
-  const [focalPointDesktop, setFocalPointDesktop] = useState(focalPointToPercentage(article?.image_focal_point));
-  const [focalPointMobile, setFocalPointMobile] = useState(focalPointToPercentage(article?.image_focal_point_mobile));
+  const [focalPointDesktop, setFocalPointDesktop] = useState(getHorizontalFocalPoint(article?.image_focal_point));
+  const [focalPointMobile, setFocalPointMobile] = useState(getVerticalFocalPoint(article?.image_focal_point_mobile));
 
   // Função auxiliar para lidar com a mudança de foco
   const handleFocalPointChangeWrapper = (type: 'desktop' | 'mobile', value: number[]) => {
@@ -39,11 +43,12 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
     
     if (type === 'desktop') {
       setFocalPointDesktop(value[0]);
-      // O foco desktop (16:9) usa o eixo X (horizontal)
-      onFocalPointChange(article.id, [`${percentage} 50%`, article.image_focal_point_mobile]);
+      // O foco desktop (16:9) usa o eixo X (horizontal). Mantemos o Y atual.
+      const currentVertical = getVerticalFocalPoint(article.image_focal_point);
+      onFocalPointChange(article.id, [`${percentage} ${currentVertical}%`, article.image_focal_point_mobile]);
     } else {
       setFocalPointMobile(value[0]);
-      // O foco mobile (3:4) usa o eixo Y (vertical)
+      // O foco mobile (3:4) usa o eixo Y (vertical).
       onFocalPointChange(article.id, [article.image_focal_point, percentage]);
     }
   };
@@ -53,16 +58,17 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
     const percentage = `${value[0]}%`;
     
     if (type === 'desktop') {
-      onFocalPointCommit(article.id, [`${percentage} 50%`, article.image_focal_point_mobile]);
+      const currentVertical = getVerticalFocalPoint(article.image_focal_point);
+      onFocalPointCommit(article.id, [`${percentage} ${currentVertical}%`, article.image_focal_point_mobile]);
     } else {
       onFocalPointCommit(article.id, [article.image_focal_point, percentage]);
     }
   };
   
   // Extrair o valor X do foco horizontal para o slider
-  const currentHorizontalFocalPoint = focalPointToPercentage(article.image_focal_point?.split(' ')[0]);
+  const currentHorizontalFocalPoint = getHorizontalFocalPoint(article.image_focal_point);
   // Extrair o valor Y do foco mobile para o slider
-  const currentMobileFocalPoint = focalPointToPercentage(article.image_focal_point_mobile);
+  const currentMobileFocalPoint = getVerticalFocalPoint(article.image_focal_point_mobile);
 
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">

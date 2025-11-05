@@ -7,29 +7,33 @@ import { toast } from "sonner";
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle } from '@/lib/utils';
 
-const focalPointToPercentage = (focalPoint: string | null | undefined): number => {
-  if (!focalPoint) return 50;
-  
-  // Remove 'px' ou 'em' se houver (improvável, mas seguro)
-  const cleanFocalPoint = focalPoint.replace(/px|em/g, '').trim();
-
-  // Se for um par de coordenadas (ex: '30% 70%'), pegamos o primeiro valor (horizontal)
-  if (cleanFocalPoint.includes(' ')) {
-    const parts = cleanFocalPoint.split(' ');
-    // Para o slider horizontal, queremos o primeiro valor (X)
-    const horizontal = parts[0];
-    if (horizontal.endsWith('%')) return parseInt(horizontal.replace('%', ''));
-  }
-  
-  // Se for apenas a porcentagem (vertical ou horizontal)
-  if (cleanFocalPoint.endsWith('%')) return parseInt(cleanFocalPoint.replace('%', ''));
-  
-  // Se for palavra-chave
-  if (cleanFocalPoint === 'top' || cleanFocalPoint === 'left') return 0;
-  if (cleanFocalPoint === 'center') return 50;
-  if (cleanFocalPoint === 'bottom' || cleanFocalPoint === 'right') return 100;
-  
+// Helper para converter valor de foco (X% ou Y%) para número (0-100)
+const percentageToNumber = (value: string | null | undefined): number => {
+  if (!value) return 50;
+  if (value.endsWith('%')) return parseInt(value.replace('%', ''));
+  if (value === 'top' || value === 'left') return 0;
+  if (value === 'center') return 50;
+  if (value === 'bottom' || value === 'right') return 100;
   return 50;
+};
+
+// Extrai o foco horizontal (X) de uma string de posição (X% Y%)
+const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => {
+  if (!focalPoint) return 50;
+  const parts = focalPoint.split(' ');
+  return percentageToNumber(parts[0]);
+};
+
+// Extrai o foco vertical (Y) de uma string de posição (X% Y% ou Y%)
+const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => {
+  if (!focalPoint) return 50;
+  const parts = focalPoint.split(' ');
+  // Se for um par (desktop), pegamos o segundo valor (Y)
+  if (parts.length > 1) {
+    return percentageToNumber(parts[1]);
+  }
+  // Se for apenas um valor (mobile), pegamos ele mesmo (Y)
+  return percentageToNumber(parts[0]);
 };
 
 export default function EditArticle() {
@@ -197,9 +201,9 @@ export default function EditArticle() {
   }
   
   // Extrair o valor X do foco horizontal para o slider
-  const currentHorizontalFocalPoint = focalPointToPercentage(formData.image_focal_point.split(' ')[0]);
+  const currentHorizontalFocalPoint = getHorizontalFocalPoint(formData.image_focal_point);
   // Extrair o valor Y do foco mobile para o slider
-  const currentMobileFocalPoint = focalPointToPercentage(formData.image_focal_point_mobile);
+  const currentMobileFocalPoint = getVerticalFocalPoint(formData.image_focal_point_mobile);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white py-12">
@@ -406,7 +410,7 @@ export default function EditArticle() {
                 </p>
               </div>
               
-              {/* Foco Horizontal (Desktop 16:9) - Mantido */}
+              {/* Foco Horizontal (Desktop 16:9) - CORRIGIDO */}
               <div className="mt-6 pt-4 border-t border-gray-700">
                 <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                   Foco Horizontal (Desktop 16:9)
@@ -416,7 +420,9 @@ export default function EditArticle() {
                   <Slider
                     value={[currentHorizontalFocalPoint]}
                     onValueChange={(value) => {
-                      setFormData(prev => ({ ...prev, image_focal_point: `${value[0]}% 50%` })); // Mantém o vertical no centro
+                      // Mantemos o valor vertical (Y) atual, mas atualizamos o horizontal (X)
+                      const currentVertical = getVerticalFocalPoint(formData.image_focal_point);
+                      setFormData(prev => ({ ...prev, image_focal_point: `${value[0]}% ${currentVertical}%` }));
                     }}
                     max={100}
                     step={1}
