@@ -61,11 +61,9 @@ export default function Classificacao() {
       
       if (error) throw error;
       
-      // Corrigido: A verificação de `data.success` era o problema.
-      // Agora verificamos diretamente se `data.standings` existe.
       if (data?.standings) {
         const addSlugToTeams = (teams: any[]): Team[] => {
-          if (!Array.isArray(teams)) return []; // Adicionada verificação de segurança
+          if (!Array.isArray(teams)) return [];
           return teams.map(team => {
             const teamInfo = NBA_TEAMS.find(t => t.abbreviation.toUpperCase() === team.abbreviation.toUpperCase());
             return {
@@ -103,7 +101,6 @@ export default function Classificacao() {
     }
   };
 
-  // Combinar todos os times e ordenar por vitórias
   const getGeralStandings = () => {
     if (!standings) return [];
     
@@ -112,11 +109,8 @@ export default function Classificacao() {
       ...standings.western.conference.map(team => ({ ...team, conference: 'Oeste' as const }))
     ];
     
-    // Ordenar por vitórias (decrescente)
-    return allTeams.sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      return parseFloat(b.winPercent) - parseFloat(a.winPercent);
-    });
+    // Corrigido: Ordenar por porcentagem de vitórias
+    return allTeams.sort((a, b) => parseFloat(b.winPercent) - parseFloat(a.winPercent));
   };
 
   const getStreakIcon = (streak: string) => {
@@ -165,18 +159,16 @@ export default function Classificacao() {
     return team.streak.startsWith('L') && parseInt(team.streak.slice(1)) >= 4;
   };
 
-  // Função para aplicar o estilo de cor da linha (Borda vertical)
   const getRowStyle = (abbreviation: string) => {
     const colors = getTeamColors(abbreviation);
     
     return {
-      backgroundColor: '#ffffff', // Fundo branco
-      color: '#1f2937', // Texto escuro
-      borderLeft: `4px solid ${colors.primary}`, // Borda colorida
+      backgroundColor: '#ffffff',
+      color: '#1f2937',
+      borderLeft: `4px solid ${colors.primary}`,
     };
   };
   
-  // Função para obter a cor primária para destaque de texto
   const getPrimaryColorStyle = (abbreviation: string) => {
     const colors = getTeamColors(abbreviation);
     return { color: colors.primary };
@@ -196,10 +188,13 @@ export default function Classificacao() {
     );
   }
 
+  // Ordenar conferências por porcentagem de vitórias
+  const sortedEastern = standings?.eastern.conference.slice().sort((a, b) => parseFloat(b.winPercent) - parseFloat(a.winPercent));
+  const sortedWestern = standings?.western.conference.slice().sort((a, b) => parseFloat(b.winPercent) - parseFloat(a.winPercent));
+
   return (
     <div className="min-h-screen bg-white text-gray-900 py-12">
       <div className="container mx-auto px-4">
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-2">
             <Trophy className="w-10 h-10 text-yellow-400" />
@@ -212,7 +207,6 @@ export default function Classificacao() {
           </p>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center justify-center gap-4 mb-8 p-3 bg-gray-100 border border-gray-200 rounded-xl">
           <div className="bg-gray-200 p-1.5 rounded-lg flex">
             <button
@@ -248,7 +242,6 @@ export default function Classificacao() {
           </div>
         </div>
 
-        {/* Legends */}
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500 mb-8">
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500/50 border border-green-500"></div>Playoff direto (1-6)</div>
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-500"></div>Play-in (7-10)</div>
@@ -276,7 +269,7 @@ export default function Classificacao() {
                   <tr 
                     key={team.id} 
                     className="border-b border-gray-200 transition-colors"
-                    style={getRowStyle(team.abbreviation)} // Aplicando estilo dinâmico
+                    style={getRowStyle(team.abbreviation)}
                   >
                     <td className="px-4 py-3 font-bold" style={getPrimaryColorStyle(team.abbreviation)}>{index + 1}</td>
                     <td className="px-4 py-3">
@@ -331,11 +324,11 @@ export default function Classificacao() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                  {(viewType === 'leste' ? standings?.eastern.conference : standings?.western.conference)?.map((team, index) => (
+                  {(viewType === 'leste' ? sortedEastern : sortedWestern)?.map((team, index) => (
                     <tr 
                       key={team.id} 
                       className="transition-colors"
-                      style={getRowStyle(team.abbreviation)} // Aplicando estilo dinâmico
+                      style={getRowStyle(team.abbreviation)}
                     >
                       <td className="px-4 py-3 font-bold text-center" style={getPrimaryColorStyle(team.abbreviation)}>
                         <div className="relative w-8 h-8 flex items-center justify-center">
