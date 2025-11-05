@@ -132,7 +132,7 @@ export default function NBAScoreboardV2() {
   if (loading || games.length === 0) {
     return (
       <div className="bg-gray-900 py-3 border-b border-gray-700/50 text-center">
-        <span className="text-gray-400 text-sm font-medium">
+        <span className="text-gray-400 text-sm font-medium font-inter">
           {loading ? 'Carregando jogos...' : 'Nenhum jogo hoje'}
         </span>
       </div>
@@ -168,7 +168,7 @@ export default function NBAScoreboardV2() {
               >
                 {/* Badge AO VIVO - Centralizado e acima do placar */}
                 {game.gameStatus === 2 && (
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1 z-10">
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1 z-10 font-inter">
                     <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
                     AO VIVO
                   </div>
@@ -185,11 +185,11 @@ export default function NBAScoreboardV2() {
                         className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
                       />
                       <div className="text-left min-w-0">
-                        <span className="font-bold text-white text-sm md:text-base block truncate">{game.awayTeam.teamTricode}</span>
-                        <span className="text-xs text-gray-400 block truncate">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                        <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.awayTeam.teamTricode}</span>
+                        <span className="font-inter text-xs text-gray-400 block truncate">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
                       </div>
                     </div>
-                    <span className="font-black text-white text-xl md:text-2xl tabular-nums flex-shrink-0 ml-2">{game.awayTeam.score}</span>
+                    <span className="font-bebas text-3xl md:text-4xl text-white tabular-nums flex-shrink-0 ml-2">{game.awayTeam.score}</span>
                   </div>
 
                   {/* Home Team */}
@@ -201,16 +201,16 @@ export default function NBAScoreboardV2() {
                         className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
                       />
                       <div className="text-left min-w-0">
-                        <span className="font-bold text-white text-sm md:text-base block truncate">{game.homeTeam.teamTricode}</span>
-                        <span className="text-xs text-gray-400 block truncate">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                        <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.homeTeam.teamTricode}</span>
+                        <span className="font-inter text-xs text-gray-400 block truncate">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
                       </div>
                     </div>
-                    <span className="font-black text-white text-xl md:text-2xl tabular-nums flex-shrink-0 ml-2">{game.homeTeam.score}</span>
+                    <span className="font-bebas text-3xl md:text-4xl text-white tabular-nums flex-shrink-0 ml-2">{game.homeTeam.score}</span>
                   </div>
                 </div>
 
                 {/* Status/Horário - Formato brasileiro */}
-                <div className="border-t border-gray-700 mt-3 pt-2 flex items-center justify-between text-xs">
+                <div className="border-t border-gray-700 mt-3 pt-2 flex items-center justify-between text-xs font-inter">
                   <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
                     {game.gameStatus === 2 
                       ? `${game.period}º Quarto • ${formatGameClock(game.gameClock)}`

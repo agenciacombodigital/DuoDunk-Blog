@@ -19,8 +19,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Poppins", "sans-serif"],
-        heading: ["Bebas Neue", "sans-serif"],
+        'bebas': ['Bebas Neue', 'cursive'],
+        'oswald': ['Oswald', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'],
+        'sans': ['Inter', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

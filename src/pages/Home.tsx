@@ -60,7 +60,7 @@ export default function Home() {
   if (articles.length === 0) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-gray-400 text-lg">Nenhum artigo publicado ainda.</p>
+        <p className="text-gray-400 text-lg font-inter">Nenhum artigo publicado ainda.</p>
       </div>
     );
   }
@@ -83,9 +83,9 @@ export default function Home() {
     <div className="min-h-screen bg-white text-gray-900">
       {featuredArticle && (
         <section className="container mx-auto px-4 py-8">
-          <h2 className="text-sm font-bold text-pink-600 mb-4 uppercase tracking-wide flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            EM DESTAQUE
+          <h2 className="font-bebas text-2xl text-pink-600 mb-4 tracking-wide uppercase flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Em Destaque
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -113,23 +113,21 @@ export default function Home() {
                   
                   <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                      <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
                         <Star className="w-3 h-3 fill-white" />
                         DESTAQUE
                       </span>
-                      <span className="text-white/80 text-sm flex items-center gap-1">
+                      <span className="text-white/80 text-sm font-inter flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         Há {getTimeAgo(featuredArticle.published_at)}
                       </span>
                     </div>
                     
-                    <h1 className="text-4xl md:text-5xl font-heading font-bold mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
+                    <h1 className="font-oswald text-4xl md:text-5xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
                       {featuredArticle.title}
                     </h1>
                     
-                    {/* REMOVIDO: featuredArticle.summary */}
-                    
-                    <div className="flex items-center gap-2 text-sm text-white/70">
+                    <div className="flex items-center gap-2 text-sm text-white/70 font-inter">
                       <span>{new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                     </div>
                   </div>
@@ -154,10 +152,10 @@ export default function Home() {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-heading tracking-wide text-xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                      <h3 className="font-oswald text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                         {article.title}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
                         <Clock className="w-3 h-3" />
                         <span>há {getTimeAgo(article.published_at)}</span>
                       </div>
@@ -183,15 +181,15 @@ export default function Home() {
                       className="w-full h-full object-cover"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
-                    <span className="absolute top-2 left-2 bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                    <span className="absolute top-2 left-2 font-bebas text-lg bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
                       {index + 2}
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    <h3 className="font-heading tracking-wide text-lg font-bold text-gray-900 group-hover:text-pink-600 transition line-clamp-3">
+                    <h3 className="font-oswald text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3">
                       {article.title}
                     </h3>
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
                       <Clock className="w-3 h-3" />
                       <span>Há {getTimeAgo(article.published_at)}</span>
                     </div>
@@ -215,10 +213,10 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-4">
-                    <span className="inline-block bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-2">
+                    <span className="font-bebas text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2">
                       5
                     </span>
-                    <h3 className="font-heading tracking-wide text-xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                       {section1[6].title}
                     </h3>
                   </div>
@@ -232,7 +230,7 @@ export default function Home() {
       <div className="container mx-auto px-4 space-y-16">
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold mb-6">📰 Notícias em Destaque</h2>
+            <h2 className="font-bebas text-4xl mb-6">📰 Notícias em Destaque</h2>
             <div className="space-y-4">
               {section2.map((article) => (
                 <Link
@@ -249,11 +247,11 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 font-inter">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
@@ -266,7 +264,7 @@ export default function Home() {
 
         {section3.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold mb-6">🔥 Análises Profundas</h2>
+            <h2 className="font-bebas text-4xl mb-6">🔥 Análises Profundas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {section3.map((article) => (
                 <Link
@@ -285,11 +283,11 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-heading tracking-wide text-3xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-2">{article.summary}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <p className="text-gray-600 mb-4 line-clamp-2 font-inter">{article.summary}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 font-inter">
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
@@ -301,7 +299,7 @@ export default function Home() {
 
         {section4.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold mb-6">⚡ Destaques Rápidos</h2>
+            <h2 className="font-bebas text-4xl mb-6">⚡ Destaques Rápidos</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {section4.map((article) => (
                 <Link
@@ -320,7 +318,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="font-heading tracking-wide text-lg font-bold group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-base font-semibold uppercase group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                   </div>
@@ -332,7 +330,7 @@ export default function Home() {
 
         {section5.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold mb-6">📊 Mais Lidas</h2>
+            <h2 className="font-bebas text-4xl mb-6">📊 Mais Lidas</h2>
             <div className="space-y-6">
               {section5.map((article, index) => (
                 <Link
@@ -351,10 +349,10 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -364,7 +362,7 @@ export default function Home() {
 
         {section6.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold mb-6">🏀 Mais da NBA</h2>
+            <h2 className="font-bebas text-4xl mb-6">🏀 Mais da NBA</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {section6.map((article) => (
                 <Link
@@ -383,10 +381,10 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">{article.summary}</p>
+                    <p className="text-gray-600 text-sm line-clamp-2 font-inter">{article.summary}</p>
                   </div>
                 </Link>
               ))}
@@ -396,7 +394,7 @@ export default function Home() {
 
         {section7.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold mb-6">📌 Não Perca</h2>
+            <h2 className="font-bebas text-4xl mb-6">📌 Não Perca</h2>
             <div className="space-y-4">
               {section7.map((article) => (
                 <Link
@@ -413,11 +411,11 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-heading tracking-wide text-2xl font-bold mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block">{article.summary}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 font-inter">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
@@ -448,11 +446,11 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-heading tracking-wide text-3xl font-bold mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 line-clamp-2">{article.summary}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 font-inter">
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
@@ -465,7 +463,7 @@ export default function Home() {
         {remaining.length > 0 && (
           <section className="mt-20">
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-3xl font-black text-black">📚 ARQUIVO</h2>
+              <h2 className="font-bebas text-5xl text-black">📚 ARQUIVO</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-pink-500 to-transparent"></div>
             </div>
 
@@ -490,7 +488,7 @@ export default function Home() {
                         </div>
                         <div className="sm:w-3/5 p-6 flex flex-col justify-between">
                           <div>
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-2 mb-3 font-inter">
                               <span className="text-xs font-bold text-pink-500 uppercase">
                                 {article.tags?.[0] || 'NBA'}
                               </span>
@@ -499,15 +497,15 @@ export default function Home() {
                                 {new Date(article.published_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
-                            <h3 className="font-heading tracking-wide text-2xl font-bold text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
+                            <h3 className="font-oswald text-xl font-bold uppercase text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
                               {article.title}
                             </h3>
-                            <p className="text-sm text-gray-600 line-clamp-2">{article.summary}</p>
+                            <p className="text-sm text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
                           </div>
                           
                           <Link
                             to={`/artigos/${article.slug}`}
-                            className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link"
+                            className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link font-inter"
                           >
                             Ler mais
                             <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -535,7 +533,7 @@ export default function Home() {
                           />
                         </div>
                         <div className="flex flex-col justify-center p-8">
-                          <div className="flex items-center gap-2 mb-4">
+                          <div className="flex items-center gap-2 mb-4 font-inter">
                             <span className="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-bold uppercase">
                               {article.tags?.[0] || 'NBA'}
                             </span>
@@ -543,17 +541,17 @@ export default function Home() {
                               {new Date(article.published_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
-                          <h3 className="font-heading text-4xl font-black text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
+                          <h3 className="font-oswald text-3xl font-black uppercase text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
                             {article.title}
                           </h3>
                           {article.subtitle && (
-                            <p className="text-lg text-gray-700 mb-4">{article.subtitle}</p>
+                            <p className="text-lg text-gray-700 mb-4 font-inter">{article.subtitle}</p>
                           )}
-                          <p className="text-sm text-gray-600 mb-6 line-clamp-2">{article.summary}</p>
+                          <p className="text-sm text-gray-600 mb-6 line-clamp-2 font-inter">{article.summary}</p>
                           
                           <Link
                             to={`/artigos/${article.slug}`}
-                            className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link w-fit"
+                            className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link w-fit font-inter"
                           >
                             Ler Matéria Completa
                             <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -579,26 +577,26 @@ export default function Home() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+                        <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase font-inter">
                           {article.tags?.[0] || 'NBA'}
                         </span>
                       </div>
                     </div>
                     <div className="p-6">
-                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-400 font-inter">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                       </div>
-                      <h3 className="font-heading tracking-wide text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
+                      <h3 className="font-oswald text-xl font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-4">{article.summary}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-inter">{article.summary}</p>
                       
                       <Link
                         to={`/artigos/${article.slug}`}
-                        className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 group/link"
+                        className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 group/link font-inter"
                       >
                         Leia mais
                         <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">

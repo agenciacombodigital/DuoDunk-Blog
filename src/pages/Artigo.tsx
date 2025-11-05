@@ -54,12 +54,12 @@ export default function Artigo() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 font-oswald">
             Artigo não encontrado
           </h1>
           <Link 
             to="/" 
-            className="text-[#00DBFB] hover:text-[#FA007D] transition-colors inline-flex items-center gap-2"
+            className="text-[#00DBFB] hover:text-[#FA007D] transition-colors inline-flex items-center gap-2 font-inter"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar para Home
@@ -69,32 +69,20 @@ export default function Artigo() {
     );
   }
 
-  // Se o corpo do artigo for texto puro (sem tags <p>), usamos a lógica de split.
-  // Se for HTML (gerado pela IA), precisamos usar dangerouslySetInnerHTML.
-  // Como o prompt da IA pede HTML, vamos manter o dangerouslySetInnerHTML, mas
-  // se o usuário está vendo quebras de linha incorretas, pode ser que o conteúdo
-  // esteja vindo como texto puro.
-  // Para resolver o problema de quebra de linha em texto puro, mas ainda permitir HTML,
-  // vamos usar uma abordagem híbrida: se o conteúdo for HTML, renderizamos como HTML.
-  // Se for texto puro, usamos a lógica de split.
-  
   const isHtmlContent = /<[a-z][\s\S]*>/i.test(article.body);
   
   const renderBody = () => {
     if (isHtmlContent) {
-      // Se for HTML (como esperado da IA), usamos dangerouslySetInnerHTML
       return (
         <div 
-          className="prose prose-lg max-w-none mb-12"
+          className="prose prose-lg max-w-none mb-12 font-inter"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
         />
       );
     }
     
-    // Se for texto puro (como pode acontecer em posts manuais ou rodadas NBA),
-    // usamos a lógica de split para criar parágrafos.
     return (
-      <div className="prose prose-lg max-w-none mb-12">
+      <div className="prose prose-lg max-w-none mb-12 font-inter">
         {article.body.split('\n\n').map((paragraph: string, index: number) => (
           <p key={index} className="mb-4">
             {paragraph}
@@ -111,13 +99,13 @@ export default function Artigo() {
           <article>
             <Link 
               to="/"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-[#FA007D] transition-colors mb-8 font-semibold"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-[#FA007D] transition-colors mb-8 font-semibold font-inter"
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar
             </Link>
 
-            <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap">
+            <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap font-inter">
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 {new Date(article.published_at).toLocaleDateString('pt-BR', {
@@ -128,11 +116,11 @@ export default function Artigo() {
               </span>
             </div>
 
-            <h1 className="font-heading text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-wide">
+            <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-6 leading-tight tracking-wide">
               {article.title}
             </h1>
 
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed font-inter">
               {article.summary}
             </p>
 
@@ -170,7 +158,7 @@ export default function Artigo() {
                     <Link
                       key={tag}
                       to={`/times/${tag.toLowerCase()}`}
-                      className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 text-pink-900 px-4 py-2 rounded-full text-sm font-medium transition group"
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 text-pink-900 px-4 py-2 rounded-full text-sm font-medium transition group font-inter"
                     >
                       🏀 <span className="group-hover:underline">Ver página do {tag}</span>
                     </Link>
@@ -183,8 +171,8 @@ export default function Artigo() {
 
             {article.tags && article.tags.length > 0 && (
               <div className="pt-8 border-t border-gray-200 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags:</h3>
-                <div className="flex flex-wrap gap-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 font-oswald">Tags:</h3>
+                <div className="flex flex-wrap gap-2 font-inter">
                   {article.tags.map((tag: string) => (
                     <span 
                       key={tag} 
@@ -202,7 +190,7 @@ export default function Artigo() {
 
       <div className="container mx-auto px-4 max-w-4xl pb-12">
         <div className="mt-12 mb-12">
-          <h2 className="text-2xl font-black text-gray-900 mb-6 pb-3 border-b-2 border-gray-200">
+          <h2 className="font-bebas text-3xl text-gray-900 mb-6 pb-3 border-b-2 border-gray-200">
             📰 Últimas Notícias
           </h2>
           <LatestNews currentPostId={article.id} limit={3} />

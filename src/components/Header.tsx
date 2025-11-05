@@ -19,7 +19,7 @@ export default function Header() {
           </Link>
           
           {/* Navegação */}
-          <nav className="flex items-center gap-8 text-sm uppercase tracking-widest">
+          <nav className="flex items-center gap-8 text-sm uppercase tracking-widest font-inter font-semibold">
             <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
             <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
             <Link to="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>

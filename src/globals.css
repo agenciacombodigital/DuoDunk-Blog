@@ -22,11 +22,11 @@
   }
 
   body {
-    @apply bg-white text-gray-900 font-sans antialiased;
+    @apply bg-white text-gray-900 font-inter antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-bold;
+    @apply font-oswald font-bold;
   }
 
   /* Hero Section - Mantém preta */
@@ -304,5 +304,12 @@ html {
   .container, main {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
+  }
+}
+
+/* Responsividade mobile para Bebas */
+@media (max-width: 768px) {
+  .font-bebas {
+    letter-spacing: 0.03em;
   }
 }

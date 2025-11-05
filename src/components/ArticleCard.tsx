@@ -40,11 +40,11 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
       
       {/* Conteúdo */}
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="font-heading text-2xl tracking-wide font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-[#FA007D] transition-colors">
+        <h3 className="font-oswald text-xl font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-[#FA007D] transition-colors">
           {article.title}
         </h3>
         
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
+        <p className="font-inter text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
           {article.summary}
         </p>
         
@@ -54,7 +54,7 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
             {article.tags.slice(0, 3).map((tag) => (
               <span 
                 key={tag} 
-                className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs"
+                className="font-inter bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs"
               >
                 #{tag}
               </span>
@@ -63,7 +63,7 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
         )}
         
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-gray-100 mt-auto">
+        <div className="font-inter flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-gray-100 mt-auto">
           <span>
             {new Date(article.published_at).toLocaleDateString('pt-BR', {
               day: '2-digit',
