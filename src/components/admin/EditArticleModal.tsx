@@ -45,8 +45,8 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
     // Garantir que o foco horizontal tenha X e Y para o preview 16:9
     const initialArticle = {
       ...article,
-      image_focal_point: article.image_focal_point || '50% 50%',
-      image_focal_point_mobile: article.image_focal_point_mobile || '50%',
+      image_focal_point: article?.image_focal_point || '50% 50%',
+      image_focal_point_mobile: article?.image_focal_point_mobile || '50%',
     };
     setEditedArticle(initialArticle);
   }, [article]);
@@ -54,7 +54,10 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
   if (!isOpen || !editedArticle) return null;
   
   // Extrair o valor X do foco horizontal para o slider
-  const currentHorizontalFocalPoint = focalPointToPercentage(editedArticle.image_focal_point.split(' ')[0]);
+  const currentHorizontalFocalPoint = editedArticle.image_focal_point?.includes(' ') 
+    ? focalPointToPercentage(editedArticle.image_focal_point.split(' ')[0]) 
+    : focalPointToPercentage(editedArticle.image_focal_point);
+
   // Extrair o valor Y do foco mobile para o slider
   const currentMobileFocalPoint = focalPointToPercentage(editedArticle.image_focal_point_mobile);
 
@@ -116,7 +119,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
               <div className="flex items-center gap-4 mt-2">
                 <span className="text-xs text-gray-400 font-inter">Topo</span>
                 <Slider 
-                  value={[currentMobileFocalPoint]} 
+                  value={[focalPointToPercentage(editedArticle.image_focal_point_mobile)]} 
                   onValueChange={(value) => { 
                     setEditedArticle({ ...editedArticle, image_focal_point_mobile: `${value[0]}%` }) 
                   }} 

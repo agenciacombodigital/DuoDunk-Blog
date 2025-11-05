@@ -29,8 +29,9 @@ const focalPointToPercentage = (focalPoint: string | null | undefined): number =
 
 export default function PendingApprovalCard({ article, uploadingImage, onImageUpload, onFocalPointChange, onFocalPointCommit, onToggleFeatured, onEdit, onApprove, onReject, onDelete }: any) {
   // Inicializa os estados de foco com fallback para '50%'
-  const [focalPointDesktop, setFocalPointDesktop] = useState(focalPointToPercentage(article.image_focal_point));
-  const [focalPointMobile, setFocalPointMobile] = useState(focalPointToPercentage(article.image_focal_point_mobile));
+  // Usamos o valor do article diretamente, mas garantimos que ele não seja null/undefined
+  const [focalPointDesktop, setFocalPointDesktop] = useState(focalPointToPercentage(article?.image_focal_point));
+  const [focalPointMobile, setFocalPointMobile] = useState(focalPointToPercentage(article?.image_focal_point_mobile));
 
   // Função auxiliar para lidar com a mudança de foco
   const handleFocalPointChangeWrapper = (type: 'desktop' | 'mobile', value: number[]) => {
