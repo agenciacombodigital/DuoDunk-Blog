@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { TrendingUp, Calendar, Loader2, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Função auxiliar para mostrar o tempo "há X horas/dias"
 function getTimeAgo(dateString: string): string {
@@ -25,6 +26,7 @@ function getTimeAgo(dateString: string): string {
 export default function Home() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     loadArticles();
@@ -89,8 +91,13 @@ export default function Home() {
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
                 <div className="relative w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   
-                  {/* Container com aspecto 3:4 (mobile) e 16:9 (desktop) */}
-                  <div className="relative w-full pb-[133.33%] md:pb-[56.25%]">
+                  {/* Container com aspect-ratio CSS nativo, controlado pelo hook useIsMobile */}
+                  <div 
+                    className="relative w-full"
+                    style={{
+                      aspectRatio: isMobile ? '3 / 4' : '16 / 9'
+                    }}
+                  >
                     
                     {/* Imagem de fundo */}
                     <img
@@ -139,7 +146,6 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  
                 </div>
               </Link>
 
