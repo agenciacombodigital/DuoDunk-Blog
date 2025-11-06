@@ -26,7 +26,7 @@ function getTimeAgo(dateString: string): string {
 export default function Home() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(); // Mantemos o hook, mas não o usamos no featured card
 
   useEffect(() => {
     loadArticles();
@@ -91,15 +91,9 @@ export default function Home() {
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
                 <div className="relative w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   
-                  {/* Container com aspect-ratio CSS nativo, controlado pelo hook useIsMobile */}
-                  <div 
-                    className="relative w-full"
-                    style={{
-                      aspectRatio: isMobile ? '3 / 4' : '16 / 9'
-                    }}
-                  >
+                  {/* ✅ SOLUÇÃO COM TAILWIND aspect-[3/4] */}
+                  <div className="relative w-full aspect-[3/4] md:aspect-video">
                     
-                    {/* Imagem de fundo */}
                     <img
                       src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                       srcSet={`
@@ -115,10 +109,8 @@ export default function Home() {
                       style={getObjectPositionStyle(featuredArticle.image_focal_point_mobile)}
                     />
 
-                    {/* Gradiente overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                     
-                    {/* Conteúdo sobreposto */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-10">
                       <div className="flex items-center gap-3 mb-3">
                         <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
