@@ -26,7 +26,7 @@ function getTimeAgo(dateString: string): string {
 export default function Home() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const isMobile = useIsMobile(); // Mantemos o hook, mas não o usamos no featured card
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     loadArticles();
@@ -77,6 +77,11 @@ export default function Home() {
   const section8 = articles.slice(35, 37);
   const remaining = articles.slice(37);
 
+  // Determina o focal point a ser usado com base no tamanho da tela
+  const focalPointStyle = isMobile 
+    ? getObjectPositionStyle(featuredArticle.image_focal_point_mobile)
+    : getObjectPositionStyle(featuredArticle.image_focal_point);
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {featuredArticle && (
@@ -91,8 +96,8 @@ export default function Home() {
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
                 <div className="relative w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   
-                  {/* ✅ SOLUÇÃO COM TAILWIND aspect-[3/4] */}
-                  <div className="relative w-full aspect-[3/4] md:aspect-video">
+                  {/* CÓDIGO CORRIGIDO: Usando aspect-3/4 e removendo o div interno */}
+                  <div className="relative w-full aspect-3/4 md:aspect-video overflow-hidden">
                     
                     <img
                       src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
@@ -105,8 +110,8 @@ export default function Home() {
                       alt={featuredArticle.title}
                       loading="lazy"
                       decoding="async"
-                      className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={getObjectPositionStyle(featuredArticle.image_focal_point_mobile)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={focalPointStyle}
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
@@ -293,7 +298,7 @@ export default function Home() {
                     <h3 className="font-oswald text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-2 font-inter">{article.summary}</p>
+                    <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 font-inter">
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                     </div>

@@ -18,6 +18,9 @@ export default {
       },
     },
     extend: {
+      aspectRatio: {
+        '3/4': '3 / 4',
+      },
       fontFamily: {
         'bebas': ['Bebas Neue', 'cursive'],
         'oswald': ['Oswald', 'sans-serif'],
