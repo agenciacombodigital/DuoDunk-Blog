@@ -226,12 +226,12 @@ export default function Home() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={getOptimizedImageUrl(article.image_url, 400)}
-                      alt={article.title}
+                      src={getOptimizedImageUrl(section1[6].image_url, 400)}
+                      alt={section1[6].title}
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={getObjectPositionStyle(article.image_focal_point)}
+                      style={getObjectPositionStyle(section1[6].image_focal_point)}
                     />
                   </div>
                   <div className="p-4">
@@ -239,7 +239,7 @@ export default function Home() {
                       5
                     </span>
                     <h3 className="font-oswald text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
-                      {article.title}
+                      {section1[6].title}
                     </h3>
                   </div>
                 </Link>
