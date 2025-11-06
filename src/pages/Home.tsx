@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Calendar, Loader2, Clock, Eye, Star } from 'lucide-react';
+import { TrendingUp, Calendar, Loader2, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 
-// Função para calcular tempo atrás
+// Função auxiliar para mostrar o tempo "há X horas/dias"
 function getTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -87,9 +87,25 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
-                {/* ===================== CORREÇÃO FEITA AQUI ===================== */}
-                <div className="w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
-                  <div className="relative aspect-[3/4] md:aspect-[16/9]">
+
+                {/* 
+                  ===============================================
+                  🔧 CORREÇÃO DO PROBLEMA DO CONTAINER DE IMAGEM
+                  ===============================================
+                  O problema original era que o container usava `aspect-[3/4]`, mas
+                  isso depende do plugin `@tailwindcss/aspect-ratio`.
+                  Sem o plugin, o navegador ignora o aspecto e a imagem aparece achatada (16:9).
+
+                  A solução adotada aqui é universal: usar padding-bottom com porcentagem.
+                  - pb-[133.33%] = formato 3:4 (altura = 75% da largura)
+                  - md:pb-[56.25%] = formato 16:9 no desktop
+
+                  Isso garante que o container sempre mantenha a proporção correta
+                  mesmo sem plugin, e a imagem dentro (absolute inset-0) preenche 100% da área.
+                */}
+
+                <div className="w-full rounded-2xl shadow-xl hover:shadow-2xl transition-shadow overflow-hidden">
+                  <div className="relative block w-full pb-[133.33%] md:pb-[56.25%]">
                     <img
                       src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                       srcSet={`
@@ -101,12 +117,12 @@ export default function Home() {
                       alt={featuredArticle.title}
                       loading="lazy"
                       decoding="async"
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       style={getObjectPositionStyle(featuredArticle.image_focal_point_mobile)}
                     />
 
+                    {/* Gradiente e conteúdo sobreposto */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                       <div className="flex items-center gap-3 mb-3">
                         <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
@@ -135,7 +151,11 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                {/* ================================================================ */}
+
+                {/* 
+                  ✅ Agora o container respeita 3:4 no mobile e 16:9 no desktop,
+                  com a imagem sempre cobrindo toda a área (object-cover).
+                */}
               </Link>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
