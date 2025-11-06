@@ -1,36 +1,16 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Edit, Loader2, Save, Upload, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import { getObjectPositionStyle } from '@/lib/utils';
+import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint } from '@/lib/utils';
 
 // Helper para converter valor de foco (X% ou Y%) para número (0-100)
-const percentageToNumber = (value: string | null | undefined): number => {
-  if (!value) return 50;
-  if (value.endsWith('%')) return parseInt(value.replace('%', ''));
-  if (value === 'top' || value === 'left') return 0;
-  if (value === 'center') return 50;
-  if (value === 'bottom' || value === 'right') return 100;
-  return 50;
-};
+// REMOVIDO: const percentageToNumber = (value: string | null | undefined): number => { ... };
 
 // Extrai o foco horizontal (X) de uma string de posição (X% Y%)
-const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => {
-  if (!focalPoint) return 50;
-  const parts = focalPoint.split(' ');
-  return percentageToNumber(parts[0]);
-};
+// REMOVIDO: const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
 
 // Extrai o foco vertical (Y) de uma string de posição (X% Y% ou Y%)
-const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => {
-  if (!focalPoint) return 50;
-  const parts = focalPoint.split(' ');
-  // Se for um par (desktop), pegamos o segundo valor (Y)
-  if (parts.length > 1) {
-    return percentageToNumber(parts[1]);
-  }
-  // Se for apenas um valor (mobile), pegamos ele mesmo (Y)
-  return percentageToNumber(parts[0]);
-};
+// REMOVIDO: const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
 
 interface EditArticleModalProps {
   article: any;
@@ -125,7 +105,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
                   src={editedArticle.image_url}
                   alt="Preview Mobile"
                   className="w-full h-full object-cover"
-                  style={getObjectPositionStyle(editedArticle.image_focal_point_mobile)}
+                  style={getObjectPositionStyle(editedArticle.image_focal_point_mobile, true)}
                 />
                 <div className="absolute inset-0 border-4 border-dashed border-white/50 pointer-events-none flex items-center justify-center">
                   <span className="text-white text-xs bg-black/50 p-1 rounded font-inter">Corte Mobile (3:4)</span>

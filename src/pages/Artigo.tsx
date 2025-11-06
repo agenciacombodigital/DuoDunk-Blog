@@ -137,7 +137,7 @@ export default function Artigo() {
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto rounded-2xl object-cover mb-10 shadow-lg"
-                style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point) }}
+                style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point, false) }}
               />
             )}
 

@@ -109,6 +109,8 @@ export default function AdminRodadaNBA() {
         published_at: new Date().toISOString(),
         views: 0,
         is_featured: isFeatured,
+        image_focal_point: '50% 50%', // ✅ Adicionado com %
+        image_focal_point_mobile: '50%', // ✅ Adicionado com %
       });
 
       if (insertError) throw insertError;

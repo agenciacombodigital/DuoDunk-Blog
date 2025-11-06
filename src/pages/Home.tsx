@@ -82,7 +82,8 @@ export default function Home() {
     ? featuredArticle.image_focal_point_mobile
     : featuredArticle.image_focal_point;
     
-  const focalPointStyle = getObjectPositionStyle(focalPointValue);
+  // Passa o flag 'isMobile' para a função utilitária
+  const focalPointStyle = getObjectPositionStyle(focalPointValue, isMobile);
 
   // 🔍 DEBUG TEMPORÁRIO
   console.log('=== DEBUG HOME FEATURED ===');

@@ -82,6 +82,8 @@ export default function AdminManual() {
         views: 0,
         video_url: form.video_url || null,
         is_featured: form.is_featured || false, // Adicionado
+        image_focal_point: '50% 50%', // ✅ Adicionado com %
+        image_focal_point_mobile: '50%', // ✅ Adicionado com %
       });
 
       if (error) throw error;
