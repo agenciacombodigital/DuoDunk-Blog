@@ -78,9 +78,19 @@ export default function Home() {
   const remaining = articles.slice(37);
 
   // Determina o focal point a ser usado com base no tamanho da tela
-  const focalPointStyle = isMobile 
-    ? getObjectPositionStyle(featuredArticle.image_focal_point_mobile)
-    : getObjectPositionStyle(featuredArticle.image_focal_point);
+  const focalPointValue = isMobile 
+    ? featuredArticle.image_focal_point_mobile
+    : featuredArticle.image_focal_point;
+    
+  const focalPointStyle = getObjectPositionStyle(focalPointValue);
+
+  // 🔍 DEBUG TEMPORÁRIO
+  console.log('=== DEBUG HOME FEATURED ===');
+  console.log('isMobile:', isMobile);
+  console.log('Focal Point Bruto:', focalPointValue);
+  console.log('Resultado da função:', focalPointStyle);
+  console.log('===========================');
+  // FIM DEBUG TEMPORÁRIO
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -216,12 +226,12 @@ export default function Home() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={getOptimizedImageUrl(section1[6].image_url, 400)}
-                      alt={section1[6].title}
+                      src={getOptimizedImageUrl(article.image_url, 400)}
+                      alt={article.title}
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={getObjectPositionStyle(section1[6].image_focal_point)}
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
                   <div className="p-4">
@@ -229,7 +239,7 @@ export default function Home() {
                       5
                     </span>
                     <h3 className="font-oswald text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
-                      {section1[6].title}
+                      {article.title}
                     </h3>
                   </div>
                 </Link>
