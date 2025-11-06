@@ -13,6 +13,7 @@ import PendingProcessingSection from '@/components/admin/PendingProcessingSectio
 import PublishedArticlesSection from '@/components/admin/PublishedArticlesSection';
 import EditArticleModal from '@/components/admin/EditArticleModal';
 import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
+import { clearAllFeaturedArticles } from '@/lib/adminUtils';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -172,6 +173,12 @@ export default function AdminPage() {
     if (!window.confirm('Aprovar e publicar este artigo?')) return;
     const toastId = toast.loading("Publicando artigo...");
     try {
+      // 1. Se o artigo for destaque, limpa os destaques antigos
+      if (article.is_featured) {
+        await clearAllFeaturedArticles();
+      }
+
+      // 2. Publica o novo artigo
       await supabase.from('articles').insert({
         queue_id: article.id,
         title: article.title,
@@ -187,10 +194,13 @@ export default function AdminPage() {
         published_at: new Date().toISOString(),
         is_featured: article.is_featured || false,
         video_url: article.video_url || null,
-        image_focal_point: article.image_focal_point || '50%',
+        image_focal_point: article.image_focal_point || '50% 50%',
         image_focal_point_mobile: article.image_focal_point_mobile || '50%',
       });
+      
+      // 3. Remove da fila
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
+      
       toast.success('Artigo publicado!', { id: toastId });
       await loadData();
       setShowEditModal(false);
