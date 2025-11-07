@@ -294,22 +294,14 @@ html {
     margin-bottom: 1.5rem !important;
   }
   
-  /* Imagens responsivas */
-  img {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  
   /* Padding lateral mobile */
   .container, main {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
   }
   
-  /* Forçar object-fit: cover para preencher o container 3:4 */
-  .aspect-\[3\/4\] img {
-    object-fit: cover !important;
-  }
+  /* REMOVIDO: img { max-width: 100% !important; height: auto !important; } */
+  /* REMOVIDO: .aspect-\[3\/4\] img { object-fit: cover !important; } */
 }
 
 /* Responsividade mobile para Bebas */
