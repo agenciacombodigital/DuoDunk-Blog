@@ -77,21 +77,13 @@ export default function Home() {
   const section8 = articles.slice(35, 37);
   const remaining = articles.slice(37);
 
-  // Determina o focal point a ser usado com base no tamanho da tela
+  // ✅ CORREÇÃO: Determina o focal point correto baseado no dispositivo
   const focalPointValue = isMobile 
     ? featuredArticle.image_focal_point_mobile
     : featuredArticle.image_focal_point;
     
-  // Passa o flag 'isMobile' para a função utilitária
+  // ✅ CORREÇÃO: Passa o flag correto para a função
   const focalPointStyle = getObjectPositionStyle(focalPointValue, isMobile);
-
-  // 🔍 DEBUG TEMPORÁRIO
-  console.log('=== DEBUG HOME FEATURED ===');
-  console.log('isMobile:', isMobile);
-  console.log('Focal Point Bruto:', focalPointValue);
-  console.log('Resultado da função:', focalPointStyle);
-  console.log('===========================');
-  // FIM DEBUG TEMPORÁRIO
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -105,53 +97,50 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
-                <div className="relative w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
+                {/* ✅ CORREÇÃO PRINCIPAL: Estrutura simplificada sem DIV interno desnecessário */}
+                <div className="relative w-full aspect-3/4 md:aspect-video overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   
-                  {/* CÓDIGO CORRIGIDO: Usando aspect-3/4 e removendo o div interno */}
-                  <div className="relative w-full aspect-3/4 md:aspect-video overflow-hidden">
-                    
-                    <img
-                      src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
-                      srcSet={`
-                        ${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w,
-                        ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w,
-                        ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w
-                      `}
-                      sizes="(max-width: 1023px) 100vw, 800px"
-                      alt={featuredArticle.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={focalPointStyle}
-                    />
+                  <img
+                    src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
+                    srcSet={`
+                      ${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w,
+                      ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w,
+                      ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w
+                    `}
+                    sizes="(max-width: 1023px) 100vw, 800px"
+                    alt={featuredArticle.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    style={focalPointStyle}
+                  />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-white" />
-                          DESTAQUE
-                        </span>
-                        <span className="text-white/80 text-sm font-inter flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Há {getTimeAgo(featuredArticle.published_at)}
-                        </span>
-                      </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                  
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-white" />
+                        DESTAQUE
+                      </span>
+                      <span className="text-white/80 text-sm font-inter flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Há {getTimeAgo(featuredArticle.published_at)}
+                      </span>
+                    </div>
 
-                      <h1 className="font-oswald text-4xl md:text-5xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
-                        {featuredArticle.title}
-                      </h1>
+                    <h1 className="font-oswald text-4xl md:text-5xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
+                      {featuredArticle.title}
+                    </h1>
 
-                      <div className="flex items-center gap-2 text-sm text-white/70 font-inter">
-                        <span>
-                          {new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm text-white/70 font-inter">
+                      <span>
+                        {new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -232,7 +221,7 @@ export default function Home() {
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={getObjectPositionStyle(section1[6].image_focal_point)}
+                      style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
                   <div className="p-4">

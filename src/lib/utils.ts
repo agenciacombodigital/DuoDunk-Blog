@@ -34,38 +34,45 @@ export const getVerticalFocalPoint = (focalPoint: string | null | undefined): nu
   return percentageToNumber(parts[0]);
 };
 
-// ✅ CORREÇÃO: Função para processar focal point, agora recebe isMobileFocalPoint para saber se deve forçar 'center' para X.
+// ✅ CORREÇÃO: Função otimizada para processar focal point corretamente
 export function getObjectPositionStyle(
   focalPoint?: string | null,
   isMobileFocalPoint: boolean = false
-): object {
+): { objectPosition: string } {
   // Se não tiver focalPoint, usa padrão central
-  if (!focalPoint) {
-    return { objectPosition: 'center 50%' };
+  if (!focalPoint || focalPoint.trim() === '') {
+    return { objectPosition: 'center center' };
   }
   
-  let objectPosition: string;
-
+  const trimmedFocalPoint = focalPoint.trim();
+  
+  // ✅ CORREÇÃO: Tratamento especial para mobile
   if (isMobileFocalPoint) {
-    // Mobile: apenas valor Y (vertical). Ex: "50%"
-    const yValue = focalPoint.trim();
-    
-    if (yValue.includes(' ')) {
-        // Se por acaso salvou o formato desktop, usamos ele
-        objectPosition = yValue;
+    // Mobile: pode ser apenas Y% (ex: "50%") ou X% Y% (ex: "center 50%")
+    if (!trimmedFocalPoint.includes(' ')) {
+      // Formato mobile simples: apenas Y%
+      // Garante que X seja sempre 'center' para mobile
+      return { objectPosition: `center ${trimmedFocalPoint}` };
     } else {
-        // Se for o formato mobile (Y%), garantimos que o X seja 'center'
-        objectPosition = `center ${yValue}`;
+      // Se já tem espaço, usa como está (pode ser "center 50%" ou "50% 50%")
+      return { objectPosition: trimmedFocalPoint };
     }
-  } else {
-    // Desktop: valores X e Y. Ex: "50% 50%"
-    objectPosition = focalPoint;
   }
   
-  // Handle keywords like 'center', 'top', 'bottom' if they were passed
-  if (objectPosition.toLowerCase().trim() === 'center') {
-    objectPosition = 'center 50%';
+  // Desktop: usa o valor como está
+  // Se for uma palavra-chave simples como 'center', expande
+  if (trimmedFocalPoint.toLowerCase() === 'center') {
+    return { objectPosition: 'center center' };
   }
   
-  return { objectPosition };
+  if (trimmedFocalPoint.toLowerCase() === 'top') {
+    return { objectPosition: 'center top' };
+  }
+  
+  if (trimmedFocalPoint.toLowerCase() === 'bottom') {
+    return { objectPosition: 'center bottom' };
+  }
+  
+  // Retorna o valor formatado
+  return { objectPosition: trimmedFocalPoint };
 }
