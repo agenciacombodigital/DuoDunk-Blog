@@ -221,7 +221,7 @@ export default function Home() {
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      style={getObjectPositionStyle(article.image_focal_point)}
+                      style={getObjectPositionStyle(section1[6].image_focal_point)}
                     />
                   </div>
                   <div className="p-4">
@@ -481,6 +481,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {remaining.map((article, index) => {
+                if (!article) return null;
                 const layoutType = index % 6;
 
                 if (layoutType === 0 || layoutType === 3) {
