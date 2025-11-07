@@ -330,7 +330,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                   </div>
@@ -423,7 +423,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-base md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
