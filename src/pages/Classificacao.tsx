@@ -68,7 +68,8 @@ export default function Classificacao() {
             const teamInfo = NBA_TEAMS.find(t => t.abbreviation.toUpperCase() === team.abbreviation.toUpperCase());
             return {
               ...team,
-              slug: teamInfo?.slug || team.abbreviation.toLowerCase()
+              slug: teamInfo?.slug || team.abbreviation.toLowerCase(),
+              name: teamInfo?.name || team.name, // Usar nome completo do nosso mapa se disponível
             };
           });
         };

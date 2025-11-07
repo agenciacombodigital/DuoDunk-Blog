@@ -41,10 +41,15 @@ export const NBA_TEAM_COLORS: Record<string, TeamColors> = {
 };
 
 export function getTeamColors(abbreviation: string): TeamColors {
-  const abbr = abbreviation.toUpperCase();
-  // Ajuste para New Orleans Pelicans (NO) e Utah Jazz (UTA) se a abreviação for diferente
-  if (abbr === 'NOP') return NBA_TEAM_COLORS['NO'];
-  if (abbr === 'UTAH') return NBA_TEAM_COLORS['UTA'];
+  let abbr = abbreviation.toUpperCase();
   
+  // Mapeamento de abreviações comuns/antigas para as oficiais
+  if (abbr === 'NOP') abbr = 'NO';
+  if (abbr === 'UTAH') abbr = 'UTA';
+  if (abbr === 'NY') abbr = 'NYK'; // New York Knicks
+  if (abbr === 'SA') abbr = 'SAS'; // San Antonio Spurs
+  if (abbr === 'GS') abbr = 'GSW'; // Golden State Warriors
+  if (abbr === 'WSH') abbr = 'WAS'; // Washington Wizards
+
   return NBA_TEAM_COLORS[abbr] || { primary: '#f3f4f6', secondary: '#e5e7eb', text: '#1f2937' }; // Default gray
 }
