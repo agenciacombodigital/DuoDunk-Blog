@@ -257,7 +257,7 @@ export default function Home() {
                     alt={article.title}
                     loading="lazy"
                     decoding="async"
-                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                    className="w-full md:w-32 h-32 object-cover rounded-lg flex-shrink-0"
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
@@ -423,7 +423,7 @@ export default function Home() {
                     alt={article.title}
                     loading="lazy"
                     decoding="async"
-                    className="w-full md:w-32 h-24 object-cover rounded-lg flex-shrink-0"
+                    className="w-full md:w-32 h-32 object-cover rounded-lg flex-shrink-0"
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
