@@ -164,7 +164,7 @@ export default function Home() {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-oswald text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                      <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                         {article.title}
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
@@ -198,7 +198,7 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    <h3 className="font-oswald text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3">
+                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3">
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
@@ -228,7 +228,7 @@ export default function Home() {
                     <span className="font-bebas text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2">
                       5
                     </span>
-                    <h3 className="font-oswald text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                    <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                       {section1[6].title}
                     </h3>
                   </div>
@@ -259,7 +259,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-oswald text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
@@ -295,7 +295,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-oswald text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -330,7 +330,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="font-oswald text-base font-semibold uppercase group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                   </div>
@@ -361,7 +361,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    <h3 className="font-oswald text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -393,7 +393,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-oswald text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 font-inter">{article.summary}</p>
@@ -423,7 +423,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-oswald text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
@@ -458,7 +458,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="font-oswald text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -510,7 +510,7 @@ export default function Home() {
                                 {new Date(article.published_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
-                            <h3 className="font-oswald text-xl font-bold uppercase text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
+                            <h3 className="font-oswald text-lg md:text-xl font-bold uppercase text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
                               {article.title}
                             </h3>
                             <p className="text-sm text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -554,7 +554,7 @@ export default function Home() {
                               {new Date(article.published_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
-                          <h3 className="font-oswald text-3xl font-black uppercase text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
+                          <h3 className="font-oswald text-2xl md:text-3xl font-black uppercase text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
                             {article.title}
                           </h3>
                           {article.subtitle && (
@@ -602,7 +602,7 @@ export default function Home() {
                         </svg>
                         <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                       </div>
-                      <h3 className="font-oswald text-xl font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
+                      <h3 className="font-oswald text-lg md:text-xl font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
                         {article.title}
                       </h3>
                       <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-inter">{article.summary}</p>
