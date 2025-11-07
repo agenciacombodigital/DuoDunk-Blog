@@ -241,8 +241,10 @@ export default function Home() {
 
       <div className="container mx-auto px-4 space-y-16">
         {section2.length > 0 && (
-          <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
-            <h2 className="font-bebas text-4xl mb-6">📰 Notícias em Destaque</h2>
+          <section className="bg-gray-50 rounded-xl p-4 md:p-8 border border-gray-100">
+            <h2 className="font-bebas text-2xl md:text-4xl mb-4 md:mb-6 flex items-center gap-2">
+              📌 Não Perca
+            </h2>
             <div className="space-y-4">
               {section2.map((article) => (
                 <Link
@@ -259,7 +261,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
@@ -311,8 +313,10 @@ export default function Home() {
 
         {section4.length > 0 && (
           <section>
-            <h2 className="font-bebas text-4xl mb-6">⚡ Destaques Rápidos</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <h2 className="font-bebas text-2xl md:text-4xl mb-4 md:mb-6 flex items-center gap-2">
+              ⚡ Destaques Rápidos
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {section4.map((article) => (
                 <Link
                   key={article.id}
@@ -329,8 +333,8 @@ export default function Home() {
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
-                  <div className="p-3">
-                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-2">
+                  <div className="p-2.5 md:p-3">
+                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                   </div>
