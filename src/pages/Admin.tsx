@@ -378,14 +378,15 @@ export default function AdminPage() {
           onScrape={scrape} 
           onProcess={processOneWithAI} 
           onDeleteAll={deleteAllPublished} 
-          onRetryRateLimited={handleRetryRateLimited} // Passando a nova função
+          onRetryRateLimited={handleRetryRateLimited}
+          readyToRetryCount={rateLimitStats.ready_to_retry} // Passando a contagem
         />
         <AdminStats 
           pendingProcessingCount={pendingProcessing.length}
           autoApprovedCount={autoApproved.length}
           pendingApprovalCount={pendingApproval.length}
           publishedCount={published.length}
-          rateLimitedCount={rateLimitStats.total} // Passando o novo contador
+          rateLimitedCount={rateLimitStats.total}
         />
         <PendingApprovalSection 
           articles={pendingApproval}
