@@ -124,9 +124,12 @@ export default function Time() {
     if (!teamInfo) return;
 
     try {
-      // NOTE: A função 'nba-team-info' não existe no schema, mas assumimos que ela retorna TeamData
+      // NOTE: Enviando ID e Abreviação para a Edge Function
       const { data, error } = await supabase.functions.invoke('nba-team-info', {
-        body: { teamId: teamInfo.id }
+        body: { 
+          teamId: teamInfo.id,
+          abbreviation: teamInfo.abbreviation // Adicionando abreviação
+        }
       });
 
       if (error) {
