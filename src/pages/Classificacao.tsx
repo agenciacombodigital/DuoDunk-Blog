@@ -65,11 +65,24 @@ export default function Classificacao() {
         const addSlugToTeams = (teams: any[]): Team[] => {
           if (!Array.isArray(teams)) return [];
           return teams.map(team => {
+            // Usamos a abreviação da API (que pode ser 'NY', 'SA', 'GS', 'WSH') para encontrar o time no nosso mapa
             const teamInfo = NBA_TEAMS.find(t => t.abbreviation.toUpperCase() === team.abbreviation.toUpperCase());
+            
+            // Se não encontrar pela abreviação, tentamos encontrar pelo nome (fallback)
+            if (!teamInfo) {
+                const teamInfoByName = NBA_TEAMS.find(t => t.name.toLowerCase().includes(team.name.toLowerCase()));
+                return {
+                    ...team,
+                    slug: teamInfoByName?.slug || team.abbreviation.toLowerCase(), // Fallback para slug da abreviação
+                    name: teamInfoByName?.name || team.name,
+                };
+            }
+
             return {
               ...team,
-              slug: teamInfo?.slug || team.abbreviation.toLowerCase(),
-              name: teamInfo?.name || team.name, // Usar nome completo do nosso mapa se disponível
+              slug: teamInfo.slug, // Usamos o slug correto do nosso mapa (ex: 'knicks')
+              abbreviation: teamInfo.abbreviation, // Usamos a abreviação oficial (ex: 'NYK')
+              name: teamInfo.name, // Usamos o nome completo
             };
           });
         };
