@@ -197,7 +197,7 @@ export default function Time() {
 
   const { team, record, roster, pastGames, upcomingGames } = teamData;
   
-  // Cálculo e formatação da porcentagem de vitórias
+  // Cálculo e formatação da porcentagem de vitórias (mantido para referência, mas removido do display)
   const winPercentage = parseFloat(record.winPercent);
   const winPercentageDisplay = isNaN(winPercentage) 
     ? 'N/D' 
@@ -257,7 +257,8 @@ export default function Time() {
 
       {/* Estatísticas */}
       <div className="container mx-auto px-4 py-8 sm:py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-12">
+        {/* Ajustado para 3 colunas */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-12">
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 sm:p-6 border border-green-200">
             <div className="flex items-center gap-2 mb-2">
               <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
@@ -274,15 +275,7 @@ export default function Time() {
             <p className="text-3xl sm:text-4xl font-black text-red-600">{record.losses}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 sm:p-6 border border-blue-200">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-              <span className="text-xs sm:text-sm font-medium text-blue-900">% Vitórias</span>
-            </div>
-            <p className="text-3xl sm:text-4xl font-black text-blue-600">
-              {winPercentageDisplay}
-            </p>
-          </div>
+          {/* Removido o card de % Vitórias */}
 
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-6 border border-purple-200">
             <div className="flex items-center gap-2 mb-2">
@@ -333,7 +326,7 @@ export default function Time() {
                 {roster.map((player) => (
                   <div 
                     key={player.id}
-                    className="bg-gray-50 rounded-xl p-4 hover:shadow-lg transition border border-gray-200 group"
+                    className="bg-gray-50 rounded-xl p-4 hover:shadow-lg transition border border-gray-200 hover:border-pink-200 group"
                   >
                     <div className="flex items-start gap-4">
                       {player.headshot ? (
@@ -404,10 +397,12 @@ export default function Time() {
   
                     // ✅ GARANTIR QUE SCORE É SEMPRE STRING SIMPLES
                     const extractScore = (scoreData: any): string => {
-                      if (typeof scoreData === 'string') return scoreData;
-                      if (typeof scoreData === 'number') return String(scoreData);
-                      if (scoreData?.value) return String(scoreData.value);
-                      if (scoreData?.displayValue) return scoreData.displayValue;
+                      if (typeof scoreData === 'string' || typeof scoreData === 'number') return String(scoreData);
+                      if (typeof scoreData === 'object' && scoreData !== null) {
+                        if (scoreData.displayValue) return scoreData.displayValue;
+                        if (scoreData.display) return scoreData.display;
+                        if (scoreData.value) return String(scoreData.value);
+                      }
                       return '0';
                     };
                     

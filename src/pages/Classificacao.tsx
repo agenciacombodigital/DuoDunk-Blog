@@ -276,6 +276,7 @@ export default function Classificacao() {
                       <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
                         <img src={team.logo} alt={team.abbreviation} className="w-8 h-8" />
                         <div>
+                          {/* Aplicando cor primária no nome e abreviação */}
                           <p className="font-bold group-hover:underline transition-colors" style={getPrimaryColorStyle(team.abbreviation)}>{team.abbreviation}</p>
                           <p className="text-xs text-gray-600">{team.name}</p>
                         </div>
@@ -340,6 +341,7 @@ export default function Classificacao() {
                         <Link to={`/times/${team.slug}`} className="flex items-center gap-3 group">
                           <img src={team.logo} alt={team.name} className="w-8 h-8 object-contain" />
                           <div>
+                            {/* Aplicando cor primária no nome e abreviação */}
                             <div className="font-bold flex items-center group-hover:underline transition-colors" style={getPrimaryColorStyle(team.abbreviation)}>
                               {team.abbreviation}
                               {isHotTeam(team) && <Flame className="w-3 h-3 text-orange-400 ml-1" />}
