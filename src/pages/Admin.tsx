@@ -14,15 +14,18 @@ import PublishedArticlesSection from '@/components/admin/PublishedArticlesSectio
 import EditArticleModal from '@/components/admin/EditArticleModal';
 import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 import { clearAllFeaturedArticles } from '@/lib/adminUtils';
+import { retryRateLimitedArticles, getRateLimitStats } from '@/lib/retryRateLimitedArticles'; // Importando novas funções
 
 export default function AdminPage() {
   const navigate = useNavigate();
   const [queue, setQueue] = useState<any[]>([]);
   const [published, setPublished] = useState<any[]>([]);
+  const [rateLimitStats, setRateLimitStats] = useState({ total: 0, ready_to_retry: 0, still_waiting: 0 });
   const [loading, setLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   
   const [showEditModal, setShowEditModal] = useState(false);
@@ -41,6 +44,7 @@ export default function AdminPage() {
     try {
       await loadQueue();
       await loadPublished();
+      await loadRateLimitStats();
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -65,6 +69,13 @@ export default function AdminPage() {
       .order('published_at', { ascending: false });
     if (error) throw error;
     setPublished(data || []);
+  };
+  
+  const loadRateLimitStats = async () => {
+    const stats = await getRateLimitStats();
+    if (stats.success) {
+      setRateLimitStats(stats);
+    }
   };
 
   const handleLogout = () => {
@@ -103,6 +114,30 @@ export default function AdminPage() {
       toast.error('Erro ao processar', { id: toastId, description: error.message });
     }
     setIsProcessing(false);
+  };
+  
+  const handleRetryRateLimited = async () => {
+    setIsRetrying(true);
+    const toastId = toast.loading("Retentando artigos com Rate Limit...");
+    try {
+      const result = await retryRateLimitedArticles();
+      
+      if (result.success) {
+        if (result.processed > 0) {
+          toast.success(`✅ ${result.processed} artigos marcados para reprocessamento!`, { id: toastId });
+        } else {
+          toast.info("Nenhum artigo pronto para retentar.", { id: toastId });
+        }
+      } else {
+        throw new Error(result.error);
+      }
+      
+      await loadData();
+    } catch (error: any) {
+      toast.error('Erro ao retentar', { id: toastId, description: error.message });
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   const handleImageUpload = async (articleId: string, file: File) => {
@@ -323,7 +358,7 @@ export default function AdminPage() {
     }
   };
 
-  const isLoading = isScraping || isProcessing || isDeleting || loading;
+  const isLoading = isScraping || isProcessing || isDeleting || loading || isRetrying;
 
   if (loading) {
     return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -338,12 +373,19 @@ export default function AdminPage() {
       <AdminHeader onLogout={handleLogout} />
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        <AdminActions isLoading={isLoading} onScrape={scrape} onProcess={processOneWithAI} onDeleteAll={deleteAllPublished} />
+        <AdminActions 
+          isLoading={isLoading} 
+          onScrape={scrape} 
+          onProcess={processOneWithAI} 
+          onDeleteAll={deleteAllPublished} 
+          onRetryRateLimited={handleRetryRateLimited} // Passando a nova função
+        />
         <AdminStats 
           pendingProcessingCount={pendingProcessing.length}
           autoApprovedCount={autoApproved.length}
           pendingApprovalCount={pendingApproval.length}
           publishedCount={published.length}
+          rateLimitedCount={rateLimitStats.total} // Passando o novo contador
         />
         <PendingApprovalSection 
           articles={pendingApproval}
