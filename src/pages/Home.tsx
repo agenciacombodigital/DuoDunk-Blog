@@ -262,7 +262,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 3: Não Perca (section2) - text-base md:text-xl */}
+                    {/* AJUSTE 4: Não Perca (section2) - text-base md:text-xl */}
                     <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
@@ -301,7 +301,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 4: Análises Profundas (section3) - text-xl md:text-2xl */}
+                    {/* AJUSTE 5: Análises Profundas (section3) - text-xl md:text-2xl */}
                     <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -373,7 +373,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    {/* AJUSTE 5: Mais Lidas (section5) - text-lg md:text-xl */}
+                    {/* AJUSTE 6: Mais Lidas (section5) - text-lg md:text-xl */}
                     <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -408,7 +408,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 6: Mais da NBA (section6) - text-lg md:text-xl */}
+                    {/* AJUSTE 7: Mais da NBA (section6) - text-lg md:text-xl */}
                     <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -441,7 +441,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 3: Não Perca (section7) - text-base md:text-xl */}
+                    {/* AJUSTE 4: Não Perca (section7) - text-base md:text-xl */}
                     <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
@@ -477,7 +477,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 4: Análises Profundas (section8) - text-xl md:text-2xl */}
+                    {/* AJUSTE 5: Análises Profundas (section8) - text-xl md:text-2xl */}
                     <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
