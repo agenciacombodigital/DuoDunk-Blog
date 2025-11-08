@@ -77,12 +77,10 @@ export default function Home() {
   const section8 = articles.slice(35, 37);
   const remaining = articles.slice(37);
 
-  // ✅ CORREÇÃO: Determina o focal point correto baseado no dispositivo
   const focalPointValue = isMobile 
     ? featuredArticle.image_focal_point_mobile
     : featuredArticle.image_focal_point;
     
-  // ✅ CORREÇÃO: Passa o flag correto para a função
   const focalPointStyle = getObjectPositionStyle(focalPointValue, isMobile);
 
   return (
@@ -97,7 +95,6 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-6">
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
-                {/* ✅ CORREÇÃO PRINCIPAL: Estrutura simplificada sem DIV interno desnecessário */}
                 <div className="relative w-full aspect-3/4 md:aspect-video overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   
                   <img
@@ -198,8 +195,8 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    {/* AJUSTE 1: Mini Cards Laterais (2, 3, 4) - text-sm md:text-base */}
-                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
+                    {/* SOLUÇÃO: Inter no mobile, Oswald no desktop */}
+                    <h3 className="font-inter md:font-oswald text-xs md:text-base font-bold md:font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
@@ -262,8 +259,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 4: Não Perca (section2) - text-base md:text-xl */}
-                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* SOLUÇÃO: Inter no mobile, Oswald no desktop */}
+                    <h3 className="font-inter md:font-oswald text-sm md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
@@ -301,7 +298,6 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 5: Análises Profundas (section3) - text-xl md:text-2xl */}
                     <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -338,9 +334,9 @@ export default function Home() {
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
                   </div>
-                  <div className="p-2.5 md:p-3">
-                    {/* AJUSTE 2: Destaques Rápidos (section4) - text-xs md:text-sm */}
-                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
+                  <div className="p-2 md:p-3">
+                    {/* SOLUÇÃO CRÍTICA: Inter sempre, tamanho menor */}
+                    <h3 className="font-inter text-[11px] md:text-sm font-bold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-[1.2]">
                       {article.title}
                     </h3>
                   </div>
@@ -373,7 +369,6 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    {/* AJUSTE 6: Mais Lidas (section5) - text-lg md:text-xl */}
                     <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -408,7 +403,6 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 7: Mais da NBA (section6) - text-lg md:text-xl */}
                     <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -441,8 +435,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 4: Não Perca (section7) - text-base md:text-xl */}
-                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* SOLUÇÃO: Inter no mobile, Oswald no desktop */}
+                    <h3 className="font-inter md:font-oswald text-sm md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
@@ -477,7 +471,6 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 5: Análises Profundas (section8) - text-xl md:text-2xl */}
                     <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
