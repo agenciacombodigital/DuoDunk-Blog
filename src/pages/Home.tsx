@@ -230,7 +230,7 @@ export default function Home() {
                       5
                     </span>
                     <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
-                      {article.title}
+                      {section1[6].title}
                     </h3>
                   </div>
                 </Link>
