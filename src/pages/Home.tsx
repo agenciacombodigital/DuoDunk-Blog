@@ -198,8 +198,8 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    {/* AJUSTE 3: Mini Cards Laterais (2, 3, 4) - Reduzido para text-xs md:text-sm */}
-                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3">
+                    {/* AJUSTE 1: Mini Cards Laterais (2, 3, 4) - text-sm no mobile */}
+                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
@@ -243,7 +243,7 @@ export default function Home() {
       <div className="container mx-auto px-4 space-y-16">
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-4 md:p-8 border border-gray-100">
-            <h2 className="font-bebas text-2xl md:text-4xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               📌 Não Perca
             </h2>
             <div className="space-y-4">
@@ -262,8 +262,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 2: Seção Não Perca (section2) - Reduzido para text-sm md:text-base */}
-                    <h3 className="font-oswald text-sm md:text-base font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* AJUSTE 2: Seção Não Perca (section2) - text-base no mobile */}
+                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
@@ -280,7 +280,9 @@ export default function Home() {
 
         {section3.length > 0 && (
           <section>
-            <h2 className="font-bebas text-4xl mb-6">🔥 Análises Profundas</h2>
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+              🔥 Análises Profundas
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {section3.map((article) => (
                 <Link
@@ -315,7 +317,7 @@ export default function Home() {
 
         {section4.length > 0 && (
           <section>
-            <h2 className="font-bebas text-2xl md:text-4xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               ⚡ Destaques Rápidos
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -336,8 +338,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-2.5 md:p-3">
-                    {/* AJUSTE 1: Seção Destaques Rápidos (section4) - Reduzido para text-xs */}
-                    <h3 className="font-oswald text-xs font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
+                    {/* AJUSTE 3: Seção Destaques Rápidos (section4) - text-xs no mobile, line-clamp-3 */}
+                    <h3 className="font-oswald text-xs md:text-base font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                   </div>
@@ -349,7 +351,9 @@ export default function Home() {
 
         {section5.length > 0 && (
           <section>
-            <h2 className="font-bebas text-4xl mb-6">📊 Mais Lidas</h2>
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+              📊 Mais Lidas
+            </h2>
             <div className="space-y-6">
               {section5.map((article, index) => (
                 <Link
@@ -381,7 +385,9 @@ export default function Home() {
 
         {section6.length > 0 && (
           <section>
-            <h2 className="font-bebas text-4xl mb-6">🏀 Mais da NBA</h2>
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+              🏀 Mais da NBA
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {section6.map((article) => (
                 <Link
@@ -413,7 +419,9 @@ export default function Home() {
 
         {section7.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
-            <h2 className="font-bebas text-4xl mb-6">📌 Não Perca</h2>
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+              📌 Não Perca
+            </h2>
             <div className="space-y-4">
               {section7.map((article) => (
                 <Link
@@ -430,8 +438,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 2: Seção Não Perca (section7) - Reduzido para text-sm md:text-base */}
-                    <h3 className="font-oswald text-sm md:text-base font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    {/* AJUSTE 2: Seção Não Perca (section7) - text-base no mobile */}
+                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
