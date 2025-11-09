@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, MessageSquare } from 'lucide-react';
+import MobileMenu from './MobileMenu'; // Importação adicionada
 
 export default function Header() {
   return (
