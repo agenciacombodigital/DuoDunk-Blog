@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
-import MobileMenu from './MobileMenu';
+import { Instagram, Threads } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -28,10 +27,22 @@ export default function Header() {
           
           {/* Sociais */}
           <div className="flex items-center gap-4">
-            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={20} /></a>
-            <a href="https://www.instagram.com/duodunk/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
-            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
-            <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitch size={20} /></a>
+            <a 
+              href="https://www.instagram.com/duodunk/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-gray-400 hover:text-primary transition-colors"
+            >
+              <Instagram size={20} />
+            </a>
+            <a 
+              href="https://www.threads.com/@duodunk?xmt=AQF0DK1KHM0AbHGst0S-sm_Wy_Nva6Jl70oEeQGRbf5SZsY" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-gray-400 hover:text-primary transition-colors"
+            >
+              <Threads size={20} />
+            </a>
           </div>
         </div>
 

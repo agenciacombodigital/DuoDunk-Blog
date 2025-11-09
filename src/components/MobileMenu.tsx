@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Newspaper, Users, Trophy, Youtube, Instagram, Twitter, Twitch } from 'lucide-react';
+import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Threads } from 'lucide-react';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,10 +90,22 @@ export default function MobileMenu() {
           <div className="mt-auto pt-6 border-t border-white/10 text-center">
             <p className="text-sm text-gray-400 mb-4">Siga-nos:</p>
             <div className="flex justify-center gap-6">
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={24} /></a>
-              <a href="https://www.instagram.com/duodunk/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={24} /></a>
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={24} /></a>
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitch size={24} /></a>
+              <a 
+                href="https://www.instagram.com/duodunk/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-400 hover:text-primary transition-colors"
+              >
+                <Instagram size={24} />
+              </a>
+              <a 
+                href="https://www.threads.com/@duodunk?xmt=AQF0DK1KHM0AbHGst0S-sm_Wy_Nva6Jl70oEeQGRbf5SZsY" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-400 hover:text-primary transition-colors"
+              >
+                <Threads size={24} />
+              </a>
             </div>
           </div>
         </div>
