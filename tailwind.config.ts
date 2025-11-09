@@ -25,6 +25,7 @@ export default {
         'bebas': ['Bebas Neue', 'cursive'],
         'oswald': ['Oswald', 'sans-serif'],
         'inter': ['Inter', 'sans-serif'],
+        'poppins': ['Poppins', 'sans-serif'], // ✅ NOVA FONTE
         'sans': ['Inter', 'sans-serif'],
       },
       colors: {

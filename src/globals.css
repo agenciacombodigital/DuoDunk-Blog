@@ -130,6 +130,19 @@
            px-3 py-1 rounded-full text-xs font-semibold;
   }
 
+  /* Classes para títulos responsivos */
+  .title-mobile {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+  }
+
+  @media (min-width: 768px) {
+    .title-mobile {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 600;
+    }
+  }
+
   /* Scrollbar customizada - MANTÉM AS CORES ATUAIS */
   ::-webkit-scrollbar {
     width: 10px;
@@ -299,9 +312,6 @@ html {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
   }
-  
-  /* REMOVIDO: img { max-width: 100% !important; height: auto !important; } */
-  /* REMOVIDO: .aspect-\[3\/4\] img { object-fit: cover !important; } */
 }
 
 /* Responsividade mobile para Bebas */
