@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Instagram, MessageSquare } from 'lucide-react';
-import MobileMenu from './MobileMenu'; // Importação adicionada
+import { Instagram } from 'lucide-react';
+import MobileMenu from './MobileMenu';
 
 export default function Header() {
   return (
@@ -42,7 +42,11 @@ export default function Header() {
               rel="noopener noreferrer" 
               className="text-gray-400 hover:text-primary transition-colors"
             >
-              <MessageSquare size={20} />
+              <img 
+                src="/images/Threads-logo.svg" 
+                alt="Threads Logo" 
+                className="w-5 h-5" 
+              />
             </a>
           </div>
         </div>
