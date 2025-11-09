@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Newspaper, Users, Trophy, Instagram } from 'lucide-react';
+import ThreadsIcon from './ThreadsIcon';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -104,11 +105,7 @@ export default function MobileMenu() {
                 rel="noopener noreferrer" 
                 className="text-gray-400 hover:text-primary transition-colors"
               >
-                <img 
-                  src="/images/Threads-branco.svg" 
-                  alt="Threads Logo" 
-                  className="w-6 h-6" 
-                />
+                <ThreadsIcon className="w-6 h-6" />
               </a>
             </div>
           </div>

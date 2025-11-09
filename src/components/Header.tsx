@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Instagram } from 'lucide-react';
 import MobileMenu from './MobileMenu';
+import ThreadsIcon from './ThreadsIcon';
 
 export default function Header() {
   return (
@@ -42,11 +43,7 @@ export default function Header() {
               rel="noopener noreferrer" 
               className="text-gray-400 hover:text-primary transition-colors"
             >
-              <img 
-                src="/images/Threads-branco.svg" 
-                alt="Threads Logo" 
-                className="w-5 h-5" 
-              />
+              <ThreadsIcon className="w-5 h-5" />
             </a>
           </div>
         </div>
