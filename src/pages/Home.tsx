@@ -1,4 +1,3 @@
-published_at) para garantir que os dados sejam carregados e os estilos sejam aplicados corretamente.">
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
