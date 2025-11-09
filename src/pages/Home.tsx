@@ -6,7 +6,7 @@ import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Função auxiliar para mostrar o tempo "há X horas/dias"
+// Função auxiliar para mostrar o tempo (h X horas/dias)
 function getTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -66,8 +66,8 @@ export default function Home() {
     );
   }
 
-  const featuredArticle = articles.find(a => a.is_featured) || articles[0];
-  const section1 = articles.filter(a => a.id !== featuredArticle?.id).slice(0, 7);
+  const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
+  const section1 = articles.filter((a) => a.id !== featuredArticle?.id).slice(0, 7);
   const section2 = articles.slice(8, 14);
   const section3 = articles.slice(14, 16);
   const section4 = articles.slice(16, 20);
@@ -79,14 +79,15 @@ export default function Home() {
 
   // ✅ CORREÇÃO: Determina o focal point correto baseado no dispositivo
   const focalPointValue = isMobile 
-    ? featuredArticle.image_focal_point_mobile
+    ? featuredArticle.image_focal_point_mobile 
     : featuredArticle.image_focal_point;
-    
+  
   // ✅ CORREÇÃO: Passa o flag correto para a função
   const focalPointStyle = getObjectPositionStyle(focalPointValue, isMobile);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
+      {/* Featured Article */}
       {featuredArticle && (
         <section className="container mx-auto px-4 py-8">
           <h2 className="font-bebas text-2xl text-pink-600 mb-4 tracking-wide uppercase flex items-center gap-2">
@@ -95,18 +96,14 @@ export default function Home() {
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Featured Card Principal */}
             <div className="lg:col-span-8 space-y-6">
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
                 {/* ✅ CORREÇÃO PRINCIPAL: Estrutura simplificada sem DIV interno desnecessário */}
-                <div className="relative w-full aspect-3/4 md:aspect-video overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
-                  
+                <div className="relative w-full aspect-[3/4] md:aspect-video overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
                     src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
-                    srcSet={`
-                      ${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w,
-                      ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w,
-                      ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w
-                    `}
+                    srcSet={`${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w, ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w, ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w`}
                     sizes="(max-width: 1023px) 100vw, 800px"
                     alt={featuredArticle.title}
                     loading="lazy"
@@ -114,9 +111,7 @@ export default function Home() {
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     style={focalPointStyle}
                   />
-
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-                  
                   <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-10">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase flex items-center gap-1">
@@ -128,11 +123,10 @@ export default function Home() {
                         Há {getTimeAgo(featuredArticle.published_at)}
                       </span>
                     </div>
-
-                    <h1 className="font-oswald text-4xl md:text-5xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
+                    {/* ✅ AJUSTE: Título Featured - text-2xl md:text-4xl (reduzido de 4xl/5xl) */}
+                    <h1 className="font-oswald text-2xl md:text-4xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
                       {featuredArticle.title}
                     </h1>
-
                     <div className="flex items-center gap-2 text-sm text-white/70 font-inter">
                       <span>
                         {new Date(featuredArticle.published_at).toLocaleDateString('pt-BR', {
@@ -146,6 +140,7 @@ export default function Home() {
                 </div>
               </Link>
 
+              {/* Grid 3 Cards Horizontais */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {section1.slice(3, 6).map((article) => (
                   <Link
@@ -164,7 +159,8 @@ export default function Home() {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                      {/* ✅ AJUSTE 3: Cards Horizontais 3x - text-sm md:text-base */}
+                      <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2 leading-tight">
                         {article.title}
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
@@ -177,6 +173,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Sidebar com Mini Cards Numerados 2, 3, 4 */}
             <div className="lg:col-span-4 space-y-4">
               {section1.slice(0, 3).map((article, index) => (
                 <Link
@@ -198,8 +195,8 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    {/* AJUSTE 1: Mini Cards Laterais (2, 3, 4) - text-sm md:text-base */}
-                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
+                    {/* ✅ AJUSTE 1: Mini Cards Laterais 2, 3, 4 - text-xs md:text-sm */}
+                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
@@ -210,6 +207,7 @@ export default function Home() {
                 </Link>
               ))}
 
+              {/* Card #5 */}
               {section1[6] && (
                 <Link
                   to={`/artigos/${section1[6].slug}`}
@@ -229,7 +227,8 @@ export default function Home() {
                     <span className="font-bebas text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2">
                       5
                     </span>
-                    <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                    {/* ✅ AJUSTE 3: Card #5 - text-sm md:text-base */}
+                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                       {section1[6].title}
                     </h3>
                   </div>
@@ -240,7 +239,9 @@ export default function Home() {
         </section>
       )}
 
+      {/* Seções Restantes */}
       <div className="container mx-auto px-4 space-y-16">
+        {/* Seção 2: Notícias em Destaque */}
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-4 md:p-8 border border-gray-100">
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -262,11 +263,13 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 4: Não Perca (section2) - text-base md:text-xl */}
-                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* ✅ AJUSTE 4: Não Perca (section2) - text-sm md:text-lg */}
+                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
+                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
+                      {article.summary}
+                    </p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 font-inter">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
@@ -278,6 +281,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção 3: Análises Profundas */}
         {section3.length > 0 && (
           <section>
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -301,8 +305,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 5: Análises Profundas (section3) - text-xl md:text-2xl */}
-                    <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    {/* ✅ AJUSTE 5: Análises Profundas - text-base md:text-xl */}
+                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -316,6 +320,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção 4: Destaques Rápidos */}
         {section4.length > 0 && (
           <section>
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -339,7 +344,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-2.5 md:p-3">
-                    {/* AJUSTE 2: Destaques Rápidos (section4) - text-xs md:text-sm */}
+                    {/* ✅ AJUSTE 2: Destaques Rápidos - text-xs md:text-sm */}
                     <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
@@ -350,6 +355,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção 5: Mais Lidas */}
         {section5.length > 0 && (
           <section>
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -373,8 +379,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    {/* AJUSTE 6: Mais Lidas (section5) - text-lg md:text-xl */}
-                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    {/* ✅ AJUSTE 6: Mais Lidas - text-sm md:text-lg */}
+                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -385,6 +391,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção 6: Mais da NBA */}
         {section6.length > 0 && (
           <section>
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -408,8 +415,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 7: Mais da NBA (section6) - text-lg md:text-xl */}
-                    <h3 className="font-oswald text-lg md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
+                    {/* ✅ AJUSTE 7: Mais da NBA - text-sm md:text-lg */}
+                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 font-inter">{article.summary}</p>
@@ -420,6 +427,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção 7: No Perca (Segunda ocorrência) */}
         {section7.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -441,11 +449,13 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 4: Não Perca (section7) - text-base md:text-xl */}
-                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* ✅ AJUSTE 4: Não Perca - text-sm md:text-lg */}
+                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">{article.summary}</p>
+                    <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
+                      {article.summary}
+                    </p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 font-inter">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
@@ -457,6 +467,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção 8 */}
         {section8.length > 0 && (
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -477,8 +488,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* AJUSTE 5: Análises Profundas (section8) - text-xl md:text-2xl */}
-                    <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    {/* ✅ AJUSTE 5: Seção 8 - text-base md:text-xl */}
+                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -492,6 +503,7 @@ export default function Home() {
           </section>
         )}
 
+        {/* Seção ARQUIVO (Remaining) */}
         {remaining.length > 0 && (
           <section className="mt-20">
             <div className="flex items-center gap-4 mb-8">
@@ -502,11 +514,16 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {remaining.map((article, index) => {
                 if (!article) return null;
+
                 const layoutType = index % 6;
 
+                // Layout Wide (0, 3)
                 if (layoutType === 0 || layoutType === 3) {
                   return (
-                    <div key={article.id} className="md:col-span-2 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                    <div
+                      key={article.id}
+                      className="md:col-span-2 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                    >
                       <div className="flex flex-col sm:flex-row">
                         <div className="sm:w-2/5 relative">
                           <img
@@ -530,19 +547,31 @@ export default function Home() {
                                 {new Date(article.published_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
-                            <h3 className="font-oswald text-lg md:text-xl font-bold uppercase text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
+                            {/* ✅ AJUSTE 8: Layout Wide - text-sm md:text-lg */}
+                            <h3 className="font-oswald text-sm md:text-lg font-bold uppercase text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
                               {article.title}
                             </h3>
-                            <p className="text-sm text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
+                            <p className="text-sm text-gray-600 line-clamp-2 font-inter">
+                              {article.summary}
+                            </p>
                           </div>
-                          
                           <Link
                             to={`/artigos/${article.slug}`}
                             className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link font-inter"
                           >
                             Ler mais
-                            <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            <svg
+                              className="w-4 h-4 group-hover/link:translate-x-1 transition-transform"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
                             </svg>
                           </Link>
                         </div>
@@ -551,9 +580,13 @@ export default function Home() {
                   );
                 }
 
+                // Layout Full Width (2, 5)
                 if (layoutType === 2 || layoutType === 5) {
                   return (
-                    <div key={article.id} className="md:col-span-2 lg:col-span-3 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                    <div
+                      key={article.id}
+                      className="md:col-span-2 lg:col-span-3 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                    >
                       <div className="grid lg:grid-cols-2">
                         <div className="relative rounded-xl overflow-hidden">
                           <img
@@ -574,21 +607,33 @@ export default function Home() {
                               {new Date(article.published_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
-                          <h3 className="font-oswald text-2xl md:text-3xl font-black uppercase text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
+                          {/* ✅ AJUSTE 9: Layout Full Width - text-xl md:text-2xl */}
+                          <h3 className="font-oswald text-xl md:text-2xl font-black uppercase text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
                             {article.title}
                           </h3>
                           {article.subtitle && (
                             <p className="text-lg text-gray-700 mb-4 font-inter">{article.subtitle}</p>
                           )}
-                          <p className="text-sm text-gray-600 mb-6 line-clamp-2 font-inter">{article.summary}</p>
-                          
+                          <p className="text-sm text-gray-600 mb-6 line-clamp-2 font-inter">
+                            {article.summary}
+                          </p>
                           <Link
                             to={`/artigos/${article.slug}`}
                             className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link w-fit font-inter"
                           >
                             Ler Matéria Completa
-                            <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            <svg
+                              className="w-4 h-4 group-hover/link:translate-x-1 transition-transform"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                              />
                             </svg>
                           </Link>
                         </div>
@@ -597,8 +642,12 @@ export default function Home() {
                   );
                 }
 
+                // Layout Padrão (1, 4)
                 return (
-                  <div key={article.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                  <div
+                    key={article.id}
+                    className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                  >
                     <div className="relative overflow-hidden aspect-[4/3]">
                       <img
                         src={getOptimizedImageUrl(article.image_url, 400)}
@@ -618,22 +667,39 @@ export default function Home() {
                     <div className="p-6">
                       <div className="flex items-center gap-2 mb-3 text-xs text-gray-400 font-inter">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
                         </svg>
                         <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                       </div>
-                      <h3 className="font-oswald text-lg md:text-xl font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
+                      {/* ✅ AJUSTE 10: Layout Padrão - text-sm md:text-base */}
+                      <h3 className="font-oswald text-sm md:text-base font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-inter">{article.summary}</p>
-                      
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-inter">
+                        {article.summary}
+                      </p>
                       <Link
                         to={`/artigos/${article.slug}`}
                         className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 group/link font-inter"
                       >
                         Leia mais
-                        <svg className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <svg
+                          className="w-4 h-4 group-hover/link:translate-x-1 transition-transform"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       </Link>
                     </div>
