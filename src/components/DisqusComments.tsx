@@ -8,29 +8,29 @@ interface DisqusCommentsProps {
 
 export default function DisqusComments({ identifier, title, url }: DisqusCommentsProps) {
   useEffect(() => {
+    // Configuração para desativar as reações (emojis)
+    const disqus_config = function () {
+      // @ts-ignore
+      this.page.url = url;
+      // @ts-ignore
+      this.page.identifier = identifier;
+      // @ts-ignore
+      this.page.title = title;
+      // @ts-ignore
+      this.language = 'pt_BR';
+      // ✅ Desativa o recurso de Reações (emojis)
+      // @ts-ignore
+      this.disable_features = ['reactions']; 
+    };
+
     // Limpar comentários anteriores
     if (window.DISQUS) {
       window.DISQUS.reset({
         reload: true,
-        config: function () {
-          this.page.identifier = identifier;
-          this.page.url = url;
-          this.page.title = title;
-        }
+        config: disqus_config
       });
     } else {
       // Carregar Disqus pela primeira vez
-      const disqus_config = function () {
-        // @ts-ignore
-        this.page.url = url;
-        // @ts-ignore
-        this.page.identifier = identifier;
-        // @ts-ignore
-        this.page.title = title;
-        // @ts-ignore
-        this.language = 'pt_BR';
-      };
-
       // @ts-ignore
       window.disqus_config = disqus_config;
 
