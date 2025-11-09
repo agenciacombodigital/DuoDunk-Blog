@@ -325,7 +325,8 @@ export default function Home() {
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               ⚡ Destaques Rápidos
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {/* ALTERAÇÃO APLICADA: grid-cols-1 no mobile, md:grid-cols-4 no desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
               {section4.map((article) => (
                 <Link
                   key={article.id}
@@ -519,9 +520,11 @@ export default function Home() {
                 // Layout Wide (0, 3)
                 if (layoutType === 0 || layoutType === 3) {
                   return (
-                    <div
+                    // CORREÇÃO: Envolvendo o card inteiro com Link
+                    <Link
                       key={article.id}
-                      className="md:col-span-2 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                      to={`/artigos/${article.slug}`}
+                      className="md:col-span-2 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 block"
                     >
                       <div className="flex flex-col sm:flex-row">
                         <div className="sm:w-2/5 relative">
@@ -554,8 +557,8 @@ export default function Home() {
                               {article.summary}
                             </p>
                           </div>
-                          <Link
-                            to={`/artigos/${article.slug}`}
+                          {/* Removido o Link interno, pois o Link externo envolve tudo */}
+                          <span
                             className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link font-inter"
                           >
                             Ler mais
@@ -572,19 +575,21 @@ export default function Home() {
                                 d="M9 5l7 7-7 7"
                               />
                             </svg>
-                          </Link>
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 }
 
                 // Layout Full Width (2, 5)
                 if (layoutType === 2 || layoutType === 5) {
                   return (
-                    <div
+                    // CORREÇÃO: Envolvendo o card inteiro com Link
+                    <Link
                       key={article.id}
-                      className="md:col-span-2 lg:col-span-3 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                      to={`/artigos/${article.slug}`}
+                      className="md:col-span-2 lg:col-span-3 group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 block"
                     >
                       <div className="grid lg:grid-cols-2">
                         <div className="relative rounded-xl overflow-hidden">
@@ -616,8 +621,8 @@ export default function Home() {
                           <p className="text-sm text-gray-600 mb-6 line-clamp-2 font-inter">
                             {article.summary}
                           </p>
-                          <Link
-                            to={`/artigos/${article.slug}`}
+                          {/* Removido o Link interno, pois o Link externo envolve tudo */}
+                          <span
                             className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 mt-4 group/link w-fit font-inter"
                           >
                             Ler Matéria Completa
@@ -634,18 +639,20 @@ export default function Home() {
                                 d="M13 7l5 5m0 0l-5 5m5-5H6"
                               />
                             </svg>
-                          </Link>
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 }
 
                 // Layout Padrão (1, 4)
                 return (
-                  <div
+                  // CORREÇÃO: Envolvendo o card inteiro com Link
+                  <Link
                     key={article.id}
-                    className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                    to={`/artigos/${article.slug}`}
+                    className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 block"
                   >
                     <div className="relative overflow-hidden aspect-[4/3]">
                       <img
@@ -682,8 +689,8 @@ export default function Home() {
                       <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-inter">
                         {article.summary}
                       </p>
-                      <Link
-                        to={`/artigos/${article.slug}`}
+                      {/* Removido o Link interno, pois o Link externo envolve tudo */}
+                      <span
                         className="inline-flex items-center gap-2 text-sm font-bold text-pink-500 hover:text-pink-600 group/link font-inter"
                       >
                         Leia mais
@@ -700,9 +707,9 @@ export default function Home() {
                             d="M9 5l7 7-7 7"
                           />
                         </svg>
-                      </Link>
+                      </span>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
