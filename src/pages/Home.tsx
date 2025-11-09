@@ -343,8 +343,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-2.5 md:p-3">
-                    {/* AJUSTE 2: Destaques Rápidos (section4) - text-xs md:text-sm */}
-                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
+                    {/* AJUSTE APLICADO: Aumentando o tamanho da fonte para text-sm no mobile e line-clamp-4 */}
+                    <h3 className="font-oswald text-sm md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-4 leading-tight">
                       {article.title}
                     </h3>
                   </div>
@@ -546,7 +546,7 @@ export default function Home() {
                                 {new Date(article.published_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
-                            {/* ✅ AJUSTE 8: Layout Wide - text-sm md:text-lg */}
+                            {/* AJUSTE 8: Layout Wide - text-sm md:text-lg */}
                             <h3 className="font-oswald text-sm md:text-lg font-bold uppercase text-gray-900 mb-3 group-hover:text-pink-500 transition-colors line-clamp-2">
                               {article.title}
                             </h3>
@@ -606,7 +606,7 @@ export default function Home() {
                               {new Date(article.published_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
-                          {/* ✅ AJUSTE 9: Layout Full Width - text-xl md:text-2xl */}
+                          {/* AJUSTE 9: Layout Full Width - text-xl md:text-2xl */}
                           <h3 className="font-oswald text-xl md:text-2xl font-black uppercase text-gray-900 mb-4 leading-tight group-hover:text-pink-600 transition-colors">
                             {article.title}
                           </h3>
@@ -675,7 +675,7 @@ export default function Home() {
                         </svg>
                         <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                       </div>
-                      {/* ✅ AJUSTE 10: Layout Padrão - text-sm md:text-base */}
+                      {/* AJUSTE 10: Layout Padrão - text-sm md:text-base */}
                       <h3 className="font-oswald text-sm md:text-base font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-pink-500 transition-colors">
                         {article.title}
                       </h3>
