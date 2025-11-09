@@ -262,8 +262,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE: Reduzindo para text-sm no mobile e line-clamp-3 */}
-                    <h3 className="font-oswald text-sm md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
+                    {/* AJUSTE APLICADO: Reduzindo para text-xs no mobile e line-clamp-3 */}
+                    <h3 className="font-oswald text-xs md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
@@ -343,7 +343,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-2.5 md:p-3">
-                    {/* AJUSTE APLICADO: Reduzindo para text-xs no mobile e line-clamp-4 */}
+                    {/* AJUSTE APLICADO: Mantendo text-xs no mobile e line-clamp-4 */}
                     <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-4 leading-tight">
                       {article.title}
                     </h3>
@@ -448,8 +448,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE: Reduzindo para text-sm no mobile e line-clamp-3 */}
-                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
+                    {/* AJUSTE APLICADO: Reduzindo para text-xs no mobile e line-clamp-3 */}
+                    <h3 className="font-oswald text-xs md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
