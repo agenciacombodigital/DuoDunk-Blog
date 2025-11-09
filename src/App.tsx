@@ -18,6 +18,7 @@ import Time from "./pages/Time";
 import Classificacao from './pages/Classificacao';
 import Privacidade from './pages/Privacidade';
 import Cookies from './pages/Cookies';
+import ScrollToTop from './components/ScrollToTop'; // Importando o novo componente
 
 const AppContent = () => {
   const location = useLocation();
@@ -26,6 +27,7 @@ const AppContent = () => {
 
   return (
     <div className={`min-h-screen flex flex-col ${isAdminRoute ? 'bg-black' : 'bg-white'}`}>
+      <ScrollToTop /> {/* Adicionando o ScrollToTop aqui */}
       {!isAdminRoute && (
         <>
           <Header />

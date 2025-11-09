@@ -116,11 +116,13 @@ export default function Artigo() {
               </span>
             </div>
 
-            <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-6 leading-tight tracking-wide">
+            {/* AJUSTE DE TAMANHO: Título reduzido para text-3xl no mobile */}
+            <h1 className="font-oswald text-3xl md:text-6xl font-bold uppercase text-gray-900 mb-6 leading-tight tracking-wide">
               {article.title}
             </h1>
 
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed font-inter">
+            {/* AJUSTE DE TAMANHO: Resumo reduzido para text-lg no mobile */}
+            <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed font-inter">
               {article.summary}
             </p>
 
