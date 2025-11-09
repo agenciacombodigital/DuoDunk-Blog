@@ -1,3 +1,4 @@
+published_at) para garantir que os dados sejam carregados e os estilos sejam aplicados corretamente.">
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
@@ -195,8 +196,8 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="flex-1 p-3 flex flex-col justify-between">
-                    {/* ✅ AJUSTE 1: Mini Cards Laterais 2, 3, 4 - text-xs md:text-sm */}
-                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
+                    {/* AJUSTE 1: Mini Cards Laterais (2, 3, 4) - text-sm md:text-base */}
+                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 group-hover:text-pink-600 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
@@ -227,8 +228,7 @@ export default function Home() {
                     <span className="font-bebas text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2">
                       5
                     </span>
-                    {/* ✅ AJUSTE 3: Card #5 - text-sm md:text-base */}
-                    <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
+                    <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
                       {section1[6].title}
                     </h3>
                   </div>
@@ -263,8 +263,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* ✅ AJUSTE 4: Não Perca (section2) - text-sm md:text-lg */}
-                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* AJUSTE 4: Não Perca (section2) - text-base md:text-xl */}
+                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
@@ -305,8 +305,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* ✅ AJUSTE 5: Análises Profundas - text-base md:text-xl */}
-                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
+                    {/* AJUSTE 5: Análises Profundas (section3) - text-xl md:text-2xl */}
+                    <h3 className="font-oswald text-xl md:text-2xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 font-inter">{article.summary}</p>
@@ -344,7 +344,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-2.5 md:p-3">
-                    {/* ✅ AJUSTE 2: Destaques Rápidos - text-xs md:text-sm */}
+                    {/* AJUSTE 2: Destaques Rápidos (section4) - text-xs md:text-sm */}
                     <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
@@ -379,7 +379,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1 p-6 flex flex-col justify-center">
-                    {/* ✅ AJUSTE 6: Mais Lidas - text-sm md:text-lg */}
+                    {/* AJUSTE 6: Mais Lidas (section5) - text-sm md:text-lg */}
                     <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -415,7 +415,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* ✅ AJUSTE 7: Mais da NBA - text-sm md:text-lg */}
+                    {/* AJUSTE 7: Mais da NBA (section6) - text-sm md:text-lg */}
                     <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
@@ -449,7 +449,7 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* ✅ AJUSTE 4: Não Perca - text-sm md:text-lg */}
+                    {/* AJUSTE 4: Não Perca - text-sm md:text-lg */}
                     <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
                       {article.title}
                     </h3>
@@ -488,7 +488,7 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-6">
-                    {/* ✅ AJUSTE 5: Seção 8 - text-base md:text-xl */}
+                    {/* AJUSTE 5: Seção 8 - text-base md:text-xl */}
                     <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                       {article.title}
                     </h3>
