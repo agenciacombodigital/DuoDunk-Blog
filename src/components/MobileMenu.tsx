@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Threads } from 'lucide-react';
+import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, MessageSquare } from 'lucide-react';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -104,7 +104,7 @@ export default function MobileMenu() {
                 rel="noopener noreferrer" 
                 className="text-gray-400 hover:text-primary transition-colors"
               >
-                <Threads size={24} />
+                <MessageSquare size={24} />
               </a>
             </div>
           </div>

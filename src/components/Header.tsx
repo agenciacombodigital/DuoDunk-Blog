@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Instagram, Threads } from 'lucide-react';
+import { Instagram, MessageSquare } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -41,7 +41,7 @@ export default function Header() {
               rel="noopener noreferrer" 
               className="text-gray-400 hover:text-primary transition-colors"
             >
-              <Threads size={20} />
+              <MessageSquare size={20} />
             </a>
           </div>
         </div>
