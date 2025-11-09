@@ -105,7 +105,7 @@ export default function MobileMenu() {
                 className="text-gray-400 hover:text-primary transition-colors"
               >
                 <img 
-                  src="/images/Threads-logo.svg" 
+                  src="/images/Threads-branco.svg" 
                   alt="Threads Logo" 
                   className="w-6 h-6" 
                 />
