@@ -240,7 +240,7 @@ export default function Home() {
 
       {/* Seções Restantes */}
       <div className="container mx-auto px-4 space-y-16">
-        {/* Seção 2: Notícias em Destaque */}
+        {/* Seção 2: Notícias em Destaque (NÃO PERCA) */}
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-4 md:p-8 border border-gray-100">
             <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
@@ -262,8 +262,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 4: Não Perca (section2) - text-base md:text-xl */}
-                    <h3 className="font-oswald text-base md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* AJUSTE: Reduzindo para text-sm no mobile e line-clamp-3 */}
+                    <h3 className="font-oswald text-sm md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
@@ -343,8 +343,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="p-2.5 md:p-3">
-                    {/* AJUSTE APLICADO: Aumentando o tamanho da fonte para text-sm no mobile e line-clamp-4 */}
-                    <h3 className="font-oswald text-sm md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-4 leading-tight">
+                    {/* AJUSTE APLICADO: Reduzindo para text-xs no mobile e line-clamp-4 */}
+                    <h3 className="font-oswald text-xs md:text-sm font-semibold uppercase group-hover:text-pink-400 transition line-clamp-4 leading-tight">
                       {article.title}
                     </h3>
                   </div>
@@ -448,8 +448,8 @@ export default function Home() {
                     style={getObjectPositionStyle(article.image_focal_point)}
                   />
                   <div className="flex-1">
-                    {/* AJUSTE 4: Não Perca - text-sm md:text-lg */}
-                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-2 leading-tight">
+                    {/* AJUSTE: Reduzindo para text-sm no mobile e line-clamp-3 */}
+                    <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
