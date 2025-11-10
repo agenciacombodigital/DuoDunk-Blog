@@ -281,7 +281,7 @@ export default function AdminRodadaNBA() {
               <AlertTriangle className="w-5 h-5" />
               {error}
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
