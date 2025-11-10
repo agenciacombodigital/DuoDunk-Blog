@@ -79,9 +79,6 @@ export default function AdminRodadaNBA() {
       const imageUrl = await handleImageUpload(imageFile);
       if (!imageUrl) throw new Error('Falha ao obter URL da imagem após o upload.');
 
-      const dateObj = new Date(`${date}T12:00:00Z`);
-      const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-
       let body = '<div class="schedule-post" style="font-family: system-ui, -apple-system, sans-serif;">';
       
       if (customSummary.trim()) {
@@ -93,7 +90,14 @@ export default function AdminRodadaNBA() {
       body += '<div style="margin-top: 30px; padding: 15px; background: #fff3f8; border-left: 4px solid #e91e63; border-radius: 4px;"><p style="margin: 0; color: #666; font-size: 14px;"><strong>💬 Participe!</strong> Deixe seu comentário e palpite para os jogos de hoje!</p></div>';
       body += '</div>';
 
-      const slug = `rodada-nba-${dateStr.replace(/\//g, '-')}-${Date.now()}`;
+      const slug = title
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 100);
 
       const { error: insertError } = await supabase.from('articles').insert({
         title: title.trim(),
@@ -277,7 +281,7 @@ export default function AdminRodadaNBA() {
               <AlertTriangle className="w-5 h-5" />
               {error}
             </div>
-          )}
+          </div>
 
           <button
             type="submit"

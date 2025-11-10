@@ -19,8 +19,16 @@ export default function ArticleMeta({
   slug,
   tags = []
 }: ArticleMetaProps) {
-  const articleUrl = `https://www.duodunk.com.br/artigos/${slug}`;
-  const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `https://www.duodunk.com.br${imageUrl}`;
+  const siteUrl = 'https://www.duodunk.com.br';
+  const articleUrl = `${siteUrl}/artigos/${slug}`;
+  const defaultImageUrl = `${siteUrl}/images/duodunk-logoV2.svg`;
+
+  let finalImageUrl = defaultImageUrl;
+  if (imageUrl && imageUrl.startsWith('http')) {
+    finalImageUrl = imageUrl;
+  } else if (imageUrl) {
+    finalImageUrl = `${siteUrl}${imageUrl}`;
+  }
 
   return (
     <Helmet>
@@ -36,7 +44,7 @@ export default function ArticleMeta({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={articleUrl} />
-      <meta property="og:image" content={fullImageUrl} />
+      <meta property="og:image" content={finalImageUrl} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={title} />
@@ -52,7 +60,7 @@ export default function ArticleMeta({
       <meta name="twitter:site" content="@duodunk" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={fullImageUrl} />
+      <meta name="twitter:image" content={finalImageUrl} />
 
       {/* SCHEMA.ORG JSON-LD */}
       <script type="application/ld+json">
@@ -61,7 +69,7 @@ export default function ArticleMeta({
           "@type": "NewsArticle",
           "headline": title,
           "description": description,
-          "image": fullImageUrl,
+          "image": finalImageUrl,
           "datePublished": publishedAt,
           "author": {
             "@type": "Organization",
