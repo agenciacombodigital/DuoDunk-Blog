@@ -42,10 +42,10 @@ export default function Estatisticas() {
     }
   };
 
-  // Ordenar jogadores pela categoria ativa
+  // Corrigido: Tratar valores undefined/null como 0 antes de ordenar
   const jogadoresOrdenados = [...todosJogadores].sort((a, b) => {
-    const valorA = a[categoriaAtiva] as number;
-    const valorB = b[categoriaAtiva] as number;
+    const valorA = (a[categoriaAtiva] as number) || 0;
+    const valorB = (b[categoriaAtiva] as number) || 0;
     return ordenacao === 'desc' ? valorB - valorA : valorA - valorB;
   });
 
@@ -210,7 +210,8 @@ export default function Estatisticas() {
                 {/* Estatística */}
                 <div className="col-span-2 md:col-span-1 text-center">
                   <span className="font-oswald text-lg md:text-2xl font-bold text-pink-600">
-                    {(jogador[categoriaAtiva] as number).toFixed(1)}
+                    {/* Corrigido: Acessar a propriedade e garantir que é um número antes de toFixed */}
+                    {((jogador[categoriaAtiva] as number) || 0).toFixed(1)}
                   </span>
                 </div>
               </div>

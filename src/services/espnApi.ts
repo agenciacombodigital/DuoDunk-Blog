@@ -229,8 +229,8 @@ export const buscarLideresEstatisticas = async (): Promise<{
           id: '5104157',
           nome: 'Victor Wembanyama',
           time: 'San Antonio Spurs',
-          siglaTime: 'SA',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/sa.png',
+          siglaTime: 'SAS', // Corrigido de SA para SAS
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/sas.png',
           posicao: 'C',
           pontos: 25.7,
           rebotes: 12.8,
@@ -298,7 +298,7 @@ export const buscarLideresEstatisticas = async (): Promise<{
           roubos: 1.4,
           tocos: 0.8,
           triplosConvertidos: 1.9,
-          foto: 'https://a.espncdn.com/i/headshots/nba/players/full/4351851.png'
+          foto: 'https://a.espncdn.com/i/headshots/nba/players/full/3112335.png' // Corrigido ID da foto para o Jokic correto
         }
       ],
       assistencias: [
@@ -398,8 +398,8 @@ export const buscarLideresEstatisticas = async (): Promise<{
           id: '4066421',
           nome: 'Alex Sarr',
           time: 'Washington Wizards',
-          siglaTime: 'WSH',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/wsh.png',
+          siglaTime: 'WAS', // Corrigido de WSH para WAS
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/was.png',
           posicao: 'C',
           pontos: 12.1,
           rebotes: 7.8,
@@ -427,9 +427,9 @@ export const buscarLideresEstatisticas = async (): Promise<{
         {
           id: '4066383',
           nome: 'Marcus Smart',
-          time: 'Los Angeles Lakers',
-          siglaTime: 'LAL',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/lal.png',
+          time: 'Memphis Grizzlies', // Corrigido time
+          siglaTime: 'MEM', // Corrigido de LAL para MEM
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/mem.png',
           posicao: 'PG',
           pontos: 9.8,
           rebotes: 3.2,
@@ -443,8 +443,8 @@ export const buscarLideresEstatisticas = async (): Promise<{
           id: '3917376',
           nome: 'OG Anunoby',
           time: 'New York Knicks',
-          siglaTime: 'NY',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/ny.png',
+          siglaTime: 'NYK', // Corrigido de NY para NYK
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/nyk.png',
           posicao: 'SF',
           pontos: 15.2,
           rebotes: 5.1,
@@ -460,8 +460,8 @@ export const buscarLideresEstatisticas = async (): Promise<{
           id: '5104157',
           nome: 'Victor Wembanyama',
           time: 'San Antonio Spurs',
-          siglaTime: 'SA',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/sa.png',
+          siglaTime: 'SAS', // Corrigido de SA para SAS
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/sas.png',
           posicao: 'C',
           pontos: 25.7,
           rebotes: 12.8,
@@ -475,8 +475,8 @@ export const buscarLideresEstatisticas = async (): Promise<{
           id: '4066421',
           nome: 'Alex Sarr',
           time: 'Washington Wizards',
-          siglaTime: 'WSH',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/wsh.png',
+          siglaTime: 'WAS', // Corrigido de WSH para WAS
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/was.png',
           posicao: 'C',
           pontos: 12.1,
           rebotes: 7.8,
@@ -489,9 +489,9 @@ export const buscarLideresEstatisticas = async (): Promise<{
         {
           id: '4066261',
           nome: 'Myles Turner',
-          time: 'Milwaukee Bucks',
-          siglaTime: 'MIL',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/mil.png',
+          time: 'Indiana Pacers', // Corrigido time
+          siglaTime: 'IND', // Corrigido de MIL para IND
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/ind.png',
           posicao: 'C',
           pontos: 15.8,
           rebotes: 7.2,
@@ -537,8 +537,8 @@ export const buscarLideresEstatisticas = async (): Promise<{
           id: '3975',
           nome: 'Stephen Curry',
           time: 'Golden State Warriors',
-          siglaTime: 'GS',
-          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/gs.png',
+          siglaTime: 'GSW', // Corrigido de GS para GSW
+          logoTime: 'https://a.espncdn.com/i/teamlogos/nba/500/gsw.png',
           posicao: 'PG',
           pontos: 26.8,
           rebotes: 3.6,
