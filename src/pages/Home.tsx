@@ -5,7 +5,7 @@ import { TrendingUp, Calendar, Loader2, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import CalendarioNBA from '@/components/CalendarioNBA';
+// import CalendarioNBA from '@/components/CalendarioNBA'; // Removido
 
 // Função auxiliar para mostrar o tempo (h X horas/dias)
 function getTimeAgo(dateString: string): string {
@@ -202,7 +202,7 @@ export default function Home() {
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
                       <Clock className="w-3 h-3" />
-                      <span>Há {getTimeAgo(article.published_at)}</span>
+                      <span>Há {getTimeAgo(featuredArticle.published_at)}</span>
                     </div>
                   </div>
                 </Link>
@@ -264,7 +264,7 @@ export default function Home() {
                   />
                   <div className="flex-1">
                     {/* AJUSTE APLICADO: Reduzindo para text-xs no mobile e line-clamp-3 */}
-                    <h3 className="font-oswald text-xs md:text-xl font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
+                    <h3 className="font-oswald text-xs md:text-lg font-bold uppercase mb-2 group-hover:text-pink-400 transition line-clamp-3 leading-tight">
                       {article.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-2 hidden md:block font-inter">
@@ -503,11 +503,6 @@ export default function Home() {
             </div>
           </section>
         )}
-
-        {/* Seção Calendário NBA */}
-        <section>
-          <CalendarioNBA />
-        </section>
 
         {/* Seção ARQUIVO (Remaining) */}
         {remaining.length > 0 && (
