@@ -15,7 +15,7 @@ export default function PendingProcessingSection({ articles, onDelete }: Pending
         Aguardando Coleta/Processamento ({articles.length})
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {articles.slice(0, 6).map((article) => (
+        {articles.slice(0, 12).map((article) => (
           <div key={article.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex flex-col justify-between">
             <div>
               <span className="px-2 py-1 bg-yellow-900/50 text-yellow-300 text-xs rounded-full font-semibold">{article.source}</span>
