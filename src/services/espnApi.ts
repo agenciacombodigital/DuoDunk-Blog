@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { supabase } from '@/lib/supabase'; // Importando o cliente Supabase
 
 // URL base da API da ESPN
 const ESPN_API_BASE = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba';
@@ -113,7 +112,7 @@ export const buscarJogosSemana = async (): Promise<Jogo[]> => {
   }
 };
 
-// ========== ESTATÍSTICAS DE JOGADORES ==========
+// ========== ESTATÍSTICAS DE JOGADORES - VERSÃO CORRIGIDA ==========
 
 export interface EstatisticaJogador {
   id: string;
@@ -122,7 +121,7 @@ export interface EstatisticaJogador {
   siglaTime: string;
   logoTime: string;
   posicao: string;
-  jogosDispputados: number;
+  jogosDisputados: number;
   minutos: number;
   pontos: number;
   rebotes: number;
@@ -142,11 +141,9 @@ export interface EstatisticaJogador {
   duploDuplo: number;
   triploDuplo: number;
   foto: string;
-  // Adicionando 'valor' para o novo formato da Edge Function
-  valor?: number; 
 }
 
-// Função para buscar líderes de estatísticas por categoria (usando Edge Function)
+// ✅ CORREÇÃO: Usar o endpoint correto da API ESPN
 export const buscarLideresEstatisticas = async (): Promise<{
   pontos: EstatisticaJogador[];
   rebotes: EstatisticaJogador[];
@@ -156,44 +153,89 @@ export const buscarLideresEstatisticas = async (): Promise<{
   triplos: EstatisticaJogador[];
 }> => {
   try {
-    const { data, error } = await supabase.functions.invoke('nba-leaders');
+    // ✅ URL CORRETA: Esta é a URL que realmente funciona
+    const response = await axios.get(
+      'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/statistics'
+    );
     
-    if (error) throw error;
-    if (!data?.success) throw new Error(data?.error || "Falha ao buscar líderes via Edge Function.");
+    console.log('Resposta da API:', response.data); // Debug
 
-    const leaders = data.leaders;
+    // ✅ ESTRUTURA CORRETA: Processar dados como a API retorna
+    const stats = response.data.statistics;
     
-    // Mapeia os dados da Edge Function para o formato EstatisticaJogador
-    const mapLeaders = (list: any[]): EstatisticaJogador[] => {
-        return list.map(l => ({
-            id: l.id,
-            nome: l.nome,
-            time: l.time,
-            siglaTime: l.siglaTime,
-            logoTime: l.logoTime,
-            posicao: l.posicao,
-            valor: l.valor, // O valor principal da estatística
-            foto: l.foto,
-            // Valores dummy para as outras propriedades não usadas na lista de líderes
-            jogosDispputados: 0, minutos: 0, pontos: 0, rebotes: 0, assistencias: 0, roubos: 0, tocos: 0,
-            arremessosConvertidos: 0, arremessosTentados: 0, percentualArremessos: 0,
-            triplosConvertidos: 0, triplosTentados: 0, percentualTriplos: 0,
-            lancesLivresConvertidos: 0, lancesLivresTentados: 0, percentualLancesLivres: 0,
-            erros: 0, duploDuplo: 0, triploDuplo: 0,
-        }));
+    if (!stats || !Array.isArray(stats)) {
+      console.error('Estrutura de dados inesperada:', response.data);
+      return {
+        pontos: [],
+        rebotes: [],
+        assistencias: [],
+        roubos: [],
+        tocos: [],
+        triplos: []
+      };
+    }
+
+    // Função auxiliar para processar cada categoria
+    const processarCategoria = (categoria: any): EstatisticaJogador[] => {
+      if (!categoria?.athletes) return [];
+      
+      return categoria.athletes.slice(0, 5).map((item: any) => {
+        const athlete = item.athlete;
+        const team = item.team;
+        
+        return {
+          id: athlete.id,
+          nome: athlete.displayName,
+          time: team?.displayName || 'N/A',
+          siglaTime: team?.abbreviation || 'N/A',
+          logoTime: team?.logos?.[0]?.href || '',
+          posicao: athlete.position?.abbreviation || 'N/A',
+          jogosDisputados: 0,
+          minutos: 0,
+          pontos: parseFloat(item.value || 0),
+          rebotes: parseFloat(item.value || 0),
+          assistencias: parseFloat(item.value || 0),
+          roubos: parseFloat(item.value || 0),
+          tocos: parseFloat(item.value || 0),
+          arremessosConvertidos: 0,
+          arremessosTentados: 0,
+          percentualArremessos: 0,
+          triplosConvertidos: parseFloat(item.value || 0),
+          triplosTentados: 0,
+          percentualTriplos: 0,
+          lancesLivresConvertidos: 0,
+          lancesLivresTentados: 0,
+          percentualLancesLivres: 0,
+          erros: 0,
+          duploDuplo: 0,
+          triploDuplo: 0,
+          foto: athlete.headshot?.href || athlete.headshot || ''
+        };
+      });
     };
+
+    // Encontrar cada categoria pelos nomes
+    const pontos = stats.find((s: any) => s.name === 'points' || s.abbreviation === 'PTS');
+    const rebotes = stats.find((s: any) => s.name === 'rebounds' || s.abbreviation === 'REB');
+    const assistencias = stats.find((s: any) => s.name === 'assists' || s.abbreviation === 'AST');
+    const roubos = stats.find((s: any) => s.name === 'steals' || s.abbreviation === 'STL');
+    const tocos = stats.find((s: any) => s.name === 'blocks' || s.abbreviation === 'BLK');
+    const triplos = stats.find((s: any) => s.name === 'threePointFieldGoalsMade' || s.abbreviation === '3PM');
 
     return {
-      pontos: mapLeaders(leaders.pontos || []),
-      rebotes: mapLeaders(leaders.rebotes || []),
-      assistencias: mapLeaders(leaders.assistencias || []),
-      roubos: mapLeaders(leaders.roubos || []),
-      tocos: mapLeaders(leaders.tocos || []),
-      triplos: mapLeaders(leaders.triplos || []),
+      pontos: processarCategoria(pontos),
+      rebotes: processarCategoria(rebotes),
+      assistencias: processarCategoria(assistencias),
+      roubos: processarCategoria(roubos),
+      tocos: processarCategoria(tocos),
+      triplos: processarCategoria(triplos)
     };
-
-  } catch (error) {
-    console.error('Erro ao buscar líderes via Edge Function:', error);
+    
+  } catch (error: any) {
+    console.error('Erro ao buscar líderes de estatísticas:', error);
+    console.error('Detalhes do erro:', error.response?.data || error.message);
+    
+    // Retornar arrays vazios em caso de erro
     return {
       pontos: [],
       rebotes: [],
@@ -225,7 +267,7 @@ export const buscarEstatisticasCompletas = async (): Promise<EstatisticaJogador[
         siglaTime: team.abbreviation,
         logoTime: team.logos?.[0]?.href || '',
         posicao: athlete.position?.abbreviation || 'N/A',
-        jogosDispputados: stats.gamesPlayed || 0,
+        jogosDisputados: stats.gamesPlayed || 0,
         minutos: parseFloat(stats.avgMinutes || 0),
         pontos: parseFloat(stats.avgPoints || 0),
         rebotes: parseFloat(stats.avgRebounds || 0),
@@ -237,7 +279,7 @@ export const buscarEstatisticasCompletas = async (): Promise<EstatisticaJogador[
         percentualArremessos: parseFloat(stats.fieldGoalPct || 0),
         triplosConvertidos: parseFloat(stats.avgThreePointFieldGoalsMade || 0),
         triplosTentados: parseFloat(stats.avgThreePointFieldGoalsAttempted || 0),
-        percentualTriplos: parseFloat(stats.freeThrowPct || 0),
+        percentualTriplos: parseFloat(stats.threePointFieldGoalPct || 0),
         lancesLivresConvertidos: parseFloat(stats.avgFreeThrowsMade || 0),
         lancesLivresTentados: parseFloat(stats.avgFreeThrowsAttempted || 0),
         percentualLancesLivres: parseFloat(stats.freeThrowPct || 0),
