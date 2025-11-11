@@ -10,6 +10,16 @@ interface ArticleMetaProps {
   tags?: string[];
 }
 
+// Lista de palavras-chave prioritárias para SEO
+const PRIORITY_KEYWORDS = [
+  "NBA hoje", "Lakers notícias", "Luka Doncic", "Classificação NBA", "Stephen Curry", 
+  "LeBron James", "Victor Wembanyama", "Warriors notícias", "Celtics", "Nikola Jokic", 
+  "Chicago Bull", "Shai Gilgeous Alexander", "OKC", "Oklahoma City Thunder", "Gui Santos", 
+  "NBA ao vivo", "Resultado NBA", "Lakers hoje", "Onde assistir NBA", "Jayson Tatum", 
+  "Giannis Antetokounmpo", "NBA Brasil", "Playoffs NBA", "Tabela NBA", "Melhores jogadas NBA", 
+  "Notícias NBA em português"
+];
+
 export default function ArticleMeta({ 
   title, 
   description, 
@@ -29,13 +39,20 @@ export default function ArticleMeta({
   } else if (imageUrl) {
     finalImageUrl = `${siteUrl}${imageUrl}`;
   }
+  
+  // Combina tags do artigo com palavras-chave prioritárias, removendo duplicatas
+  const allKeywords = Array.from(new Set([
+    "NBA", 
+    ...tags, 
+    ...PRIORITY_KEYWORDS
+  ])).join(', ');
 
   return (
     <Helmet>
       {/* SEO BÁSICO */}
       <title>{title} | Duo Dunk</title>
       <meta name="description" content={description} />
-      <meta name="keywords" content={`NBA, ${tags.join(', ')}, ${title}`} />
+      <meta name="keywords" content={allKeywords} />
       <link rel="canonical" href={articleUrl} />
 
       {/* OPEN GRAPH (WhatsApp, Facebook) */}
