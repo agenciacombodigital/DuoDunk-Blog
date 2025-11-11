@@ -44,7 +44,7 @@ export default function Estatisticas() {
     );
   }
 
-  const CardLider = ({ jogador, rank, stat }: { jogador: EstatisticaJogador; rank: number; stat: keyof EstatisticaJogador }) => (
+  const CardLider = ({ jogador, rank }: { jogador: EstatisticaJogador; rank: number }) => (
     <div className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors group">
       {/* Rank */}
       <div className="flex-shrink-0">
@@ -96,7 +96,7 @@ export default function Estatisticas() {
       {/* Estatística */}
       <div className="flex-shrink-0 text-right">
         <span className="font-oswald text-3xl font-bold text-pink-500">
-          {typeof jogador[stat] === 'number' ? jogador[stat].toFixed(1) : '0.0'}
+          {typeof jogador.valor === 'number' ? jogador.valor.toFixed(1) : '0.0'}
         </span>
       </div>
     </div>
@@ -106,13 +106,11 @@ export default function Estatisticas() {
     titulo, 
     icone: Icone, 
     jogadores, 
-    stat, 
     cor 
   }: { 
     titulo: string; 
     icone: any; 
     jogadores: EstatisticaJogador[]; 
-    stat: keyof EstatisticaJogador;
     cor: string;
   }) => (
     <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
@@ -137,7 +135,6 @@ export default function Estatisticas() {
               key={jogador.id} 
               jogador={jogador} 
               rank={index + 1} 
-              stat={stat}
             />
           ))
         ) : (
@@ -172,7 +169,6 @@ export default function Estatisticas() {
             titulo="Pontos por Jogo"
             icone={Flame}
             jogadores={lideres.pontos}
-            stat="pontos"
             cor="bg-orange-500"
           />
 
@@ -181,7 +177,6 @@ export default function Estatisticas() {
             titulo="Rebotes"
             icone={Target}
             jogadores={lideres.rebotes}
-            stat="rebotes"
             cor="bg-blue-500"
           />
 
@@ -190,7 +185,6 @@ export default function Estatisticas() {
             titulo="Assistências"
             icone={Zap}
             jogadores={lideres.assistencias}
-            stat="assistencias"
             cor="bg-green-500"
           />
 
@@ -199,7 +193,6 @@ export default function Estatisticas() {
             titulo="Tocos"
             icone={Shield}
             jogadores={lideres.tocos}
-            stat="tocos"
             cor="bg-purple-500"
           />
 
@@ -208,7 +201,6 @@ export default function Estatisticas() {
             titulo="Roubos de Bola"
             icone={Zap}
             jogadores={lideres.roubos}
-            stat="roubos"
             cor="bg-yellow-500"
           />
 
@@ -217,7 +209,6 @@ export default function Estatisticas() {
             titulo="Cestas de 3 Pontos"
             icone={Award}
             jogadores={lideres.triplos}
-            stat="triplosConvertidos"
             cor="bg-pink-500"
           />
         </div>

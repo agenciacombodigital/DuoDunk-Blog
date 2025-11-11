@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '@/lib/supabase'; // Importando o cliente Supabase
 
 // URL base da API da ESPN
 const ESPN_API_BASE = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba';
@@ -141,9 +142,11 @@ export interface EstatisticaJogador {
   duploDuplo: number;
   triploDuplo: number;
   foto: string;
+  // Adicionando 'valor' para o novo formato da Edge Function
+  valor?: number; 
 }
 
-// Função para buscar líderes de estatísticas por categoria
+// Função para buscar líderes de estatísticas por categoria (usando Edge Function)
 export const buscarLideresEstatisticas = async (): Promise<{
   pontos: EstatisticaJogador[];
   rebotes: EstatisticaJogador[];
@@ -153,58 +156,44 @@ export const buscarLideresEstatisticas = async (): Promise<{
   triplos: EstatisticaJogador[];
 }> => {
   try {
-    const response = await axios.get(`${ESPN_API_BASE}/leaders`);
+    const { data, error } = await supabase.functions.invoke('nba-leaders');
     
-    const processarLideres = (categoria: any): EstatisticaJogador[] => {
-      if (!categoria?.leaders) return [];
-      
-      return categoria.leaders.slice(0, 5).map((lider: any) => {
-        const athlete = lider.athlete;
-        const team = lider.team;
-        
-        return {
-          id: athlete.id,
-          nome: athlete.displayName,
-          time: team.name,
-          siglaTime: team.abbreviation,
-          logoTime: team.logos?.[0]?.href || '',
-          posicao: athlete.position?.abbreviation || 'N/A',
-          jogosDispputados: 0,
-          minutos: 0,
-          pontos: lider.statistics?.find((s: any) => s.name === 'avgPoints')?.value || lider.value,
-          rebotes: lider.statistics?.find((s: any) => s.name === 'avgRebounds')?.value || lider.value,
-          assistencias: lider.statistics?.find((s: any) => s.name === 'avgAssists')?.value || lider.value,
-          roubos: lider.statistics?.find((s: any) => s.name === 'avgSteals')?.value || lider.value,
-          tocos: lider.statistics?.find((s: any) => s.name === 'avgBlocks')?.value || lider.value,
-          arremessosConvertidos: 0,
-          arremessosTentados: 0,
-          percentualArremessos: 0,
-          triplosConvertidos: lider.statistics?.find((s: any) => s.name === 'avgThreePointFieldGoalsMade')?.value || lider.value,
-          triplosTentados: 0,
-          percentualTriplos: 0,
-          lancesLivresConvertidos: 0,
-          lancesLivresTentados: 0,
-          percentualLancesLivres: 0,
-          erros: 0,
-          duploDuplo: 0,
-          triploDuplo: 0,
-          foto: athlete.headshot?.href || ''
-        };
-      });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.error || "Falha ao buscar líderes via Edge Function.");
+
+    const leaders = data.leaders;
+    
+    // Mapeia os dados da Edge Function para o formato EstatisticaJogador
+    const mapLeaders = (list: any[]): EstatisticaJogador[] => {
+        return list.map(l => ({
+            id: l.id,
+            nome: l.nome,
+            time: l.time,
+            siglaTime: l.siglaTime,
+            logoTime: l.logoTime,
+            posicao: l.posicao,
+            valor: l.valor, // O valor principal da estatística
+            foto: l.foto,
+            // Valores dummy para as outras propriedades não usadas na lista de líderes
+            jogosDispputados: 0, minutos: 0, pontos: 0, rebotes: 0, assistencias: 0, roubos: 0, tocos: 0,
+            arremessosConvertidos: 0, arremessosTentados: 0, percentualArremessos: 0,
+            triplosConvertidos: 0, triplosTentados: 0, percentualTriplos: 0,
+            lancesLivresConvertidos: 0, lancesLivresTentados: 0, percentualLancesLivres: 0,
+            erros: 0, duploDuplo: 0, triploDuplo: 0,
+        }));
     };
 
-    const categorias = response.data.categories;
-    
     return {
-      pontos: processarLideres(categorias?.find((c: any) => c.name === 'avgPoints')),
-      rebotes: processarLideres(categorias?.find((c: any) => c.name === 'avgRebounds')),
-      assistencias: processarLideres(categorias?.find((c: any) => c.name === 'avgAssists')),
-      roubos: processarLideres(categorias?.find((c: any) => c.name === 'avgSteals')),
-      tocos: processarLideres(categorias?.find((c: any) => c.name === 'avgBlocks')),
-      triplos: processarLideres(categorias?.find((c: any) => c.name === 'avgThreePointFieldGoalsMade'))
+      pontos: mapLeaders(leaders.pontos || []),
+      rebotes: mapLeaders(leaders.rebotes || []),
+      assistencias: mapLeaders(leaders.assistencias || []),
+      roubos: mapLeaders(leaders.roubos || []),
+      tocos: mapLeaders(leaders.tocos || []),
+      triplos: mapLeaders(leaders.triplos || []),
     };
+
   } catch (error) {
-    console.error('Erro ao buscar líderes:', error);
+    console.error('Erro ao buscar líderes via Edge Function:', error);
     return {
       pontos: [],
       rebotes: [],
@@ -248,7 +237,7 @@ export const buscarEstatisticasCompletas = async (): Promise<EstatisticaJogador[
         percentualArremessos: parseFloat(stats.fieldGoalPct || 0),
         triplosConvertidos: parseFloat(stats.avgThreePointFieldGoalsMade || 0),
         triplosTentados: parseFloat(stats.avgThreePointFieldGoalsAttempted || 0),
-        percentualTriplos: parseFloat(stats.threePointFieldGoalPct || 0),
+        percentualTriplos: parseFloat(stats.freeThrowPct || 0),
         lancesLivresConvertidos: parseFloat(stats.avgFreeThrowsMade || 0),
         lancesLivresTentados: parseFloat(stats.avgFreeThrowsAttempted || 0),
         percentualLancesLivres: parseFloat(stats.freeThrowPct || 0),
