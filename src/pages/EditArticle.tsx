@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { isAuthenticated } from '@/lib/auth';
 import { Save, X, Upload, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth'; // Importando useAuth
 
 export default function EditArticle() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth(); // Usando useAuth para verificar autenticação
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [article, setArticle] = useState<any>(null);
@@ -29,12 +30,12 @@ export default function EditArticle() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (!isAdmin) {
       navigate('/admin/login');
       return;
     }
     loadArticle();
-  }, [slug, navigate]);
+  }, [slug, navigate, isAdmin]); // Adicionado isAdmin como dependência
 
   const loadArticle = async () => {
     try {
