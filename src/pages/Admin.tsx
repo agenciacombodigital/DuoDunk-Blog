@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { logout, isAuthenticated } from '@/lib/auth';
+import { logout } from '@/lib/auth'; // Importando o novo logout
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
 
@@ -14,14 +14,17 @@ import PublishedArticlesSection from '@/components/admin/PublishedArticlesSectio
 import EditArticleModal from '@/components/admin/EditArticleModal';
 import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 import { clearAllFeaturedArticles } from '@/lib/adminUtils';
-import { retryRateLimitedArticles, getRateLimitStats } from '@/lib/retryRateLimitedArticles'; // Importando novas funções
+import { retryRateLimitedArticles, getRateLimitStats } from '@/lib/retryRateLimitedArticles';
+import { useAuth } from '@/hooks/useAuth'; // Importando useAuth
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const { isAdmin, isLoading } = useAuth(); // Usando useAuth
   const [queue, setQueue] = useState<any[]>([]);
   const [published, setPublished] = useState<any[]>([]);
   const [rateLimitStats, setRateLimitStats] = useState({ total: 0, ready_to_retry: 0, still_waiting: 0 });
-  const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true); // Usamos localLoading para o fetch de dados
+
   const [isScraping, setIsScraping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,15 +35,15 @@ export default function AdminPage() {
   const [editingArticle, setEditingArticle] = useState<any>(null);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (!isLoading && !isAdmin) {
       navigate('/admin/login');
-    } else {
+    } else if (isAdmin) {
       loadData();
     }
-  }, [navigate]);
+  }, [navigate, isAdmin, isLoading]);
 
   const loadData = async () => {
-    setLoading(true);
+    setLocalLoading(true);
     try {
       await loadQueue();
       await loadPublished();
@@ -48,7 +51,7 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -78,8 +81,8 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     toast.info("Você foi desconectado.");
     navigate('/admin/login');
   };
@@ -326,7 +329,7 @@ export default function AdminPage() {
       return;
     }
 
-    setLoading(true);
+    setLocalLoading(true);
     const toastId = toast.loading("Salvando edição...");
 
     try {
@@ -354,14 +357,15 @@ export default function AdminPage() {
     } catch (error: any) {
       toast.error('Erro ao salvar edição', { id: toastId, description: error.message });
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
-  const isLoading = isScraping || isProcessing || isDeleting || loading || isRetrying;
+  const isGlobalLoading = isScraping || isProcessing || isDeleting || localLoading || isRetrying;
 
-  if (loading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  if (isLoading || !isAdmin) {
+    // O AuthProvider já lida com o loading inicial e redireciona se não for admin
+    return null; 
   }
 
   const pendingApproval = queue.filter(a => a.status === 'processed');
@@ -374,12 +378,12 @@ export default function AdminPage() {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         <AdminActions 
-          isLoading={isLoading} 
+          isLoading={isGlobalLoading} 
           onScrape={scrape} 
           onProcess={processOneWithAI} 
           onDeleteAll={deleteAllPublished} 
           onRetryRateLimited={handleRetryRateLimited}
-          readyToRetryCount={rateLimitStats.ready_to_retry} // Passando a contagem
+          readyToRetryCount={rateLimitStats.ready_to_retry}
         />
         <AdminStats 
           pendingProcessingCount={pendingProcessing.length}
@@ -412,7 +416,7 @@ export default function AdminPage() {
       <EditArticleModal
         article={editingArticle}
         isOpen={showEditModal}
-        isLoading={isLoading}
+        isLoading={isGlobalLoading}
         uploadingImage={uploadingImage}
         onClose={() => setShowEditModal(false)}
         onSave={handleSaveEdit}

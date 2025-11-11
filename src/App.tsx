@@ -1,5 +1,5 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/Admin";
@@ -18,7 +18,7 @@ import Time from "./pages/Time";
 import Classificacao from './pages/Classificacao';
 import Privacidade from './pages/Privacidade';
 import Cookies from './pages/Cookies';
-import ScrollToTop from './components/ScrollToTop'; // Importando o novo componente
+import ScrollToTop from './components/ScrollToTop';
 
 const AppContent = () => {
   const location = useLocation();
@@ -93,9 +93,7 @@ const AppContent = () => {
 const App = () => (
   <>
     <Sonner richColors />
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <AppContent />
   </>
 );
 
