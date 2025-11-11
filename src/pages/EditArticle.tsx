@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Save, X, Upload, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
+import { Save, X, Upload, Trash2, ArrowLeft, Loader2, Star } from 'lucide-react';
 import { toast } from "sonner";
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth'; // Importando useAuth
+import { useAuth } from '@/hooks/useAuth';
+import { clearAllFeaturedArticles } from '@/lib/adminUtils';
 
 export default function EditArticle() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth(); // Usando useAuth para verificar autenticação
+  const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [article, setArticle] = useState<any>(null);
@@ -18,15 +19,16 @@ export default function EditArticle() {
   
   const [formData, setFormData] = useState({
     title: '',
-    slug: '', // Adicionado o campo slug
+    slug: '',
     summary: '',
     body: '',
     image_url: '',
     meta_description: '',
     tags: [] as string[],
     video_url: '',
-    image_focal_point: '50% 50%', // Foco para desktop/16:9 (X Y)
-    image_focal_point_mobile: '50%', // Foco para mobile/3:4 (Y)
+    image_focal_point: '50% 50%',
+    image_focal_point_mobile: '50%',
+    is_featured: false,
   });
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function EditArticle() {
       return;
     }
     loadArticle();
-  }, [slug, navigate, isAdmin]); // Adicionado isAdmin como dependência
+  }, [slug, navigate, isAdmin]);
 
   const loadArticle = async () => {
     try {
@@ -50,17 +52,16 @@ export default function EditArticle() {
       setArticle(data);
       setFormData({
         title: data.title || '',
-        slug: data.slug || '', // Carrega o slug existente
+        slug: data.slug || '',
         summary: data.summary || '',
         body: data.body || '',
         image_url: data.image_url || '',
         meta_description: data.meta_description || '',
         tags: data.tags || [],
         video_url: data.video_url || '',
-        // Garantir que o foco horizontal tenha X e Y para o preview 16:9
         image_focal_point: data.image_focal_point || '50% 50%', 
-        // Garantir que o foco mobile seja apenas Y
         image_focal_point_mobile: data.image_focal_point_mobile || '50%',
+        is_featured: data.is_featured || false,
       });
     } catch (error: any) {
       toast.error('Erro ao carregar artigo', { description: error.message });
@@ -106,17 +107,20 @@ export default function EditArticle() {
       return;
     }
     
-    // Garante que o slug é limpo antes de salvar
     const finalSlug = slugify(formData.slug || formData.title);
 
     setSaving(true);
     const toastId = toast.loading("Salvando alterações...");
     try {
+      if (formData.is_featured && !article.is_featured) {
+        await clearAllFeaturedArticles();
+      }
+
       const { error } = await supabase
         .from('articles')
         .update({
           title: formData.title,
-          slug: finalSlug, // Salva o slug corrigido
+          slug: finalSlug,
           summary: formData.summary,
           body: formData.body,
           image_url: formData.image_url,
@@ -125,6 +129,7 @@ export default function EditArticle() {
           video_url: formData.video_url,
           image_focal_point: formData.image_focal_point,
           image_focal_point_mobile: formData.image_focal_point_mobile,
+          is_featured: formData.is_featured,
         })
         .eq('id', article.id);
 
@@ -132,7 +137,6 @@ export default function EditArticle() {
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
       
-      // Redireciona para a nova URL se o slug mudou
       if (finalSlug !== article.slug) {
         navigate(`/admin/editar/${finalSlug}`, { replace: true });
       } else {
@@ -183,15 +187,12 @@ export default function EditArticle() {
     );
   }
 
-  // Extrair o valor X do foco horizontal para o slider
   const currentHorizontalFocalPoint = getHorizontalFocalPoint(formData.image_focal_point);
-  // Extrair o valor Y do foco mobile para o slider
   const currentMobileFocalPoint = getVerticalFocalPoint(formData.image_focal_point_mobile);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white py-12">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
         <div className="bg-gray-800 rounded-2xl p-6 mb-6 border border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -240,9 +241,7 @@ export default function EditArticle() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna Principal */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Título */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Título da Notícia
@@ -256,7 +255,6 @@ export default function EditArticle() {
               />
             </div>
             
-            {/* Slug (URL) */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Slug (URL)
@@ -274,7 +272,6 @@ export default function EditArticle() {
               </p>
             </div>
 
-            {/* Resumo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Resumo
@@ -288,7 +285,6 @@ export default function EditArticle() {
               />
             </div>
 
-            {/* Conteúdo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Conteúdo Completo (HTML)
@@ -302,7 +298,6 @@ export default function EditArticle() {
               />
             </div>
 
-            {/* Vídeo */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 🎬 Vídeo (Opcional) - YouTube, Twitter ou Instagram
@@ -320,9 +315,7 @@ export default function EditArticle() {
             </div>
           </div>
 
-          {/* Coluna Lateral */}
           <div className="space-y-6">
-            {/* Imagem */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-4 font-inter">
                 Imagem de Destaque
@@ -377,7 +370,6 @@ export default function EditArticle() {
                 )}
               </label>
               
-              {/* Foco Vertical Mobile (3:4) */}
               <div className="mt-6 pt-4 border-t border-gray-700">
                 <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                   Foco Vertical (Mobile 3:4)
@@ -398,7 +390,6 @@ export default function EditArticle() {
                   <Slider
                     value={[currentMobileFocalPoint]}
                     onValueChange={(value) => {
-                      // Atualiza o foco vertical (Y)
                       setFormData(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` }));
                     }}
                     max={100}
@@ -412,7 +403,6 @@ export default function EditArticle() {
                 </p>
               </div>
               
-              {/* Foco Horizontal (Desktop 16:9) */}
               <div className="mt-6 pt-4 border-t border-gray-700">
                 <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                   Foco Horizontal (Desktop 16:9)
@@ -422,7 +412,6 @@ export default function EditArticle() {
                   <Slider
                     value={[currentHorizontalFocalPoint]}
                     onValueChange={(value) => {
-                      // Mantemos o valor vertical (Y) atual, mas atualizamos o horizontal (X)
                       const currentVertical = getVerticalFocalPoint(formData.image_focal_point);
                       setFormData(prev => ({ ...prev, image_focal_point: `${value[0]}% ${currentVertical}%` }));
                     }}
@@ -438,7 +427,6 @@ export default function EditArticle() {
               </div>
             </div>
 
-            {/* Tags */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Tags
@@ -458,7 +446,6 @@ export default function EditArticle() {
               </p>
             </div>
 
-            {/* Meta Description */}
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Meta Description (SEO)
@@ -470,6 +457,27 @@ export default function EditArticle() {
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none text-sm font-inter"
                 placeholder="Descrição para mecanismos de busca..."
               />
+            </div>
+
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="featured-edit"
+                  checked={formData.is_featured}
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_featured: e.target.checked }))}
+                  className="w-5 h-5 rounded border-gray-600 text-pink-600 focus:ring-pink-500 focus:ring-offset-gray-900 cursor-pointer"
+                />
+                <label htmlFor="featured-edit" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Star className={`w-5 h-5 text-yellow-500 ${formData.is_featured ? 'fill-yellow-500' : ''}`} />
+                    <span className="font-bold text-white">Marcar como Destaque</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Isso substituirá qualquer outra notícia em destaque.
+                  </p>
+                </label>
+              </div>
             </div>
           </div>
         </div>
