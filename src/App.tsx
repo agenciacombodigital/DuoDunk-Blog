@@ -19,7 +19,8 @@ import Classificacao from './pages/Classificacao';
 import Privacidade from './pages/Privacidade';
 import Cookies from './pages/Cookies';
 import ScrollToTop from './components/ScrollToTop';
-import Calendario from './pages/Calendario'; // Importando a nova página
+import Calendario from './pages/Calendario';
+import Estatisticas from './pages/Estatisticas'; // Importando a nova página
 
 const AppContent = () => {
   const location = useLocation();
@@ -44,7 +45,8 @@ const AppContent = () => {
           <Route path="/times" element={<Times />} />
           <Route path="/times/:teamSlug" element={<Time />} />
           <Route path="/classificacao" element={<Classificacao />} />
-          <Route path="/calendario" element={<Calendario />} /> {/* Nova Rota */}
+          <Route path="/calendario" element={<Calendario />} />
+          <Route path="/estatisticas" element={<Estatisticas />} /> {/* Nova Rota */}
           <Route path="/privacidade" element={<Privacidade />} />
           <Route path="/cookies" element={<Cookies />} />
           
