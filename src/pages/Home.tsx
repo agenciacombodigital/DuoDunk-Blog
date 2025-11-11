@@ -5,6 +5,7 @@ import { TrendingUp, Calendar, Loader2, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import CalendarioNBA from '@/components/CalendarioNBA';
 
 // Função auxiliar para mostrar o tempo (h X horas/dias)
 function getTimeAgo(dateString: string): string {
@@ -502,6 +503,11 @@ export default function Home() {
             </div>
           </section>
         )}
+
+        {/* Seção Calendário NBA */}
+        <section>
+          <CalendarioNBA />
+        </section>
 
         {/* Seção ARQUIVO (Remaining) */}
         {remaining.length > 0 && (
