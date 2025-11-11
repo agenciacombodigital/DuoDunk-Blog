@@ -18,9 +18,9 @@ export default function PendingApprovalSection({ articles, ...props }: PendingAp
   if (articles.length === 0) return null;
 
   return (
-    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <CheckCircle className="w-6 h-6 text-cyan-400" />
+    <div className="bg-gray-900 rounded-xl p-4 md:p-6 border border-gray-800">
+      <h2 className="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">
+        <CheckCircle className="w-5 h-5 text-cyan-400" />
         Artigos Processados ({articles.length})
       </h2>
       <div className="space-y-6">

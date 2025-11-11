@@ -3,15 +3,6 @@ import { CheckCircle, Edit, Loader2, Star, Trash2, Upload } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint } from '@/lib/utils';
 
-// Helper para converter valor de foco (X% ou Y%) para número (0-100)
-// REMOVIDO: const percentageToNumber = (value: string | null | undefined): number => { ... };
-
-// Extrai o foco horizontal (X) de uma string de posição (X% Y%)
-// REMOVIDO: const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
-
-// Extrai o foco vertical (Y) de uma string de posição (X% Y% ou Y%)
-// REMOVIDO: const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
-
 export default function PendingApprovalCard({ article, uploadingImage, onImageUpload, onFocalPointChange, onFocalPointCommit, onToggleFeatured, onEdit, onApprove, onReject, onDelete }: any) {
   // Estado local para o preview do slider
   const [localFocalPointDesktop, setLocalFocalPointDesktop] = useState(article.image_focal_point || '50% 50%');
@@ -58,17 +49,23 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
 
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
-      <div className="p-6">
+      <div className="p-4 md:p-6">
+        <h3 className="font-oswald text-lg md:text-xl font-bold uppercase text-white mb-2">{article.title}</h3>
+        <p className="text-cyan-400 text-sm mb-4 line-clamp-2 leading-snug font-inter">{article.summary}</p>
+        
+        {/* Seção de Imagem e Foco */}
         <div className="mb-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
           <label className="block text-sm text-gray-400 mb-2 font-semibold font-inter">📸 Imagem do Artigo:</label>
           {article.image_url && <img src={article.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg mb-3" style={getObjectPositionStyle(localFocalPointDesktop)} />}
+          
+          {/* Upload */}
           <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) onImageUpload(article.id, file); }} disabled={uploadingImage === article.id} className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 file:cursor-pointer cursor-pointer font-inter" />
           {uploadingImage === article.id && <p className="text-xs text-cyan-400 mt-2 animate-pulse flex items-center gap-2 font-inter"><Loader2 className="w-3 h-3 animate-spin" />Fazendo upload...</p>}
           
           {/* Foco Vertical Mobile (3:4) */}
           <div className="mt-4 pt-4 border-t border-gray-700">
             <label className="text-sm font-semibold text-gray-400 font-inter">Foco Vertical (Mobile 3:4)</label>
-            <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-96 mx-auto max-w-xs">
+            <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-64 mx-auto max-w-xs">
               <img
                 src={article.image_url}
                 alt="Preview Mobile"
@@ -110,16 +107,17 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
             </div>
           </div>
         </div>
-        <h3 className="font-oswald text-xl font-bold uppercase text-white mb-2">{article.title}</h3>
-        {/* NOVO: Resumo Curto */}
-        <p className="text-cyan-400 text-sm mb-4 line-clamp-2 leading-snug font-inter">{article.summary}</p>
+        
+        {/* Conteúdo e Tags */}
         <details className="mb-4"><summary className="cursor-pointer text-secondary hover:text-cyan-300 text-sm font-semibold font-inter">📄 Ver conteúdo completo</summary><div className="mt-4 prose prose-invert prose-sm max-w-none bg-black p-4 rounded-lg overflow-auto max-h-96 font-inter" dangerouslySetInnerHTML={{ __html: article.body }} /></details>
         {article.tags && <div className="flex flex-wrap gap-2 mb-4">{article.tags.map((tag: string) => (<span key={tag} className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded font-inter">#{tag}</span>))}</div>}
-        <div className="flex gap-3">
-          <button onClick={() => onToggleFeatured(article.id, article.is_featured)} className={`flex-1 ${article.is_featured ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter`} title={article.is_featured ? 'Remover destaque' : 'Marcar como destaque'}><Star className={`w-5 h-5 ${article.is_featured ? 'fill-white' : ''}`} />{article.is_featured ? 'Em Destaque' : 'Destacar'}</button>
-          <button onClick={() => onEdit(article)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter" title="Editar antes de publicar"><Edit className="w-5 h-5" />Editar</button>
-          <button onClick={() => onApprove(article)} className="btn-success flex-1 flex items-center justify-center gap-2 font-inter"><CheckCircle className="w-5 h-5" />Aprovar</button>
-          <button onClick={() => onReject(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-6 py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2 font-inter"><Trash2 className="w-5 h-5" />Rejeitar</button>
+        
+        {/* Botões de Ação - Grid responsivo */}
+        <div className="grid grid-cols-2 gap-3 md:flex md:gap-3">
+          <button onClick={() => onToggleFeatured(article.id, article.is_featured)} className={`flex-1 ${article.is_featured ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter text-sm`} title={article.is_featured ? 'Remover destaque' : 'Marcar como destaque'}><Star className={`w-4 h-4 ${article.is_featured ? 'fill-white' : ''}`} />{article.is_featured ? 'Destaque' : 'Destacar'}</button>
+          <button onClick={() => onEdit(article)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter text-sm" title="Editar antes de publicar"><Edit className="w-4 h-4" />Editar</button>
+          <button onClick={() => onApprove(article)} className="btn-success flex-1 flex items-center justify-center gap-2 font-inter text-sm"><CheckCircle className="w-4 h-4" />Aprovar</button>
+          <button onClick={() => onReject(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2 font-inter text-sm"><Trash2 className="w-4 h-4" />Rejeitar</button>
         </div>
       </div>
     </div>
