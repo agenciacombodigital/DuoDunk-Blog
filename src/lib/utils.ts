@@ -76,3 +76,17 @@ export function getObjectPositionStyle(
   // Retorna o valor formatado
   return { objectPosition: trimmedFocalPoint };
 }
+
+/**
+ * Converte uma string em um slug amigável para URL.
+ */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD') // Decompõe caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[^\w\s-]/g, '') // Remove caracteres não alfanuméricos (exceto espaços e hífens)
+    .trim()
+    .replace(/\s+/g, '-') // Substitui espaços por hífens
+    .substring(0, 100); // Limita o tamanho
+}

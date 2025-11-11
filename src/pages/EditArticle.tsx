@@ -5,16 +5,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { Save, X, Upload, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { Slider } from '@/components/ui/slider';
-import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint } from '@/lib/utils';
-
-// Helper para converter valor de foco (X% ou Y%) para número (0-100)
-// REMOVIDO: const percentageToNumber = (value: string | null | undefined): number => { ... };
-
-// Extrai o foco horizontal (X) de uma string de posição (X% Y%)
-// REMOVIDO: const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
-
-// Extrai o foco vertical (Y) de uma string de posição (X% Y% ou Y%)
-// REMOVIDO: const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
+import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
 
 export default function EditArticle() {
   const { slug } = useParams();
@@ -26,6 +17,7 @@ export default function EditArticle() {
   
   const [formData, setFormData] = useState({
     title: '',
+    slug: '', // Adicionado o campo slug
     summary: '',
     body: '',
     image_url: '',
@@ -57,6 +49,7 @@ export default function EditArticle() {
       setArticle(data);
       setFormData({
         title: data.title || '',
+        slug: data.slug || '', // Carrega o slug existente
         summary: data.summary || '',
         body: data.body || '',
         image_url: data.image_url || '',
@@ -111,6 +104,9 @@ export default function EditArticle() {
       toast.error('Título e conteúdo são obrigatórios!');
       return;
     }
+    
+    // Garante que o slug é limpo antes de salvar
+    const finalSlug = slugify(formData.slug || formData.title);
 
     setSaving(true);
     const toastId = toast.loading("Salvando alterações...");
@@ -119,6 +115,7 @@ export default function EditArticle() {
         .from('articles')
         .update({
           title: formData.title,
+          slug: finalSlug, // Salva o slug corrigido
           summary: formData.summary,
           body: formData.body,
           image_url: formData.image_url,
@@ -133,7 +130,13 @@ export default function EditArticle() {
       if (error) throw error;
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
-      navigate('/admin');
+      
+      // Redireciona para a nova URL se o slug mudou
+      if (finalSlug !== article.slug) {
+        navigate(`/admin/editar/${finalSlug}`, { replace: true });
+      } else {
+        navigate('/admin');
+      }
     } catch (error: any) {
       toast.error('Erro ao salvar', { id: toastId, description: error.message });
     } finally {
@@ -250,6 +253,24 @@ export default function EditArticle() {
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg font-oswald uppercase font-bold"
                 placeholder="Digite o título..."
               />
+            </div>
+            
+            {/* Slug (URL) */}
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                Slug (URL)
+              </label>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                onBlur={() => setFormData(prev => ({ ...prev, slug: slugify(prev.slug || prev.title) }))}
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm font-mono"
+                placeholder="slug-da-noticia"
+              />
+              <p className="text-xs text-gray-500 mt-2 font-inter">
+                URL atual: <span className="text-cyan-400 break-all">/artigos/{formData.slug}</span>
+              </p>
             </div>
 
             {/* Resumo */}
