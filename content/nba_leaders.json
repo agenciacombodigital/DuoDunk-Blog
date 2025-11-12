@@ -1,0 +1,146 @@
+{
+  "PTS": {
+    "resource": "leagueLeaders",
+    "parameters": {
+      "LeagueID": "00",
+      "Season": "2025-26",
+      "SeasonType": "Regular Season",
+      "StatCategory": "PTS"
+    },
+    "resultSets": [
+      {
+        "name": "LeagueLeaders",
+        "headers": [
+          "PLAYER_ID", "RANK", "PLAYER", "TEAM_ID", "TEAM_ABBREVIATION", "PTS", "REB", "AST", "STL", "BLK", "FG3M"
+        ],
+        "rowSet": [
+          [203954, 1, "Joel Embiid", 1610612755, "PHI", 34.7, 11.0, 5.6, 1.2, 1.7, 1.2],
+          [203507, 2, "Giannis Antetokounmpo", 1610612749, "MIL", 32.1, 11.5, 6.2, 1.0, 1.4, 0.5],
+          [1628983, 3, "Shai Gilgeous-Alexander", 1610612760, "OKC", 30.8, 5.5, 6.2, 2.0, 1.0, 2.1],
+          [1629029, 4, "Luka Doncic", 1610612742, "DAL", 28.8, 8.3, 10.5, 1.5, 0.6, 3.2],
+          [201142, 5, "Kevin Durant", 1610612756, "PHX", 29.0, 6.8, 5.2, 1.0, 1.3, 2.6]
+        ]
+      }
+    ]
+  },
+  "REB": {
+    "resource": "leagueLeaders",
+    "parameters": {
+      "LeagueID": "00",
+      "Season": "2025-26",
+      "SeasonType": "Regular Season",
+      "StatCategory": "REB"
+    },
+    "resultSets": [
+      {
+        "name": "LeagueLeaders",
+        "headers": [
+          "PLAYER_ID", "RANK", "PLAYER", "TEAM_ID", "TEAM_ABBREVIATION", "PTS", "REB", "AST", "STL", "BLK", "FG3M"
+        ],
+        "rowSet": [
+          [203999, 1, "Nikola Jokic", 1610612743, "DEN", 26.8, 12.0, 9.2, 1.5, 1.0, 1.3],
+          [203507, 2, "Giannis Antetokounmpo", 1610612749, "MIL", 32.1, 11.5, 6.2, 1.0, 1.4, 0.5],
+          [203954, 3, "Joel Embiid", 1610612755, "PHI", 34.7, 11.0, 5.6, 1.2, 1.7, 1.2],
+          [1641705, 4, "Victor Wembanyama", 1610612759, "SAS", 22.0, 10.8, 4.0, 1.3, 3.8, 1.9],
+          [1628389, 5, "Bam Adebayo", 1610612748, "MIA", 20.8, 10.5, 4.0, 1.2, 1.0, 0.0]
+        ]
+      }
+    ]
+  },
+  "AST": {
+    "resource": "leagueLeaders",
+    "parameters": {
+      "LeagueID": "00",
+      "Season": "2025-26",
+      "SeasonType": "Regular Season",
+      "StatCategory": "AST"
+    },
+    "resultSets": [
+      {
+        "name": "LeagueLeaders",
+        "headers": [
+          "PLAYER_ID", "RANK", "PLAYER", "TEAM_ID", "TEAM_ABBREVIATION", "PTS", "REB", "AST", "STL", "BLK", "FG3M"
+        ],
+        "rowSet": [
+          [1630169, 1, "Tyrese Haliburton", 1610612754, "IND", 20.5, 4.0, 10.8, 1.3, 0.8, 2.9],
+          [1629029, 2, "Luka Doncic", 1610612742, "DAL", 28.8, 8.3, 10.5, 1.5, 0.6, 3.2],
+          [203999, 3, "Nikola Jokic", 1610612743, "DEN", 26.8, 12.0, 9.2, 1.5, 1.0, 1.3],
+          [2544, 4, "LeBron James", 1610612747, "LAL", 25.7, 7.3, 8.3, 1.3, 0.5, 2.2],
+          [1630596, 5, "Cade Cunningham", 1610612765, "DET", 23.0, 4.4, 7.6, 1.0, 0.5, 2.2]
+        ]
+      }
+    ]
+  },
+  "STL": {
+    "resource": "leagueLeaders",
+    "parameters": {
+      "LeagueID": "00",
+      "Season": "2025-26",
+      "SeasonType": "Regular Season",
+      "StatCategory": "STL"
+    },
+    "resultSets": [
+      {
+        "name": "LeagueLeaders",
+        "headers": [
+          "PLAYER_ID", "RANK", "PLAYER", "TEAM_ID", "TEAM_ABBREVIATION", "PTS", "REB", "AST", "STL", "BLK", "FG3M"
+        ],
+        "rowSet": [
+          [1628983, 1, "Shai Gilgeous-Alexander", 1610612760, "OKC", 30.8, 5.5, 6.2, 2.0, 1.0, 2.1],
+          [1628378, 2, "Donovan Mitchell", 1610612739, "CLE", 27.0, 5.2, 6.2, 1.9, 0.5, 3.4],
+          [1628368, 3, "De'Aaron Fox", 1610612758, "SAC", 25.9, 4.5, 5.7, 1.6, 0.5, 2.6],
+          [1629029, 4, "Luka Doncic", 1610612742, "DAL", 28.8, 8.3, 10.5, 1.5, 0.6, 3.2],
+          [203999, 5, "Nikola Jokic", 1610612743, "DEN", 26.8, 12.0, 9.2, 1.5, 1.0, 1.3]
+        ]
+      }
+    ]
+  },
+  "BLK": {
+    "resource": "leagueLeaders",
+    "parameters": {
+      "LeagueID": "00",
+      "Season": "2025-26",
+      "SeasonType": "Regular Season",
+      "StatCategory": "BLK"
+    },
+    "resultSets": [
+      {
+        "name": "LeagueLeaders",
+        "headers": [
+          "PLAYER_ID", "RANK", "PLAYER", "TEAM_ID", "TEAM_ABBREVIATION", "PTS", "REB", "AST", "STL", "BLK", "FG3M"
+        ],
+        "rowSet": [
+          [1641705, 1, "Victor Wembanyama", 1610612759, "SAS", 22.0, 10.8, 4.0, 1.3, 3.8, 1.9],
+          [203954, 2, "Joel Embiid", 1610612755, "PHI", 34.7, 11.0, 5.6, 1.2, 1.7, 1.2],
+          [203507, 3, "Giannis Antetokounmpo", 1610612749, "MIL", 32.1, 11.5, 6.2, 1.0, 1.4, 0.5],
+          [201142, 4, "Kevin Durant", 1610612756, "PHX", 29.0, 6.8, 5.2, 1.0, 1.3, 2.6],
+          [203999, 5, "Nikola Jokic", 1610612743, "DEN", 26.8, 12.0, 9.2, 1.5, 1.0, 1.3]
+        ]
+      }
+    ]
+  },
+  "FG3M": {
+    "resource": "leagueLeaders",
+    "parameters": {
+      "LeagueID": "00",
+      "Season": "2025-26",
+      "SeasonType": "Regular Season",
+      "StatCategory": "FG3M"
+    },
+    "resultSets": [
+      {
+        "name": "LeagueLeaders",
+        "headers": [
+          "PLAYER_ID", "RANK", "PLAYER", "TEAM_ID", "TEAM_ABBREVIATION", "PTS", "REB", "AST", "STL", "BLK", "FG3M"
+        ],
+        "rowSet": [
+          [201939, 1, "Stephen Curry", 1610612744, "GSW", 26.5, 4.6, 5.2, 0.9, 0.4, 4.9],
+          [203081, 2, "Damian Lillard", 1610612749, "MIL", 24.5, 4.5, 7.1, 1.1, 0.4, 3.5],
+          [1628378, 3, "Donovan Mitchell", 1610612739, "CLE", 27.0, 5.2, 6.2, 1.9, 0.5, 3.4],
+          [1628369, 4, "Jayson Tatum", 1610612738, "BOS", 27.5, 8.1, 5.0, 1.1, 0.7, 3.3],
+          [1629029, 5, "Luka Doncic", 1610612742, "DAL", 28.8, 8.3, 10.5, 1.5, 0.6, 3.2]
+        ]
+      }
+    ]
+  }
+}

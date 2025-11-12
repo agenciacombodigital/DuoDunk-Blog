@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { buscarLideresEstatisticas, EstatisticaJogador } from '../services/espnApi';
+import { getAllPlayersWithStats, EstatisticaJogador } from '../services/nbaStatsService';
 import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 type CategoriaEstatistica = 'pontos' | 'rebotes' | 'assistencias' | 'roubos' | 'tocos' | 'triplos';
@@ -14,11 +14,9 @@ export default function Estatisticas() {
     const carregarEstatisticas = async () => {
       setCarregando(true);
       try {
-        // A função agora retorna todas as listas, mas vamos usar a de pontos como base,
-        // pois ela contém todas as estatísticas de todos os jogadores.
-        const dados = await buscarLideresEstatisticas();
-        // Usamos a lista de pontos como base, pois ela contém todos os jogadores
-        setTodosJogadores(dados.pontos); 
+        // Usando o novo serviço para carregar todos os jogadores com stats
+        const dados = getAllPlayersWithStats();
+        setTodosJogadores(dados); 
       } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
       } finally {
@@ -29,10 +27,8 @@ export default function Estatisticas() {
   }, []);
 
   // Usamos useMemo para otimizar a ordenação e filtragem.
-  // Isso garante que a lista só seja recalculada quando necessário.
   const jogadoresExibidos = useMemo(() => {
     return [...todosJogadores]
-      // Removido o filtro de stats > 0, pois todos os jogadores agora têm dados projetados
       .sort((a, b) => { // Depois ordena
         const valorA = (a[categoriaAtiva] as number) || 0;
         const valorB = (b[categoriaAtiva] as number) || 0;
