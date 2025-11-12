@@ -44,9 +44,10 @@ export default function Estatisticas() {
     setOrdenacao(ordenacao === 'desc' ? 'asc' : 'desc');
   };
 
-  // Função para lidar com erro de imagem
+  // Função para lidar com erro de imagem (usando fallback genérico da ESPN)
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=i/headshots/nba/players/full/default.png&w=350&h=254';
+    e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/default.png&w=350&h=254';
+    e.currentTarget.onerror = null; // Previne loop infinito
   };
 
   // Função para lidar com erro de logo do time
