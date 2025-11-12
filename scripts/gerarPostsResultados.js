@@ -1,4 +1,4 @@
-// Script para gerar posts de resultados da NBA automaticamente
+// Script para gerar UM POST CONSOLIDADO com TODOS os resultados da NBA
 // Executa diariamente via GitHub Actions às 3h30 AM (horário de Brasília)
 
 import fs from 'fs';
@@ -35,77 +35,105 @@ async function buscarJogosOntem() {
     
     console.log(`✅ Encontrados ${jogosFinalizados.length} jogos finalizados`);
     
-    return jogosFinalizados;
+    return { jogos: jogosFinalizados, data: ontem };
   } catch (error) {
     console.error('❌ Erro ao buscar jogos:', error);
-    return [];
+    return { jogos: [], data: new Date() };
   }
 }
 
-// Função para gerar o conteúdo do post em Markdown
-function gerarConteudoPost(jogo) {
+// Função para gerar seção de um jogo individual
+function gerarSecaoJogo(jogo, index) {
   const timeCasa = jogo.homeTeam;
   const timeVisitante = jogo.awayTeam;
   
   const placarCasa = timeCasa.score;
   const placarVisitante = timeVisitante.score;
   
-  const vencedor = placarCasa > placarVisitante ? timeCasa.teamName : timeVisitante.teamName;
-  const perdedor = placarCasa > placarVisitante ? timeVisitante.teamName : timeCasa.teamName;
+  const vencedor = placarCasa > placarVisitante ? timeCasa : timeVisitante;
+  const perdedor = placarCasa > placarVisitante ? timeVisitante : timeCasa;
+  const placarVencedor = Math.max(placarCasa, placarVisitante);
+  const placarPerdedor = Math.min(placarCasa, placarVisitante);
   
-  // Data do jogo
-  const dataJogo = new Date(jogo.gameTimeUTC);
-  const dataFormatada = dataJogo.toLocaleDateString('pt-BR');
-  
-  // Título do post
-  const titulo = `${vencedor} vence ${perdedor} por ${Math.max(placarCasa, placarVisitante)} x ${Math.min(placarCasa, placarVisitante)}`;
-  
-  // Slug (URL amigável)
-  const slug = titulo
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  
-  // Conteúdo Markdown
-  const conteudo = `---
-title: "${titulo}"
-slug: "${slug}"
-published: true
-publishedat: "${new Date().toISOString()}"
-category: "Resultados"
-tags: ["NBA", "${timeCasa.teamTricode}", "${timeVisitante.teamTricode}", "Resultados"]
-imageurl: "https://cdn.nba.com/logos/nba/${timeCasa.teamId}/primary/L/logo.svg"
-summary: "${vencedor} derrotou ${perdedor} em partida válida pela NBA."
----
+  // Seção do jogo em Markdown
+  return `## ${index}. ${vencedor.teamName} ${placarVencedor} x ${placarPerdedor} ${perdedor.teamName}
 
-# ${titulo}
+**${vencedor.teamName}** venceu **${perdedor.teamName}** pelo placar de **${placarVencedor} x ${placarPerdedor}**.
 
-**Data do jogo:** ${dataFormatada}
-
-## Placar Final
+### Placar por Período
 
 | Time | Q1 | Q2 | Q3 | Q4 | Total |
 |------|----|----|----|----|-------|
 | **${timeCasa.teamName}** | - | - | - | - | **${placarCasa}** |
 | **${timeVisitante.teamName}** | - | - | - | - | **${placarVisitante}** |
 
----
+### Destaques
 
-## Destaque da Partida
-
-Em partida emocionante da NBA, **${vencedor}** venceu **${perdedor}** pelo placar de **${Math.max(placarCasa, placarVisitante)} x ${Math.min(placarCasa, placarVisitante)}**.
+*Estatísticas detalhadas dos principais jogadores serão adicionadas em breve.*
 
 ---
+`;
+}
 
-## Estatísticas Principais
+// Função para gerar o conteúdo do post consolidado
+function gerarPostConsolidado(jogos, data) {
+  const dataFormatada = data.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  
+  const dataSlug = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+  
+  // Título do post
+  const titulo = `Resultados NBA - ${dataFormatada}`;
+  
+  // Slug (URL amigável)
+  const slug = `resultados-nba-${dataSlug}`;
+  
+  // Gera resumo dos jogos
+  const resumoJogos = jogos.map(jogo => {
+    const timeCasa = jogo.homeTeam;
+    const timeVisitante = jogo.awayTeam;
+    const placarCasa = timeCasa.score;
+    const placarVisitante = timeVisitante.score;
+    const vencedor = placarCasa > placarVisitante ? timeCasa.teamTricode : timeVisitante.teamTricode;
+    return vencedor;
+  }).join(', ');
+  
+  // Monta o conteúdo completo
+  let conteudo = `---
+title: "${titulo}"
+slug: "${slug}"
+published: true
+publishedat: "${new Date().toISOString()}"
+category: "Resultados"
+tags: ["NBA", "Resultados", "Rodada"]
+imageurl: "https://cdn.nba.com/logos/nba/nba-logoman-75-word_white.svg"
+summary: "Confira todos os resultados da rodada da NBA de ${dataFormatada}. ${jogos.length} jogos realizados."
+---
 
-*Estatísticas detalhadas serão adicionadas em breve.*
+# ${titulo}
+
+**Total de jogos:** ${jogos.length}
+
+Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormatada}**.
 
 ---
 
-**Fonte:** NBA Official Stats
+`;
+
+  // Adiciona cada jogo como uma seção
+  jogos.forEach((jogo, index) => {
+    conteudo += gerarSecaoJogo(jogo, index + 1);
+  });
+  
+  // Rodapé
+  conteudo += `
+---
+
+**Fonte:** NBA Official Stats  
+**Atualizado em:** ${new Date().toLocaleString('pt-BR')}
 `;
 
   return { slug, conteudo };
@@ -129,7 +157,7 @@ function salvarPost(slug, conteudo) {
     // Salva o arquivo
     fs.writeFileSync(caminhoArquivo, conteudo, 'utf-8');
     
-    console.log(`✅ Post salvo: ${nomeArquivo}`);
+    console.log(`✅ Post consolidado salvo: ${nomeArquivo}`);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar post:', error);
@@ -139,29 +167,29 @@ function salvarPost(slug, conteudo) {
 
 // Função principal
 async function main() {
-  console.log('🏀 Iniciando geração de posts de resultados da NBA...\n');
+  console.log('🏀 Iniciando geração de post consolidado de resultados da NBA...\n');
   
   // Busca os jogos de ontem
-  const jogos = await buscarJogosOntem();
+  const { jogos, data } = await buscarJogosOntem();
   
   if (jogos.length === 0) {
-    console.log('ℹ️ Nenhum jogo finalizado encontrado para gerar posts.');
+    console.log('ℹ️ Nenhum jogo finalizado encontrado para gerar post.');
     return;
   }
   
-  // Gera um post para cada jogo
-  let postsGerados = 0;
+  // Gera o post consolidado
+  const { slug, conteudo } = gerarPostConsolidado(jogos, data);
   
-  for (const jogo of jogos) {
-    const { slug, conteudo } = gerarConteudoPost(jogo);
-    const sucesso = salvarPost(slug, conteudo);
-    
-    if (sucesso) {
-      postsGerados++;
-    }
+  // Salva o post
+  const sucesso = salvarPost(slug, conteudo);
+  
+  if (sucesso) {
+    console.log(`\n🎉 Post consolidado gerado com sucesso!`);
+    console.log(`📰 Título: Resultados NBA - ${data.toLocaleDateString('pt-BR')}`);
+    console.log(`🏀 Total de jogos: ${jogos.length}`);
+  } else {
+    console.log('\n❌ Falha ao gerar o post consolidado.');
   }
-  
-  console.log(`\n🎉 Processo finalizado! ${postsGerados} posts gerados com sucesso!`);
 }
 
 // Executa o script
