@@ -49,6 +49,35 @@
       }
     }
     </script>
+    
+    <!-- JSON-LD para Organization (Logo nos resultados de busca) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Duo Dunk",
+      "url": "https://www.duodunk.com.br/",
+      "logo": "https://www.duodunk.com.br/images/duodunk-logoV2.svg"
+    }
+    </script>
+
+    <!-- JSON-LD para WebSite (Publisher Logo) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://www.duodunk.com.br/",
+      "name": "Duo Dunk",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Duo Dunk",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.duodunk.com.br/images/duodunk-logoV2.svg"
+        }
+      }
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
