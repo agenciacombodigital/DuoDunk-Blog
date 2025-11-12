@@ -1,22 +1,22 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getAllPlayersWithStats, EstatisticaJogador } from '../services/nbaStatsService';
+import { getAllLeaderCategories, PlayerStats, LeaderCategory } from '../services/espnStatsService';
 import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
-type CategoriaEstatistica = 'pontos' | 'rebotes' | 'assistencias' | 'roubos' | 'tocos' | 'triplos';
+type CategoriaEstatistica = 'PTS' | 'REB' | 'AST' | 'STL' | 'BLK' | 'FG3M';
 
 export default function Estatisticas() {
-  const [todosJogadores, setTodosJogadores] = useState<EstatisticaJogador[]>([]);
-  const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaEstatistica>('pontos');
+  const [todasCategorias, setTodasCategorias] = useState<LeaderCategory[]>([]);
+  const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaEstatistica>('PTS');
   const [carregando, setCarregando] = useState(true);
   const [ordenacao, setOrdenacao] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    const carregarEstatisticas = async () => {
+    const carregarEstatisticas = () => {
       setCarregando(true);
       try {
-        // Usando o novo serviço para carregar todos os jogadores com stats
-        const dados = getAllPlayersWithStats();
-        setTodosJogadores(dados); 
+        // Usando o novo serviço para carregar todas as categorias
+        const dados = getAllLeaderCategories();
+        setTodasCategorias(dados); 
       } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
       } finally {
@@ -26,15 +26,16 @@ export default function Estatisticas() {
     carregarEstatisticas();
   }, []);
 
-  // Usamos useMemo para otimizar a ordenação e filtragem.
   const jogadoresExibidos = useMemo(() => {
-    return [...todosJogadores]
-      .sort((a, b) => { // Depois ordena
-        const valorA = (a[categoriaAtiva] as number) || 0;
-        const valorB = (b[categoriaAtiva] as number) || 0;
-        return ordenacao === 'desc' ? valorB - valorA : valorA - valorB;
+    const categoria = todasCategorias.find(c => c.abbreviation === categoriaAtiva);
+    if (!categoria) return [];
+
+    return [...categoria.leaders]
+      .sort((a, b) => {
+        // A ordenação padrão da API é por rank (descendente de valor), mas mantemos a opção de inverter
+        return ordenacao === 'desc' ? b.value - a.value : a.value - b.value;
       });
-  }, [todosJogadores, categoriaAtiva, ordenacao]);
+  }, [todasCategorias, categoriaAtiva, ordenacao]);
 
   const toggleOrdenacao = () => {
     setOrdenacao(prev => (prev === 'desc' ? 'asc' : 'desc'));
@@ -43,10 +44,6 @@ export default function Estatisticas() {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = 'https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/default.png&w=350&h=254';
     e.currentTarget.onerror = null;
-  };
-
-  const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.style.display = 'none';
   };
 
   if (carregando) {
@@ -60,14 +57,13 @@ export default function Estatisticas() {
     );
   }
 
-  const categorias = [
-    { key: 'pontos' as CategoriaEstatistica, label: 'Pontos', abrev: 'PTS' },
-    { key: 'rebotes' as CategoriaEstatistica, label: 'Rebotes', abrev: 'REB' },
-    { key: 'assistencias' as CategoriaEstatistica, label: 'Assistências', abrev: 'AST' },
-    { key: 'roubos' as CategoriaEstatistica, label: 'Roubos', abrev: 'STL' },
-    { key: 'tocos' as CategoriaEstatistica, label: 'Tocos', abrev: 'BLK' },
-    { key: 'triplos' as CategoriaEstatistica, label: 'Triplos', abrev: '3PM' },
-  ];
+  const categorias = todasCategorias.map(c => ({
+    key: c.abbreviation as CategoriaEstatistica,
+    label: c.name.charAt(0).toUpperCase() + c.name.slice(1),
+    abrev: c.abbreviation,
+  }));
+  
+  const categoriaNome = todasCategorias.find(c => c.abbreviation === categoriaAtiva)?.name || 'Estatísticas';
 
   return (
     <div className="min-h-screen bg-white">
@@ -114,7 +110,7 @@ export default function Estatisticas() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
             <h2 className="font-oswald text-xl font-bold uppercase">
-              {categorias.find((c) => c.key === categoriaAtiva)?.label} - Temporada 2025-26
+              {categoriaNome} - Temporada 2025-26
             </h2>
             <button
               onClick={toggleOrdenacao}
@@ -127,18 +123,17 @@ export default function Estatisticas() {
 
           <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 font-inter text-xs font-semibold text-gray-600 uppercase">
             <div className="col-span-1 text-center">#</div>
-            <div className="col-span-5 md:col-span-6">Jogador</div>
-            <div className="col-span-2 md:col-span-2 text-center">Time</div>
-            <div className="col-span-2 md:col-span-2 text-center">Pos</div>
-            <div className="col-span-2 md:col-span-1 text-center font-bold text-pink-600">
-              {categorias.find((c) => c.key === categoriaAtiva)?.abrev}
+            <div className="col-span-7 md:col-span-8">Jogador</div>
+            <div className="col-span-2 md:col-span-1 text-center">Time</div>
+            <div className="col-span-2 md:col-span-2 text-center font-bold text-pink-600">
+              {categoriaAtiva}
             </div>
           </div>
 
           <div className="divide-y divide-gray-200">
             {jogadoresExibidos.map((jogador, index) => (
               <div
-                key={jogador.id} // Usando apenas o ID do jogador, que é único e estável.
+                key={jogador.id}
                 className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors items-center"
               >
                 <div className="col-span-1 text-center">
@@ -147,37 +142,28 @@ export default function Estatisticas() {
                   </span>
                 </div>
 
-                <div className="col-span-5 md:col-span-6 flex items-center gap-3">
+                <div className="col-span-7 md:col-span-8 flex items-center gap-3">
                   <div className="relative flex-shrink-0">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 overflow-hidden">
-                      <img src={jogador.foto} alt={jogador.nome} className="w-full h-full object-cover" onError={handleImageError} />
+                      <img src={jogador.headshot} alt={jogador.displayName} className="w-full h-full object-cover" onError={handleImageError} />
                     </div>
-                    {jogador.logoTime && (
-                      <img src={jogador.logoTime} alt={jogador.siglaTime} className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white p-0.5 shadow-sm" onError={handleLogoError} />
-                    )}
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-oswald font-semibold text-gray-900 truncate text-sm md:text-base">
-                      {jogador.nome}
+                      {jogador.displayName}
                     </h3>
                   </div>
                 </div>
 
-                <div className="col-span-2 md:col-span-2 text-center">
-                  <span className="font-inter text-xs md:text-sm font-semibold text-pink-600">
-                    {jogador.siglaTime}
-                  </span>
-                </div>
-
-                <div className="col-span-2 md:col-span-2 text-center">
-                  <span className="font-inter text-xs md:text-sm text-gray-600">
-                    {jogador.posicao}
-                  </span>
-                </div>
-
                 <div className="col-span-2 md:col-span-1 text-center">
+                  <span className="font-inter text-xs md:text-sm font-semibold text-pink-600">
+                    {jogador.teamAbbreviation}
+                  </span>
+                </div>
+
+                <div className="col-span-2 md:col-span-2 text-center">
                   <span className="font-oswald text-lg md:text-2xl font-bold text-pink-600">
-                    {((jogador[categoriaAtiva] as number) || 0).toFixed(1)}
+                    {jogador.value.toFixed(1)}
                   </span>
                 </div>
               </div>
@@ -189,7 +175,7 @@ export default function Estatisticas() {
       <section className="container mx-auto px-4 pb-8">
         <div className="bg-gray-50 rounded-xl p-4 md:p-6 border border-gray-200">
           <p className="text-sm text-gray-600 font-inter text-center">
-            <strong className="text-gray-900">Nota:</strong> Estatísticas atualizadas diariamente com base nos jogos da temporada regular 2025-26. Para qualificação oficial nas lideranças da NBA, um jogador deve participar de pelo menos 70% dos jogos da sua equipe.
+            <strong className="text-gray-900">Nota:</strong> Estatísticas atualizadas diariamente com base nos jogos da temporada regular 2025-26.
           </p>
         </div>
       </section>
