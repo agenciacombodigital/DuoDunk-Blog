@@ -169,14 +169,15 @@ const obterLogoTime = (sigla: string): string => {
   if (!sigla || sigla === 'undefined') {
     return '';
   }
+  // Usamos o endpoint de logo da ESPN que aceita a abreviação
   return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${sigla.toLowerCase()}.png&h=100&w=100`;
 };
 
 export async function buscarLideresEstatisticas(): Promise<DadosEstatisticas> {
   try {
-    // API da ESPN para estatísticas de líderes
+    // ✅ CORREÇÃO: Chamando o endpoint /leaders
     const response = await axios.get(
-      'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/leaders'
+      `${ESPN_API_BASE}/leaders`
     );
 
     const categorias = response.data.categories || [];
