@@ -1,0 +1,36 @@
+name: Gerar Posts de Resultados Automaticamente
+
+on:
+  schedule:
+    # Executar todos os dias às 6h30 UTC (3h30 AM horário de Brasília)
+    - cron: '30 6 * * *'
+  workflow_dispatch: # Permite execução manual também
+
+jobs:
+  gerar-posts:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Instalar dependências
+        run: npm ci
+      
+      - name: Gerar posts de resultados
+        run: npm run gerar-posts-resultados
+      
+      - name: Commit e push dos novos posts
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions Bot"
+          git add content/posts/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🏀 Posts automáticos gerados - $(date +'%d/%m/%Y %H:%M')" && git push)
