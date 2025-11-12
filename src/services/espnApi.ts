@@ -22,42 +22,32 @@ export interface Jogo {
     logo: string;
     placar?: number;
   };
-  status: 'agendado' | 'ao_vivo' | 'finalizado';
+  status: 'agendado' | 'aovivo' | 'finalizado';
   canal?: string;
   arena?: string;
 }
 
-// Função auxiliar para obter a data de hoje formatada no fuso de São Paulo (BRT/BRST)
 const getTodayDateInSaoPaulo = (): string => {
   const now = new Date();
-  
-  // Formata a data para o fuso de São Paulo (BRT/BRST)
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     timeZone: 'America/Sao_Paulo',
   };
-  
-  const formatter = new Intl.DateTimeFormat('en-CA', options); // 'en-CA' usa YYYY-MM-DD
+  const formatter = new Intl.DateTimeFormat('en-CA', options);
   const [year, month, day] = formatter.format(now).split('-');
-  
   return `${year}-${month}-${day}`;
 };
 
-// Funções de busca de jogos (mantidas)
 export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
   try {
     const dataFormatada = data.replace(/-/g, '');
     const response = await axios.get(`${ESPN_API_BASE}/scoreboard`, {
-      params: {
-        dates: dataFormatada
-      }
+      params: { dates: dataFormatada },
     });
 
-    if (!response.data.events) {
-      return [];
-    }
+    if (!response.data.events) return [];
 
     const jogos = response.data.events.map((event: any) => {
       const competition = event.competitions[0];
@@ -70,29 +60,29 @@ export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
         horario: new Date(event.date).toLocaleTimeString('pt-BR', {
           hour: '2-digit',
           minute: '2-digit',
-          timeZone: 'America/Sao_Paulo'
+          timeZone: 'America/Sao_Paulo',
         }),
         timeCasa: {
           id: timeCasa.id,
           nome: timeCasa.team.displayName,
           sigla: timeCasa.team.abbreviation,
           logo: timeCasa.team.logo,
-          placar: timeCasa.score ? parseInt(timeCasa.score) : undefined
+          placar: timeCasa.score ? parseInt(timeCasa.score) : undefined,
         },
         timeVisitante: {
           id: timeVisitante.id,
           nome: timeVisitante.team.displayName,
           sigla: timeVisitante.team.abbreviation,
           logo: timeVisitante.team.logo,
-          placar: timeVisitante.score ? parseInt(timeVisitante.score) : undefined
+          placar: timeVisitante.score ? parseInt(timeVisitante.score) : undefined,
         },
-        status: competition.status.type.completed 
-          ? 'finalizado' 
-          : competition.status.type.state === 'in' 
-          ? 'ao_vivo' 
+        status: competition.status.type.completed
+          ? 'finalizado'
+          : competition.status.type.state === 'in'
+          ? 'aovivo'
           : 'agendado',
         canal: competition.broadcasts?.[0]?.names?.[0],
-        arena: competition.venue?.fullName
+        arena: competition.venue?.fullName,
       };
     });
 
@@ -128,7 +118,7 @@ export const buscarJogosSemana = async (): Promise<Jogo[]> => {
   }
 };
 
-// ========== ESTATÍSTICAS - SOLUÇÃO DEFINITIVA: Dados Mock Completos ==========
+// ========== ESTATÍSTICAS - SOLUÇÃO DEFINITIVA (Dados Mock Completos) ==========
 
 export interface EstatisticaJogador {
   id: string;
@@ -154,50 +144,19 @@ interface DadosEstatisticas {
   triplos: EstatisticaJogador[];
 }
 
+// CORREÇÃO: Usar ESPN CDN para fotos (IDs corretos)
 const obterFotoJogador = (id: string): string => {
-  return `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`;
+  return `https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/${id}.png&w=350&h=254`;
 };
 
 const obterLogoTime = (sigla: string): string => {
-  return `https://cdn.nba.com/logos/nba/${getTeamId(sigla)}/primary/L/logo.svg`;
+  return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${sigla.toLowerCase()}.png&h=100&w=100`;
 };
 
-// Mapa de times para IDs da NBA
-const getTeamId = (sigla: string): string => {
-  const teamMap: { [key: string]: string } = {
-    'MIL': '1610612749',
-    'PHI': '1610612755',
-    'OKC': '1610612760',
-    'CLE': '1610612739',
-    'LAL': '1610612747',
-    'MIN': '1610612750',
-    'DET': '1610612765',
-    'GSW': '1610612744',
-    'SAS': '1610612759',
-    'DEN': '1610612743',
-    'LAC': '1610612746',
-    'CHI': '1610612741',
-    'SAC': '1610612758',
-    'PHX': '1610612756',
-    'IND': '1610612754',
-    'NYK': '1610612752',
-    'ATL': '1610612737',
-    'WAS': '1610612764',
-    'CHA': '1610612766',
-    'MEM': '1610612763',
-    'BOS': '1610612738',
-    'MIA': '1610612748',
-    'DAL': '1610612742',
-    'TOR': '1610612761',
-    'BKN': '1610612751',
-  };
-  return teamMap[sigla] || '1610612739';
-};
-
-// DADOS MOCK REALISTAS - Baseados na temporada 2025-26
+// DADOS MOCK REALISTAS com IDs ESPN CORRETOS
 const dadosMockCompletos: EstatisticaJogador[] = [
   {
-    id: '2544',
+    id: '2544', // Giannis - ESPN ID
     nome: 'Giannis Antetokounmpo',
     siglaTime: 'MIL',
     logoTime: obterLogoTime('MIL'),
@@ -211,12 +170,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 1.6,
   },
   {
-    id: '1629001',
+    id: '4431678', // Tyrese Maxey - ESPN ID CORRETO
     nome: 'Tyrese Maxey',
     siglaTime: 'PHI',
     logoTime: obterLogoTime('PHI'),
     posicao: 'PG',
-    foto: obterFotoJogador('1629001'),
+    foto: obterFotoJogador('4431678'),
     pontos: 33.2,
     rebotes: 4.9,
     assistencias: 8.2,
@@ -225,12 +184,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 4.1,
   },
   {
-    id: '1628983',
+    id: '4278073', // Shai - ESPN ID CORRETO
     nome: 'Shai Gilgeous-Alexander',
     siglaTime: 'OKC',
     logoTime: obterLogoTime('OKC'),
     posicao: 'PG',
-    foto: obterFotoJogador('1628983'),
+    foto: obterFotoJogador('4278073'),
     pontos: 33.2,
     rebotes: 5.2,
     assistencias: 6.0,
@@ -239,12 +198,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 2.1,
   },
   {
-    id: '203507',
+    id: '3934672', // Donovan Mitchell - ESPN ID
     nome: 'Donovan Mitchell',
     siglaTime: 'CLE',
     logoTime: obterLogoTime('CLE'),
     posicao: 'SG',
-    foto: obterFotoJogador('203507'),
+    foto: obterFotoJogador('3934672'),
     pontos: 30.4,
     rebotes: 4.4,
     assistencias: 5.4,
@@ -253,12 +212,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 4.8,
   },
   {
-    id: '1630559',
+    id: '4397020', // Austin Reaves - ESPN ID CORRETO
     nome: 'Austin Reaves',
     siglaTime: 'LAL',
     logoTime: obterLogoTime('LAL'),
     posicao: 'SG',
-    foto: obterFotoJogador('1630559'),
+    foto: obterFotoJogador('4397020'),
     pontos: 30.3,
     rebotes: 4.9,
     assistencias: 6.9,
@@ -267,12 +226,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 3.2,
   },
   {
-    id: '1630162',
+    id: '4433134', // Anthony Edwards - ESPN ID
     nome: 'Anthony Edwards',
     siglaTime: 'MIN',
     logoTime: obterLogoTime('MIN'),
     posicao: 'SG',
-    foto: obterFotoJogador('1630162'),
+    foto: obterFotoJogador('4433134'),
     pontos: 28.3,
     rebotes: 5.6,
     assistencias: 5.4,
@@ -281,12 +240,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 3.7,
   },
   {
-    id: '1630595',
+    id: '4432166', // Cade Cunningham - ESPN ID
     nome: 'Cade Cunningham',
     siglaTime: 'DET',
     logoTime: obterLogoTime('DET'),
     posicao: 'PG',
-    foto: obterFotoJogador('1630595'),
+    foto: obterFotoJogador('4432166'),
     pontos: 27.5,
     rebotes: 7.2,
     assistencias: 10.1,
@@ -295,12 +254,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 2.8,
   },
   {
-    id: '201939',
+    id: '3975', // Stephen Curry - ESPN ID
     nome: 'Stephen Curry',
     siglaTime: 'GSW',
     logoTime: obterLogoTime('GSW'),
     posicao: 'PG',
-    foto: obterFotoJogador('201939'),
+    foto: obterFotoJogador('3975'),
     pontos: 26.8,
     rebotes: 5.0,
     assistencias: 6.3,
@@ -309,12 +268,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 5.3,
   },
   {
-    id: '1641705',
+    id: '4433218', // Victor Wembanyama - ESPN ID
     nome: 'Victor Wembanyama',
     siglaTime: 'SAS',
     logoTime: obterLogoTime('SAS'),
     posicao: 'C',
-    foto: obterFotoJogador('1641705'),
+    foto: obterFotoJogador('4433218'),
     pontos: 25.7,
     rebotes: 11.2,
     assistencias: 4.2,
@@ -323,12 +282,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 1.8,
   },
   {
-    id: '203999',
+    id: '3112335', // Nikola Jokic - ESPN ID
     nome: 'Nikola Jokic',
     siglaTime: 'DEN',
     logoTime: obterLogoTime('DEN'),
     posicao: 'C',
-    foto: obterFotoJogador('203999'),
+    foto: obterFotoJogador('3112335'),
     pontos: 25.2,
     rebotes: 13.5,
     assistencias: 10.8,
@@ -337,12 +296,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 1.1,
   },
   {
-    id: '201935',
+    id: '3992', // James Harden - ESPN ID
     nome: 'James Harden',
     siglaTime: 'LAC',
     logoTime: obterLogoTime('LAC'),
     posicao: 'PG',
-    foto: obterFotoJogador('201935'),
+    foto: obterFotoJogador('3992'),
     pontos: 22.0,
     rebotes: 6.1,
     assistencias: 9.2,
@@ -351,12 +310,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 2.9,
   },
   {
-    id: '1629634',
+    id: '4433219', // Josh Giddey - ESPN ID
     nome: 'Josh Giddey',
     siglaTime: 'CHI',
     logoTime: obterLogoTime('CHI'),
     posicao: 'SG',
-    foto: obterFotoJogador('1629634'),
+    foto: obterFotoJogador('4433219'),
     pontos: 21.4,
     rebotes: 8.3,
     assistencias: 7.5,
@@ -365,12 +324,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 1.9,
   },
   {
-    id: '203994',
+    id: '3155942', // Domantas Sabonis - ESPN ID
     nome: 'Domantas Sabonis',
     siglaTime: 'SAC',
     logoTime: obterLogoTime('SAC'),
     posicao: 'C',
-    foto: obterFotoJogador('203994'),
+    foto: obterFotoJogador('3155942'),
     pontos: 20.1,
     rebotes: 14.2,
     assistencias: 7.1,
@@ -379,12 +338,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 0.4,
   },
   {
-    id: '203932',
+    id: '3936299', // Grayson Allen - ESPN ID
     nome: 'Grayson Allen',
     siglaTime: 'PHX',
     logoTime: obterLogoTime('PHX'),
     posicao: 'SG',
-    foto: obterFotoJogador('203932'),
+    foto: obterFotoJogador('3936299'),
     pontos: 18.9,
     rebotes: 4.1,
     assistencias: 3.2,
@@ -393,12 +352,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 4.8,
   },
   {
-    id: '203093',
+    id: '3136776', // Myles Turner - ESPN ID
     nome: 'Myles Turner',
     siglaTime: 'IND',
     logoTime: obterLogoTime('IND'),
     posicao: 'C',
-    foto: obterFotoJogador('203093'),
+    foto: obterFotoJogador('3136776'),
     pontos: 15.8,
     rebotes: 7.9,
     assistencias: 1.8,
@@ -407,12 +366,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 2.3,
   },
   {
-    id: '203476',
+    id: '4066373', // OG Anunoby - ESPN ID
     nome: 'OG Anunoby',
     siglaTime: 'NYK',
     logoTime: obterLogoTime('NYK'),
     posicao: 'SF',
-    foto: obterFotoJogador('203476'),
+    foto: obterFotoJogador('4066373'),
     pontos: 15.2,
     rebotes: 4.9,
     assistencias: 2.1,
@@ -421,12 +380,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 2.7,
   },
   {
-    id: '1629155',
+    id: '4396993', // Dyson Daniels - ESPN ID
     nome: 'Dyson Daniels',
     siglaTime: 'ATL',
     logoTime: obterLogoTime('ATL'),
     posicao: 'SG',
-    foto: obterFotoJogador('1629155'),
+    foto: obterFotoJogador('4396993'),
     pontos: 12.7,
     rebotes: 4.6,
     assistencias: 3.5,
@@ -435,12 +394,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 1.8,
   },
   {
-    id: '1641737',
+    id: '5104281', // Alex Sarr - ESPN ID
     nome: 'Alex Sarr',
     siglaTime: 'WAS',
     logoTime: obterLogoTime('WAS'),
     posicao: 'C',
-    foto: obterFotoJogador('1641737'),
+    foto: obterFotoJogador('5104281'),
     pontos: 12.1,
     rebotes: 6.8,
     assistencias: 1.9,
@@ -449,12 +408,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 1.1,
   },
   {
-    id: '1641738',
+    id: '5105298', // Ryan Kalkbrenner - ESPN ID
     nome: 'Ryan Kalkbrenner',
     siglaTime: 'CHA',
     logoTime: obterLogoTime('CHA'),
     posicao: 'C',
-    foto: obterFotoJogador('1641738'),
+    foto: obterFotoJogador('5105298'),
     pontos: 11.4,
     rebotes: 8.5,
     assistencias: 1.2,
@@ -463,12 +422,12 @@ const dadosMockCompletos: EstatisticaJogador[] = [
     triplos: 0.2,
   },
   {
-    id: '203952',
+    id: '4066636', // Isaiah Stewart - ESPN ID
     nome: 'Isaiah Stewart',
     siglaTime: 'DET',
     logoTime: obterLogoTime('DET'),
     posicao: 'PF',
-    foto: obterFotoJogador('203952'),
+    foto: obterFotoJogador('4066636'),
     pontos: 10.3,
     rebotes: 8.9,
     assistencias: 1.5,
@@ -492,7 +451,7 @@ export async function buscarLideresEstatisticas(): Promise<DadosEstatisticas> {
   };
 }
 
+// Função mantida para compatibilidade (não mais usada)
 export async function buscarEstatisticasCompletas(): Promise<EstatisticaJogador[]> {
-  // Esta função não é mais usada pelo Estatisticas.tsx, mas é mantida para compatibilidade
-  return [];
-};
+  return dadosMockCompletos;
+}
