@@ -27,6 +27,24 @@ export interface Jogo {
   arena?: string;
 }
 
+// Função auxiliar para obter a data de hoje formatada no fuso de São Paulo (BRT/BRST)
+const getTodayDateInSaoPaulo = (): string => {
+  const now = new Date();
+  
+  // Formata a data para o fuso de São Paulo (BRT/BRST)
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'America/Sao_Paulo',
+  };
+  
+  const formatter = new Intl.DateTimeFormat('en-CA', options); // 'en-CA' usa YYYY-MM-DD
+  const [year, month, day] = formatter.format(now).split('-');
+  
+  return `${year}-${month}-${day}`;
+};
+
 // Função para buscar jogos de uma data específica
 export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
   try {
@@ -87,7 +105,7 @@ export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
 
 // Função para buscar jogos de hoje
 export const buscarJogosHoje = async (): Promise<Jogo[]> => {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = getTodayDateInSaoPaulo();
   return buscarJogosPorData(hoje);
 };
 
