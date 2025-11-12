@@ -18,8 +18,9 @@ export default function Estatisticas() {
     setCarregando(true);
     try {
       const dados = await buscarLideresEstatisticas();
-      // Pegar a lista de pontos como base (já tem todos os jogadores únicos e consolidados)
-      setTodosJogadores(dados.pontos);
+      // Usamos a lista de pontos como base, pois ela contém todos os jogadores que têm estatísticas.
+      // A ordenação e filtragem serão feitas localmente.
+      setTodosJogadores(dados.pontos); 
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
     } finally {

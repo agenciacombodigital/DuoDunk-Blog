@@ -130,7 +130,7 @@ export const buscarJogosSemana = async (): Promise<Jogo[]> => {
   }
 };
 
-// ========== ESTATÍSTICAS - SOLUÇÃO CORRIGIDA ==========
+// ========== ESTATÍSTICAS - SOLUÇÃO CORRIGIDA (Usando /athletes) ==========
 
 export interface EstatisticaJogador {
   id: string;
@@ -173,107 +173,68 @@ const obterLogoTime = (sigla: string): string => {
   return `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${sigla.toLowerCase()}.png&h=100&w=100`;
 };
 
-export async function buscarLideresEstatisticas(): Promise<DadosEstatisticas> {
+// Função para buscar estatísticas completas de todos os jogadores
+export async function buscarEstatisticasCompletas(): Promise<EstatisticaJogador[]> {
   try {
-    // ✅ CORREÇÃO: Chamando o endpoint /leaders
-    const response = await axios.get(
-      `${ESPN_API_BASE}/leaders`
-    );
-
-    const categorias = response.data.categories || [];
+    // Endpoint que fornece dados de jogadores com estatísticas médias
+    const response = await axios.get(`${ESPN_API_BASE}/athletes`);
     
-    // Objeto para armazenar jogadores únicos com TODAS as suas estatísticas
-    const jogadoresMap = new Map<string, EstatisticaJogador>();
-
-    // Função para processar cada categoria
-    const processarCategoria = (categoria: any, nomeStat: keyof Omit<EstatisticaJogador, 'id' | 'nome' | 'siglaTime' | 'logoTime' | 'posicao' | 'foto'>) => {
-      const leaders = categoria?.leaders || [];
+    if (!response.data.entries) return [];
+    
+    return response.data.entries.map((entry: any) => {
+      const athlete = entry.athlete;
+      const team = entry.team;
+      const stats = entry.statistics || {};
       
-      leaders.forEach((leader: any) => {
-        const athlete = leader.athlete;
-        if (!athlete) return;
-
-        const playerId = athlete.id?.toString() || '';
-        const team = athlete.team;
-        const siglaTime = team?.abbreviation || team?.shortDisplayName || 'N/A';
-        const position = athlete.position?.abbreviation || 'N/A';
-        // Usamos o value, que é o valor numérico, e garantimos que é um float ou 0
-        const displayValue = parseFloat(leader.value) || 0; 
-
-        // Se o jogador já existe no Map, apenas atualiza a estatística específica
-        if (jogadoresMap.has(playerId)) {
-          const jogadorExistente = jogadoresMap.get(playerId)!;
-          // Atualiza apenas se o valor for maior que zero (para não sobrescrever com 0)
-          if (displayValue > 0) {
-            (jogadorExistente[nomeStat] as number) = displayValue;
-          }
-        } else {
-          // Cria novo jogador com todas as estatísticas zeradas
-          jogadoresMap.set(playerId, {
-            id: playerId,
-            nome: athlete.displayName || athlete.name || 'Desconhecido',
-            siglaTime: siglaTime,
-            logoTime: obterLogoTime(siglaTime),
-            posicao: position,
-            foto: obterFotoJogador(playerId),
-            pontos: nomeStat === 'pontos' ? displayValue : 0,
-            rebotes: nomeStat === 'rebotes' ? displayValue : 0,
-            assistencias: nomeStat === 'assistencias' ? displayValue : 0,
-            roubos: nomeStat === 'roubos' ? displayValue : 0,
-            tocos: nomeStat === 'tocos' ? displayValue : 0,
-            triplos: nomeStat === 'triplos' ? displayValue : 0,
-          });
-        }
-      });
-    };
-
-    // Mapear categorias da ESPN para nossas categorias
-    categorias.forEach((categoria: any) => {
-      const name = categoria.name?.toLowerCase() || '';
+      // Extrai estatísticas médias (avg)
+      const avgStats = stats.splits?.find((s: any) => s.name === 'averages')?.categories?.[0]?.statistics || [];
       
-      if (name.includes('point') || name.includes('scoring')) {
-        processarCategoria(categoria, 'pontos');
-      } else if (name.includes('rebound')) {
-        processarCategoria(categoria, 'rebotes');
-      } else if (name.includes('assist')) {
-        processarCategoria(categoria, 'assistencias');
-      } else if (name.includes('steal')) {
-        processarCategoria(categoria, 'roubos');
-      } else if (name.includes('block')) {
-        processarCategoria(categoria, 'tocos');
-      } else if (name.includes('three') || name.includes('3-point')) {
-        processarCategoria(categoria, 'triplos');
-      }
-    });
+      const getStatValue = (name: string) => {
+        const stat = avgStats.find((s: any) => s.name === name);
+        return parseFloat(stat?.displayValue || stat?.value || 0);
+      };
 
-    // Converter Map para Array
-    const todosJogadores = Array.from(jogadoresMap.values());
+      const siglaTime = team?.abbreviation || team?.shortDisplayName || 'N/A';
 
-    // Separar por categoria (ordenados)
-    return {
-      pontos: [...todosJogadores].sort((a, b) => b.pontos - a.pontos),
-      rebotes: [...todosJogadores].sort((a, b) => b.rebotes - a.rebotes),
-      assistencias: [...todosJogadores].sort((a, b) => b.assistencias - a.assistencias),
-      roubos: [...todosJogadores].sort((a, b) => b.roubos - a.roubos),
-      tocos: [...todosJogadores].sort((a, b) => b.tocos - a.tocos),
-      triplos: [...todosJogadores].sort((a, b) => b.triplos - a.triplos),
-    };
-
+      return {
+        id: athlete.id,
+        nome: athlete.displayName || athlete.name || 'Desconhecido',
+        siglaTime: siglaTime,
+        logoTime: obterLogoTime(siglaTime),
+        posicao: athlete.position?.abbreviation || 'N/A',
+        foto: athlete.headshot?.href || obterFotoJogador(athlete.id),
+        
+        // Mapeamento das estatísticas
+        pontos: getStatValue('points'),
+        rebotes: getStatValue('rebounds'),
+        assistencias: getStatValue('assists'),
+        roubos: getStatValue('steals'),
+        tocos: getStatValue('blocks'),
+        triplos: getStatValue('threePointFieldGoalsMade'),
+      };
+    }).filter((p: EstatisticaJogador) => p.pontos > 0); // Filtra jogadores sem estatísticas válidas
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
-    return {
-      pontos: [],
-      rebotes: [],
-      assistencias: [],
-      roubos: [],
-      tocos: [],
-      triplos: [],
-    };
+    console.error('Erro ao buscar estatísticas completas:', error);
+    return [];
   }
-}
-
-// Função para buscar estatísticas completas de todos os jogadores (mantida, mas não usada no Estatisticas.tsx)
-export const buscarEstatisticasCompletas = async (): Promise<EstatisticaJogador[]> => {
-  // Esta função não é mais usada pelo Estatisticas.tsx, mas é mantida para compatibilidade
-  return [];
 };
+
+// Função principal para a página de líderes
+export async function buscarLideresEstatisticas(): Promise<DadosEstatisticas> {
+  const todosJogadores = await buscarEstatisticasCompletas();
+
+  // Função auxiliar para ordenar e retornar a lista
+  const ordenar = (stat: keyof EstatisticaJogador) => 
+    [...todosJogadores]
+      .sort((a, b) => (b[stat] as number) - (a[stat] as number))
+      .slice(0, 50); // Limita aos 50 melhores
+
+  return {
+    pontos: ordenar('pontos'),
+    rebotes: ordenar('rebotes'),
+    assistencias: ordenar('assistencias'),
+    roubos: ordenar('roubos'),
+    tocos: ordenar('tocos'),
+    triplos: ordenar('triplos'),
+  };
+}
