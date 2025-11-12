@@ -178,7 +178,7 @@ const obterLogoTime = (sigla: string): string => {
   return `https://cdn.nba.com/logos/nba/${teamId}/global/L/logo.svg`;
 };
 
-// DADOS MOCK REALISTAS PROJETADOS PARA O INÍCIO DA TEMPORADA 2025-26
+// DADOS MOCK REALISTAS PROJETADOS PARA A TEMPORADA 2025-26 ATIVA
 const dadosComIdsCorretos: EstatisticaJogador[] = [
   {
     id: '203954', // Joel Embiid
@@ -187,12 +187,12 @@ const dadosComIdsCorretos: EstatisticaJogador[] = [
     logoTime: obterLogoTime('PHI'),
     posicao: 'C',
     foto: obterFotoJogador('203954'),
-    pontos: 35.1, // Inflacionado no início
-    rebotes: 11.2,
-    assistencias: 5.8,
-    roubos: 1.3,
-    tocos: 1.8,
-    triplos: 1.3,
+    pontos: 34.7,
+    rebotes: 11.0,
+    assistencias: 5.6,
+    roubos: 1.2,
+    tocos: 1.7,
+    triplos: 1.2,
   },
   {
     id: '203507', // Giannis Antetokounmpo
@@ -201,12 +201,12 @@ const dadosComIdsCorretos: EstatisticaJogador[] = [
     logoTime: obterLogoTime('MIL'),
     posicao: 'PF',
     foto: obterFotoJogador('203507'),
-    pontos: 33.5,
-    rebotes: 11.8, // Líder de rebotes
-    assistencias: 6.5,
-    roubos: 1.1,
-    tocos: 1.5,
-    triplos: 0.6,
+    pontos: 32.1,
+    rebotes: 11.5,
+    assistencias: 6.2,
+    roubos: 1.0,
+    tocos: 1.4,
+    triplos: 0.5,
   },
   {
     id: '1628983', // Shai Gilgeous-Alexander
@@ -215,12 +215,12 @@ const dadosComIdsCorretos: EstatisticaJogador[] = [
     logoTime: obterLogoTime('OKC'),
     posicao: 'PG',
     foto: obterFotoJogador('1628983'),
-    pontos: 31.2,
-    rebotes: 5.6,
-    assistencias: 6.4,
-    roubos: 2.2, // Líder de roubos
-    tocos: 1.1,
-    triplos: 2.3,
+    pontos: 30.8,
+    rebotes: 5.5,
+    assistencias: 6.2,
+    roubos: 2.0,
+    tocos: 1.0,
+    triplos: 2.1,
   },
   {
     id: '201142', // Kevin Durant
@@ -321,18 +321,18 @@ const dadosComIdsCorretos: EstatisticaJogador[] = [
     triplos: 3.0,
   },
   {
-    id: '2544', // LeBron James (Simulando que ainda não jogou)
+    id: '2544', // LeBron James (AGORA ATIVO)
     nome: 'LeBron James',
     siglaTime: 'LAL',
     logoTime: obterLogoTime('LAL'),
     posicao: 'SF',
     foto: obterFotoJogador('2544'),
-    pontos: 0.0, // Estatística zerada
-    rebotes: 0.0,
-    assistencias: 0.0,
-    roubos: 0.0,
-    tocos: 0.0,
-    triplos: 0.0,
+    pontos: 25.7,
+    rebotes: 7.3,
+    assistencias: 8.3,
+    roubos: 1.3,
+    tocos: 0.5,
+    triplos: 2.2,
   },
   {
     id: '1628368', // De'Aaron Fox
@@ -480,19 +480,16 @@ export async function buscarLideresEstatisticas(): Promise<DadosEstatisticas> {
   // Simular delay de API
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  // Filtra jogadores com estatísticas zeradas (simulando não ter jogado)
-  const jogadoresAtivos = dadosComIdsCorretos.filter(p => p.pontos > 0 || p.rebotes > 0 || p.assistencias > 0);
+  // Como a temporada está ativa, todos os jogadores listados têm estatísticas.
+  // Apenas ordenamos a lista completa.
   
-  // Inclui jogadores inativos no final da lista de pontos, mas os exclui das outras listas
-  const jogadoresInativos = dadosComIdsCorretos.filter(p => p.pontos === 0 && p.rebotes === 0 && p.assistencias === 0);
-
   return {
-    pontos: [...jogadoresAtivos].sort((a, b) => b.pontos - a.pontos).concat(jogadoresInativos),
-    rebotes: [...jogadoresAtivos].sort((a, b) => b.rebotes - a.rebotes).concat(jogadoresInativos),
-    assistencias: [...jogadoresAtivos].sort((a, b) => b.assistencias - a.assistencias).concat(jogadoresInativos),
-    roubos: [...jogadoresAtivos].sort((a, b) => b.roubos - a.roubos).concat(jogadoresInativos),
-    tocos: [...jogadoresAtivos].sort((a, b) => b.tocos - a.tocos).concat(jogadoresInativos),
-    triplos: [...jogadoresAtivos].sort((a, b) => b.triplos - a.triplos).concat(jogadoresInativos),
+    pontos: [...dadosComIdsCorretos].sort((a, b) => b.pontos - a.pontos),
+    rebotes: [...dadosComIdsCorretos].sort((a, b) => b.rebotes - a.rebotes),
+    assistencias: [...dadosComIdsCorretos].sort((a, b) => b.assistencias - a.assistencias),
+    roubos: [...dadosComIdsCorretos].sort((a, b) => b.roubos - a.roubos),
+    tocos: [...dadosComIdsCorretos].sort((a, b) => b.tocos - a.tocos),
+    triplos: [...dadosComIdsCorretos].sort((a, b) => b.triplos - a.triplos),
   };
 }
 

@@ -17,6 +17,7 @@ export default function Estatisticas() {
         // A função agora retorna todas as listas, mas vamos usar a de pontos como base,
         // pois ela contém todas as estatísticas de todos os jogadores.
         const dados = await buscarLideresEstatisticas();
+        // Usamos a lista de pontos como base, pois ela contém todos os jogadores
         setTodosJogadores(dados.pontos); 
       } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
@@ -31,7 +32,7 @@ export default function Estatisticas() {
   // Isso garante que a lista só seja recalculada quando necessário.
   const jogadoresExibidos = useMemo(() => {
     return [...todosJogadores]
-      .filter(jogador => (jogador[categoriaAtiva] as number) > 0) // Filtra primeiro
+      // Removido o filtro de stats > 0, pois todos os jogadores agora têm dados projetados
       .sort((a, b) => { // Depois ordena
         const valorA = (a[categoriaAtiva] as number) || 0;
         const valorB = (b[categoriaAtiva] as number) || 0;
