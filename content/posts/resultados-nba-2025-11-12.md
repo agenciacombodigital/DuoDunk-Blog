@@ -2,7 +2,7 @@
 title: "Resultados NBA - 12/11/2025"
 slug: "resultados-nba-2025-11-12"
 published: true
-publishedat: "2025-11-13T12:01:41.397Z"
+publishedat: "2025-11-13T15:45:00.000Z"
 category: "Resultados"
 tags: ["NBA", "Resultados", "Rodada"]
 imageurl: "https://cdn.nba.com/logos/nba/nba-logoman-75-word_white.svg"
@@ -213,4 +213,4 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **12/11/2025**.
 ---
 
 **Fonte:** NBA Official Stats  
-**Atualizado em:** 13/11/2025, 09:01:41
+**Atualizado em:** 13/11/2025, 15:45:00
