@@ -1,9 +1,10 @@
 // Script para gerar UM POST CONSOLIDADO com TODOS os resultados da NBA
-// Executa diariamente via GitHub Actions às 3h30 AM (horário de Brasília)
+// Executa diariamente via GitHub Actions às 5h AM (UTC)
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch'; // Adicionando import do fetch
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,14 +16,13 @@ async function buscarJogosOntem() {
     const ontem = new Date();
     ontem.setDate(ontem.getDate() - 1);
     
-    const ano = ontem.getFullYear();
-    const mes = String(ontem.getMonth() + 1).padStart(2, '0');
     const dia = String(ontem.getDate()).padStart(2, '0');
-    const dataFormatada = `${ano}${mes}${dia}`;
+    const mes = String(ontem.getMonth() + 1).padStart(2, '0');
+    const ano = ontem.getFullYear();
     
-    console.log(`📅 Buscando jogos do dia: ${dia}/${mes}/${ano}`);
+    console.log(`📅 Buscando jogos finalizados referentes a: ${dia}/${mes}/${ano}`);
     
-    // URL da API da NBA para os jogos do dia
+    // URL da API da NBA para os jogos do dia (usamos o placar de 'hoje' e filtramos por 'Final')
     const url = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json`;
     
     const response = await fetch(url);
@@ -64,8 +64,8 @@ function gerarSecaoJogo(jogo, index) {
 
 | Time | Q1 | Q2 | Q3 | Q4 | Total |
 |------|----|----|----|----|-------|
-| **${timeCasa.teamName}** | - | - | - | - | **${placarCasa}** |
 | **${timeVisitante.teamName}** | - | - | - | - | **${placarVisitante}** |
+| **${timeCasa.teamName}** | - | - | - | - | **${placarCasa}** |
 
 ### Destaques
 

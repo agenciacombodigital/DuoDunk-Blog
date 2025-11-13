@@ -2,15 +2,14 @@ name: Gerar Post Consolidado NBA
 
 on:
   schedule:
-    - cron: '0 5 * * *' # Roda todo dia às 5h da manhã (UTC, ajuste para seu fuso)
+    - cron: '0 5 * * *' # Roda todo dia às 5h da manhã (UTC)
   workflow_dispatch:
 
 jobs:
   gerar_post:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout projeto
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
