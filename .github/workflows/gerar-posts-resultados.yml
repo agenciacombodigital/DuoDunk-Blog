@@ -20,9 +20,50 @@ jobs:
         run: npm install
 
       - name: Executar script de geração de posts
-        run: node scripts/gerarPostsResultados.js
-
-      - name: Commit post gerado
+        id: generate
+        run: |
+          # 1. Executa o script que gera o arquivo Markdown
+          node scripts/gerarPostsResultados.js
+          
+          # 2. Encontra o nome do arquivo gerado (o mais recente)
+          LATEST_FILE=$(ls -t content/posts/resultados-nba-*.md | head -n 1)
+          
+          if [ -z "$LATEST_FILE" ]; then
+            echo "Nenhum arquivo de resultados gerado. Pulando commit e publicação."
+            echo "::set-output name=file_path::"
+            echo "::set-output name=content::"
+            exit 0
+          fi
+          
+          # 3. Lê o conteúdo do arquivo
+          CONTENT=$(cat "$LATEST_FILE")
+          
+          # 4. Define outputs para o próximo passo
+          echo "::set-output name=file_path::$LATEST_FILE"
+          # O conteúdo precisa ser escapado para ser passado como output
+          # Usamos um delimitador único para evitar problemas com quebras de linha
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        
+      - name: 🚀 Publicar no Supabase via Edge Function
+        if: steps.generate.outputs.file_path != ''
+        env:
+          SUPABASE_URL: https://brerfpcfkyptkzygyzxl.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # O conteúdo do Markdown está em steps.generate.outputs.content
+          MARKDOWN_CONTENT="${{ steps.generate.outputs.content }}"
+          
+          # Chama a Edge Function
+          curl -X POST \
+            "${{ env.SUPABASE_URL }}/functions/v1/publish-markdown-post" \
+            -H "Authorization: Bearer ${{ env.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"markdownContent\": \"$(echo "$MARKDOWN_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\\n/\\n/g')\"}"
+          
+      - name: Commit post gerado (para histórico)
+        if: steps.generate.outputs.file_path != ''
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
