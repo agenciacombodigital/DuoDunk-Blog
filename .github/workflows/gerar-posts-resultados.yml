@@ -16,8 +16,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Instalar dependências
-        run: npm install
+      - name: Instalar dependências e JQ
+        run: |
+          npm install
+          sudo apt-get install jq # Instala jq para manipulação de JSON
 
       - name: Executar script de geração de posts
         id: generate
@@ -26,22 +28,20 @@ jobs:
           node scripts/gerarPostsResultados.js
           
           # 2. Encontra o nome do arquivo gerado (o mais recente)
-          LATEST_FILE=$(ls -t content/posts/resultados-nba-*.md | head -n 1)
+          LATEST_FILE=$(ls -t content/posts/resultados-nba-*.md 2>/dev/null | head -n 1)
           
           if [ -z "$LATEST_FILE" ]; then
             echo "Nenhum arquivo de resultados gerado. Pulando commit e publicação."
             echo "::set-output name=file_path::"
-            echo "::set-output name=content::"
             exit 0
           fi
           
-          # 3. Lê o conteúdo do arquivo
+          # 3. Lê o conteúdo do arquivo e salva em um output
           CONTENT=$(cat "$LATEST_FILE")
           
           # 4. Define outputs para o próximo passo
-          echo "::set-output name=file_path::$LATEST_FILE"
-          # O conteúdo precisa ser escapado para ser passado como output
-          # Usamos um delimitador único para evitar problemas com quebras de linha
+          echo "file_path=$LATEST_FILE" >> $GITHUB_OUTPUT
+          # Usamos um delimitador único para passar o conteúdo de forma segura
           echo "content<<EOF" >> $GITHUB_OUTPUT
           echo "$CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -51,16 +51,18 @@ jobs:
         env:
           SUPABASE_URL: https://brerfpcfkyptkzygyzxl.supabase.co
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          MARKDOWN_CONTENT: ${{ steps.generate.outputs.content }}
         run: |
-          # O conteúdo do Markdown está em steps.generate.outputs.content
-          MARKDOWN_CONTENT="${{ steps.generate.outputs.content }}"
+          # Constrói o payload JSON de forma segura usando jq
+          PAYLOAD=$(jq -n --arg content "$MARKDOWN_CONTENT" '{"markdownContent": $content}')
           
-          # Chama a Edge Function
+          echo "Enviando payload para Edge Function..."
+          
           curl -X POST \
             "${{ env.SUPABASE_URL }}/functions/v1/publish-markdown-post" \
             -H "Authorization: Bearer ${{ env.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{\"markdownContent\": \"$(echo "$MARKDOWN_CONTENT" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\\n/\\n/g')\"}"
+            -d "$PAYLOAD"
           
       - name: Commit post gerado (para histórico)
         if: steps.generate.outputs.file_path != ''
