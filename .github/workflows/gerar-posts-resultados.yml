@@ -1,36 +1,32 @@
-name: Gerar Posts de Resultados Automaticamente
+name: Gerar Post Consolidado NBA
 
 on:
   schedule:
-    # Executar todos os dias às 6h30 UTC (3h30 AM horário de Brasília)
-    - cron: '30 6 * * *'
-  workflow_dispatch: # Permite execução manual também
+    - cron: '0 5 * * *' # Roda todo dia às 5h da manhã (UTC, ajuste para seu fuso)
+  workflow_dispatch:
 
 jobs:
-  gerar-posts:
+  gerar_post:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout do repositório
+      - name: Checkout projeto
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Configurar Node.js
+
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: '20'
+
       - name: Instalar dependências
-        run: npm ci
-      
-      - name: Gerar posts de resultados
-        run: npm run gerar-posts-resultados
-      
-      - name: Commit e push dos novos posts
+        run: npm install
+
+      - name: Executar script de geração de posts
+        run: node scripts/gerarPostsResultados.js
+
+      - name: Commit post gerado
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "GitHub Actions Bot"
-          git add content/posts/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🏀 Posts automáticos gerados - $(date +'%d/%m/%Y %H:%M')" && git push)
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add content/posts/resultados-nba-*.md
+          git commit -m "🤖 Auto: post NBA resultados" || true
+          git push

@@ -1,41 +1,45 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getAllLeaderCategories, PlayerStats, LeaderCategory } from '../services/espnStatsService';
+import { getTopPlayers, PlayerLeader, STAT_CATEGORIES } from '../services/nbaCoreStatsService';
 import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
-type CategoriaEstatistica = 'PTS' | 'REB' | 'AST' | 'STL' | 'BLK' | 'FG3M';
+type CategoriaEstatisticaKey = 'points' | 'rebounds' | 'assists' | 'steals' | 'blocks' | 'threePointFieldGoalsMade' | 'fieldGoalPercentage' | 'freeThrowPercentage';
 
 export default function Estatisticas() {
-  const [todasCategorias, setTodasCategorias] = useState<LeaderCategory[]>([]);
-  const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaEstatistica>('PTS');
+  const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaEstatisticaKey>('points');
   const [carregando, setCarregando] = useState(true);
   const [ordenacao, setOrdenacao] = useState<'asc' | 'desc'>('desc');
+  const [jogadores, setJogadores] = useState<PlayerLeader[]>([]);
+
+  // Mapeamento de chaves para o nome de exibição
+  const categorias = STAT_CATEGORIES.map(c => ({
+    key: c.key as CategoriaEstatisticaKey,
+    label: c.name,
+    abrev: c.abbreviation,
+  }));
 
   useEffect(() => {
     const carregarEstatisticas = () => {
       setCarregando(true);
       try {
-        // Usando o novo serviço para carregar todas as categorias
-        const dados = getAllLeaderCategories();
-        setTodasCategorias(dados); 
+        // Usando o novo serviço para carregar os top players da categoria ativa
+        const dados = getTopPlayers(categoriaAtiva, 50); // Busca os 50 primeiros
+        setJogadores(dados); 
       } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
+        setJogadores([]);
       } finally {
         setCarregando(false);
       }
     };
     carregarEstatisticas();
-  }, []);
+  }, [categoriaAtiva]); // Recarrega quando a categoria muda
 
   const jogadoresExibidos = useMemo(() => {
-    const categoria = todasCategorias.find(c => c.abbreviation === categoriaAtiva);
-    if (!categoria) return [];
-
-    return [...categoria.leaders]
+    return [...jogadores]
       .sort((a, b) => {
-        // A ordenação padrão da API é por rank (descendente de valor), mas mantemos a opção de inverter
         return ordenacao === 'desc' ? b.value - a.value : a.value - b.value;
       });
-  }, [todasCategorias, categoriaAtiva, ordenacao]);
+  }, [jogadores, ordenacao]);
 
   const toggleOrdenacao = () => {
     setOrdenacao(prev => (prev === 'desc' ? 'asc' : 'desc'));
@@ -57,13 +61,21 @@ export default function Estatisticas() {
     );
   }
 
-  const categorias = todasCategorias.map(c => ({
-    key: c.abbreviation as CategoriaEstatistica,
-    label: c.name.charAt(0).toUpperCase() + c.name.slice(1),
-    abrev: c.abbreviation,
-  }));
+  const categoriaInfo = categorias.find(c => c.key === categoriaAtiva);
+  const categoriaNome = categoriaInfo?.label || 'Estatísticas';
+  const categoriaAbrev = categoriaInfo?.abrev || 'VAL';
   
-  const categoriaNome = todasCategorias.find(c => c.abbreviation === categoriaAtiva)?.name || 'Estatísticas';
+  // Helper para formatar o valor (1 casa decimal, exceto para contagens inteiras)
+  const formatValue = (value: number, abbrev: string) => {
+    if (abbrev.includes('%')) {
+      return value.toFixed(1) + '%';
+    }
+    // Se for uma contagem (PTS, REB, AST, etc.), mostra como inteiro se for inteiro
+    if (['PTS', 'REB', 'AST', 'STL', 'BLK', '3PM'].includes(abbrev)) {
+      return Math.round(value) === value ? value.toString() : value.toFixed(1);
+    }
+    return value.toFixed(1);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -126,7 +138,7 @@ export default function Estatisticas() {
             <div className="col-span-7 md:col-span-8">Jogador</div>
             <div className="col-span-2 md:col-span-1 text-center">Time</div>
             <div className="col-span-2 md:col-span-2 text-center font-bold text-pink-600">
-              {categoriaAtiva}
+              {categoriaAbrev}
             </div>
           </div>
 
@@ -145,25 +157,25 @@ export default function Estatisticas() {
                 <div className="col-span-7 md:col-span-8 flex items-center gap-3">
                   <div className="relative flex-shrink-0">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 overflow-hidden">
-                      <img src={jogador.headshot} alt={jogador.displayName} className="w-full h-full object-cover" onError={handleImageError} />
+                      <img src={jogador.headshot} alt={jogador.name} className="w-full h-full object-cover" onError={handleImageError} />
                     </div>
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-oswald font-semibold text-gray-900 truncate text-sm md:text-base">
-                      {jogador.displayName}
+                      {jogador.name}
                     </h3>
                   </div>
                 </div>
 
                 <div className="col-span-2 md:col-span-1 text-center">
                   <span className="font-inter text-xs md:text-sm font-semibold text-pink-600">
-                    {jogador.teamAbbreviation}
+                    {jogador.team || 'N/D'}
                   </span>
                 </div>
 
                 <div className="col-span-2 md:col-span-2 text-center">
                   <span className="font-oswald text-lg md:text-2xl font-bold text-pink-600">
-                    {jogador.value.toFixed(1)}
+                    {formatValue(jogador.value, categoriaAbrev)}
                   </span>
                 </div>
               </div>
