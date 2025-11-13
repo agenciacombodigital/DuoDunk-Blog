@@ -8,20 +8,6 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-// Helper para converter Markdown para HTML (simples, apenas para parágrafos)
-function markdownToHtml(markdown: string): string {
-  // Substitui quebras de linha duplas por parágrafos HTML
-  const paragraphs = markdown.split('\n\n').map(p => {
-    if (p.startsWith('#')) return p; // Ignora títulos
-    if (p.startsWith('|')) return p; // Ignora tabelas
-    return `<p>${p.trim()}</p>`;
-  }).join('');
-  
-  // Nota: Para conversão completa de Markdown para HTML, seria necessário uma biblioteca como 'marked' ou 'markdown-it'.
-  // Por enquanto, vamos confiar que o script de resultados gera HTML/Markdown simples.
-  return paragraphs;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -45,19 +31,15 @@ serve(async (req) => {
     // 1. Parsear Frontmatter e Body
     const { data: frontmatter, content: markdownBody } = parse(markdownContent);
     
-    // 2. Converter Markdown Body para HTML (simples)
-    // Nota: O script gerarPostsResultados.js já gera um corpo que é quase HTML/Markdown simples.
-    // Vamos usar o corpo como está, mas garantir que o slug e o título existem.
-    
     const title = frontmatter.title || 'Resultado da Rodada';
     const slug = frontmatter.slug || 'resultado-sem-slug';
     const summary = frontmatter.summary || title;
-    const body = markdownBody; // Mantemos o corpo Markdown/HTML gerado pelo script
+    const body = markdownBody;
     const publishedAt = frontmatter.publishedat || new Date().toISOString();
     const tags = frontmatter.tags || ['nba', 'resultados'];
     const imageUrl = frontmatter.imageurl || 'https://cdn.nba.com/logos/nba/nba-logoman-75-word_white.svg';
     
-    // 3. Verificar se o post já existe (evitar duplicidade)
+    // 2. Verificar se o post já existe (evitar duplicidade)
     const { data: existingPost, error: fetchError } = await supabaseAdmin
       .from('articles')
       .select('id')
@@ -71,8 +53,20 @@ serve(async (req) => {
         headers: { ...corsHeaders }, status: 200
       });
     }
+    
+    // 3. LIMPAR DESTAQUES ANTIGOS (GARANTIR QUE ESTE É O NOVO DESTAQUE)
+    console.log('Limpando destaques antigos...');
+    const { error: clearError } = await supabaseAdmin
+      .from('articles')
+      .update({ is_featured: false })
+      .eq('is_featured', true);
 
-    // 4. Inserir no banco de dados
+    if (clearError) {
+      console.error('Erro ao limpar destaques antigos:', clearError);
+      // Não lançamos erro fatal, apenas logamos, pois a publicação é mais importante
+    }
+
+    // 4. Inserir o novo post
     const { error: insertError } = await supabaseAdmin
       .from('articles')
       .insert({
@@ -86,14 +80,14 @@ serve(async (req) => {
         source: 'Auto-Gerado (Rodada NBA)',
         published: true,
         published_at: publishedAt,
-        is_featured: true, // Marcar como destaque para aparecer na Home
+        is_featured: true, // Marcado como destaque
         image_focal_point: '50% 50%',
         image_focal_point_mobile: '50%',
       });
 
     if (insertError) throw insertError;
 
-    return new Response(JSON.stringify({ message: `Post "${title}" publicado com sucesso!` }), {
+    return new Response(JSON.stringify({ message: `Post "${title}" publicado com sucesso e marcado como destaque!` }), {
       headers: { ...corsHeaders }, status: 200
     });
 
