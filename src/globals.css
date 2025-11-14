@@ -310,15 +310,3 @@ html {
     letter-spacing: 0.03em;
   }
 }
-
-/* --- ANIMAÇÃO PREMIUM --- */
-@keyframes gradient-move {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0% 0%; }
-}
-
-.animate-gradient-move {
-  background-size: 300% 300%;
-  animation: gradient-move 6s ease infinite;
-}

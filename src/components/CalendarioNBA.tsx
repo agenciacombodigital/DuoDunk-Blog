@@ -69,13 +69,12 @@ const CalendarioNBA: React.FC = () => {
           <div key={data} className="mb-8">
             <h3 className="font-oswald text-xl text-pink-700 capitalize mb-4 pb-2 border-b-2 border-gray-100">{data}</h3>
             
-            {/* Novo Grid de Cards */}
+            {/* Grid de Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {jogosData.map((jogo, index) => {
+              {jogosData.map((jogo) => {
                 // Adaptação: Transmissões são separadas por vírgula no campo 'canal'
                 const transmissoes = jogo.canal ? jogo.canal.split(',').map(t => t.trim()).filter(t => t) : [];
                 
-                // Variáveis para o novo JSX
                 const timeCasa = jogo.timeCasa;
                 const timeVisitante = jogo.timeVisitante;
                 
@@ -84,117 +83,87 @@ const CalendarioNBA: React.FC = () => {
                     key={jogo.id}
                     className="
                       relative
-                      p-[2px]
+                      p-6
                       rounded-3xl
-                      bg-gradient-to-br from-pink-500/30 via-blue-500/20 to-transparent
-                      animate-gradient-move
-                      transition-all
-                      duration-500
-                      hover:scale-[1.03]
-                      hover:shadow-[0_20px_60px_rgba(0,0,0,0.15)]
+                      bg-white/40 
+                      backdrop-blur-xl
+                      border border-white/40
+                      shadow-[0_8px_30px_rgba(0,0,0,0.06)]
+                      hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
+                      transition-all duration-300
+                      flex flex-col
+                      hover:scale-[1.01]
                     "
                   >
-                    {/* Fundo glass */}
-                    <div
-                      className="
-                        rounded-3xl
-                        bg-white/30 
-                        backdrop-blur-2xl
-                        border border-white/40
-                        shadow-[inset_0_0_20px_rgba(255,255,255,0.3),0_15px_40px_rgba(0,0,0,0.1)]
-                        p-6
-                        transition-all duration-500
-                        flex flex-col
-                        h-full
-                      "
-                    >
-                      {/* Status Badge (Mantido, mas estilizado para o novo visual) */}
-                      {jogo.status !== 'agendado' && (
-                          <div className={`absolute top-0 left-0 right-0 rounded-t-3xl text-center py-1 text-xs font-bold uppercase font-inter ${
-                              jogo.status === 'ao_vivo' ? 'bg-red-600/80 text-white animate-pulse' : 'bg-gray-700/80 text-white'
-                          }`}>
-                              {jogo.status === 'ao_vivo' ? 'AO VIVO' : 'FINAL'}
-                          </div>
-                      )}
+                    {/* Status Badge (Mantido) */}
+                    {jogo.status !== 'agendado' && (
+                        <div className={`absolute top-0 left-0 right-0 rounded-t-3xl text-center py-1 text-xs font-bold uppercase font-inter ${
+                            jogo.status === 'ao_vivo' ? 'bg-red-600 text-white animate-pulse' : 'bg-gray-700 text-white'
+                        }`}>
+                            {jogo.status === 'ao_vivo' ? 'AO VIVO' : 'FINAL'}
+                        </div>
+                    )}
 
-                      {/* Glow superior (reflexo elegante) */}
-                      <div className="
-                        pointer-events-none
-                        absolute top-0 left-0 right-0
-                        h-16
-                        bg-gradient-to-b from-white/40 to-transparent
-                        rounded-t-3xl
-                      " />
-
-                      {/* Horário */}
-                      <div className="flex items-center justify-center mb-5 mt-4">
-                        <span className="
-                          text-2xl font-black text-gray-900 font-oswald
-                          px-4 py-1
-                          rounded-full
-                          bg-gradient-to-r from-pink-500/20 to-blue-500/20
-                          shadow-inner
-                          backdrop-blur-xl
-                        ">
-                          {jogo.status === 'agendado' ? jogo.horario : `${timeVisitante.placar} x ${timeCasa.placar}`}
-                        </span>
-                      </div>
-
-                      {/* Times */}
-                      <div className="flex items-center justify-center gap-8 relative">
-                        <img
-                          src={timeVisitante.logo}
-                          alt={timeVisitante.sigla}
-                          className="
-                            w-16 h-16 drop-shadow-xl transition duration-300
-                            hover:drop-shadow-[0_0_12px_rgba(236,72,153,0.7)]
-                          "
-                        />
-                        <span className="text-2xl font-black text-gray-900 font-oswald">@</span>
-                        <img
-                          src={timeCasa.logo}
-                          alt={timeCasa.sigla}
-                          className="
-                            w-16 h-16 drop-shadow-xl transition duration-300
-                            hover:drop-shadow-[0_0_12px_rgba(59,130,246,0.7)]
-                          "
-                        />
-                      </div>
-
-                      {/* Siglas */}
-                      <div className="flex justify-center gap-12 mt-3 text-gray-700 font-semibold text-lg tracking-wide font-inter">
-                        <span>{timeVisitante.sigla}</span>
-                        <span>{timeCasa.sigla}</span>
-                      </div>
-
-                      {/* Transmissões */}
-                      <div className="flex flex-wrap gap-2 mt-5 justify-center">
-                        {transmissoes.map((t: string, i: number) => (
-                          <span
-                            key={i}
-                            className="
-                              px-4 py-1.5 
-                              rounded-full 
-                              bg-gradient-to-r from-pink-500/20 to-blue-500/20
-                              text-gray-900
-                              text-sm 
-                              font-semibold
-                              shadow-sm
-                              backdrop-blur-xl
-                              border border-white/40
-                              font-inter
-                            "
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Arena */}
-                      <p className="text-center text-gray-600 text-sm mt-5 tracking-tight font-inter">
-                        {jogo.arena}
-                      </p>
+                    {/* Horário / Placar (Mini-pill suave) */}
+                    <div className={`flex items-center justify-center mb-5 ${jogo.status !== 'agendado' ? 'mt-4' : ''}`}>
+                      <span className="
+                        text-xl font-black text-gray-900 font-oswald
+                        px-4 py-1
+                        rounded-full
+                        bg-pink-100
+                        text-pink-700
+                        shadow-sm
+                      ">
+                        {jogo.status === 'agendado' ? jogo.horario : `${timeVisitante.placar} x ${timeCasa.placar}`}
+                      </span>
                     </div>
+
+                    {/* Times */}
+                    <div className="flex items-center justify-center gap-6">
+                      <img
+                        src={timeVisitante.logo}
+                        alt={timeVisitante.sigla}
+                        className="w-14 h-14 drop-shadow-sm transition duration-300"
+                      />
+                      <span className="text-2xl font-black text-gray-900 font-oswald">@</span>
+                      <img
+                        src={timeCasa.logo}
+                        alt={timeCasa.sigla}
+                        className="w-14 h-14 drop-shadow-sm transition duration-300"
+                      />
+                    </div>
+
+                    {/* Siglas */}
+                    <div className="flex justify-center gap-10 mt-3 text-gray-700 font-semibold text-lg tracking-wide font-inter">
+                      <span>{timeVisitante.sigla}</span>
+                      <span>{timeCasa.sigla}</span>
+                    </div>
+
+                    {/* Transmissões */}
+                    <div className="flex flex-wrap gap-2 mt-5 justify-center">
+                      {transmissoes.map((t: string, i: number) => (
+                        <span
+                          key={i}
+                          className="
+                            px-3 py-1 
+                            rounded-full 
+                            bg-pink-100 
+                            text-pink-700 
+                            text-sm 
+                            font-semibold
+                            shadow-sm
+                            font-inter
+                          "
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Arena */}
+                    <p className="text-center text-gray-600 text-sm mt-4 font-inter">
+                      {jogo.arena}
+                    </p>
                   </div>
                 );
               })}
