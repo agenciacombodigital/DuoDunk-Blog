@@ -74,7 +74,12 @@ const CalendarioNBA: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center justify-between text-xs text-gray-600 pt-3 border-t border-gray-200 gap-2">
-          {jogo.canal && <span className="flex items-center gap-1"><Tv size={14} /> {jogo.canal}</span>}
+          {/* Exibindo o canal mapeado para o Brasil */}
+          {jogo.canal && (
+            <span className="flex items-center gap-1 font-bold text-pink-700">
+              <Tv size={14} /> {jogo.canal}
+            </span>
+          )}
           {jogo.arena && <span className="flex items-center gap-1"><MapPin size={14} /> {jogo.arena}</span>}
         </div>
       </div>

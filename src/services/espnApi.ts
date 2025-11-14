@@ -27,6 +27,45 @@ export interface Jogo {
   arena?: string;
 }
 
+// Mapeamento de canais americanos para canais brasileiros/serviços de streaming
+const BRAZIL_BROADCAST_MAP: Record<string, string> = {
+  'ESPN': 'ESPN 2 / Star+',
+  'ABC': 'ESPN / Star+',
+  'TNT': 'TNT Sports / HBO Max',
+  'NBATV': 'NBA TV',
+  'Prime Video': 'Amazon Prime Video',
+  'Amazon Prime Video': 'Amazon Prime Video',
+  // Adicione mais mapeamentos conforme necessário para canais regionais que transmitem jogos importantes
+  // Ex: Se um jogo é transmitido na TNT ou ESPN americana, é provável que seja transmitido no Brasil.
+};
+
+/**
+ * Tenta mapear o canal americano para o canal brasileiro.
+ * Adiciona 'League Pass' a todos os jogos.
+ */
+const getBrazilBroadcast = (usBroadcast: string | undefined): string => {
+  if (!usBroadcast) {
+    return 'League Pass';
+  }
+
+  // Tenta encontrar uma correspondência direta
+  const mappedChannel = BRAZIL_BROADCAST_MAP[usBroadcast];
+  if (mappedChannel) {
+    return `${mappedChannel}, League Pass`;
+  }
+  
+  // Tenta encontrar correspondência parcial (ex: 'ESPN' dentro de 'ESPN2')
+  for (const key in BRAZIL_BROADCAST_MAP) {
+    if (usBroadcast.toUpperCase().includes(key.toUpperCase())) {
+      return `${BRAZIL_BROADCAST_MAP[key]}, League Pass`;
+    }
+  }
+
+  // Se não houver mapeamento, assume apenas League Pass
+  return 'League Pass';
+};
+
+
 const getTodayDateInSaoPaulo = (): string => {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
@@ -53,6 +92,10 @@ export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
       const competition = event.competitions[0];
       const timeCasa = competition.competitors.find((t: any) => t.homeAway === 'home');
       const timeVisitante = competition.competitors.find((t: any) => t.homeAway === 'away');
+      
+      // Pega o primeiro canal de transmissão americano
+      const usBroadcast = competition.broadcasts?.[0]?.names?.[0];
+      const brazilBroadcast = getBrazilBroadcast(usBroadcast);
 
       return {
         id: event.id,
@@ -81,7 +124,7 @@ export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
           : competition.status.type.state === 'in'
           ? 'aovivo'
           : 'agendado',
-        canal: competition.broadcasts?.[0]?.names?.[0],
+        canal: brazilBroadcast, // Usando o canal mapeado para o Brasil
         arena: competition.venue?.fullName,
       };
     });
