@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Tv } from 'lucide-react';
 import GameStatsModalV2 from './GameStatsModalV2';
+import { buscarJogosHoje, Jogo } from '../services/espnApi'; // Importando a função de busca da ESPN
 
-interface Game {
+interface Game extends Jogo {
   gameId: string;
   gameStatus: number;
   gameStatusText: string;
@@ -56,6 +57,82 @@ const convertToBrasiliaTime = (dateString: string) => {
   }
 };
 
+// Função para buscar dados do placar (mesclando ESPN e NBA Boxscore)
+const fetchGames = async () => {
+  const espnGames = await buscarJogosHoje();
+  
+  const processedGames: Game[] = [];
+
+  for (const g of espnGames) {
+    let gameStatus = 1; // Agendado
+    let gameStatusText = g.horario;
+    let homeScore = String(g.timeCasa.placar || 0);
+    let awayScore = String(g.timeVisitante.placar || 0);
+    let gameClock = '';
+    let period = 0;
+    let homeRecord = '0-0';
+    let awayRecord = '0-0';
+    
+    // Se o jogo estiver ao vivo ou finalizado, buscamos o boxscore da NBA para dados mais ricos
+    if (g.status !== 'agendado') {
+      try {
+        const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
+          body: { gameId: g.id }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.success && data?.stats) {
+          const stats = data.stats;
+          gameStatus = stats.gameState === 'in' ? 2 : 3;
+          gameStatusText = stats.status;
+          homeScore = stats.homeTeam.score;
+          awayScore = stats.awayTeam.score;
+          gameClock = stats.gameClock;
+          period = stats.period;
+          homeRecord = stats.homeTeam.record;
+          awayRecord = stats.awayTeam.record;
+        }
+      } catch (e) {
+        console.warn(`Falha ao buscar stats em tempo real para ${g.id}:`, e);
+        // Fallback para dados da ESPN
+        gameStatus = g.status === 'aovivo' ? 2 : 3;
+        gameStatusText = g.status === 'aovivo' ? 'Ao Vivo' : 'Final';
+      }
+    }
+
+    processedGames.push({
+      gameId: g.id,
+      gameStatus,
+      gameStatusText,
+      gameTimeBrasilia: g.horario,
+      gameClock,
+      period,
+      canal: g.canal, // O canal vem da API da ESPN
+      homeTeam: {
+        teamName: g.timeCasa.nome,
+        teamTricode: g.timeCasa.sigla,
+        score: homeScore,
+        wins: parseInt(homeRecord.split('-')[0] || '0'),
+        losses: parseInt(homeRecord.split('-')[1] || '0'),
+        logo: g.timeCasa.logo,
+      },
+      awayTeam: {
+        teamName: g.timeVisitante.nome,
+        teamTricode: g.timeVisitante.sigla,
+        score: awayScore,
+        wins: parseInt(awayRecord.split('-')[0] || '0'),
+        losses: parseInt(awayRecord.split('-')[1] || '0'),
+        logo: g.timeVisitante.logo,
+      },
+    });
+  }
+  
+  // Filtra jogos que já terminaram há muito tempo (opcional, mas bom para limpar)
+  return processedGames.filter(g => g.gameStatus !== 3 || g.gameStatusText.toLowerCase().includes('final'));
+};
+
+
 export default function NBAScoreboardV2() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,36 +154,8 @@ export default function NBAScoreboardV2() {
 
   const loadGames = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('nba-scoreboard-v2');
-      if (error) throw error;
-      
-      if (data?.success && data?.scoreboard?.games) {
-        const processed = data.scoreboard.games.map((g: any): Game => ({
-          gameId: g.gameId,
-          gameStatus: g.gameStatus,
-          gameStatusText: g.gameStatusText,
-          gameTimeBrasilia: convertToBrasiliaTime(g.gameTimeUTC),
-          gameClock: g.gameClock,
-          period: g.period,
-          homeTeam: {
-            teamName: g.homeTeam.teamName,
-            teamTricode: g.homeTeam.teamTricode,
-            score: String(g.homeTeam.score),
-            wins: g.homeTeam.wins,
-            losses: g.homeTeam.losses,
-            logo: `https://cdn.nba.com/logos/nba/${g.homeTeam.teamId}/primary/L/logo.svg`,
-          },
-          awayTeam: {
-            teamName: g.awayTeam.teamName,
-            teamTricode: g.awayTeam.teamTricode,
-            score: String(g.awayTeam.score),
-            wins: g.awayTeam.wins,
-            losses: g.awayTeam.losses,
-            logo: `https://cdn.nba.com/logos/nba/${g.awayTeam.teamId}/primary/L/logo.svg`,
-          },
-        }));
-        setGames(processed);
-      }
+      const processed = await fetchGames();
+      setGames(processed);
     } catch (err) {
       console.error('[SCOREBOARD-V2] Erro:', err);
     } finally {
@@ -209,19 +258,29 @@ export default function NBAScoreboardV2() {
                   </div>
                 </div>
 
-                {/* Status/Horário - Formato brasileiro */}
-                <div className="border-t border-gray-700 mt-3 pt-2 flex items-center justify-between text-xs font-inter">
-                  <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
-                    {game.gameStatus === 2 
-                      ? `${game.period}º Quarto • ${formatGameClock(game.gameClock)}`
-                      : game.gameStatus === 1
-                        ? game.gameTimeBrasilia
-                        : game.gameStatusText
-                    }
-                  </span>
-                  <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
-                    Estatísticas <Play className="w-3 h-3" />
-                  </span>
+                {/* Status/Horário/Transmissão - Formato brasileiro */}
+                <div className="border-t border-gray-700 mt-3 pt-2 flex flex-col gap-1 text-xs font-inter">
+                  <div className="flex items-center justify-between">
+                    <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
+                      {game.gameStatus === 2 
+                        ? `${game.period}º Quarto • ${formatGameClock(game.gameClock)}`
+                        : game.gameStatus === 1
+                          ? game.gameTimeBrasilia
+                          : game.gameStatusText
+                      }
+                    </span>
+                    <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
+                      Estatísticas <Play className="w-3 h-3" />
+                    </span>
+                  </div>
+                  
+                  {/* Transmissão */}
+                  {game.canal && game.gameStatus === 1 && (
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Tv className="w-3 h-3 text-pink-400" />
+                      <span className="text-[10px] font-medium truncate">{game.canal}</span>
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
