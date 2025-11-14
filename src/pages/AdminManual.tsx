@@ -182,10 +182,10 @@ export default function AdminManual() {
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white font-mono text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500 transition"
-              placeholder="<p>Escreva o conteúdo completo da notícia aqui...</p>"
+              placeholder={`<p>Escreva o conteúdo completo da notícia aqui...</p>\n\n<h2>Título do Parágrafo</h2>\n<p>Conteúdo do parágrafo com título.</p>`}
             />
             <p className="text-xs text-gray-500 mt-1">
-              {form.body.length} caracteres
+              {form.body.length} caracteres. Use tags HTML como &lt;h2&gt; ou &lt;h3&gt; para títulos de seção.
             </p>
           </div>
 
