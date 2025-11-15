@@ -60,9 +60,8 @@ const convertToBrasiliaTime = (dateString: string) => {
 // Mapeamento manual de jogos Prime Video/ESPN (Exemplo baseado em jogos de destaque)
 // Em um ambiente real, isso seria alimentado por uma API de calendário brasileira.
 const PRIME_VIDEO_GAMES: [string, string][] = [
-  ['NYK', 'MIA'], // Exemplo: Knicks x Heat
-  ['GSW', 'SAS'], // Exemplo: Warriors x Spurs
-  // Adicione outros jogos Prime Video aqui
+  ['NYK', 'MIA'], // Knicks x Heat
+  ['GSW', 'SAS'], // Warriors x Spurs
 ];
 
 const ESPN_GAMES: [string, string][] = [
