@@ -59,14 +59,32 @@ const convertToBrasiliaTime = (dateString: string) => {
 
 // Helper para formatar o canal de transmissão
 const formatBroadcast = (channel: string | undefined): string => {
-  if (!channel) return 'League Pass';
+  let channels = ['League Pass'];
   
-  // Mapeamento de canais comuns para o Brasil
-  if (channel.includes('ESPN')) return 'ESPN / League Pass';
-  if (channel.includes('TNT') || channel.includes('TBS')) return 'TNT / League Pass'; // Se for canal americano, assumimos que é League Pass
-  if (channel.includes('Prime')) return 'Prime Video / League Pass';
+  if (channel) {
+    const lowerChannel = channel.toLowerCase();
+    
+    // Mapeamento para canais brasileiros
+    if (lowerChannel.includes('espn') || lowerChannel.includes('tnt') || lowerChannel.includes('tbs')) {
+      // Assumimos que se for um canal nacional americano (ESPN, TNT), ele tem transmissão no Brasil (ESPN/Star+ ou TNT/Space)
+      // Para simplificar, usamos 'ESPN' como representação de TV a cabo.
+      channels.unshift('ESPN');
+    }
+    
+    // Mapeamento para Prime Video (usando um nome de canal fictício para simular)
+    // Nota: A API da NBA não lista Prime Video diretamente, mas se o canal for um streaming específico, podemos mapear.
+    // Como não temos a lista exata de canais brasileiros, vamos simular o Prime Video se for um jogo de destaque.
+    // Para este exemplo, vamos adicionar uma lógica simples de simulação baseada em nomes comuns que poderiam ser mapeados:
+    if (lowerChannel.includes('prime') || lowerChannel.includes('amazon')) {
+        channels.unshift('Prime Video');
+    }
+  }
   
-  return 'League Pass';
+  // Remove duplicatas e junta
+  const uniqueChannels = Array.from(new Set(channels));
+  
+  // Se tiver mais de um, junta com " / "
+  return uniqueChannels.join(' / ');
 };
 
 export default function NBAScoreboardV2() {
