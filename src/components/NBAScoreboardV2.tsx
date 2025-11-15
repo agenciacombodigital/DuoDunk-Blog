@@ -11,6 +11,7 @@ interface Game extends Jogo {
   gameTimeBrasilia: string;
   gameClock: string;
   period: number;
+  canal?: string; // Adicionado o campo canal
   homeTeam: {
     teamName: string;
     teamTricode: string;
@@ -29,9 +30,12 @@ interface Game extends Jogo {
   };
 }
 
-// Helper para converter tempo da NBA para formato brasileiro
+// Helper para converter tempo da NBA para formato brasileiro (MM:SS)
 const formatGameClock = (clock: string): string => {
-  if (!clock || clock === '') return '';
+  if (!clock || clock === '') return '00:00';
+  
+  // Se já estiver no formato MM:SS (retornado pela Edge Function), retorna como está
+  if (clock.includes(':')) return clock; 
   
   // Formato NBA: "PT04M20.00S" = 4 minutos e 20 segundos
   const match = clock.match(/PT(\d+)M([\d.]+)S/);
@@ -41,7 +45,7 @@ const formatGameClock = (clock: string): string => {
     return `${minutes}:${seconds}`;
   }
   
-  return clock;
+  return '00:00';
 };
 
 const convertToBrasiliaTime = (dateString: string) => {
@@ -64,7 +68,7 @@ const fetchGames = async () => {
   const processedGames: Game[] = [];
 
   for (const g of espnGames) {
-    let gameStatus = 1; // Agendado
+    let gameStatus = g.status === 'finalizado' ? 3 : g.status === 'aovivo' ? 2 : 1;
     let gameStatusText = g.horario;
     let homeScore = String(g.timeCasa.placar || 0);
     let awayScore = String(g.timeVisitante.placar || 0);
@@ -74,8 +78,9 @@ const fetchGames = async () => {
     let awayRecord = '0-0';
     
     // Se o jogo estiver ao vivo ou finalizado, buscamos o boxscore da NBA para dados mais ricos
-    if (g.status !== 'agendado') {
+    if (gameStatus !== 1) {
       try {
+        // Chamamos a Edge Function para obter dados em tempo real
         const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
           body: { gameId: g.id }
         });
@@ -84,11 +89,13 @@ const fetchGames = async () => {
         
         if (data?.success && data?.stats) {
           const stats = data.stats;
+          
+          // Atualiza status e placar com dados da NBA
           gameStatus = stats.gameState === 'in' ? 2 : 3;
           gameStatusText = stats.status;
           homeScore = stats.homeTeam.score;
           awayScore = stats.awayTeam.score;
-          gameClock = stats.gameClock;
+          gameClock = stats.gameClock; // Já formatado pela Edge Function
           period = stats.period;
           homeRecord = stats.homeTeam.record;
           awayRecord = stats.awayTeam.record;
@@ -96,7 +103,6 @@ const fetchGames = async () => {
       } catch (e) {
         console.warn(`Falha ao buscar stats em tempo real para ${g.id}:`, e);
         // Fallback para dados da ESPN
-        gameStatus = g.status === 'aovivo' ? 2 : 3;
         gameStatusText = g.status === 'aovivo' ? 'Ao Vivo' : 'Final';
       }
     }
