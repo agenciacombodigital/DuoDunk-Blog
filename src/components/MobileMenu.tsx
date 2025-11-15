@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Calendar, TrendingUp } from 'lucide-react';
+import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Calendar } from 'lucide-react';
 import ThreadsIcon from './ThreadsIcon';
 
 export default function MobileMenu() {
@@ -13,7 +13,6 @@ export default function MobileMenu() {
     { path: '/times', label: 'Times', icon: Users },
     { path: '/classificacao', label: 'Classificação', icon: Trophy },
     { path: '/calendario', label: 'Calendário', icon: Calendar },
-    { path: '/estatisticas', label: 'Estatísticas', icon: TrendingUp }, // Novo item
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);

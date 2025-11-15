@@ -20,7 +20,6 @@ import Privacidade from './pages/Privacidade';
 import Cookies from './pages/Cookies';
 import ScrollToTop from './components/ScrollToTop';
 import Calendario from './pages/Calendario';
-import Estatisticas from './pages/Estatisticas';
 import ResultadosOntem from './pages/ResultadosOntem'; // Importando a nova página
 
 const AppContent = () => {
@@ -47,7 +46,6 @@ const AppContent = () => {
           <Route path="/times/:teamSlug" element={<Time />} />
           <Route path="/classificacao" element={<Classificacao />} />
           <Route path="/calendario" element={<Calendario />} />
-          <Route path="/estatisticas" element={<Estatisticas />} />
           <Route path="/resultados-ontem" element={<ResultadosOntem />} /> {/* Nova Rota */}
           <Route path="/privacidade" element={<Privacidade />} />
           <Route path="/cookies" element={<Cookies />} />
