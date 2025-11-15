@@ -9,11 +9,13 @@ import { getObjectPositionStyle } from '@/lib/utils';
 import DOMPurify from 'dompurify';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import ArticleMeta from '@/components/ArticleMeta';
+import { useIsMobile } from '@/hooks/use-mobile'; // Importando useIsMobile
 
 export default function Artigo() {
   const { slug } = useParams();
   const [article, setArticle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile(); // Usando o hook
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -92,6 +94,15 @@ export default function Artigo() {
       </div>
     );
   };
+  
+  // Determina o focal point correto baseado no dispositivo
+  const focalPointValue = isMobile 
+    ? article.image_focal_point_mobile 
+    : article.image_focal_point;
+  
+  // Passa o flag correto para a função
+  const focalPointStyle = getObjectPositionStyle(focalPointValue, isMobile);
+
 
   return (
     <>
@@ -150,7 +161,7 @@ export default function Artigo() {
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto rounded-2xl object-cover mb-10 shadow-lg"
-                  style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point, false) }}
+                  style={{ maxHeight: '500px', ...focalPointStyle }}
                 />
               )}
 

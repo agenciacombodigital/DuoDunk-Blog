@@ -78,12 +78,12 @@ export default function Home() {
   const section8 = articles.slice(35, 37);
   const remaining = articles.slice(37);
 
-  // ✅ CORREÇÃO: Determina o focal point correto baseado no dispositivo
+  // Determina o focal point correto baseado no dispositivo
   const focalPointValue = isMobile 
     ? featuredArticle.image_focal_point_mobile 
     : featuredArticle.image_focal_point;
   
-  // ✅ CORREÇÃO: Passa o flag correto para a função
+  // Passa o flag correto para a função
   const focalPointStyle = getObjectPositionStyle(focalPointValue, isMobile);
 
   return (
@@ -100,7 +100,7 @@ export default function Home() {
             {/* Featured Card Principal */}
             <div className="lg:col-span-8 space-y-6">
               <Link to={`/artigos/${featuredArticle.slug}`} className="group block">
-                {/* ✅ CORREÇÃO PRINCIPAL: Estrutura simplificada sem DIV interno desnecessário */}
+                {/* CORREÇÃO PRINCIPAL: Estrutura simplificada sem DIV interno desnecessário */}
                 <div className="relative w-full aspect-[3/4] md:aspect-video overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-shadow">
                   <img
                     src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
@@ -124,7 +124,7 @@ export default function Home() {
                         Há {getTimeAgo(featuredArticle.published_at)}
                       </span>
                     </div>
-                    {/* ✅ AJUSTE: Título Featured - text-2xl md:text-4xl (reduzido de 4xl/5xl) */}
+                    {/* AJUSTE: Título Featured - text-2xl md:text-4xl (reduzido de 4xl/5xl) */}
                     <h1 className="font-oswald text-2xl md:text-4xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
                       {featuredArticle.title}
                     </h1>
@@ -160,7 +160,7 @@ export default function Home() {
                       />
                     </div>
                     <div className="p-4">
-                      {/* ✅ AJUSTE 3: Cards Horizontais 3x - text-sm md:text-base */}
+                      {/* AJUSTE 3: Cards Horizontais 3x - text-sm md:text-base */}
                       <h3 className="font-oswald text-sm md:text-base font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2 leading-tight">
                         {article.title}
                       </h3>

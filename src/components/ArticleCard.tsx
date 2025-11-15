@@ -12,9 +12,14 @@ interface Article {
   tags: string[];
   published_at: string;
   image_focal_point?: string;
+  image_focal_point_mobile?: string; // Adicionado
 }
 
 export default function ArticleCard({ article, index = 0 }: { article: Article, index?: number }) {
+  // Nota: O ArticleCard é usado em listas, onde o corte é geralmente 4:3 ou 16:9.
+  // Usamos o focal point desktop como padrão.
+  const focalPointValue = article.image_focal_point || '50% 50%';
+  
   return (
     <Link
       to={`/artigos/${article.slug}`}
@@ -34,7 +39,7 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
           loading="lazy"
           decoding="async"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-          style={getObjectPositionStyle(article.image_focal_point)}
+          style={getObjectPositionStyle(focalPointValue)}
         />
       </div>
       
