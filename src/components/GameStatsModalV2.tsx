@@ -39,12 +39,14 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
 
   const loadStats = async () => {
     try {
-      console.log('[MODAL] Buscando stats para:', game.gameId);
+      console.log('[MODAL] Buscando stats para:', game.gameId, 'Status:', game.gameStatus);
       
+      // Passamos o gameStatus para a Edge Function para que ela possa decidir
+      // se deve retornar dados agendados ou tentar buscar o boxscore.
       const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
         body: {
           gameId: game.gameId,
-          gameStatus: game.gameStatus,
+          gameStatus: game.gameStatus, // Passando o status atual do placar
           homeRecord: `${game.homeTeam.wins}-${game.homeTeam.losses}`,
           awayRecord: `${game.awayTeam.wins}-${game.awayTeam.losses}`,
         }
@@ -55,6 +57,7 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
         throw error;
       }
       
+      // Se o jogo estiver agendado (status 1), a Edge Function retorna isScheduled: true
       if (data?.isScheduled) {
         setStats({ isScheduled: true });
         return;
@@ -66,20 +69,18 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
       }
     } catch (err) {
       console.error('[MODAL] Erro ao carregar stats:', err);
+    } finally {
+      // Apenas remove o loader na primeira carga
+      if (loading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    const initialLoad = async () => {
-      setLoading(true);
-      await loadStats();
-      setLoading(false);
-    };
+    loadStats();
 
-    initialLoad();
-
+    // Atualiza a cada 5 segundos se o jogo estiver ao vivo (status 2)
     if (game.gameStatus === 2) {
-      const interval = setInterval(loadStats, 5000); // Refresh without showing loader
+      const interval = setInterval(loadStats, 5000); 
       return () => clearInterval(interval);
     }
   }, [game.gameId, game.gameStatus]);
@@ -312,12 +313,12 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                           <span className="text-2xl font-black text-pink-400">{p.value}</span>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] sm:text-xs text-gray-500">
-                          <span>{p.fgm}/{p.fga} FG ({p.fgPct}%)</span>
-                          <span>{p.fg3m}/{p.fg3a} 3P ({p.fg3Pct}%)</span>
-                          <span>{p.ftm}/{p.fta} FT ({p.ftPct}%)</span>
-                          <span>{p.reboundsTotal} REB</span>
-                          <span>{p.assists} AST</span>
-                          <span>{p.minutesCalculated} MIN</span>
+                          <span>{p.stats.fgm}/{p.stats.fga} FG ({p.stats.fgPct}%)</span>
+                          <span>{p.stats.fg3m}/{p.stats.fg3a} 3P ({p.stats.fg3Pct}%)</span>
+                          <span>{p.stats.ftm}/{p.stats.fta} FT ({p.stats.ftPct}%)</span>
+                          <span>{p.stats.rebounds} REB</span>
+                          <span>{p.stats.assists} AST</span>
+                          <span>{p.stats.minutes} MIN</span>
                         </div>
                       </div>
                     ))}
@@ -336,12 +337,12 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                           <span className="text-2xl font-black text-pink-400">{p.value}</span>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] sm:text-xs text-gray-500">
-                          <span>{p.fgm}/{p.fga} FG ({p.fgPct}%)</span>
-                          <span>{p.fg3m}/{p.fg3a} 3P ({p.fg3Pct}%)</span>
-                          <span>{p.ftm}/{p.fta} FT ({p.ftPct}%)</span>
-                          <span>{p.reboundsTotal} REB</span>
-                          <span>{p.assists} AST</span>
-                          <span>{p.minutesCalculated} MIN</span>
+                          <span>{p.stats.fgm}/{p.stats.fga} FG ({p.stats.fgPct}%)</span>
+                          <span>{p.stats.fg3m}/{p.stats.fg3a} 3P ({p.stats.fg3Pct}%)</span>
+                          <span>{p.stats.ftm}/{p.stats.fta} FT ({p.stats.ftPct}%)</span>
+                          <span>{p.stats.rebounds} REB</span>
+                          <span>{p.stats.assists} AST</span>
+                          <span>{p.stats.minutes} MIN</span>
                         </div>
                       </div>
                     ))}

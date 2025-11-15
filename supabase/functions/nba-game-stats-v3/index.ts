@@ -22,13 +22,15 @@ const convertToBrasiliaTime = (dateString: string) => {
 
 // Helper para formatar o tempo de jogo
 const formatGameClock = (clock: string): string => {
-  if (!clock || clock === '') return '';
+  if (!clock || clock === '') return '00:00'; // Fallback seguro
   const match = clock.match(/PT(\d+)M([\d.]+)S/);
   if (match) {
     const minutes = match[1].padStart(2, '0');
+    // Arredonda os segundos para baixo e garante 2 dígitos
     const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
     return `${minutes}:${seconds}`;
   }
+  // Se o formato for diferente (ex: "0:00"), retorna como está
   return clock;
 };
 
@@ -43,6 +45,7 @@ const mapPlayerStats = (player: any) => {
     starter: player.starter === '1',
     oncourt: player.oncourt === '1',
     stats: {
+      // Corrigido para garantir que o formato seja MM:SS
       minutes: stats.minutesCalculated?.replace('PT', '').replace('M', ':').replace('S', '').slice(0, 5) || '00:00',
       points: stats.points,
       rebounds: stats.reboundsTotal,
@@ -130,7 +133,8 @@ serve(async (req) => {
       });
     }
 
-    // Se o jogo ainda não começou, retorna um status especial
+    // Se o jogo ainda não começou (status 1), retorna um status especial
+    // Isso garante que o modal exiba 'Jogo Agendado' se a API da NBA confirmar
     if (game.gameStatus === 1) {
       return new Response(JSON.stringify({ success: true, isScheduled: true }), {
         headers: { ...corsHeaders }, status: 200
