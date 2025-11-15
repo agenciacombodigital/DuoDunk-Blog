@@ -29,8 +29,10 @@ export interface Jogo {
 
 // Mapeamento manual de jogos Prime Video/ESPN (Exemplo baseado em jogos de destaque)
 const PRIME_VIDEO_GAMES: [string, string][] = [
-  ['NYK', 'MIA'], // Exemplo: Knicks x Heat
-  ['GSW', 'SAS'], // Exemplo: Warriors x Spurs
+  ['NYK', 'MIA'], // Exemplo anterior
+  ['GSW', 'SAS'], // Exemplo anterior
+  ['LAL', 'NO'], // Adicionado: Lakers vs Pelicans
+  ['LAC', 'DAL'], // Adicionado: Clippers vs Mavericks
   // Adicione outros jogos Prime Video aqui
 ];
 
