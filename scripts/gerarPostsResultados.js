@@ -1,18 +1,21 @@
 // Script para gerar UM POST CONSOLIDADO com TODOS os resultados da NBA
-// Executa diariamente via GitHub Actions às 5h AM (UTC)
+// Executa diariamente via GitHub Actions às 3h30 AM (Brasília)
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fetch from 'node-fetch'; // Adicionando import do fetch
+import fetch from 'node-fetch';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// 🔑 CONFIGURAÇÕES DO SUPABASE (via variáveis de ambiente)
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://brerfpcfkyptkzygyzxl.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 // Função para buscar os jogos de ontem
 async function buscarJogosOntem() {
   try {
-    // Calcula a data de ontem
     const ontem = new Date();
     ontem.setDate(ontem.getDate() - 1);
     
@@ -22,13 +25,11 @@ async function buscarJogosOntem() {
     
     console.log(`📅 Buscando jogos finalizados referentes a: ${dia}/${mes}/${ano}`);
     
-    // URL da API da NBA para os jogos do dia (usamos o placar de 'hoje' e filtramos por 'Final')
     const url = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json`;
     
     const response = await fetch(url);
     const data = await response.json();
     
-    // Filtra apenas jogos finalizados
     const jogosFinalizados = data.scoreboard.games.filter(
       jogo => jogo.gameStatusText === 'Final'
     );
@@ -55,7 +56,6 @@ function gerarSecaoJogo(jogo, index) {
   const placarVencedor = Math.max(placarCasa, placarVisitante);
   const placarPerdedor = Math.min(placarCasa, placarVisitante);
   
-  // Seção do jogo em Markdown
   return `## ${index}. ${vencedor.teamName} ${placarVencedor} x ${placarPerdedor} ${perdedor.teamName}
 
 **${vencedor.teamName}** venceu **${perdedor.teamName}** pelo placar de **${placarVencedor} x ${placarPerdedor}**.
@@ -85,13 +85,9 @@ function gerarPostConsolidado(jogos, data) {
   
   const dataSlug = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
   
-  // Título do post
   const titulo = `Resultados NBA - ${dataFormatada}`;
-  
-  // Slug (URL amigável)
   const slug = `resultados-nba-${dataSlug}`;
   
-  // Gera resumo dos jogos
   const resumoJogos = jogos.map(jogo => {
     const timeCasa = jogo.homeTeam;
     const timeVisitante = jogo.awayTeam;
@@ -101,7 +97,6 @@ function gerarPostConsolidado(jogos, data) {
     return vencedor;
   }).join(', ');
   
-  // Monta o conteúdo completo
   let conteudo = `---
 title: "${titulo}"
 slug: "${slug}"
@@ -123,12 +118,10 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
 
 `;
 
-  // Adiciona cada jogo como uma seção
   jogos.forEach((jogo, index) => {
     conteudo += gerarSecaoJogo(jogo, index + 1);
   });
   
-  // Rodapé
   conteudo += `
 ---
 
@@ -139,28 +132,62 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
   return { slug, conteudo };
 }
 
-// Função para salvar o post
+// Função para salvar o post no disco
 function salvarPost(slug, conteudo) {
   try {
-    // Caminho da pasta de posts
     const pastaContent = path.join(__dirname, '..', 'content', 'posts');
     
-    // Cria a pasta se não existir
     if (!fs.existsSync(pastaContent)) {
       fs.mkdirSync(pastaContent, { recursive: true });
     }
     
-    // Nome do arquivo
     const nomeArquivo = `${slug}.md`;
     const caminhoArquivo = path.join(pastaContent, nomeArquivo);
     
-    // Salva o arquivo
     fs.writeFileSync(caminhoArquivo, conteudo, 'utf-8');
     
-    console.log(`✅ Post consolidado salvo: ${nomeArquivo}`);
+    console.log(`✅ Post consolidado salvo no disco: ${nomeArquivo}`);
     return true;
   } catch (error) {
-    console.error('❌ Erro ao salvar post:', error);
+    console.error('❌ Erro ao salvar post no disco:', error);
+    return false;
+  }
+}
+
+// 🚀 NOVA FUNÇÃO: PUBLICAR NO SUPABASE
+async function publicarNoSupabase(conteudo) {
+  if (!SUPABASE_SERVICE_KEY) {
+    console.error('❌ SUPABASE_SERVICE_ROLE_KEY não configurada!');
+    console.error('⚠️ Configure no GitHub: Settings > Secrets > Actions > SUPABASE_SERVICE_ROLE_KEY');
+    return false;
+  }
+
+  try {
+    console.log('📤 Enviando post para o Supabase...');
+    
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/publish-markdown-post`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+      },
+      body: JSON.stringify({
+        markdownContent: conteudo
+      })
+    });
+
+    const resultado = await response.json();
+
+    if (response.ok) {
+      console.log('✅ Post publicado no Supabase com sucesso!');
+      console.log('📊 Resposta:', resultado.message || resultado);
+      return true;
+    } else {
+      console.error('❌ Erro ao publicar no Supabase:', resultado.error || resultado);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Erro na requisição ao Supabase:', error);
     return false;
   }
 }
@@ -169,7 +196,7 @@ function salvarPost(slug, conteudo) {
 async function main() {
   console.log('🏀 Iniciando geração de post consolidado de resultados da NBA...\n');
   
-  // Busca os jogos de ontem
+  // 1. Buscar jogos de ontem
   const { jogos, data } = await buscarJogosOntem();
   
   if (jogos.length === 0) {
@@ -177,18 +204,25 @@ async function main() {
     return;
   }
   
-  // Gera o post consolidado
+  // 2. Gerar o post consolidado
   const { slug, conteudo } = gerarPostConsolidado(jogos, data);
   
-  // Salva o post
-  const sucesso = salvarPost(slug, conteudo);
+  // 3. Salvar no disco (para backup/histórico no GitHub)
+  const sucessoDisco = salvarPost(slug, conteudo);
   
-  if (sucesso) {
-    console.log(`\n🎉 Post consolidado gerado com sucesso!`);
+  // 4. 🚀 PUBLICAR NO SUPABASE (NOVO!)
+  const sucessoSupabase = await publicarNoSupabase(conteudo);
+  
+  if (sucessoDisco && sucessoSupabase) {
+    console.log(`\n🎉 Post consolidado gerado e publicado com sucesso!`);
     console.log(`📰 Título: Resultados NBA - ${data.toLocaleDateString('pt-BR')}`);
     console.log(`🏀 Total de jogos: ${jogos.length}`);
+    console.log(`✅ Salvo no GitHub: content/posts/${slug}.md`);
+    console.log(`✅ Publicado no blog (Supabase)`);
   } else {
-    console.log('\n❌ Falha ao gerar o post consolidado.');
+    console.log('\n⚠️ Post gerado com problemas:');
+    console.log(`- Salvo no disco: ${sucessoDisco ? '✅' : '❌'}`);
+    console.log(`- Publicado no blog: ${sucessoSupabase ? '✅' : '❌'}`);
   }
 }
 
