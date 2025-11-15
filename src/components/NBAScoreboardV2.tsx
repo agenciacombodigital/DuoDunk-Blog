@@ -111,6 +111,44 @@ const formatBroadcast = (game: Game): string => {
   return uniqueChannels.join(' / ');
 };
 
+/**
+ * Determina o texto de status a ser exibido no placar.
+ */
+const getGameStatusDisplay = (game: Game): string => {
+  // Status 3: Finalizado
+  if (game.gameStatus === 3) {
+    return game.gameStatusText; // Ex: "Final"
+  }
+  
+  // Status 1: Agendado
+  if (game.gameStatus === 1) {
+    return game.gameTimeBrasilia;
+  }
+
+  // Status 2: Em Andamento (Ao Vivo)
+  if (game.gameStatus === 2) {
+    const clock = formatGameClock(game.gameClock);
+    
+    // Verifica se é intervalo (Half Time)
+    // A API da NBA geralmente indica intervalo principal (após o 2º quarto)
+    // com gameClock vazio ou "PT00M00.00S" e period = 2.
+    // Vamos verificar se o relógio está zerado e o período é 2 ou 4 (fim do jogo/prorrogação)
+    if (clock === '00:00' && game.period === 2) {
+      return 'Intervalo';
+    }
+    
+    // Verifica se é intervalo entre quartos (após 1º e 3º)
+    if (clock === '00:00' && (game.period === 1 || game.period === 3)) {
+      return `Fim do ${game.period}º Quarto`;
+    }
+    
+    // Se o relógio estiver rodando
+    return `${game.period}º Quarto • ${clock}`;
+  }
+
+  return game.gameStatusText;
+};
+
 export default function NBAScoreboardV2() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -276,12 +314,7 @@ export default function NBAScoreboardV2() {
                 {/* Status/Horário - Formato brasileiro */}
                 <div className="border-t border-gray-700 mt-3 pt-2 flex items-center justify-between text-xs font-inter">
                   <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
-                    {game.gameStatus === 2 
-                      ? `${game.period}º Quarto • ${formatGameClock(game.gameClock)}`
-                      : game.gameStatus === 1
-                        ? game.gameTimeBrasilia
-                        : game.gameStatusText
-                    }
+                    {getGameStatusDisplay(game)}
                   </span>
                   <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
                     Estatísticas <Play className="w-3 h-3" />
