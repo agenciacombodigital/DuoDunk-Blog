@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Tv } from 'lucide-react';
 import GameStatsModalV2 from './GameStatsModalV2';
 
 interface Game {
@@ -10,6 +10,7 @@ interface Game {
   gameTimeBrasilia: string;
   gameClock: string;
   period: number;
+  broadcastChannel?: string; // Novo campo
   homeTeam: {
     teamName: string;
     teamTricode: string;
@@ -56,6 +57,18 @@ const convertToBrasiliaTime = (dateString: string) => {
   }
 };
 
+// Helper para formatar o canal de transmissão
+const formatBroadcast = (channel: string | undefined): string => {
+  if (!channel) return 'League Pass';
+  
+  // Mapeamento de canais comuns para o Brasil
+  if (channel.includes('ESPN')) return 'ESPN / League Pass';
+  if (channel.includes('TNT') || channel.includes('TBS')) return 'TNT / League Pass'; // Se for canal americano, assumimos que é League Pass
+  if (channel.includes('Prime')) return 'Prime Video / League Pass';
+  
+  return 'League Pass';
+};
+
 export default function NBAScoreboardV2() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +101,7 @@ export default function NBAScoreboardV2() {
           gameTimeBrasilia: convertToBrasiliaTime(g.gameTimeUTC),
           gameClock: g.gameClock,
           period: g.period,
+          broadcastChannel: g.broadcastChannel, // Usando o novo campo
           homeTeam: {
             teamName: g.homeTeam.teamName,
             teamTricode: g.homeTeam.teamTricode,
@@ -166,9 +180,17 @@ export default function NBAScoreboardV2() {
                 }}
                 className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-3 md:p-4 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
               >
+                {/* Transmissão - NOVO */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-center z-10">
+                  <span className="bg-gray-700 text-gray-300 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 font-inter whitespace-nowrap">
+                    <Tv className="w-2.5 h-2.5" />
+                    {formatBroadcast(game.broadcastChannel)}
+                  </span>
+                </div>
+
                 {/* Badge AO VIVO - Centralizado e acima do placar */}
                 {game.gameStatus === 2 && (
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1 z-10 font-inter">
+                  <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1 z-10 font-inter">
                     <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
                     AO VIVO
                   </div>

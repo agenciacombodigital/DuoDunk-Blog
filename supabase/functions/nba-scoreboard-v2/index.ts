@@ -123,7 +123,26 @@ serve(async (req) => {
               game.gameStatusText = liveData.gameStatusText; // Use the text from boxscore (e.g., "Final")
           }
         }
+        
+        // Adicionar informações de transmissão (broadcasts)
+        if (game.broadcasters && game.broadcasters.video) {
+            const nationalBroadcasts = game.broadcasters.video.national;
+            if (nationalBroadcasts && nationalBroadcasts.length > 0) {
+                // Pega o primeiro canal nacional como referência
+                game.broadcastChannel = nationalBroadcasts[0].longName;
+            }
+        }
       });
+    } else {
+        // Se não estiver ao vivo, apenas adiciona o canal de transmissão do scoreboard original
+        scoreboard.games.forEach((game: any) => {
+            if (game.broadcasters && game.broadcasters.video) {
+                const nationalBroadcasts = game.broadcasters.video.national;
+                if (nationalBroadcasts && nationalBroadcasts.length > 0) {
+                    game.broadcastChannel = nationalBroadcasts[0].longName;
+                }
+            }
+        });
     }
     
     const gameCount = scoreboard.games.length || 0;
