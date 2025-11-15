@@ -184,6 +184,12 @@ export default function NBAScoreboardV2() {
     return () => clearInterval(interval);
   }, [games]);
 
+  const handleGameClick = (game: Game) => {
+    console.log(`[CLICK] Abrindo modal para Game ID: ${game.gameId}, Status: ${game.gameStatus}`);
+    setSelectedGame(game);
+    setIsModalOpen(true);
+  };
+
   if (loading || games.length === 0) {
     return (
       <div className="bg-gray-900 py-3 border-b border-gray-700/50 text-center">
@@ -215,10 +221,7 @@ export default function NBAScoreboardV2() {
             {visibleGames.map((game) => (
               <button
                 key={game.gameId}
-                onClick={() => {
-                  setSelectedGame(game);
-                  setIsModalOpen(true);
-                }}
+                onClick={() => handleGameClick(game)} // Usando o novo handler com log
                 className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-3 md:p-4 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
               >
                 {/* Badge AO VIVO - Centralizado e acima do placar */}

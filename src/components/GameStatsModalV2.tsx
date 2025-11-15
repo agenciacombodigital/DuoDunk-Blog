@@ -13,7 +13,8 @@ import {
   UsersRound,
   ChevronDown,
   ChevronUp,
-  Calendar
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 
 interface Game {
@@ -33,20 +34,20 @@ interface Props {
 export default function GameStatsModalV2({ game, onClose }: Props) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // Novo estado de erro
   const [activeTab, setActiveTab] = useState<'leaders' | 'team' | 'boxscore'>('leaders');
   const [showAllHome, setShowAllHome] = useState(false);
   const [showAllAway, setShowAllAway] = useState(false);
 
   const loadStats = async () => {
     try {
+      setError(null);
       console.log('[MODAL] Buscando stats para:', game.gameId, 'Status:', game.gameStatus);
       
-      // Passamos o gameStatus para a Edge Function para que ela possa decidir
-      // se deve retornar dados agendados ou tentar buscar o boxscore.
       const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
         body: {
           gameId: game.gameId,
-          gameStatus: game.gameStatus, // Passando o status atual do placar
+          gameStatus: game.gameStatus,
           homeRecord: `${game.homeTeam.wins}-${game.homeTeam.losses}`,
           awayRecord: `${game.awayTeam.wins}-${game.awayTeam.losses}`,
         }
@@ -54,10 +55,9 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
 
       if (error) {
         console.error('[MODAL] Erro:', error);
-        throw error;
+        throw new Error(error.message);
       }
       
-      // Se o jogo estiver agendado (status 1), a Edge Function retorna isScheduled: true
       if (data?.isScheduled) {
         setStats({ isScheduled: true });
         return;
@@ -66,11 +66,14 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
       if (data?.success) {
         setStats(data.stats);
         console.log('[MODAL] ✅ Stats carregadas:', data.stats);
+      } else {
+        // Se a chamada foi bem-sucedida mas não retornou stats (ex: jogo recém-terminado)
+        setError('Não foi possível carregar estatísticas detalhadas.');
       }
     } catch (err) {
       console.error('[MODAL] Erro ao carregar stats:', err);
+      setError('Falha ao conectar com o servidor de estatísticas.');
     } finally {
-      // Apenas remove o loader na primeira carga
       if (loading) setLoading(false);
     }
   };
@@ -96,26 +99,35 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
     );
   }
 
-  if (!stats || stats.isScheduled) {
+  // Se houver erro ou o jogo estiver agendado, exibe o card de status
+  if (error || !stats || stats.isScheduled) {
     return (
       <div
         className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div className="bg-gray-900 rounded-3xl p-8 max-w-md text-center relative" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gray-900 rounded-3xl p-8 max-w-md w-full text-center relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors z-20"
           >
             <X className="w-6 h-6 text-gray-400 hover:text-white" />
           </button>
-          <Calendar className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Jogo Agendado
-          </h2>
-          <p className="text-gray-400 mb-6">
-            As estatísticas estarão disponíveis assim que o jogo começar.
-          </p>
+          
+          {error ? (
+            <>
+              <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">Erro de Conexão</h2>
+              <p className="text-gray-400 mb-6">{error}</p>
+            </>
+          ) : (
+            <>
+              <Calendar className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">Jogo Agendado</h2>
+              <p className="text-gray-400 mb-6">As estatísticas estarão disponíveis assim que o jogo começar.</p>
+            </>
+          )}
+          
           <div className="bg-gray-800 rounded-xl p-4">
             <p className="text-sm text-gray-500 mb-1">Horário de Início</p>
             <p className="text-lg font-bold text-white">
