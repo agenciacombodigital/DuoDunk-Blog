@@ -27,6 +27,62 @@ export interface Jogo {
   arena?: string;
 }
 
+// Mapeamento manual de jogos Prime Video/ESPN (Exemplo baseado em jogos de destaque)
+const PRIME_VIDEO_GAMES: [string, string][] = [
+  ['NYK', 'MIA'], // Exemplo: Knicks x Heat
+  ['GSW', 'SAS'], // Exemplo: Warriors x Spurs
+  // Adicione outros jogos Prime Video aqui
+];
+
+const ESPN_GAMES: [string, string][] = [
+  // Adicione jogos ESPN aqui
+];
+
+// Helper para verificar se um jogo corresponde a um mapeamento
+const isGameMatch = (team1: string, team2: string, list: [string, string][]): boolean => {
+  const teams = [team1, team2].sort();
+  return list.some(pair => {
+    const sortedPair = pair.sort();
+    return sortedPair[0] === teams[0] && sortedPair[1] === teams[1];
+  });
+};
+
+/**
+ * Formata o canal de transmissão para o contexto brasileiro.
+ * @param jogo O objeto Jogo completo.
+ * @returns String formatada com os canais.
+ */
+export const formatBroadcast = (jogo: Jogo): string => {
+  let channels = ['League Pass'];
+  const home = jogo.timeCasa.sigla;
+  const away = jogo.timeVisitante.sigla;
+  const apiChannel = jogo.canal?.toLowerCase();
+  
+  // 1. Mapeamento manual (Prime Video/ESPN Brasil)
+  if (isGameMatch(home, away, PRIME_VIDEO_GAMES)) {
+    channels.unshift('Prime Video');
+  }
+  
+  if (isGameMatch(home, away, ESPN_GAMES)) {
+    channels.unshift('ESPN');
+  }
+
+  // 2. Mapeamento de canais nacionais dos EUA (se não for Prime Video/ESPN)
+  if (apiChannel) {
+    if (apiChannel.includes('espn') && !channels.includes('ESPN')) {
+      channels.unshift('ESPN');
+    }
+    // Adicione outros canais nacionais aqui se necessário
+  }
+  
+  // Remove duplicatas e junta
+  const uniqueChannels = Array.from(new Set(channels));
+  
+  // Se tiver mais de um, junta com " / "
+  return uniqueChannels.join(' / ');
+};
+
+
 const getTodayDateInSaoPaulo = (): string => {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
@@ -53,6 +109,10 @@ export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
       const competition = event.competitions[0];
       const timeCasa = competition.competitors.find((t: any) => t.homeAway === 'home');
       const timeVisitante = competition.competitors.find((t: any) => t.homeAway === 'away');
+
+      // Tenta encontrar o canal de transmissão nacional
+      const nationalBroadcast = competition.broadcasts?.find((b: any) => b.market === 'national');
+      const channelName = nationalBroadcast?.names?.[0] || competition.broadcasts?.[0]?.names?.[0];
 
       return {
         id: event.id,
@@ -81,7 +141,7 @@ export const buscarJogosPorData = async (data: string): Promise<Jogo[]> => {
           : competition.status.type.state === 'in'
           ? 'aovivo'
           : 'agendado',
-        canal: competition.broadcasts?.[0]?.names?.[0],
+        canal: channelName, // Usando o canal extraído
         arena: competition.venue?.fullName,
       };
     });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { buscarJogosHoje, buscarJogosSemana, Jogo } from '../services/espnApi';
+import { buscarJogosHoje, buscarJogosSemana, Jogo, formatBroadcast } from '../services/espnApi';
 import { Loader2, Tv, MapPin } from 'lucide-react';
 
 const CalendarioNBA: React.FC = () => {
@@ -39,14 +39,16 @@ const CalendarioNBA: React.FC = () => {
   const renderJogo = (jogo: Jogo) => {
     const statusClasses = {
       agendado: 'border-l-pink-700',
-      ao_vivo: 'border-l-red-500 bg-red-50',
+      aovivo: 'border-l-red-500 bg-red-50',
       finalizado: 'border-l-blue-800',
     };
+    
+    const transmissao = formatBroadcast(jogo);
 
     return (
       <div key={jogo.id} className={`bg-gray-50 rounded-lg p-4 border-l-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${statusClasses[jogo.status]}`}>
         <div className="text-xs font-semibold mb-3 text-gray-600">
-          {jogo.status === 'ao_vivo' && <span className="text-red-500 animate-pulse">🔴 AO VIVO</span>}
+          {jogo.status === 'aovivo' && <span className="text-red-500 animate-pulse">🔴 AO VIVO</span>}
           {jogo.status === 'finalizado' && <span className="text-blue-800">✅ FINAL</span>}
           {jogo.status === 'agendado' && `⏰ ${jogo.horario}`}
         </div>
@@ -74,7 +76,11 @@ const CalendarioNBA: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center justify-between text-xs text-gray-600 pt-3 border-t border-gray-200 gap-2">
-          {jogo.canal && <span className="flex items-center gap-1"><Tv size={14} /> {jogo.canal}</span>}
+          {/* Exibe a transmissão formatada */}
+          <span className="flex items-center gap-1 font-bold text-pink-700">
+            <Tv size={14} /> {transmissao}
+          </span>
+          {/* Mantém a arena como informação secundária */}
           {jogo.arena && <span className="flex items-center gap-1"><MapPin size={14} /> {jogo.arena}</span>}
         </div>
       </div>
@@ -95,6 +101,7 @@ const CalendarioNBA: React.FC = () => {
         <button 
           className={`px-6 py-2 border-2 rounded-md font-oswald text-base transition-all ${modo === 'semana' ? 'bg-pink-700 text-white border-pink-700' : 'border-pink-700 bg-white text-pink-700 hover:bg-pink-50'}`}
           onClick={() => setModo('semana')}
+          disabled={carregando}
         >
           Esta Semana
         </button>
