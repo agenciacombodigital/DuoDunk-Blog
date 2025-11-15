@@ -36,6 +36,51 @@ const CalendarioNBA: React.FC = () => {
     return acc;
   }, {} as Record<string, Jogo[]>);
 
+  const renderJogo = (jogo: Jogo) => {
+    const statusClasses = {
+      agendado: 'border-l-pink-700',
+      ao_vivo: 'border-l-red-500 bg-red-50',
+      finalizado: 'border-l-blue-800',
+    };
+
+    return (
+      <div key={jogo.id} className={`bg-gray-50 rounded-lg p-4 border-l-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${statusClasses[jogo.status]}`}>
+        <div className="text-xs font-semibold mb-3 text-gray-600">
+          {jogo.status === 'ao_vivo' && <span className="text-red-500 animate-pulse">🔴 AO VIVO</span>}
+          {jogo.status === 'finalizado' && <span className="text-blue-800">✅ FINAL</span>}
+          {jogo.status === 'agendado' && `⏰ ${jogo.horario}`}
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-3 mb-3">
+          <div className="flex items-center justify-around w-full">
+            <div className="flex items-center gap-3 flex-1">
+              <img src={jogo.timeVisitante.logo} alt={jogo.timeVisitante.nome} className="w-10 h-10 object-contain" />
+              <span className="font-oswald text-base font-semibold text-gray-900">{jogo.timeVisitante.sigla}</span>
+            </div>
+            {jogo.status !== 'agendado' && (
+              <span className="font-oswald text-xl font-bold text-gray-800">{jogo.timeVisitante.placar ?? '-'}</span>
+            )}
+
+            <span className="text-sm text-gray-500 font-semibold mx-2">@</span>
+
+            {jogo.status !== 'agendado' && (
+              <span className="font-oswald text-xl font-bold text-gray-800">{jogo.timeCasa.placar ?? '-'}</span>
+            )}
+            <div className="flex items-center gap-3 flex-1 justify-end">
+              <span className="font-oswald text-base font-semibold text-gray-900">{jogo.timeCasa.sigla}</span>
+              <img src={jogo.timeCasa.logo} alt={jogo.timeCasa.nome} className="w-10 h-10 object-contain" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between text-xs text-gray-600 pt-3 border-t border-gray-200 gap-2">
+          {jogo.canal && <span className="flex items-center gap-1"><Tv size={14} /> {jogo.canal}</span>}
+          {jogo.arena && <span className="flex items-center gap-1"><MapPin size={14} /> {jogo.arena}</span>}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="my-10 p-4 sm:p-6 bg-white rounded-xl shadow-lg border border-gray-100">
       <h2 className="font-oswald text-3xl text-gray-900 mb-6 text-center">🏀 Calendário NBA</h2>
@@ -68,105 +113,8 @@ const CalendarioNBA: React.FC = () => {
         Object.entries(jogosPorData).map(([data, jogosData]) => (
           <div key={data} className="mb-8">
             <h3 className="font-oswald text-xl text-pink-700 capitalize mb-4 pb-2 border-b-2 border-gray-100">{data}</h3>
-            
-            {/* Grid de Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {jogosData.map((jogo) => {
-                // Adaptação: Transmissões são separadas por vírgula no campo 'canal'
-                const transmissoes = jogo.canal ? jogo.canal.split(',').map(t => t.trim()).filter(t => t) : [];
-                
-                const timeCasa = jogo.timeCasa;
-                const timeVisitante = jogo.timeVisitante;
-                
-                return (
-                  <div
-                    key={jogo.id}
-                    className="
-                      relative
-                      p-6
-                      rounded-3xl
-                      bg-white/40 
-                      backdrop-blur-xl
-                      border border-white/40
-                      shadow-[0_8px_30px_rgba(0,0,0,0.06)]
-                      hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
-                      transition-all duration-300
-                      flex flex-col
-                      hover:scale-[1.01]
-                    "
-                  >
-                    {/* Status Badge (Mantido) */}
-                    {jogo.status !== 'agendado' && (
-                        <div className={`absolute top-0 left-0 right-0 rounded-t-3xl text-center py-1 text-xs font-bold uppercase font-inter ${
-                            jogo.status === 'ao_vivo' ? 'bg-red-600 text-white animate-pulse' : 'bg-gray-700 text-white'
-                        }`}>
-                            {jogo.status === 'ao_vivo' ? 'AO VIVO' : 'FINAL'}
-                        </div>
-                    )}
-
-                    {/* Horário / Placar (Mini-pill suave) */}
-                    <div className={`flex items-center justify-center mb-5 ${jogo.status !== 'agendado' ? 'mt-4' : ''}`}>
-                      <span className="
-                        text-xl font-black text-gray-900 font-oswald
-                        px-4 py-1
-                        rounded-full
-                        bg-pink-100
-                        text-pink-700
-                        shadow-sm
-                      ">
-                        {jogo.status === 'agendado' ? jogo.horario : `${timeVisitante.placar} x ${timeCasa.placar}`}
-                      </span>
-                    </div>
-
-                    {/* Times */}
-                    <div className="flex items-center justify-center gap-6">
-                      <img
-                        src={timeVisitante.logo}
-                        alt={timeVisitante.sigla}
-                        className="w-14 h-14 drop-shadow-sm transition duration-300"
-                      />
-                      <span className="text-2xl font-black text-gray-900 font-oswald">@</span>
-                      <img
-                        src={timeCasa.logo}
-                        alt={timeCasa.sigla}
-                        className="w-14 h-14 drop-shadow-sm transition duration-300"
-                      />
-                    </div>
-
-                    {/* Siglas */}
-                    <div className="flex justify-center gap-10 mt-3 text-gray-700 font-semibold text-lg tracking-wide font-inter">
-                      <span>{timeVisitante.sigla}</span>
-                      <span>{timeCasa.sigla}</span>
-                    </div>
-
-                    {/* Transmissões */}
-                    <div className="flex flex-wrap gap-2 mt-5 justify-center">
-                      {transmissoes.map((t: string, i: number) => (
-                        <span
-                          key={i}
-                          className="
-                            px-3 py-1 
-                            rounded-full 
-                            bg-pink-100 
-                            text-pink-700 
-                            text-sm 
-                            font-semibold
-                            shadow-sm
-                            font-inter
-                          "
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Arena */}
-                    <p className="text-center text-gray-600 text-sm mt-4 font-inter">
-                      {jogo.arena}
-                    </p>
-                  </div>
-                );
-              })}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {jogosData.map(renderJogo)}
             </div>
           </div>
         ))
