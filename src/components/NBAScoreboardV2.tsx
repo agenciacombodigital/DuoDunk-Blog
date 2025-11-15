@@ -57,27 +57,52 @@ const convertToBrasiliaTime = (dateString: string) => {
   }
 };
 
+// Mapeamento manual de jogos Prime Video/ESPN (Exemplo baseado em jogos de destaque)
+// Em um ambiente real, isso seria alimentado por uma API de calendário brasileira.
+const PRIME_VIDEO_GAMES: [string, string][] = [
+  ['NYK', 'MIA'], // Exemplo: Knicks x Heat
+  ['GSW', 'SAS'], // Exemplo: Warriors x Spurs
+  // Adicione outros jogos Prime Video aqui
+];
+
+const ESPN_GAMES: [string, string][] = [
+  // Adicione jogos ESPN aqui
+];
+
+// Helper para verificar se um jogo corresponde a um mapeamento
+const isGameMatch = (team1: string, team2: string, list: [string, string][]): boolean => {
+  const teams = [team1, team2].sort();
+  return list.some(pair => {
+    const sortedPair = pair.sort();
+    return sortedPair[0] === teams[0] && sortedPair[1] === teams[1];
+  });
+};
+
 // Helper para formatar o canal de transmissão
-const formatBroadcast = (channel: string | undefined): string => {
+const formatBroadcast = (game: Game): string => {
   let channels = ['League Pass'];
+  const home = game.homeTeam.teamTricode;
+  const away = game.awayTeam.teamTricode;
+  const apiChannel = game.broadcastChannel?.toLowerCase();
   
-  if (channel) {
-    const lowerChannel = channel.toLowerCase();
-    
-    // Mapeamento para canais brasileiros
-    if (lowerChannel.includes('espn') || lowerChannel.includes('tnt') || lowerChannel.includes('tbs')) {
-      // Assumimos que se for um canal nacional americano (ESPN, TNT), ele tem transmissão no Brasil (ESPN/Star+ ou TNT/Space)
-      // Para simplificar, usamos 'ESPN' como representação de TV a cabo.
+  // 1. Mapeamento manual (Prime Video/ESPN Brasil)
+  if (isGameMatch(home, away, PRIME_VIDEO_GAMES)) {
+    channels.unshift('Prime Video');
+  }
+  
+  if (isGameMatch(home, away, ESPN_GAMES)) {
+    channels.unshift('ESPN');
+  }
+
+  // 2. Mapeamento de canais nacionais dos EUA (se não for Prime Video/ESPN)
+  if (apiChannel) {
+    if (apiChannel.includes('espn') && !channels.includes('ESPN')) {
       channels.unshift('ESPN');
     }
-    
-    // Mapeamento para Prime Video (usando um nome de canal fictício para simular)
-    // Nota: A API da NBA não lista Prime Video diretamente, mas se o canal for um streaming específico, podemos mapear.
-    // Como não temos a lista exata de canais brasileiros, vamos simular o Prime Video se for um jogo de destaque.
-    // Para este exemplo, vamos adicionar uma lógica simples de simulação baseada em nomes comuns que poderiam ser mapeados:
-    if (lowerChannel.includes('prime') || lowerChannel.includes('amazon')) {
-        channels.unshift('Prime Video');
+    if (apiChannel.includes('tnt') && !channels.includes('TNT')) {
+      channels.unshift('TNT');
     }
+    // Adicione outros canais nacionais aqui se necessário
   }
   
   // Remove duplicatas e junta
@@ -202,7 +227,7 @@ export default function NBAScoreboardV2() {
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 text-center z-10">
                   <span className="bg-gray-700 text-gray-300 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 font-inter whitespace-nowrap">
                     <Tv className="w-2.5 h-2.5" />
-                    {formatBroadcast(game.broadcastChannel)}
+                    {formatBroadcast(game)}
                   </span>
                 </div>
 
