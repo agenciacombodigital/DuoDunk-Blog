@@ -1,21 +1,26 @@
 name: Gerar Post Consolidado NBA
+
 on:
   schedule:
-    - cron: '30 6 * * *' # Roda todo dia às 3h30 da manhã (horário de Brasília)
+    - cron: '0 5 * * *' # Roda todo dia às 5h da manhã (UTC)
   workflow_dispatch:
+
 jobs:
   gerar_post:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+
       - name: Instalar dependências e JQ
         run: |
           npm install
           sudo apt-get install jq # Instala jq para manipulação de JSON
+
       - name: Executar script de geração de posts
         id: generate
         run: |
