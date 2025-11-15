@@ -13,8 +13,7 @@ import {
   UsersRound,
   ChevronDown,
   ChevronUp,
-  Calendar,
-  AlertTriangle
+  Calendar
 } from 'lucide-react';
 
 interface Game {
@@ -34,15 +33,13 @@ interface Props {
 export default function GameStatsModalV2({ game, onClose }: Props) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // Novo estado de erro
   const [activeTab, setActiveTab] = useState<'leaders' | 'team' | 'boxscore'>('leaders');
   const [showAllHome, setShowAllHome] = useState(false);
   const [showAllAway, setShowAllAway] = useState(false);
 
   const loadStats = async () => {
     try {
-      setError(null);
-      console.log('[MODAL] Buscando stats para:', game.gameId, 'Status:', game.gameStatus);
+      console.log('[MODAL] Buscando stats para:', game.gameId);
       
       const { data, error } = await supabase.functions.invoke('nba-game-stats-v3', {
         body: {
@@ -55,7 +52,7 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
 
       if (error) {
         console.error('[MODAL] Erro:', error);
-        throw new Error(error.message);
+        throw error;
       }
       
       if (data?.isScheduled) {
@@ -66,24 +63,23 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
       if (data?.success) {
         setStats(data.stats);
         console.log('[MODAL] ✅ Stats carregadas:', data.stats);
-      } else {
-        // Se a chamada foi bem-sucedida mas não retornou stats (ex: jogo recém-terminado)
-        setError('Não foi possível carregar estatísticas detalhadas.');
       }
     } catch (err) {
       console.error('[MODAL] Erro ao carregar stats:', err);
-      setError('Falha ao conectar com o servidor de estatísticas.');
-    } finally {
-      if (loading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStats();
+    const initialLoad = async () => {
+      setLoading(true);
+      await loadStats();
+      setLoading(false);
+    };
 
-    // Atualiza a cada 5 segundos se o jogo estiver ao vivo (status 2)
+    initialLoad();
+
     if (game.gameStatus === 2) {
-      const interval = setInterval(loadStats, 5000); 
+      const interval = setInterval(loadStats, 5000); // Refresh without showing loader
       return () => clearInterval(interval);
     }
   }, [game.gameId, game.gameStatus]);
@@ -99,35 +95,26 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
     );
   }
 
-  // Se houver erro ou o jogo estiver agendado, exibe o card de status
-  if (error || !stats || stats.isScheduled) {
+  if (!stats || stats.isScheduled) {
     return (
       <div
         className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div className="bg-gray-900 rounded-3xl p-8 max-w-md w-full text-center relative" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gray-900 rounded-3xl p-8 max-w-md text-center relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors z-20"
           >
             <X className="w-6 h-6 text-gray-400 hover:text-white" />
           </button>
-          
-          {error ? (
-            <>
-              <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Erro de Conexão</h2>
-              <p className="text-gray-400 mb-6">{error}</p>
-            </>
-          ) : (
-            <>
-              <Calendar className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Jogo Agendado</h2>
-              <p className="text-gray-400 mb-6">As estatísticas estarão disponíveis assim que o jogo começar.</p>
-            </>
-          )}
-          
+          <Calendar className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Jogo Agendado
+          </h2>
+          <p className="text-gray-400 mb-6">
+            As estatísticas estarão disponíveis assim que o jogo começar.
+          </p>
           <div className="bg-gray-800 rounded-xl p-4">
             <p className="text-sm text-gray-500 mb-1">Horário de Início</p>
             <p className="text-lg font-bold text-white">
@@ -325,12 +312,12 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                           <span className="text-2xl font-black text-pink-400">{p.value}</span>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] sm:text-xs text-gray-500">
-                          <span>{p.stats.fgm}/{p.stats.fga} FG ({p.stats.fgPct}%)</span>
-                          <span>{p.stats.fg3m}/{p.stats.fg3a} 3P ({p.stats.fg3Pct}%)</span>
-                          <span>{p.stats.ftm}/{p.stats.fta} FT ({p.stats.ftPct}%)</span>
-                          <span>{p.stats.rebounds} REB</span>
-                          <span>{p.stats.assists} AST</span>
-                          <span>{p.stats.minutes} MIN</span>
+                          <span>{p.fgm}/{p.fga} FG ({p.fgPct}%)</span>
+                          <span>{p.fg3m}/{p.fg3a} 3P ({p.fg3Pct}%)</span>
+                          <span>{p.ftm}/{p.fta} FT ({p.ftPct}%)</span>
+                          <span>{p.reboundsTotal} REB</span>
+                          <span>{p.assists} AST</span>
+                          <span>{p.minutesCalculated} MIN</span>
                         </div>
                       </div>
                     ))}
@@ -349,12 +336,12 @@ export default function GameStatsModalV2({ game, onClose }: Props) {
                           <span className="text-2xl font-black text-pink-400">{p.value}</span>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] sm:text-xs text-gray-500">
-                          <span>{p.stats.fgm}/{p.stats.fga} FG ({p.stats.fgPct}%)</span>
-                          <span>{p.stats.fg3m}/{p.stats.fg3a} 3P ({p.stats.fg3Pct}%)</span>
-                          <span>{p.stats.ftm}/{p.stats.fta} FT ({p.stats.ftPct}%)</span>
-                          <span>{p.stats.rebounds} REB</span>
-                          <span>{p.stats.assists} AST</span>
-                          <span>{p.stats.minutes} MIN</span>
+                          <span>{p.fgm}/{p.fga} FG ({p.fgPct}%)</span>
+                          <span>{p.fg3m}/{p.fg3a} 3P ({p.fg3Pct}%)</span>
+                          <span>{p.ftm}/{p.fta} FT ({p.ftPct}%)</span>
+                          <span>{p.reboundsTotal} REB</span>
+                          <span>{p.assists} AST</span>
+                          <span>{p.minutesCalculated} MIN</span>
                         </div>
                       </div>
                     ))}

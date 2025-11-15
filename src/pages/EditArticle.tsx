@@ -7,7 +7,6 @@ import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { clearAllFeaturedArticles } from '@/lib/adminUtils';
-import ImageFocalPointEditor from '@/components/admin/ImageFocalPointEditor'; // Importando o novo editor
 
 export default function EditArticle() {
   const { slug } = useParams();
@@ -60,7 +59,7 @@ export default function EditArticle() {
         meta_description: data.meta_description || '',
         tags: data.tags || [],
         video_url: data.video_url || '',
-        image_focal_point: data.image_focal_point || '50% 50%',
+        image_focal_point: data.image_focal_point || '50% 50%', 
         image_focal_point_mobile: data.image_focal_point_mobile || '50%',
         is_featured: data.is_featured || false,
       });
@@ -188,20 +187,8 @@ export default function EditArticle() {
     );
   }
 
-  // Handlers para o novo editor
-  const handleFocalPointChange = (desktop: string, mobile: string) => {
-    setFormData(prev => ({
-      ...prev,
-      image_focal_point: desktop,
-      image_focal_point_mobile: mobile,
-    }));
-  };
-  
-  // O onFocalPointCommit não precisa fazer nada aqui, pois o save final já pega o formData.
-  // No entanto, o componente ImageFocalPointEditor chama onFocalPointCommit no clique,
-  // então vamos criar uma função dummy para evitar erros, já que o estado é atualizado via onFocalPointChange.
-  const handleFocalPointCommit = () => {};
-
+  const currentHorizontalFocalPoint = getHorizontalFocalPoint(formData.image_focal_point);
+  const currentMobileFocalPoint = getVerticalFocalPoint(formData.image_focal_point_mobile);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white py-12">
@@ -383,18 +370,61 @@ export default function EditArticle() {
                 )}
               </label>
               
-              {/* NOVO EDITOR DE FOCO */}
-              {formData.image_url && (
-                <div className="mt-6">
-                  <ImageFocalPointEditor
-                    imageUrl={formData.image_url}
-                    initialFocalPointDesktop={formData.image_focal_point}
-                    initialFocalPointMobile={formData.image_focal_point_mobile}
-                    onFocalPointChange={handleFocalPointChange}
-                    onFocalPointCommit={handleFocalPointCommit}
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                  Foco Vertical (Mobile 3:4)
+                </label>
+                <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-96 mx-auto max-w-xs">
+                  <img
+                    src={formData.image_url}
+                    alt="Preview Mobile"
+                    className="w-full h-full object-cover"
+                    style={getObjectPositionStyle(formData.image_focal_point_mobile, true)}
                   />
+                  <div className="absolute inset-0 border-4 border-dashed border-white/50 pointer-events-none flex items-center justify-center">
+                    <span className="text-white text-xs bg-black/50 p-1 rounded font-inter">Corte Mobile (3:4)</span>
+                  </div>
                 </div>
-              )}
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="text-xs text-gray-400 font-inter">Topo</span>
+                  <Slider
+                    value={[currentMobileFocalPoint]}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` }));
+                    }}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <span className="text-xs text-gray-400 font-inter">Baixo</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 font-inter">
+                  Ajuste para garantir que o assunto principal apareça no corte vertical (3:4) da Home.
+                </p>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-700">
+                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                  Foco Horizontal (Desktop 16:9)
+                </label>
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="text-xs text-gray-400 font-inter">Esquerda</span>
+                  <Slider
+                    value={[currentHorizontalFocalPoint]}
+                    onValueChange={(value) => {
+                      const currentVertical = getVerticalFocalPoint(formData.image_focal_point);
+                      setFormData(prev => ({ ...prev, image_focal_point: `${value[0]}% ${currentVertical}%` }));
+                    }}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <span className="text-xs text-gray-400 font-inter">Direita</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 font-inter">
+                  Ajuste para garantir que o assunto principal apareça no corte horizontal (16:9).
+                </p>
+              </div>
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">

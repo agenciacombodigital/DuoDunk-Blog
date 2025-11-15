@@ -6,18 +6,6 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-// Helper para formatar o tempo de jogo (MM:SS)
-const formatGameClock = (clock: string): string => {
-  if (!clock || clock === '') return '00:00';
-  const match = clock.match(/PT(\d+)M([\d.]+)S/);
-  if (match) {
-    const minutes = match[1].padStart(2, '0');
-    const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
-  }
-  return clock;
-};
-
 // Helper to fetch individual boxscore for real-time data
 const fetchBoxscore = async (gameId: string) => {
   try {
@@ -122,8 +110,14 @@ serve(async (req) => {
 
           // Re-create the status text based on live data
           if (liveData.gameStatus === 2) {
-              // Usando a função formatGameClock para garantir MM:SS
-              const formattedClock = formatGameClock(liveData.gameClock);
+              const clock = liveData.gameClock;
+              let formattedClock = '';
+              const match = clock.match(/PT(\d+)M([\d.]+)S/);
+              if (match) {
+                  const minutes = match[1].padStart(2, '0');
+                  const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
+                  formattedClock = `${minutes}:${seconds}`;
+              }
               game.gameStatusText = `${liveData.period}º Quarto • ${formattedClock}`;
           } else {
               game.gameStatusText = liveData.gameStatusText; // Use the text from boxscore (e.g., "Final")

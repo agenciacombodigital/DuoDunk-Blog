@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import { CheckCircle, Edit, Loader2, Save, Upload, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint } from '@/lib/utils';
-import ImageFocalPointEditor from './ImageFocalPointEditor'; // Importando o novo editor
+
+// Helper para converter valor de foco (X% ou Y%) para número (0-100)
+// REMOVIDO: const percentageToNumber = (value: string | null | undefined): number => { ... };
+
+// Extrai o foco horizontal (X) de uma string de posição (X% Y%)
+// REMOVIDO: const getHorizontalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
+
+// Extrai o foco vertical (Y) de uma string de posição (X% Y% ou Y%)
+// REMOVIDO: const getVerticalFocalPoint = (focalPoint: string | null | undefined): number => { ... };
 
 interface EditArticleModalProps {
   article: any;
@@ -32,17 +40,21 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
 
   if (!isOpen || !editedArticle) return null;
   
-  // Handlers para o novo editor
-  const handleFocalPointChange = (desktop: string, mobile: string) => {
-    setEditedArticle(prev => ({
-      ...prev,
-      image_focal_point: desktop,
-      image_focal_point_mobile: mobile,
-    }));
+  // Handlers para o Slider
+  const handleDesktopChange = (value: number[]) => {
+    const newX = `${value[0]}%`;
+    const currentY = getVerticalFocalPoint(editedArticle.image_focal_point);
+    setEditedArticle(prev => ({ ...prev, image_focal_point: `${newX} ${currentY}%` }));
   };
 
-  // O onFocalPointCommit não precisa fazer nada aqui, pois o save final já pega o editedArticle.
-  const handleFocalPointCommit = () => {};
+  const handleMobileChange = (value: number[]) => {
+    const newY = `${value[0]}%`;
+    setEditedArticle(prev => ({ ...prev, image_focal_point_mobile: newY }));
+  };
+  
+  // Valores para o Slider
+  const currentHorizontalFocalPoint = getHorizontalFocalPoint(editedArticle.image_focal_point);
+  const currentMobileFocalPoint = getVerticalFocalPoint(editedArticle.image_focal_point_mobile);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -83,18 +95,52 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
               <label htmlFor="modal-image-upload" className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer"><Upload className="w-5 h-5" /></label>
             </div>
             
-            {/* NOVO EDITOR DE FOCO */}
-            {editedArticle.image_url && (
-              <div className="mt-6">
-                <ImageFocalPointEditor
-                  imageUrl={editedArticle.image_url}
-                  initialFocalPointDesktop={editedArticle.image_focal_point}
-                  initialFocalPointMobile={editedArticle.image_focal_point_mobile}
-                  onFocalPointChange={handleFocalPointChange}
-                  onFocalPointCommit={handleFocalPointCommit}
+            {/* Foco Vertical Mobile (3:4) */}
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                Foco Vertical (Mobile 3:4)
+              </label>
+              <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-96 mx-auto max-w-xs">
+                <img
+                  src={editedArticle.image_url}
+                  alt="Preview Mobile"
+                  className="w-full h-full object-cover"
+                  style={getObjectPositionStyle(editedArticle.image_focal_point_mobile, true)}
                 />
+                <div className="absolute inset-0 border-4 border-dashed border-white/50 pointer-events-none flex items-center justify-center">
+                  <span className="text-white text-xs bg-black/50 p-1 rounded font-inter">Corte Mobile (3:4)</span>
+                </div>
               </div>
-            )}
+              <div className="flex items-center gap-4 mt-2">
+                <span className="text-xs text-gray-400 font-inter">Topo</span>
+                <Slider 
+                  value={[currentMobileFocalPoint]} 
+                  onValueChange={handleMobileChange} 
+                  max={100} 
+                  step={1} 
+                  className="w-full" 
+                />
+                <span className="text-xs text-gray-400 font-inter">Baixo</span>
+              </div>
+            </div>
+            
+            {/* Foco Horizontal (Desktop 16:9) */}
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                Foco Horizontal (Desktop 16:9)
+              </label>
+              <div className="flex items-center gap-4 mt-2">
+                <span className="text-xs text-gray-400 font-inter">Esquerda</span>
+                <Slider 
+                  value={[currentHorizontalFocalPoint]} 
+                  onValueChange={handleDesktopChange} 
+                  max={100} 
+                  step={1} 
+                  className="w-full" 
+                />
+                <span className="text-xs text-gray-400 font-inter">Direita</span>
+              </div>
+            </div>
           </div>
         </div>
         <div className="p-6 border-t border-gray-700 flex justify-end gap-3">
