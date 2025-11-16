@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
   // Verificar autorização
   const authHeader = req.headers.authorization;
