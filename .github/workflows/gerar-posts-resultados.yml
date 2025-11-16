@@ -26,20 +26,3 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           node scripts/gerarPostsResultados.js
-```
-
-4. **COLE no VS Code** (Ctrl+V)
-5. **SALVE** (Ctrl+S)
-
----
-
-### 5️⃣ **FAZER COMMIT PELO VS CODE**
-
-Agora vamos usar a interface gráfica do VS Code:
-
-1. **Clique no terceiro ícone** na barra lateral esquerda (ícone de "fork" - Source Control)
-2. Você verá o arquivo `gerar-posts-resultados.yml` listado em **"Changes"**
-3. **Passe o mouse** sobre o arquivo e clique no **"+"** (Stage Changes)
-4. No campo de mensagem (em cima), digite:
-```
-   Corrigir workflow - remover git push
