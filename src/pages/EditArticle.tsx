@@ -137,11 +137,9 @@ export default function EditArticle() {
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
       
-      if (finalSlug !== article.slug) {
-        navigate(`/admin/editar/${finalSlug}`, { replace: true });
-      } else {
-        navigate('/admin');
-      }
+      // ✅ CORREÇÃO: Sempre navega para o painel de administração após salvar
+      navigate('/admin');
+      
     } catch (error: any) {
       toast.error('Erro ao salvar', { id: toastId, description: error.message });
     } finally {
