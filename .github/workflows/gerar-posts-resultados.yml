@@ -2,73 +2,44 @@ name: Gerar Post Consolidado NBA
 
 on:
   schedule:
-    - cron: '0 5 * * *' # Roda todo dia às 5h da manhã (UTC)
+    - cron: '30 6 * * *' # Roda todo dia às 3h30 da manhã (horário de Brasília)
   workflow_dispatch:
 
 jobs:
   gerar_post:
     runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-
-      - name: Instalar dependências e JQ
-        run: |
-          npm install
-          sudo apt-get install jq # Instala jq para manipulação de JSON
-
-      - name: Executar script de geração de posts
-        id: generate
-        run: |
-          # 1. Executa o script que gera o arquivo Markdown
-          node scripts/gerarPostsResultados.js
-          
-          # 2. Encontra o nome do arquivo gerado (o mais recente)
-          LATEST_FILE=$(ls -t content/posts/resultados-nba-*.md 2>/dev/null | head -n 1)
-          
-          if [ -z "$LATEST_FILE" ]; then
-            echo "Nenhum arquivo de resultados gerado. Pulando commit e publicação."
-            echo "::set-output name=file_path::"
-            exit 0
-          fi
-          
-          # 3. Lê o conteúdo do arquivo e salva em um output
-          CONTENT=$(cat "$LATEST_FILE")
-          
-          # 4. Define outputs para o próximo passo
-          echo "file_path=$LATEST_FILE" >> $GITHUB_OUTPUT
-          # Usamos um delimitador único para passar o conteúdo de forma segura
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$CONTENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        
-      - name: 🚀 Publicar no Supabase via Edge Function
-        if: steps.generate.outputs.file_path != ''
+      
+      - name: Instalar dependências
+        run: npm install
+      
+      - name: Executar script de geração e publicação
         env:
           SUPABASE_URL: https://brerfpcfkyptkzygyzxl.supabase.co
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          MARKDOWN_CONTENT: ${{ steps.generate.outputs.content }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          # Constrói o payload JSON de forma segura usando jq
-          PAYLOAD=$(jq -n --arg content "$MARKDOWN_CONTENT" '{"markdownContent": $content}')
-          
-          echo "Enviando payload para Edge Function..."
-          
-          curl -X POST \
-            "${{ env.SUPABASE_URL }}/functions/v1/publish-markdown-post" \
-            -H "Authorization: Bearer ${{ env.SUPABASE_ANON_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD"
-          
-      - name: Commit post gerado (para histórico)
-        if: steps.generate.outputs.file_path != ''
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add content/posts/resultados-nba-*.md
-          git commit -m "🤖 Auto: post NBA resultados" || true
-          git push
+          node scripts/gerarPostsResultados.js
+```
+
+4. **COLE no VS Code** (Ctrl+V)
+5. **SALVE** (Ctrl+S)
+
+---
+
+### 5️⃣ **FAZER COMMIT PELO VS CODE**
+
+Agora vamos usar a interface gráfica do VS Code:
+
+1. **Clique no terceiro ícone** na barra lateral esquerda (ícone de "fork" - Source Control)
+2. Você verá o arquivo `gerar-posts-resultados.yml` listado em **"Changes"**
+3. **Passe o mouse** sobre o arquivo e clique no **"+"** (Stage Changes)
+4. No campo de mensagem (em cima), digite:
+```
+   Corrigir workflow - remover git push
