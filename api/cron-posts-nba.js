@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   // Verificar autorização
   const authHeader = req.headers.authorization;
@@ -115,6 +117,27 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
     
     if (!supabaseResponse.ok) {
       throw new Error(`Supabase error: ${JSON.stringify(supabaseResult)}`);
+    }
+    
+    // Solicitar indexação no Google
+    const urlParaIndexar = `https://www.duodunk.com.br/artigos/${slug}`; // Corrigido para incluir /artigos/
+    
+    try {
+      const indexResponse = await fetch('https://www.duodunk.com.br/api/request-google-indexing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.INDEXING_SECRET}`
+        },
+        body: JSON.stringify({
+          urls: [urlParaIndexar]
+        })
+      });
+      
+      const indexResult = await indexResponse.json();
+      console.log(`🔍 Indexação solicitada para: ${urlParaIndexar}`, indexResult);
+    } catch (indexError) {
+      console.error('⚠️ Erro ao solicitar indexação:', indexError.message);
     }
     
     return res.status(200).json({
