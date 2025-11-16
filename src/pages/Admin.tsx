@@ -16,6 +16,7 @@ import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 import { clearAllFeaturedArticles } from '@/lib/adminUtils';
 import { retryRateLimitedArticles, getRateLimitStats } from '@/lib/retryRateLimitedArticles';
 import { useAuth } from '@/hooks/useAuth'; // Importando useAuth
+import { requestGoogleIndexing } from '@/services/indexingService'; // Importando o serviço de indexação
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -238,6 +239,9 @@ export default function AdminPage() {
       
       // 3. Remove da fila
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
+      
+      // 4. 🚀 Solicitar Indexação
+      await requestGoogleIndexing([`/artigos/${article.slug}`]);
       
       toast.success('Artigo publicado!', { id: toastId });
       await loadData();
