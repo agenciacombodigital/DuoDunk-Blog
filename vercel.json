@@ -31,5 +31,11 @@
         }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-posts-nba",
+      "schedule": "30 6 * * *"
+    }
   ]
 }
