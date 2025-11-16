@@ -94,13 +94,16 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
     // 4. Publicar no Supabase
     console.log('📤 Enviando para o Supabase...');
     
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
     const supabaseResponse = await fetch(
-      `${process.env.SUPABASE_URL}/functions/v1/publish-markdown-post`,
+      `${supabaseUrl}/functions/v1/publish-markdown-post`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
           markdownContent: conteudo
@@ -112,18 +115,24 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
     
     console.log('✅ Resposta do Supabase:', supabaseResult);
     
+    if (!supabaseResponse.ok) {
+      throw new Error(`Supabase error: ${JSON.stringify(supabaseResult)}`);
+    }
+    
     return res.status(200).json({
       success: true,
       message: `Post "${titulo}" criado e publicado com sucesso!`,
       jogos: jogosFinalizados.length,
-      slug: slug
+      slug: slug,
+      supabaseResult: supabaseResult
     });
 
   } catch (error) {
     console.error('❌ Erro:', error);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      stack: error.stack
     });
   }
 }
