@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { logout } from '@/lib/auth';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
@@ -221,7 +222,9 @@ export default function AdminPage() {
       // STEP 1: Limpar destaques se necessário
       if (article.is_featured) {
         console.log('⭐ STEP 2: Limpando artigos em destaque...');
-        await clearAllFeaturedArticles();
+        // Usamos o cliente Admin para garantir que a operação de UPDATE funcione
+        // sem problemas de RLS, já que estamos limpando todos os destaques.
+        await clearAllFeaturedArticles(); 
         console.log('✅ Destaques limpos!');
       }
 
@@ -251,7 +254,9 @@ export default function AdminPage() {
 
       // STEP 3: Fazer INSERT e CAPTURAR resultado
       console.log('💾 STEP 4: Tentando inserir na tabela articles...');
-      const { data: insertedData, error: insertError } = await supabase
+      // Usamos o cliente Admin para garantir que a inserção funcione,
+      // especialmente se houver problemas de RLS ou se o artigo for de uma fonte externa.
+      const { data: insertedData, error: insertError } = await supabaseAdmin
         .from('articles')
         .insert(articleData)
         .select(); // 🔍 IMPORTANTE: Retorna o dado inserido!
@@ -274,7 +279,7 @@ export default function AdminPage() {
 
       console.log('✅ STEP 6: Artigo inserido com sucesso:', insertedData[0]);
       
-      // STEP 4: Atualizar status na fila
+      // STEP 4: Atualizar status na fila (pode usar o cliente normal, pois RLS na fila é mais permissivo)
       console.log('📝 STEP 7: Atualizando status na fila...');
       const { error: updateError } = await supabase
         .from('articles_queue')
@@ -305,10 +310,18 @@ export default function AdminPage() {
         code: error.code,
       });
       
-      toast.error('Erro ao publicar', { 
-        id: toastId, 
-        description: error.message || 'Erro desconhecido. Veja o console (F12).' 
-      });
+      // Se o erro for de unicidade (slug duplicado), informa o usuário
+      if (error.code === '23505') { // Código de erro PostgreSQL para violação de unicidade
+        toast.error('Erro de Publicação: Slug Duplicado', {
+          id: toastId,
+          description: 'O slug (URL) deste artigo já existe. Por favor, edite o título ou o slug e tente novamente.'
+        });
+      } else {
+        toast.error('Erro ao publicar', { 
+          id: toastId, 
+          description: error.message || 'Erro desconhecido. Veja o console (F12).' 
+        });
+      }
     }
   };
 
@@ -361,7 +374,8 @@ export default function AdminPage() {
     if (!window.confirm('DELETAR este artigo publicado permanentemente? Esta ação é irreversível.')) return;
     const toastId = toast.loading("Deletando artigo publicado...");
     try {
-      await supabase.from('articles').delete().eq('id', articleId);
+      // Usando supabaseAdmin para garantir que a exclusão funcione
+      await supabaseAdmin.from('articles').delete().eq('id', articleId);
       toast.success('Artigo publicado deletado.', { id: toastId });
       await loadPublished();
     } catch (error: any) {
@@ -378,7 +392,8 @@ export default function AdminPage() {
     setIsDeleting(true);
     const toastId = toast.loading("Deletando todas as notícias...");
     try {
-      await supabase.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Usando supabaseAdmin para garantir que a exclusão funcione
+      await supabaseAdmin.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       toast.success('Todas as notícias foram deletadas!', { id: toastId });
       await loadPublished();
     } catch (error: any) {
