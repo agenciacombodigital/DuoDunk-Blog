@@ -1,11 +1,13 @@
 import { supabase } from './supabase';
+import { supabaseAdmin } from './supabaseAdmin';
 
 /**
  * Desmarca todos os artigos atualmente marcados como destaque (is_featured = true).
  */
 export async function clearAllFeaturedArticles() {
   console.log('Desmarcando todos os artigos em destaque...');
-  const { error } = await supabase
+  // Usando supabaseAdmin para garantir que a operação funcione, ignorando RLS
+  const { error } = await supabaseAdmin
     .from('articles')
     .update({ is_featured: false })
     .eq('is_featured', true);
