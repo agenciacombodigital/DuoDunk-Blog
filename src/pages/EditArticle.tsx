@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { clearAllFeaturedArticles } from '@/lib/adminUtils';
-import { requestGoogleIndexing } from '@/services/indexingService'; // Importando o serviço de indexação
+// import { requestGoogleIndexing } from '@/services/indexingService'; // Importando o serviço de indexação
 
 export default function EditArticle() {
   const { slug } = useParams();
@@ -138,8 +138,8 @@ export default function EditArticle() {
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
       
-      // 🚀 Solicitar Indexação
-      await requestGoogleIndexing([`/artigos/${finalSlug}`]);
+      // 🚀 Solicitar Indexação (REMOVIDO: Agora é feito via trigger do Supabase)
+      // await requestGoogleIndexing([`/artigos/${finalSlug}`]);
       
       // ✅ CORREÇÃO: Sempre navega para o painel de administração após salvar
       navigate('/admin');
