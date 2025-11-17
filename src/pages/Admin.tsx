@@ -206,93 +206,140 @@ export default function AdminPage() {
     );
   };
 
-  const approveArticle = async (article: any) => {
-    if (!window.confirm('Aprovar e publicar este artigo?')) return;
-    const toastId = toast.loading("Publicando artigo...");
-    
-    try {
-      console.log('📊 STEP 1: Aprovando artigo:', article.title);
+  // APENAS A FUNÇÃO approveArticle COM LOGS EXTREMAMENTE DETALHADOS
+// Substitua APENAS esta função no seu Admin.tsx atual
 
-      // STEP 1: Limpar destaques se necessário
-      if (article.is_featured) {
-        console.log('⭐ STEP 2: Limpando destaques...');
-        await clearAllFeaturedArticles();
-      }
+const approveArticle = async (article: any) => {
+  if (!window.confirm('Aprovar e publicar este artigo?')) return;
+  const toastId = toast.loading("Publicando artigo...");
+  
+  try {
+    console.log('🔍 ===== INÍCIO DO DEBUG =====');
+    console.log('📊 Artigo original completo:', JSON.stringify(article, null, 2));
 
-      // STEP 2: Preparar dados
-      const articleData = {
-        queue_id: article.id,
-        title: article.title,
-        summary: article.summary || '',
-        body: article.body,
-        meta_description: article.meta_description || article.summary || '',
-        tags: article.tags || [],
-        slug: article.slug,
-        image_url: article.image_url || '',
-        source: article.source || 'DuoDunk',
-        original_link: article.original_link || '',
-        published: true,
-        published_at: new Date().toISOString(),
-        is_featured: article.is_featured || false,
-        video_url: article.video_url || null,
-        image_focal_point: article.image_focal_point || '50% 50%',
-        image_focal_point_mobile: article.image_focal_point_mobile || '50%',
-        views: 0,
-        created_at: new Date().toISOString(),
-      };
-
-      console.log('💾 STEP 3: Inserindo na tabela articles...');
-      
-      // ✅ USAR supabase (cliente normal) ao invés de supabaseAdmin
-      // O RLS deve permitir INSERTs de usuários autenticados
-      const { data: insertedData, error: insertError } = await supabase
-        .from('articles')
-        .insert(articleData)
-        .select();
-
-      if (insertError) {
-        console.error('❌ Erro no INSERT:', insertError);
-        throw insertError;
-      }
-
-      if (!insertedData || insertedData.length === 0) {
-        throw new Error('Artigo não foi criado. Verifique RLS ou constraints.');
-      }
-
-      console.log('✅ STEP 4: Artigo publicado:', insertedData[0].slug);
-      
-      // STEP 3: Atualizar fila (apenas marcar como approved)
-      console.log('🔄 STEP 5: Atualizando fila...');
-      const { error: updateError } = await supabase
-        .from('articles_queue')
-        .update({ status: 'approved' })
-        .eq('id', article.id);
-
-      if (updateError) {
-        console.warn('⚠️ Erro ao atualizar fila:', updateError);
-        // Não bloqueia o fluxo, pois o artigo já foi publicado
-      }
-      
-      toast.success('Artigo publicado! 🚀', { id: toastId });
-      await loadData();
-      setShowEditModal(false);
-      
-    } catch (error: any) {
-      console.error('❌ ERRO:', error);
-      
-      if (error.code === '23505') {
-        toast.error('Slug Duplicado', {
-          id: toastId,
-          description: 'Este slug já existe. Edite o título ou slug.'
-        });
-      } else {
-        toast.error('Erro ao publicar', { 
-          id: toastId, 
-          description: error.message 
-        });
-      }
+    // STEP 1: Limpar destaques se necessário
+    if (article.is_featured) {
+      console.log('⭐ Limpando destaques...');
+      await clearAllFeaturedArticles();
     }
-  };
+
+    // STEP 2: Preparar dados MINIMALISTAS (sem campos opcionais problemáticos)
+    const articleData = {
+      // ✅ CAMPOS OBRIGATÓRIOS
+      title: article.title,
+      body: article.body,
+      slug: article.slug,
+      published: true,
+      published_at: new Date().toISOString(),
+      
+      // ✅ CAMPOS COM FALLBACK SEGURO
+      summary: article.summary || '',
+      meta_description: article.meta_description || article.summary || article.title.substring(0, 160),
+      tags: Array.isArray(article.tags) ? article.tags : [],
+      image_url: article.image_url || '',
+      source: article.source || 'DuoDunk',
+      
+      // ✅ CAMPOS OPCIONAIS (só inclui se existir)
+      ...(article.queue_id && { queue_id: article.queue_id }),
+      ...(article.original_link && { original_link: article.original_link }),
+      ...(article.video_url && { video_url: article.video_url }),
+      ...(article.subtitle && { subtitle: article.subtitle }),
+      
+      // ✅ CAMPOS BOOLEANOS E NUMÉRICOS COM DEFAULTS
+      is_featured: article.is_featured || false,
+      views: 0,
+      
+      // ✅ FOCAL POINTS COM DEFAULTS
+      image_focal_point: article.image_focal_point || '50% 50%',
+      image_focal_point_mobile: article.image_focal_point_mobile || '50%',
+    };
+
+    console.log('📦 Dados preparados para INSERT:', JSON.stringify(articleData, null, 2));
+    console.log('🔢 Número de campos:', Object.keys(articleData).length);
+    console.log('📝 Lista de campos:', Object.keys(articleData).join(', '));
+
+    // STEP 3: Tentar INSERT com captura COMPLETA de erro
+    console.log('💾 Tentando INSERT...');
+    
+    const { data: insertedData, error: insertError } = await supabase
+      .from('articles')
+      .insert(articleData)
+      .select();
+
+    console.log('📊 Resposta do Supabase:');
+    console.log('  - Data:', insertedData);
+    console.log('  - Error:', insertError);
+
+    if (insertError) {
+      console.error('❌ ERRO DETALHADO DO SUPABASE:');
+      console.error('  - Message:', insertError.message);
+      console.error('  - Details:', insertError.details);
+      console.error('  - Hint:', insertError.hint);
+      console.error('  - Code:', insertError.code);
+      console.error('  - Objeto completo:', JSON.stringify(insertError, null, 2));
+      throw insertError;
+    }
+
+    if (!insertedData || insertedData.length === 0) {
+      console.error('❌ INSERT não retornou dados!');
+      throw new Error('Artigo não foi criado. INSERT vazio!');
+    }
+
+    console.log('✅ Artigo inserido com sucesso!');
+    console.log('📄 Dados do artigo criado:', JSON.stringify(insertedData[0], null, 2));
+    
+    // STEP 4: Atualizar fila
+    console.log('🔄 Atualizando status na fila...');
+    const { error: updateError } = await supabase
+      .from('articles_queue')
+      .update({ status: 'approved' })
+      .eq('id', article.id);
+
+    if (updateError) {
+      console.warn('⚠️ Erro ao atualizar fila (artigo já foi publicado):', updateError);
+    }
+    
+    toast.success('Artigo publicado! 🚀', { id: toastId });
+    await loadData();
+    setShowEditModal(false);
+    
+    console.log('🔍 ===== FIM DO DEBUG (SUCESSO) =====');
+    
+  } catch (error: any) {
+    console.error('🔍 ===== ERRO CAPTURADO =====');
+    console.error('❌ Tipo do erro:', typeof error);
+    console.error('❌ Nome do erro:', error.name);
+    console.error('❌ Mensagem:', error.message);
+    console.error('❌ Stack:', error.stack);
+    console.error('❌ Objeto completo:', error);
+    
+    // Tentar extrair detalhes específicos do Supabase
+    if (error.details) console.error('📋 Details:', error.details);
+    if (error.hint) console.error('💡 Hint:', error.hint);
+    if (error.code) console.error('🔢 Code:', error.code);
+    
+    // Tentar serializar o erro completo
+    try {
+      console.error('❌ Erro serializado:', JSON.stringify(error, null, 2));
+    } catch {
+      console.error('❌ Erro não é serializável');
+    }
+    
+    console.log('🔍 ===== FIM DO DEBUG (ERRO) =====');
+    
+    if (error.code === '23505') {
+      toast.error('Slug Duplicado', {
+        id: toastId,
+        description: 'Este slug já existe. Edite o título ou slug.'
+      });
+    } else {
+      toast.error('Erro ao publicar', { 
+        id: toastId, 
+        description: error.message || 'Veja o console (F12) para detalhes completos'
+      });
+    }
+  }
+};
 
   const handleToggleFeatured = async (articleId: string, currentStatus: boolean) => {
     try {
