@@ -8,6 +8,14 @@ const INDEXING_API_URL = '/api/request-google-indexing';
  * @param urls Array de URLs completas para indexar.
  */
 export async function requestGoogleIndexing(urls: string[]) {
+  // Este serviço não é mais usado diretamente pelo frontend Admin/EditArticle,
+  // pois a indexação é tratada pelo trigger do Supabase (on INSERT/UPDATE)
+  // e pelo Cron Job (para resultados).
+  
+  // Mantemos a função para referência, mas desativamos a execução para evitar
+  // erros de variáveis de ambiente no frontend.
+  
+  /*
   if (urls.length === 0) return;
 
   const siteUrl = 'https://www.duodunk.com.br'; // URL base do site
@@ -38,4 +46,5 @@ export async function requestGoogleIndexing(urls: string[]) {
       description: 'Verifique as variáveis de ambiente (INDEXING_SECRET/GOOGLE_SERVICE_ACCOUNT_KEY).'
     });
   }
+  */
 }
