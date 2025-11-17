@@ -208,12 +208,25 @@ export default function AdminPage() {
   const approveArticle = async (article: any) => {
     if (!window.confirm('Aprovar e publicar este artigo?')) return;
     const toastId = toast.loading("Publicando artigo...");
+    
     try {
+      // 🔍 LOG 1: Dados do artigo
+      console.log('📊 STEP 1: Dados do artigo a ser aprovado:', {
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        is_featured: article.is_featured,
+      });
+
+      // STEP 1: Limpar destaques se necessário
       if (article.is_featured) {
+        console.log('⭐ STEP 2: Limpando artigos em destaque...');
         await clearAllFeaturedArticles();
+        console.log('✅ Destaques limpos!');
       }
 
-      await supabase.from('articles').insert({
+      // STEP 2: Preparar dados para INSERT
+      const articleData = {
         queue_id: article.id,
         title: article.title,
         summary: article.summary,
@@ -230,15 +243,70 @@ export default function AdminPage() {
         video_url: article.video_url || null,
         image_focal_point: article.image_focal_point || '50% 50%',
         image_focal_point_mobile: article.image_focal_point_mobile || '50%',
+      };
+
+      console.log('📊 STEP 3: Dados a serem inseridos:', articleData);
+
+      // STEP 3: Fazer INSERT e CAPTURAR resultado
+      console.log('💾 STEP 4: Tentando inserir na tabela articles...');
+      const { data: insertedData, error: insertError } = await supabase
+        .from('articles')
+        .insert(articleData)
+        .select(); // 🔍 IMPORTANTE: Retorna o dado inserido!
+
+      // 🔍 LOG 2: Resultado do INSERT
+      console.log('📊 STEP 5: Resultado do INSERT:', {
+        data: insertedData,
+        error: insertError,
       });
+
+      if (insertError) {
+        console.error('❌ ERRO NO INSERT:', insertError);
+        throw insertError;
+      }
+
+      if (!insertedData || insertedData.length === 0) {
+        console.error('❌ INSERT não retornou dados!');
+        throw new Error('Artigo não foi criado no banco de dados! Verifique RLS ou constraints.');
+      }
+
+      console.log('✅ STEP 6: Artigo inserido com sucesso:', insertedData[0]);
       
-      await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
+      // STEP 4: Atualizar status na fila
+      console.log('📝 STEP 7: Atualizando status na fila...');
+      const { error: updateError } = await supabase
+        .from('articles_queue')
+        .update({ status: 'approved' })
+        .eq('id', article.id);
+
+      if (updateError) {
+        console.error('⚠️ Erro ao atualizar fila (mas artigo foi publicado):', updateError);
+      } else {
+        console.log('✅ Fila atualizada!');
+      }
       
-      toast.success('Artigo publicado! 🚀 Indexação será solicitada automaticamente.', { id: toastId });
+      toast.success('Artigo publicado! 🚀', { id: toastId });
+      
+      // STEP 5: Recarregar dados
+      console.log('🔄 STEP 8: Recarregando dados...');
       await loadData();
       setShowEditModal(false);
+      
+      console.log('✅ PROCESSO COMPLETO!');
+      
     } catch (error: any) {
-      toast.error('Erro ao publicar', { id: toastId, description: error.message });
+      console.error('❌ ERRO FATAL:', error);
+      console.error('❌ Detalhes completos:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
+      
+      toast.error('Erro ao publicar', { 
+        id: toastId, 
+        description: error.message || 'Erro desconhecido. Veja o console (F12).' 
+      });
     }
   };
 
