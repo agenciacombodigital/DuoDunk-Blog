@@ -229,20 +229,22 @@ export default function AdminPage() {
       const articleData = {
         queue_id: article.id,
         title: article.title,
-        summary: article.summary,
+        summary: article.summary || '',
         body: article.body,
-        meta_description: article.meta_description,
-        tags: article.tags,
+        meta_description: article.meta_description || article.summary || '',
+        tags: article.tags || [],
         slug: article.slug,
-        image_url: article.image_url,
-        source: article.source,
-        original_link: article.original_link,
+        image_url: article.image_url || '',
+        source: article.source || 'DuoDunk',
+        original_link: article.original_link || '',
         published: true,
         published_at: new Date().toISOString(),
         is_featured: article.is_featured || false,
         video_url: article.video_url || null,
         image_focal_point: article.image_focal_point || '50% 50%',
         image_focal_point_mobile: article.image_focal_point_mobile || '50%',
+        views: 0,
+        created_at: new Date().toISOString(),
       };
 
       console.log('📊 STEP 3: Dados a serem inseridos:', articleData);
