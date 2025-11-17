@@ -211,24 +211,15 @@ export default function AdminPage() {
     const toastId = toast.loading("Publicando artigo...");
     
     try {
-      // 🔍 LOG 1: Dados do artigo
-      console.log('📊 STEP 1: Dados do artigo a ser aprovado:', {
-        id: article.id,
-        title: article.title,
-        slug: article.slug,
-        is_featured: article.is_featured,
-      });
+      console.log('📊 STEP 1: Aprovando artigo:', article.title);
 
       // STEP 1: Limpar destaques se necessário
       if (article.is_featured) {
-        console.log('⭐ STEP 2: Limpando artigos em destaque...');
-        // Usamos o cliente Admin para garantir que a operação de UPDATE funcione
-        // sem problemas de RLS, já que estamos limpando todos os destaques.
-        await clearAllFeaturedArticles(); 
-        console.log('✅ Destaques limpos!');
+        console.log('⭐ STEP 2: Limpando destaques...');
+        await clearAllFeaturedArticles();
       }
 
-      // STEP 2: Preparar dados para INSERT
+      // STEP 2: Preparar dados
       const articleData = {
         queue_id: article.id,
         title: article.title,
@@ -250,76 +241,54 @@ export default function AdminPage() {
         created_at: new Date().toISOString(),
       };
 
-      console.log('📊 STEP 3: Dados a serem inseridos:', articleData);
-
-      // STEP 3: Fazer INSERT e CAPTURAR resultado
-      console.log('💾 STEP 4: Tentando inserir na tabela articles...');
-      // Usamos o cliente Admin para garantir que a inserção funcione,
-      // especialmente se houver problemas de RLS ou se o artigo for de uma fonte externa.
-      const { data: insertedData, error: insertError } = await supabaseAdmin
+      console.log('💾 STEP 3: Inserindo na tabela articles...');
+      
+      // ✅ USAR supabase (cliente normal) ao invés de supabaseAdmin
+      // O RLS deve permitir INSERTs de usuários autenticados
+      const { data: insertedData, error: insertError } = await supabase
         .from('articles')
         .insert(articleData)
-        .select(); // 🔍 IMPORTANTE: Retorna o dado inserido!
-
-      // 🔍 LOG 2: Resultado do INSERT
-      console.log('📊 STEP 5: Resultado do INSERT:', {
-        data: insertedData,
-        error: insertError,
-      });
+        .select();
 
       if (insertError) {
-        console.error('❌ ERRO NO INSERT:', insertError);
+        console.error('❌ Erro no INSERT:', insertError);
         throw insertError;
       }
 
       if (!insertedData || insertedData.length === 0) {
-        console.error('❌ INSERT não retornou dados!');
-        throw new Error('Artigo não foi criado no banco de dados! Verifique RLS ou constraints.');
+        throw new Error('Artigo não foi criado. Verifique RLS ou constraints.');
       }
 
-      console.log('✅ STEP 6: Artigo inserido com sucesso:', insertedData[0]);
+      console.log('✅ STEP 4: Artigo publicado:', insertedData[0].slug);
       
-      // STEP 4: Atualizar status na fila (pode usar o cliente normal, pois RLS na fila é mais permissivo)
-      console.log('📝 STEP 7: Atualizando status na fila...');
+      // STEP 3: Atualizar fila (apenas marcar como approved)
+      console.log('🔄 STEP 5: Atualizando fila...');
       const { error: updateError } = await supabase
         .from('articles_queue')
         .update({ status: 'approved' })
         .eq('id', article.id);
 
       if (updateError) {
-        console.error('⚠️ Erro ao atualizar fila (mas artigo foi publicado):', updateError);
-      } else {
-        console.log('✅ Fila atualizada!');
+        console.warn('⚠️ Erro ao atualizar fila:', updateError);
+        // Não bloqueia o fluxo, pois o artigo já foi publicado
       }
       
       toast.success('Artigo publicado! 🚀', { id: toastId });
-      
-      // STEP 5: Recarregar dados
-      console.log('🔄 STEP 8: Recarregando dados...');
       await loadData();
       setShowEditModal(false);
       
-      console.log('✅ PROCESSO COMPLETO!');
-      
     } catch (error: any) {
-      console.error('❌ ERRO FATAL:', error);
-      console.error('❌ Detalhes completos:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
+      console.error('❌ ERRO:', error);
       
-      // Se o erro for de unicidade (slug duplicado), informa o usuário
-      if (error.code === '23505') { // Código de erro PostgreSQL para violação de unicidade
-        toast.error('Erro de Publicação: Slug Duplicado', {
+      if (error.code === '23505') {
+        toast.error('Slug Duplicado', {
           id: toastId,
-          description: 'O slug (URL) deste artigo já existe. Por favor, edite o título ou o slug e tente novamente.'
+          description: 'Este slug já existe. Edite o título ou slug.'
         });
       } else {
         toast.error('Erro ao publicar', { 
           id: toastId, 
-          description: error.message || 'Erro desconhecido. Veja o console (F12).' 
+          description: error.message 
         });
       }
     }
@@ -374,8 +343,7 @@ export default function AdminPage() {
     if (!window.confirm('DELETAR este artigo publicado permanentemente? Esta ação é irreversível.')) return;
     const toastId = toast.loading("Deletando artigo publicado...");
     try {
-      // Usando supabaseAdmin para garantir que a exclusão funcione
-      await supabaseAdmin.from('articles').delete().eq('id', articleId);
+      await supabase.from('articles').delete().eq('id', articleId);
       toast.success('Artigo publicado deletado.', { id: toastId });
       await loadPublished();
     } catch (error: any) {
@@ -392,8 +360,7 @@ export default function AdminPage() {
     setIsDeleting(true);
     const toastId = toast.loading("Deletando todas as notícias...");
     try {
-      // Usando supabaseAdmin para garantir que a exclusão funcione
-      await supabaseAdmin.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       toast.success('Todas as notícias foram deletadas!', { id: toastId });
       await loadPublished();
     } catch (error: any) {
