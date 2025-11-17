@@ -214,16 +214,14 @@ const approveArticle = async (article: any) => {
   const toastId = toast.loading("Publicando artigo...");
   
   try {
-    console.log('🔍 ===== INÍCIO DO DEBUG =====');
-    console.log('📊 Artigo original completo:', JSON.stringify(article, null, 2));
-
     // STEP 1: Limpar destaques se necessário
     if (article.is_featured) {
-      console.log('⭐ Limpando destaques...');
       await clearAllFeaturedArticles();
     }
 
-    // STEP 2: Preparar dados MINIMALISTAS (sem campos opcionais problemáticos)
+    // STEP 2: Preparar dados para INSERT na tabela articles
+    // ⚠️ IMPORTANTE: A tabela "articles" NÃO TEM coluna "status"!
+    // A coluna "status" existe APENAS na tabela "articles_queue"
     const articleData = {
       // ✅ CAMPOS OBRIGATÓRIOS
       title: article.title,
@@ -239,7 +237,7 @@ const approveArticle = async (article: any) => {
       image_url: article.image_url || '',
       source: article.source || 'DuoDunk',
       
-      // ✅ CAMPOS OPCIONAIS (só inclui se existir)
+      // ✅ CAMPOS OPCIONAIS (só inclui se existir e não for vazio)
       ...(article.queue_id && { queue_id: article.queue_id }),
       ...(article.original_link && { original_link: article.original_link }),
       ...(article.video_url && { video_url: article.video_url }),
@@ -254,88 +252,54 @@ const approveArticle = async (article: any) => {
       image_focal_point_mobile: article.image_focal_point_mobile || '50%',
     };
 
-    console.log('📦 Dados preparados para INSERT:', JSON.stringify(articleData, null, 2));
-    console.log('🔢 Número de campos:', Object.keys(articleData).length);
-    console.log('📝 Lista de campos:', Object.keys(articleData).join(', '));
-
-    // STEP 3: Tentar INSERT com captura COMPLETA de erro
-    console.log('💾 Tentando INSERT...');
-    
+    // STEP 3: INSERT na tabela articles (SEM campo "status"!)
     const { data: insertedData, error: insertError } = await supabase
       .from('articles')
       .insert(articleData)
       .select();
 
-    console.log('📊 Resposta do Supabase:');
-    console.log('  - Data:', insertedData);
-    console.log('  - Error:', insertError);
-
     if (insertError) {
-      console.error('❌ ERRO DETALHADO DO SUPABASE:');
-      console.error('  - Message:', insertError.message);
-      console.error('  - Details:', insertError.details);
-      console.error('  - Hint:', insertError.hint);
-      console.error('  - Code:', insertError.code);
-      console.error('  - Objeto completo:', JSON.stringify(insertError, null, 2));
+      console.error('❌ Erro no INSERT:', insertError);
       throw insertError;
     }
 
     if (!insertedData || insertedData.length === 0) {
-      console.error('❌ INSERT não retornou dados!');
       throw new Error('Artigo não foi criado. INSERT vazio!');
     }
-
-    console.log('✅ Artigo inserido com sucesso!');
-    console.log('📄 Dados do artigo criado:', JSON.stringify(insertedData[0], null, 2));
     
-    // STEP 4: Atualizar fila
-    console.log('🔄 Atualizando status na fila...');
+    // STEP 4: Atualizar status NA FILA (articles_queue TEM a coluna "status")
+    // ⚠️ ESTA É A ÚNICA TABELA QUE TEM A COLUNA "status"!
     const { error: updateError } = await supabase
-      .from('articles_queue')
+      .from('articles_queue')  // ← Tabela CORRETA para atualizar status
       .update({ status: 'approved' })
       .eq('id', article.id);
 
     if (updateError) {
-      console.warn('⚠️ Erro ao atualizar fila (artigo já foi publicado):', updateError);
+      console.warn('⚠️ Erro ao atualizar fila:', updateError);
+      // Não bloqueia o fluxo, pois o artigo já foi publicado
     }
     
     toast.success('Artigo publicado! 🚀', { id: toastId });
     await loadData();
     setShowEditModal(false);
     
-    console.log('🔍 ===== FIM DO DEBUG (SUCESSO) =====');
-    
   } catch (error: any) {
-    console.error('🔍 ===== ERRO CAPTURADO =====');
-    console.error('❌ Tipo do erro:', typeof error);
-    console.error('❌ Nome do erro:', error.name);
-    console.error('❌ Mensagem:', error.message);
-    console.error('❌ Stack:', error.stack);
-    console.error('❌ Objeto completo:', error);
-    
-    // Tentar extrair detalhes específicos do Supabase
-    if (error.details) console.error('📋 Details:', error.details);
-    if (error.hint) console.error('💡 Hint:', error.hint);
-    if (error.code) console.error('🔢 Code:', error.code);
-    
-    // Tentar serializar o erro completo
-    try {
-      console.error('❌ Erro serializado:', JSON.stringify(error, null, 2));
-    } catch {
-      console.error('❌ Erro não é serializável');
-    }
-    
-    console.log('🔍 ===== FIM DO DEBUG (ERRO) =====');
+    console.error('❌ ERRO:', error);
     
     if (error.code === '23505') {
       toast.error('Slug Duplicado', {
         id: toastId,
         description: 'Este slug já existe. Edite o título ou slug.'
       });
+    } else if (error.code === '42703') {
+      toast.error('Erro de Estrutura do Banco', {
+        id: toastId,
+        description: 'Coluna inexistente na tabela. Contate o suporte técnico.'
+      });
     } else {
       toast.error('Erro ao publicar', { 
         id: toastId, 
-        description: error.message || 'Veja o console (F12) para detalhes completos'
+        description: error.message
       });
     }
   }
