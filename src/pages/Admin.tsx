@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { logout } from '@/lib/auth'; // Importando o novo logout
+import { logout } from '@/lib/auth';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
 
@@ -15,16 +15,15 @@ import EditArticleModal from '@/components/admin/EditArticleModal';
 import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 import { clearAllFeaturedArticles } from '@/lib/adminUtils';
 import { retryRateLimitedArticles, getRateLimitStats } from '@/lib/retryRateLimitedArticles';
-import { useAuth } from '@/hooks/useAuth'; // Importando useAuth
-// import { requestGoogleIndexing } from '@/services/indexingService'; // Importando o serviço de indexação
+import { useAuth } from '@/hooks/useAuth';
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const { isAdmin, isLoading } = useAuth(); // Usando useAuth
+  const { isAdmin, isLoading } = useAuth();
   const [queue, setQueue] = useState<any[]>([]);
   const [published, setPublished] = useState<any[]>([]);
   const [rateLimitStats, setRateLimitStats] = useState({ total: 0, ready_to_retry: 0, still_waiting: 0 });
-  const [localLoading, setLocalLoading] = useState(true); // Usamos localLoading para o fetch de dados
+  const [localLoading, setLocalLoading] = useState(true);
 
   const [isScraping, setIsScraping] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -175,7 +174,6 @@ export default function AdminPage() {
     }
   };
 
-  // Recebe [focalPointDesktop, focalPointMobile]
   const handleFocalPointCommit = async (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
     
@@ -193,7 +191,6 @@ export default function AdminPage() {
     }
   };
   
-  // Recebe [focalPointDesktop, focalPointMobile]
   const handleFocalPointChange = (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
 
@@ -212,12 +209,10 @@ export default function AdminPage() {
     if (!window.confirm('Aprovar e publicar este artigo?')) return;
     const toastId = toast.loading("Publicando artigo...");
     try {
-      // 1. Se o artigo for destaque, limpa os destaques antigos
       if (article.is_featured) {
         await clearAllFeaturedArticles();
       }
 
-      // 2. Publica o novo artigo
       await supabase.from('articles').insert({
         queue_id: article.id,
         title: article.title,
@@ -237,13 +232,9 @@ export default function AdminPage() {
         image_focal_point_mobile: article.image_focal_point_mobile || '50%',
       });
       
-      // 3. Remove da fila
       await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       
-      // 4. 🚀 Solicitar Indexação (REMOVIDO: Agora é feito via trigger do Supabase)
-      // await requestGoogleIndexing([`/artigos/${article.slug}`]);
-      
-      toast.success('Artigo publicado!', { id: toastId });
+      toast.success('Artigo publicado! 🚀 Indexação será solicitada automaticamente.', { id: toastId });
       await loadData();
       setShowEditModal(false);
     } catch (error: any) {
@@ -368,7 +359,6 @@ export default function AdminPage() {
   const isGlobalLoading = isScraping || isProcessing || isDeleting || localLoading || isRetrying;
 
   if (isLoading || !isAdmin) {
-    // O AuthProvider já lida com o loading inicial e redireciona se não for admin
     return null; 
   }
 
