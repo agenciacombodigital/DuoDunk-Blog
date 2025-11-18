@@ -94,16 +94,25 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
     // 4. Publicar no Supabase
     console.log('📤 Enviando para o Supabase...');
     
+    // Usando as variáveis de ambiente do Vercel
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas no Vercel.');
+        return res.status(500).json({ success: false, error: 'Configuração de ambiente Supabase ausente.' });
+    }
+    
+    // URL da Edge Function (Hardcoded com o Project ID)
+    const edgeFunctionUrl = `https://brerfpcfkyptkzygyzxl.supabase.co/functions/v1/publish-markdown-post`;
+    
     const supabaseResponse = await fetch(
-      `${supabaseUrl}/functions/v1/publish-markdown-post`,
+      edgeFunctionUrl,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
+          'Authorization': `Bearer ${supabaseKey}` // Usando a Service Role Key
         },
         body: JSON.stringify({
           markdownContent: conteudo
@@ -120,7 +129,7 @@ Confira abaixo todos os resultados da rodada da NBA realizada em **${dataFormata
     }
     
     // Solicitar indexação no Google
-    const urlParaIndexar = `https://www.duodunk.com.br/artigos/${slug}`; // Corrigido para incluir /artigos/
+    const urlParaIndexar = `https://www.duodunk.com.br/artigos/${slug}`;
     
     try {
       const indexResponse = await fetch('https://www.duodunk.com.br/api/request-google-indexing', {
