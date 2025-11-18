@@ -5,6 +5,7 @@ interface ArticleMetaProps {
   description: string;
   imageUrl: string;
   publishedAt: string;
+  updatedAt?: string; // Adicionado
   author?: string;
   slug: string;
   tags?: string[];
@@ -25,6 +26,7 @@ export default function ArticleMeta({
   description, 
   imageUrl, 
   publishedAt, 
+  updatedAt, // Usando a nova prop
   author = "Duo Dunk",
   slug,
   tags = []
@@ -46,6 +48,9 @@ export default function ArticleMeta({
     ...tags, 
     ...PRIORITY_KEYWORDS
   ])).join(', ');
+  
+  // Usar updatedAt se existir, senão usa publishedAt
+  const dateModified = updatedAt || publishedAt;
 
   return (
     <Helmet>
@@ -53,6 +58,8 @@ export default function ArticleMeta({
       <title>{title} | Duo Dunk</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={allKeywords} />
+      
+      {/* ✅ CANÔNICA: URL absoluta e limpa */}
       <link rel="canonical" href={articleUrl} />
 
       {/* OPEN GRAPH (WhatsApp, Facebook) */}
@@ -67,6 +74,7 @@ export default function ArticleMeta({
       <meta property="og:image:alt" content={title} />
       <meta property="og:locale" content="pt_BR" />
       <meta property="article:published_time" content={publishedAt} />
+      <meta property="article:modified_time" content={dateModified} /> {/* Adicionado modified_time */}
       <meta property="article:author" content={author} />
       {tags.map(tag => (
         <meta key={tag} property="article:tag" content={tag} />
@@ -79,18 +87,24 @@ export default function ArticleMeta({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={finalImageUrl} />
 
-      {/* SCHEMA.ORG JSON-LD */}
+      {/* ✅ SCHEMA.ORG JSON-LD (NewsArticle para Google News) */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "NewsArticle",
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": articleUrl
+          },
           "headline": title,
-          "description": description,
-          "image": finalImageUrl,
+          "image": [
+            finalImageUrl
+          ],
           "datePublished": publishedAt,
+          "dateModified": dateModified, // Usando a data de modificação
           "author": {
-            "@type": "Organization",
-            "name": author
+            "@type": "Person", // Alterado para Person, mais comum para autores
+            "name": author // Usando o nome do autor
           },
           "publisher": {
             "@type": "Organization",
@@ -99,10 +113,6 @@ export default function ArticleMeta({
               "@type": "ImageObject",
               "url": "https://www.duodunk.com.br/images/duodunk-logoV2.svg"
             }
-          },
-          "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": articleUrl
           }
         })}
       </script>
