@@ -27,7 +27,7 @@ export default function ArticleMeta({
   imageUrl, 
   publishedAt, 
   updatedAt, // Usando a nova prop
-  author = "Duo Dunk",
+  author = "Fernando Balley", // Definindo o autor padrão
   slug,
   tags = []
 }: ArticleMetaProps) {
@@ -49,8 +49,9 @@ export default function ArticleMeta({
     ...PRIORITY_KEYWORDS
   ])).join(', ');
   
-  // Usar updatedAt se existir, senão usa publishedAt
-  const dateModified = updatedAt || publishedAt;
+  // Usar updatedAt se existir, senão usa publishedAt. Garantir formato ISO.
+  const datePublishedISO = new Date(publishedAt).toISOString();
+  const dateModifiedISO = new Date(updatedAt || publishedAt).toISOString();
 
   return (
     <Helmet>
@@ -73,8 +74,8 @@ export default function ArticleMeta({
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={title} />
       <meta property="og:locale" content="pt_BR" />
-      <meta property="article:published_time" content={publishedAt} />
-      <meta property="article:modified_time" content={dateModified} /> {/* Adicionado modified_time */}
+      <meta property="article:published_time" content={datePublishedISO} />
+      <meta property="article:modified_time" content={dateModifiedISO} /> {/* Usando data ISO formatada */}
       <meta property="article:author" content={author} />
       {tags.map(tag => (
         <meta key={tag} property="article:tag" content={tag} />
@@ -100,10 +101,10 @@ export default function ArticleMeta({
           "image": [
             finalImageUrl
           ],
-          "datePublished": publishedAt,
-          "dateModified": dateModified, // Usando a data de modificação
+          "datePublished": datePublishedISO, // Usando data ISO formatada
+          "dateModified": dateModifiedISO, // Usando data ISO formatada
           "author": {
-            "@type": "Person", // Alterado para Person, mais comum para autores
+            "@type": "Person",
             "name": author // Usando o nome do autor
           },
           "publisher": {

@@ -92,6 +92,14 @@ export default function Artigo() {
       </div>
     );
   };
+  
+  // Determinar o nome do autor para o Schema Markup
+  let articleAuthor = "Duo Dunk";
+  if (article.source && article.source.toLowerCase().includes('duodunk')) {
+    articleAuthor = "Fernando Balley";
+  } else if (article.source) {
+    articleAuthor = article.source;
+  }
 
   return (
     <>
@@ -101,7 +109,7 @@ export default function Artigo() {
         imageUrl={article.image_url}
         publishedAt={article.published_at}
         updatedAt={article.updated_at} // Passando a data de atualização
-        author={article.source || "Duo Dunk"}
+        author={articleAuthor} // Passando o autor determinado
         slug={article.slug}
         tags={article.tags || []}
       />
