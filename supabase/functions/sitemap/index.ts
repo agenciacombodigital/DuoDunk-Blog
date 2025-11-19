@@ -44,9 +44,10 @@ serve(async (req) => {
 
     // 2. Gerar URLs dinâmicas
     const articleUrls = (articles || []).map(article => {
+      // Usar updated_at se existir, senão usa published_at
       const lastmod = article.updated_at || article.published_at;
       return {
-        loc: `${SITE_URL}/artigos/${article.slug}`,
+        loc: `/artigos/${article.slug}`, // Corrigido para usar /artigos/
         lastmod: lastmod ? new Date(lastmod).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         changefreq: 'daily',
         priority: '0.7',

@@ -100,6 +100,7 @@ export default function Artigo() {
         description={article.meta_description || article.summary}
         imageUrl={article.image_url}
         publishedAt={article.published_at}
+        updatedAt={article.updated_at} // Passando a data de atualização
         author={article.source || "Duo Dunk"}
         slug={article.slug}
         tags={article.tags || []}
