@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
 
+# Bloqueio de rotas de API para economizar crawl budget
+Disallow: /api/
+
+# Localização do Sitemap
 Sitemap: https://www.duodunk.com.br/sitemap.xml
