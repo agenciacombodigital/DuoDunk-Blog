@@ -10,6 +10,36 @@ import DOMPurify from 'dompurify';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import ArticleMeta from '@/components/ArticleMeta';
 
+// Helper para formatar a data no estilo "DD MMM YYYY às HH:MM"
+const formatDateTime = (dateString: string, includeTime: boolean = true): string => {
+  try {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    };
+
+    if (includeTime) {
+      options.hour = '2-digit';
+      options.minute = '2-digit';
+    }
+
+    const formattedDate = date.toLocaleDateString('pt-BR', options).replace(/\./g, ''); // Remove pontos (ex: 20 nov 2025)
+    
+    if (includeTime) {
+      const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+      return `${formattedDate} às ${time}`;
+    }
+    
+    return formattedDate;
+
+  } catch (e) {
+    return 'Data Indisponível';
+  }
+};
+
 export default function Artigo() {
   const { slug } = useParams();
   const [article, setArticle] = useState<any>(null);
@@ -93,13 +123,17 @@ export default function Artigo() {
     );
   };
   
-  // Determinar o nome do autor para o Schema Markup
+  // Determinar o nome do autor para o Schema Markup e exibição
   let articleAuthor = "Duo Dunk";
-  if (article.source && article.source.toLowerCase().includes('duodunk')) {
+  if (article.source && article.source.toLowerCase().includes('duodunk') || article.source.toLowerCase().includes('editorial')) {
     articleAuthor = "Fernando Balley";
   } else if (article.source) {
     articleAuthor = article.source;
   }
+  
+  const publishedDate = formatDateTime(article.published_at);
+  const isUpdated = article.updated_at && new Date(article.updated_at).getTime() > new Date(article.published_at).getTime() + 60000; // Se atualizado há mais de 1 minuto
+  const updatedDate = isUpdated ? formatDateTime(article.updated_at) : null;
 
   return (
     <>
@@ -125,26 +159,29 @@ export default function Artigo() {
                 Voltar
               </Link>
 
-              <div className="flex items-center gap-4 text-sm text-gray-500 mb-6 flex-wrap font-inter">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {new Date(article.published_at).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </span>
-              </div>
-
               {/* AJUSTE DE TAMANHO: Título reduzido para text-3xl no mobile */}
-              <h1 className="font-oswald text-3xl md:text-6xl font-bold uppercase text-gray-900 mb-6 leading-tight tracking-wide">
+              <h1 className="font-oswald text-3xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight tracking-wide">
                 {article.title}
               </h1>
 
               {/* AJUSTE DE TAMANHO: Resumo reduzido para text-lg no mobile */}
-              <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed font-inter">
+              <p className="text-lg md:text-xl text-gray-600 mb-6 leading-relaxed font-inter">
                 {article.summary}
               </p>
+              
+              {/* NOVO BLOCO DE AUTOR E DATA */}
+              <div className="text-sm text-gray-600 mb-8 font-inter space-y-1">
+                <p className="font-bold">Por {articleAuthor}</p>
+                <p className="text-xs">
+                  Postado em {publishedDate}
+                  {isUpdated && (
+                    <span className="ml-2 text-gray-500 italic">
+                      (Atualizado em {updatedDate})
+                    </span>
+                  )}
+                </p>
+              </div>
+              {/* FIM NOVO BLOCO */}
 
               {article.image_url && (
                 <img
