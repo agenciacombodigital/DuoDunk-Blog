@@ -125,10 +125,17 @@ export default function Artigo() {
   
   // Determinar o nome do autor para o Schema Markup e exibição
   let articleAuthor = "Duo Dunk";
-  if (article.source && article.source.toLowerCase().includes('duodunk') || article.source.toLowerCase().includes('editorial')) {
-    articleAuthor = "Fernando Balley";
-  } else if (article.source) {
-    articleAuthor = article.source;
+  const internalSources = ['duodunk', 'editorial', 'auto-gerado'];
+  
+  if (article.source) {
+    const lowerSource = article.source.toLowerCase();
+    const isInternal = internalSources.some(s => lowerSource.includes(s));
+    
+    if (isInternal) {
+      articleAuthor = "Fernando Balley";
+    } else {
+      articleAuthor = article.source;
+    }
   }
   
   const publishedDate = formatDateTime(article.published_at);
