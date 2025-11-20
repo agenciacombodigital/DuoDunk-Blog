@@ -125,17 +125,16 @@ export default function Artigo() {
   
   // Determinar o nome do autor para o Schema Markup e exibição
   let articleAuthor = "Duo Dunk";
-  const internalSources = ['duodunk', 'editorial', 'auto-gerado'];
+  const lowerSource = article.source ? article.source.toLowerCase() : '';
   
-  if (article.source) {
-    const lowerSource = article.source.toLowerCase();
-    const isInternal = internalSources.some(s => lowerSource.includes(s));
-    
-    if (isInternal) {
-      articleAuthor = "Fernando Balley";
-    } else {
-      articleAuthor = article.source;
-    }
+  if (lowerSource.includes('yahoo sports')) {
+    articleAuthor = "Hugo Tamura";
+  } else if (lowerSource.includes('espn')) {
+    articleAuthor = "Maiara Pires";
+  } else if (lowerSource.includes('duodunk') || lowerSource.includes('editorial') || lowerSource.includes('auto-gerado')) {
+    articleAuthor = "Fernando Balley";
+  } else if (article.source) {
+    articleAuthor = article.source;
   }
   
   const publishedDate = formatDateTime(article.published_at);
