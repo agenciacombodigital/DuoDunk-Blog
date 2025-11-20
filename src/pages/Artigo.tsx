@@ -10,27 +10,29 @@ import DOMPurify from 'dompurify';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import ArticleMeta from '@/components/ArticleMeta';
 
-// Helper para formatar a data no estilo "DD MMM YYYY às HH:MM"
+// Helper para formatar a data no estilo "DD MMM YYYY, HH:MM"
 const formatDateTime = (dateString: string, includeTime: boolean = true): string => {
   try {
     const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
+    
+    const dateOptions: Intl.DateTimeFormatOptions = {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
       timeZone: 'America/Sao_Paulo',
     };
 
-    if (includeTime) {
-      options.hour = '2-digit';
-      options.minute = '2-digit';
-    }
+    const timeOptions: Intl.DateTimeFormatOptions = {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo',
+    };
 
-    const formattedDate = date.toLocaleDateString('pt-BR', options).replace(/\./g, ''); // Remove pontos (ex: 20 nov 2025)
+    const formattedDate = date.toLocaleDateString('pt-BR', dateOptions).replace(/\./g, ''); // Ex: 20 nov 2025
     
     if (includeTime) {
-      const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
-      return `${formattedDate} às ${time}`;
+      const time = date.toLocaleTimeString('pt-BR', timeOptions); // Ex: 11:25
+      return `${formattedDate}, ${time}`; // Ex: 20 nov 2025, 11:25
     }
     
     return formattedDate;
@@ -134,6 +136,7 @@ export default function Artigo() {
   } else if (lowerSource.includes('duodunk') || lowerSource.includes('editorial') || lowerSource.includes('auto-gerado')) {
     articleAuthor = "Fernando Balley";
   } else if (article.source) {
+    // Se for outra fonte externa não mapeada, usamos o nome da fonte
     articleAuthor = article.source;
   }
   
