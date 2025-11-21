@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 
@@ -19,7 +19,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
     
-    // Recupera a chave correta do Gemini
+    // Usa a chave GEMINI_API_KEY correta
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
     if (!geminiApiKey) {
       throw new Error("A chave GEMINI_API_KEY não foi encontrada nas variáveis de ambiente.");
@@ -85,7 +85,6 @@ serve(async (req) => {
       let canalFormatado = "League Pass";
       let icon = "📲"; 
       
-      // Regex para identificar canais brasileiros na lista da ESPN
       const temTransmissaoBR = canais.some((c: string) => /ESPN|Star|Disney|Amazon|Vivo|YouTube/i.test(c));
       
       if (temTransmissaoBR) {
