@@ -32,8 +32,10 @@ serve(async (req) => {
     const espnData = await espnRes.json();
     
     const jogos = espnData.events || [];
+    
+    // SE NÃO TIVER JOGOS, RETORNA SUCESSO MAS AVISA
     if (jogos.length === 0) {
-      return new Response(JSON.stringify({ message: "Nenhum jogo hoje" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: false, message: "Nenhum jogo hoje para gerar agenda." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Processar Jogos
@@ -45,7 +47,6 @@ serve(async (req) => {
       return `- ${timeVisitante} @ ${timeCasa} (Transmissão: ${canais || 'League Pass'})`;
     }).join("\n");
 
-    // Gerar Intro com IA
     console.log("Gerando texto com Gemini...");
     const prompt = `
       Atue como um jornalista esportivo especialista em NBA do blog "DuoDunk".
@@ -86,7 +87,6 @@ serve(async (req) => {
         const canaisFiltrados = canais.filter((c: string) => !c.includes("NBA")); 
         let canaisTexto = canaisFiltrados.length > 0 ? canaisFiltrados.join(" / ") : canais.join(" / ");
         
-        // MONETIZAÇÃO AMAZON
         if (/Amazon|Prime/i.test(canaisTexto)) {
              canaisTexto = canaisTexto.replace(/(Amazon Prime Video|Amazon|Prime Video)/gi, `<a href="${AMAZON_AFFILIATE_LINK}" target="_blank" rel="noopener noreferrer" style="color: #00A8E1; font-weight: bold; text-decoration: underline;">$1 (Teste Grátis)</a>`);
         }
@@ -102,7 +102,6 @@ serve(async (req) => {
     htmlBody += `</ul>`;
     htmlBody += `<p><em>* Horários de Brasília.</em></p>`;
     
-    // CTA MONETIZAÇÃO FINAL
     htmlBody += `<p style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-left: 5px solid #00A8E1;">
       <strong>Dica DuoDunk:</strong> Ainda não tem Amazon Prime? 
       <a href="${AMAZON_AFFILIATE_LINK}" target="_blank" rel="noopener noreferrer">Clique aqui para testar 30 dias grátis</a> 
@@ -112,7 +111,10 @@ serve(async (req) => {
     const dataSlug = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     const slug = `onde-assistir-nba-hoje-${dataSlug}`;
     
-    const { error } = await supabase.from('articles_queue').insert([{
+    console.log("Tentando salvar no banco...");
+
+    // OBJETO CORRIGIDO COM CAMPOS PADRÃO
+    const articlePayload = {
         title: `Onde assistir NBA hoje (${dataHoje})`,
         summary: `Confira a programação completa da NBA para hoje.`,
         body: htmlBody,
@@ -121,13 +123,24 @@ serve(async (req) => {
         source: 'DuoDunk Agenda',
         image_url: 'https://duodunk.com.br/images/agenda-nba-padrao.jpg', 
         status: 'processed', 
-        created_at: new Date().toISOString()
-    }]);
+        created_at: new Date().toISOString(),
+        is_featured: false, // Campo importante
+        video_url: null,    // Campo importante
+        image_focal_point: '50% 50%',
+        image_focal_point_mobile: '50%'
+    };
 
-    if (error) throw error;
+    const { data, error } = await supabase.from('articles_queue').insert([articlePayload]).select();
 
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (error) {
+        console.error("Erro ao inserir no Supabase:", error);
+        throw error; // Joga o erro para o catch
+    }
+
+    return new Response(JSON.stringify({ success: true, data: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    console.error("Erro GERAL na função:", error);
+    return new Response(JSON.stringify({ error: error.message, details: error }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
