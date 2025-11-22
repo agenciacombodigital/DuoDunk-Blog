@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { logout } from '@/lib/auth';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
@@ -88,6 +87,23 @@ export default function AdminPage() {
     navigate('/admin/login');
   };
 
+  // --- NOVO: Acionar o Robô da Agenda ---
+  const handleAutoAgenda = async () => {
+    const toastId = toast.loading("🤖 Robô criando a agenda...");
+    try {
+      // Chama a nova função renomeada
+      const { error } = await supabase.functions.invoke('auto-rodada-nba');
+      if (error) throw error;
+      
+      toast.success("Agenda criada! Verifique a fila.", { id: toastId });
+      await loadQueue();
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro no robô', { id: toastId, description: error.message });
+    }
+  };
+  // --------------------------------------
+
   const scrape = async () => {
     setIsScraping(true);
     const toastId = toast.loading("Coletando notícias...");
@@ -125,7 +141,6 @@ export default function AdminPage() {
     const toastId = toast.loading("Retentando artigos com Rate Limit...");
     try {
       const result = await retryRateLimitedArticles();
-      
       if (result.success) {
         if (result.processed > 0) {
           toast.success(`✅ ${result.processed} artigos marcados para reprocessamento!`, { id: toastId });
@@ -135,7 +150,6 @@ export default function AdminPage() {
       } else {
         throw new Error(result.error);
       }
-      
       await loadData();
     } catch (error: any) {
       toast.error('Erro ao retentar', { id: toastId, description: error.message });
@@ -158,14 +172,11 @@ export default function AdminPage() {
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from('article-images').getPublicUrl(fileName);
       if (!data.publicUrl) throw new Error("URL da imagem não encontrada.");
-      
       const { error: updateError } = await supabase.from('articles_queue').update({ image_url: data.publicUrl }).eq('id', articleId);
       if (updateError) throw updateError;
-
       if (editingArticle && editingArticle.id === articleId) {
         setEditingArticle((prev: any) => ({ ...prev, image_url: data.publicUrl }));
       }
-
       toast.success('Imagem atualizada!', { id: toastId });
       await loadQueue();
     } catch (error: any) {
@@ -177,7 +188,6 @@ export default function AdminPage() {
 
   const handleFocalPointCommit = async (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
-    
     const { error } = await supabase
       .from('articles_queue')
       .update({ 
@@ -185,16 +195,14 @@ export default function AdminPage() {
         image_focal_point_mobile: mobileFocalPoint,
       })
       .eq('id', articleId);
-
     if (error) {
       toast.error('Erro ao salvar o foco da imagem.');
       loadQueue();
     }
   };
-  
+
   const handleFocalPointChange = (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
-
     setQueue(prevQueue =>
       prevQueue.map(a =>
         a.id === articleId ? { 
@@ -206,123 +214,61 @@ export default function AdminPage() {
     );
   };
 
-  // APENAS A FUNÇÃO approveArticle COM LOGS EXTREMAMENTE DETALHADOS
-// Substitua APENAS esta função no seu Admin.tsx atual
-
-const approveArticle = async (article: any) => {
-  if (!window.confirm('Aprovar e publicar este artigo?')) return;
-  const toastId = toast.loading("Publicando artigo...");
-  
-  try {
-    // STEP 1: Limpar destaques se necessário
-    if (article.is_featured) {
-      await clearAllFeaturedArticles();
-    }
-
-    // STEP 2: Preparar dados para INSERT na tabela articles
-    // ⚠️ IMPORTANTE: A tabela "articles" NÃO TEM coluna "status"!
-    // A coluna "status" existe APENAS na tabela "articles_queue"
-    const articleData = {
-      // ✅ CAMPOS OBRIGATÓRIOS
-      title: article.title,
-      body: article.body,
-      slug: article.slug,
-      published: true,
-      published_at: new Date().toISOString(),
+  const approveArticle = async (article: any) => {
+    if (!window.confirm('Aprovar e publicar este artigo?')) return;
+    const toastId = toast.loading("Publicando artigo...");
+    try {
+      if (article.is_featured) {
+        await clearAllFeaturedArticles();
+      }
+      const articleData = {
+        title: article.title,
+        body: article.body,
+        slug: article.slug,
+        published: true,
+        published_at: new Date().toISOString(),
+        summary: article.summary || '',
+        meta_description: article.meta_description || article.summary || article.title.substring(0, 160),
+        tags: Array.isArray(article.tags) ? article.tags : [],
+        image_url: article.image_url || '',
+        source: article.source || 'DuoDunk',
+        ...(article.queue_id && { queue_id: article.queue_id }),
+        ...(article.original_link && { original_link: article.original_link }),
+        ...(article.video_url && { video_url: article.video_url }),
+        ...(article.subtitle && { subtitle: article.subtitle }),
+        is_featured: article.is_featured || false,
+        views: 0,
+        image_focal_point: article.image_focal_point || '50% 50%',
+        image_focal_point_mobile: article.image_focal_point_mobile || '50%',
+      };
+      const { data: insertedData, error: insertError } = await supabase.from('articles').insert(articleData).select();
+      if (insertError) throw insertError;
+      if (!insertedData || insertedData.length === 0) throw new Error('Artigo não foi criado. INSERT vazio!');
       
-      // ✅ CAMPOS COM FALLBACK SEGURO
-      summary: article.summary || '',
-      meta_description: article.meta_description || article.summary || article.title.substring(0, 160),
-      tags: Array.isArray(article.tags) ? article.tags : [],
-      image_url: article.image_url || '',
-      source: article.source || 'DuoDunk',
+      const { error: updateError } = await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
+      if (updateError) console.warn('⚠️ Erro ao atualizar fila:', updateError);
       
-      // ✅ CAMPOS OPCIONAIS (só inclui se existir e não for vazio)
-      ...(article.queue_id && { queue_id: article.queue_id }),
-      ...(article.original_link && { original_link: article.original_link }),
-      ...(article.video_url && { video_url: article.video_url }),
-      ...(article.subtitle && { subtitle: article.subtitle }),
-      
-      // ✅ CAMPOS BOOLEANOS E NUMÉRICOS COM DEFAULTS
-      is_featured: article.is_featured || false,
-      views: 0,
-      
-      // ✅ FOCAL POINTS COM DEFAULTS
-      image_focal_point: article.image_focal_point || '50% 50%',
-      image_focal_point_mobile: article.image_focal_point_mobile || '50%',
-    };
-
-    // STEP 3: INSERT na tabela articles (SEM campo "status"!)
-    const { data: insertedData, error: insertError } = await supabase
-      .from('articles')
-      .insert(articleData)
-      .select();
-
-    if (insertError) {
-      console.error('❌ Erro no INSERT:', insertError);
-      throw insertError;
+      toast.success('Artigo publicado! 🚀', { id: toastId });
+      await loadData();
+      setShowEditModal(false);
+    } catch (error: any) {
+      console.error('❌ ERRO:', error);
+      if (error.code === '23505') {
+        toast.error('Slug Duplicado', { id: toastId, description: 'Este slug já existe. Edite o título ou slug.' });
+      } else {
+        toast.error('Erro ao publicar', { id: toastId, description: error.message });
+      }
     }
-
-    if (!insertedData || insertedData.length === 0) {
-      throw new Error('Artigo não foi criado. INSERT vazio!');
-    }
-    
-    // STEP 4: Atualizar status NA FILA (articles_queue TEM a coluna "status")
-    // ⚠️ ESTA É A ÚNICA TABELA QUE TEM A COLUNA "status"!
-    const { error: updateError } = await supabase
-      .from('articles_queue')  // ← Tabela CORRETA para atualizar status
-      .update({ status: 'approved' })
-      .eq('id', article.id);
-
-    if (updateError) {
-      console.warn('⚠️ Erro ao atualizar fila:', updateError);
-      // Não bloqueia o fluxo, pois o artigo já foi publicado
-    }
-    
-    toast.success('Artigo publicado! 🚀', { id: toastId });
-    await loadData();
-    setShowEditModal(false);
-    
-  } catch (error: any) {
-    console.error('❌ ERRO:', error);
-    
-    if (error.code === '23505') {
-      toast.error('Slug Duplicado', {
-        id: toastId,
-        description: 'Este slug já existe. Edite o título ou slug.'
-      });
-    } else if (error.code === '42703') {
-      toast.error('Erro de Estrutura do Banco', {
-        id: toastId,
-        description: 'Coluna inexistente na tabela. Contate o suporte técnico.'
-      });
-    } else {
-      toast.error('Erro ao publicar', { 
-        id: toastId, 
-        description: error.message
-      });
-    }
-  }
-};
+  };
 
   const handleToggleFeatured = async (articleId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('articles_queue')
-        .update({ is_featured: !currentStatus })
-        .eq('id', articleId);
-  
+      const { error } = await supabase.from('articles_queue').update({ is_featured: !currentStatus }).eq('id', articleId);
       if (error) throw error;
-  
-      toast.success(
-        !currentStatus ? '⭐ Marcado como destaque!' : '✓ Destaque removido'
-      );
-      
+      toast.success(!currentStatus ? '⭐ Marcado como destaque!' : '✓ Destaque removido');
       await loadQueue();
     } catch (error: any) {
-      toast.error('Erro ao atualizar destaque', { 
-        description: error.message,
-      });
+      toast.error('Erro ao atualizar destaque', { description: error.message });
     }
   };
 
@@ -386,10 +332,8 @@ const approveArticle = async (article: any) => {
       toast.error('Título e corpo do artigo são obrigatórios.');
       return;
     }
-
     setLocalLoading(true);
     const toastId = toast.loading("Salvando edição...");
-
     try {
       const { error } = await supabase
         .from('articles_queue')
@@ -406,9 +350,7 @@ const approveArticle = async (article: any) => {
           image_focal_point_mobile: articleToSave.image_focal_point_mobile,
         })
         .eq('id', articleToSave.id);
-
       if (error) throw error;
-
       toast.success('Edição salva na fila!', { id: toastId });
       setShowEditModal(false);
       await loadQueue();
@@ -441,6 +383,7 @@ const approveArticle = async (article: any) => {
           onDeleteAll={deleteAllPublished} 
           onRetryRateLimited={handleRetryRateLimited}
           readyToRetryCount={rateLimitStats.ready_to_retry}
+          onGenerateAutoAgenda={handleAutoAgenda}
         />
         <AdminStats 
           pendingProcessingCount={pendingProcessing.length}
