@@ -7,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const AMAZON_AFFILIATE_LINK = "https://amzn.to/3KaOGB9";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -89,7 +91,14 @@ serve(async (req) => {
       
       if (temTransmissaoBR) {
         const canaisFiltrados = canais.filter((c: string) => !c.includes("NBA")); 
-        canalFormatado = canaisFiltrados.length > 0 ? canaisFiltrados.join(" / ") : canais.join(" / ");
+        let canaisTexto = canaisFiltrados.length > 0 ? canaisFiltrados.join(" / ") : canais.join(" / ");
+        
+        // MONETIZAÇÃO: Inserir link de afiliado Amazon
+        if (/Amazon|Prime/i.test(canaisTexto)) {
+             canaisTexto = canaisTexto.replace(/(Amazon Prime Video|Amazon|Prime Video)/gi, `<a href="${AMAZON_AFFILIATE_LINK}" target="_blank" rel="noopener noreferrer" style="color: #00A8E1; font-weight: bold; text-decoration: underline;">$1 (Teste Grátis)</a>`);
+        }
+
+        canalFormatado = canaisTexto;
         icon = "📺"; 
       }
 
@@ -101,9 +110,17 @@ serve(async (req) => {
 
     htmlBody += `</ul>`;
     htmlBody += `<p><em>* Horários de Brasília. A programação é de responsabilidade das emissoras e pode sofrer alterações.</em></p>`;
+    
+    // CTA Extra no final
+    htmlBody += `<p style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-left: 5px solid #00A8E1;">
+      <strong>Dica DuoDunk:</strong> Ainda não tem Amazon Prime? 
+      <a href="${AMAZON_AFFILIATE_LINK}" target="_blank" rel="noopener noreferrer">Clique aqui para testar 30 dias grátis</a> 
+      e assistir aos jogos da NBA ao vivo! 🏀
+    </p>`;
 
     // 6. Salvar na Fila (Articles Queue)
-    const slug = `onde-assistir-nba-hoje-${dataHoje.replace(/\//g, '-')}`;
+    const dataSlug = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const slug = `onde-assistir-nba-hoje-${dataSlug}`;
     
     const { data, error } = await supabase
       .from('articles_queue')
