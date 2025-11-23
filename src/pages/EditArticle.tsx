@@ -93,6 +93,7 @@ export default function EditArticle() {
         .from('article-images')
         .getPublicUrl(fileName);
 
+      // ✅ Atualiza o formData com o novo URL público
       setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
       toast.success('Imagem atualizada com sucesso!', { id: toastId });
     } catch (error: any) {
@@ -131,7 +132,7 @@ export default function EditArticle() {
           image_focal_point: formData.image_focal_point,
           image_focal_point_mobile: formData.image_focal_point_mobile,
           is_featured: formData.is_featured,
-          updated_at: new Date().toISOString(), // Adicionado para forçar a atualização do timestamp
+          updated_at: new Date().toISOString(), // Força a atualização do timestamp
         })
         .eq('id', article.id);
 
@@ -139,7 +140,7 @@ export default function EditArticle() {
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
       
-      // ✅ CORREÇÃO: Sempre navega para o painel de administração após salvar
+      // Navega para o painel de administração após salvar
       navigate('/admin');
       
     } catch (error: any) {
@@ -338,37 +339,43 @@ export default function EditArticle() {
                 </div>
               )}
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file);
-                }}
-                disabled={uploadingImage}
-                className="hidden"
-                id="image-upload"
-              />
-              <label
-                htmlFor="image-upload"
-                className={`flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-600 rounded-xl hover:border-pink-500 transition-colors cursor-pointer ${
-                  uploadingImage ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {uploadingImage ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin text-pink-500" />
-                    <span className="text-sm font-semibold text-gray-400 font-inter">Enviando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-400 font-inter">
-                      {formData.image_url ? 'Trocar Imagem' : 'Upload de Imagem'}
-                    </span>
-                  </>
-                )}
-              </label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500 transition"
+                  placeholder="Cole a URL da imagem aqui..."
+                />
+                
+                <input
+                  type="file"
+                  id="image-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file);
+                  }}
+                  disabled={uploadingImage}
+                />
+                <label
+                  htmlFor="image-upload"
+                  className={`flex items-center justify-center gap-2 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition cursor-pointer ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {uploadingImage ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Enviando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5" />
+                      <span>Upload</span>
+                    </>
+                  )}
+                </label>
+              </div>
               
               <div className="mt-6 pt-4 border-t border-gray-700">
                 <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
