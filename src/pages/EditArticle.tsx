@@ -131,15 +131,13 @@ export default function EditArticle() {
           image_focal_point: formData.image_focal_point,
           image_focal_point_mobile: formData.image_focal_point_mobile,
           is_featured: formData.is_featured,
+          updated_at: new Date().toISOString(), // Adicionado para forçar a atualização do timestamp
         })
         .eq('id', article.id);
 
       if (error) throw error;
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
-      
-      // 🚀 Solicitar Indexação (REMOVIDO: Agora é feito via trigger do Supabase)
-      // await requestGoogleIndexing([`/artigos/${finalSlug}`]);
       
       // ✅ CORREÇÃO: Sempre navega para o painel de administração após salvar
       navigate('/admin');
