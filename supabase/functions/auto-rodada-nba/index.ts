@@ -112,10 +112,13 @@ serve(async (req) => {
     const slug = `onde-assistir-nba-hoje-${dataSlug}`;
     
     console.log("Tentando salvar no banco...");
+    
+    const articleTitle = `Onde assistir NBA hoje (${dataHoje})`;
 
     // OBJETO CORRIGIDO COM CAMPOS PADRÃO
     const articlePayload = {
-        title: `Onde assistir NBA hoje (${dataHoje})`,
+        title: articleTitle,
+        original_title: articleTitle, // ✅ CAMPO ADICIONADO PARA EVITAR ERRO 23502
         summary: `Confira a programação completa da NBA para hoje.`,
         body: htmlBody,
         tags: [...new Set(tags)], 
