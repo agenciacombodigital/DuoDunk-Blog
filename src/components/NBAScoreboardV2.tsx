@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, ChevronRight, Play, Tv } from 'lucide-react';
-import GameStatsModalV2 from './GameStatsModalV2';
+import GameStatsModalV3 from './GameStatsModalV3';
 
 interface Game {
   gameId: string;
@@ -337,7 +337,7 @@ export default function NBAScoreboardV2() {
       </div>
 
       {isModalOpen && selectedGame && (
-        <GameStatsModalV2
+        <GameStatsModalV3
           game={selectedGame}
           onClose={() => {
             setIsModalOpen(false);
