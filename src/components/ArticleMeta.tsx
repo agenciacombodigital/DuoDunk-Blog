@@ -17,7 +17,13 @@ export default function ArticleMeta({ article }: ArticleMetaProps) {
   const siteUrl = 'https://www.duodunk.com.br';
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
   const imageUrl = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
-  const keywords = article.tags ? article.tags.join(', ') : 'NBA, Basquete, Notícias';
+  
+  // Lógica aprimorada para Keywords
+  // Pega as tags do artigo, remove duplicatas e junta com vírgula
+  const articleKeywords = article.tags && article.tags.length > 0
+    ? [...new Set(article.tags)].join(', ')
+    : 'NBA, Basquete, Notícias, NBA Brasil';
+
   const publishedTime = new Date(article.published_at).toISOString();
   const modifiedTime = article.updated_at ? new Date(article.updated_at).toISOString() : publishedTime;
   const authorName = article.author || 'Duo Dunk Redação';
@@ -43,6 +49,7 @@ export default function ArticleMeta({ article }: ArticleMetaProps) {
       }
     },
     "description": article.summary,
+    "keywords": articleKeywords, // Adicionado ao Schema também
     "mainEntityOfPage": {
       "@type": "WebPage",
       "@id": currentUrl
@@ -51,10 +58,10 @@ export default function ArticleMeta({ article }: ArticleMetaProps) {
 
   return (
     <Helmet>
-      {/* Título e Meta Básica */}
+      {/* Título e Meta Básica - Força a atualização */}
       <title>{article.title} | Duo Dunk</title>
       <meta name="description" content={article.summary} />
-      <meta name="keywords" content={keywords} />
+      <meta name="keywords" content={articleKeywords} />
       <link rel="canonical" href={currentUrl} />
 
       {/* Open Graph (Facebook/WhatsApp) */}
@@ -66,6 +73,9 @@ export default function ArticleMeta({ article }: ArticleMetaProps) {
       <meta property="article:published_time" content={publishedTime} />
       <meta property="article:modified_time" content={modifiedTime} />
       <meta property="article:author" content={authorName} />
+      <meta property="article:section" content="NBA" />
+      
+      {/* Gera uma meta tag para cada tag individualmente também */}
       {article.tags?.map(tag => (
         <meta property="article:tag" content={tag} key={tag} />
       ))}
