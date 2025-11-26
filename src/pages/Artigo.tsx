@@ -147,14 +147,16 @@ export default function Artigo() {
   return (
     <>
       <ArticleMeta
-        title={article.title}
-        description={article.meta_description || article.summary}
-        imageUrl={article.image_url}
-        publishedAt={article.published_at}
-        updatedAt={article.updated_at} // Passando a data de atualização
-        author={articleAuthor} // Passando o autor determinado
-        slug={article.slug}
-        tags={article.tags || []}
+        article={{
+          title: article.title,
+          summary: article.meta_description || article.summary,
+          image_url: article.image_url,
+          slug: article.slug,
+          tags: article.tags || [],
+          published_at: article.published_at,
+          updated_at: article.updated_at,
+          author: articleAuthor,
+        }}
       />
       <div className="bg-white">
         <div className="container mx-auto px-4 py-12">

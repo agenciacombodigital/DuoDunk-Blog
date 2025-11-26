@@ -1,121 +1,84 @@
 import { Helmet } from 'react-helmet-async';
 
 interface ArticleMetaProps {
-  title: string;
-  description: string;
-  imageUrl: string;
-  publishedAt: string;
-  updatedAt?: string; // Adicionado
-  author?: string;
-  slug: string;
-  tags?: string[];
+  article: {
+    title: string;
+    summary: string;
+    image_url?: string;
+    slug: string;
+    tags?: string[];
+    published_at: string;
+    updated_at?: string;
+    author?: string;
+  };
 }
 
-// Lista de palavras-chave prioritárias para SEO
-const PRIORITY_KEYWORDS = [
-  "NBA hoje", "Lakers notícias", "Luka Doncic", "Classificação NBA", "Stephen Curry", 
-  "LeBron James", "Victor Wembanyama", "Warriors notícias", "Celtics", "Nikola Jokic", 
-  "Chicago Bull", "Shai Gilgeous Alexander", "OKC", "Oklahoma City Thunder", "Gui Santos", 
-  "NBA ao vivo", "Resultado NBA", "Lakers hoje", "Onde assistir NBA", "Jayson Tatum", 
-  "Giannis Antetokounmpo", "NBA Brasil", "Playoffs NBA", "Tabela NBA", "Melhores jogadas NBA", 
-  "Notícias NBA em português"
-];
-
-export default function ArticleMeta({ 
-  title, 
-  description, 
-  imageUrl, 
-  publishedAt, 
-  updatedAt, // Usando a nova prop
-  author = "Fernando Balley", // Definindo o autor padrão
-  slug,
-  tags = []
-}: ArticleMetaProps) {
+export default function ArticleMeta({ article }: ArticleMetaProps) {
   const siteUrl = 'https://www.duodunk.com.br';
-  const articleUrl = `${siteUrl}/artigos/${slug}`;
-  const defaultImageUrl = `${siteUrl}/images/duodunk-logoV2.svg`;
+  const currentUrl = `${siteUrl}/artigos/${article.slug}`;
+  const imageUrl = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
+  const keywords = article.tags ? article.tags.join(', ') : 'NBA, Basquete, Notícias';
+  const publishedTime = new Date(article.published_at).toISOString();
+  const modifiedTime = article.updated_at ? new Date(article.updated_at).toISOString() : publishedTime;
+  const authorName = article.author || 'Duo Dunk Redação';
 
-  let finalImageUrl = defaultImageUrl;
-  if (imageUrl && imageUrl.startsWith('http')) {
-    finalImageUrl = imageUrl;
-  } else if (imageUrl) {
-    finalImageUrl = `${siteUrl}${imageUrl}`;
-  }
-  
-  // Combina tags do artigo com palavras-chave prioritárias, removendo duplicatas
-  const allKeywords = Array.from(new Set([
-    "NBA", 
-    ...tags, 
-    ...PRIORITY_KEYWORDS
-  ])).join(', ');
-  
-  // Usar updatedAt se existir, senão usa publishedAt. Garantir formato ISO.
-  const datePublishedISO = new Date(publishedAt).toISOString();
-  const dateModifiedISO = new Date(updatedAt || publishedAt).toISOString();
+  // Schema.org para NewsArticle (Google News)
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": article.title,
+    "image": [imageUrl],
+    "datePublished": publishedTime,
+    "dateModified": modifiedTime,
+    "author": {
+      "@type": "Person",
+      "name": authorName
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Duo Dunk",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${siteUrl}/images/duodunk-logoV2.svg`
+      }
+    },
+    "description": article.summary,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": currentUrl
+    }
+  };
 
   return (
     <Helmet>
-      {/* SEO BÁSICO */}
-      <title>{title} | Duo Dunk</title>
-      <meta name="description" content={description} />
-      <meta name="keywords" content={allKeywords} />
-      
-      {/* ✅ CANÔNICA: URL absoluta e limpa */}
-      <link rel="canonical" href={articleUrl} />
+      {/* Título e Meta Básica */}
+      <title>{article.title} | Duo Dunk</title>
+      <meta name="description" content={article.summary} />
+      <meta name="keywords" content={keywords} />
+      <link rel="canonical" href={currentUrl} />
 
-      {/* OPEN GRAPH (WhatsApp, Facebook) */}
+      {/* Open Graph (Facebook/WhatsApp) */}
       <meta property="og:type" content="article" />
-      <meta property="og:site_name" content="Duo Dunk" />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={articleUrl} />
-      <meta property="og:image" content={finalImageUrl} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={title} />
-      <meta property="og:locale" content="pt_BR" />
-      <meta property="article:published_time" content={datePublishedISO} />
-      <meta property="article:modified_time" content={dateModifiedISO} /> {/* Usando data ISO formatada */}
-      <meta property="article:author" content={author} />
-      {tags.map(tag => (
-        <meta key={tag} property="article:tag" content={tag} />
+      <meta property="og:title" content={article.title} />
+      <meta property="og:description" content={article.summary} />
+      <meta property="og:url" content={currentUrl} />
+      <meta property="og:image" content={imageUrl} />
+      <meta property="article:published_time" content={publishedTime} />
+      <meta property="article:modified_time" content={modifiedTime} />
+      <meta property="article:author" content={authorName} />
+      {article.tags?.map(tag => (
+        <meta property="article:tag" content={tag} key={tag} />
       ))}
 
-      {/* TWITTER CARD */}
+      {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@duodunk" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={finalImageUrl} />
+      <meta name="twitter:title" content={article.title} />
+      <meta name="twitter:description" content={article.summary} />
+      <meta name="twitter:image" content={imageUrl} />
 
-      {/* ✅ SCHEMA.ORG JSON-LD (NewsArticle para Google News) */}
+      {/* Schema JSON-LD para Google News */}
       <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "NewsArticle",
-          "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": articleUrl
-          },
-          "headline": title,
-          "image": [
-            finalImageUrl
-          ],
-          "datePublished": datePublishedISO, // Usando data ISO formatada
-          "dateModified": dateModifiedISO, // Usando data ISO formatada
-          "author": {
-            "@type": "Person",
-            "name": author // Usando o nome do autor
-          },
-          "publisher": {
-            "@type": "Organization",
-            "name": "Duo Dunk",
-            "logo": {
-              "@type": "ImageObject",
-              "url": "https://www.duodunk.com.br/images/duodunk-logoV2.svg"
-            }
-          }
-        })}
+        {JSON.stringify(schemaData)}
       </script>
     </Helmet>
   );
