@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+// Middleware para Vercel Edge Runtime (Compatível com Vite/React)
 
-// Lista de Robôs que devem receber a página pré-renderizada (HTML pronto)
+// Lista de Robôs (User Agents)
 const botUserAgents = [
   'googlebot',
   'bingbot',
@@ -22,24 +21,30 @@ const botUserAgents = [
   'whatsapp'
 ];
 
-export async function middleware(request: NextRequest) {
+// Configuração para dizer onde o middleware deve rodar
+export const config = {
+  matcher: [
+    // Ignora API, arquivos estáticos, imagens e assets
+    '/((?!api|_next/static|_next/image|assets|favicon.ico|.*\\.(?:css|js|jpg|jpeg|png|gif|svg|ico|woff2?)$).*)',
+  ],
+};
+
+export default async function middleware(request: Request) {
+  // 1. Identificar o User Agent (Robô ou Humano?)
   const userAgent = request.headers.get('user-agent')?.toLowerCase() || '';
   const isBot = botUserAgents.some(bot => userAgent.includes(bot));
-  
-  // Ignora arquivos estáticos (imagens, css, js) para economizar quota
-  const isFile = request.nextUrl.pathname.match(/\.(css|js|jpg|png|gif|ico|svg|woff2)$/);
 
-  // Se for Robô e não for arquivo, manda pro Prerender
-  if (isBot && !isFile) {
-    // Pega o token que configuramos na Vercel
+  // 2. Se for Robô, manda para o Prerender
+  if (isBot) {
     const prerenderToken = process.env.PRERENDER_TOKEN;
     
     if (prerenderToken) {
-      const url = request.nextUrl.toString();
-      const prerenderUrl = `https://service.prerender.io/${url}`;
+      // Constrói a URL correta
+      const url = new URL(request.url);
+      const prerenderUrl = `https://service.prerender.io/${url.toString()}`;
       
       try {
-        // Pede ao Prerender a versão HTML da página
+        // Busca o HTML pronto no Prerender
         const response = await fetch(prerenderUrl, {
           headers: {
             'X-Prerender-Token': prerenderToken
@@ -48,23 +53,21 @@ export async function middleware(request: NextRequest) {
         
         if (response.status === 200) {
             const html = await response.text();
-            return new NextResponse(html, {
-              headers: { 'Content-Type': 'text/html' }
+            // Retorna o HTML puro para o Robô
+            return new Response(html, {
+              headers: { 
+                'Content-Type': 'text/html; charset=utf-8',
+                'X-Prerendered': 'true' // Marca para sabermos que funcionou
+              },
+              status: 200
             });
         }
       } catch (e) {
-        console.error('Erro Prerender, seguindo normal:', e);
+        console.error('Erro no Prerender, seguindo fluxo normal:', e);
       }
     }
   }
 
-  // Se for Humano ou der erro, carrega o site React normal
-  return NextResponse.next();
+  // 3. Se for Humano ou der erro, o Vercel continua normal (serve o index.html do Vite)
+  return fetch(request);
 }
-
-export const config = {
-  matcher: [
-    // Aplica em todas as rotas, exceto api e arquivos internos do next
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
-};
