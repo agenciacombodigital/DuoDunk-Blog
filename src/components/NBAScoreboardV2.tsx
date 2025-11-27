@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, ChevronRight, Play, Tv } from 'lucide-react';
 import GameStatsModalV3 from './GameStatsModalV3';
+import { cn } from '@/lib/utils'; // Importando cn para classes condicionais
 
 interface Game {
   gameId: string;
@@ -225,7 +226,7 @@ export default function NBAScoreboardV2() {
 
   if (loading || games.length === 0) {
     return (
-      <div className="bg-gray-900 py-3 border-b border-gray-700/50 text-center">
+      <div className="bg-[#09090b] py-3 border-b border-white/10 text-center">
         <span className="text-gray-400 text-sm font-medium font-inter">
           {loading ? 'Carregando jogos...' : 'Nenhum jogo hoje'}
         </span>
@@ -237,7 +238,8 @@ export default function NBAScoreboardV2() {
 
   return (
     <>
-      <div className="bg-gray-900 py-3 border-b border-gray-700/50">
+      {/* Fundo da barra alterado para o preto premium */}
+      <div className="bg-[#09090b] py-3 border-b border-white/10">
         <div className="container mx-auto px-4 flex items-center gap-2 md:gap-4">
           {games.length > gamesPerView && (
             <button
@@ -258,11 +260,12 @@ export default function NBAScoreboardV2() {
                   setSelectedGame(game);
                   setIsModalOpen(true);
                 }}
-                className="group relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-3 md:p-4 border border-gray-700/50 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
+                // Estilo do card de jogo ajustado para o design premium
+                className="group relative bg-zinc-900/40 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/10 hover:border-pink-500/50 transition-all hover:scale-[1.02] shadow-xl hover:shadow-pink-500/20"
               >
-                {/* Transmissão - NOVO */}
+                {/* Transmissão */}
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 text-center z-10">
-                  <span className="bg-gray-700 text-gray-300 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 font-inter whitespace-nowrap">
+                  <span className="bg-zinc-800 text-zinc-400 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 font-inter whitespace-nowrap">
                     <Tv className="w-2.5 h-2.5" />
                     {formatBroadcast(game)}
                   </span>
@@ -287,10 +290,12 @@ export default function NBAScoreboardV2() {
                         className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
                       />
                       <div className="text-left min-w-0">
+                        {/* Fonte Oswald para Tricode */}
                         <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.awayTeam.teamTricode}</span>
-                        <span className="font-inter text-xs text-gray-400 block truncate">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                        <span className="font-inter text-xs text-zinc-400 block truncate">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
                       </div>
                     </div>
+                    {/* Fonte Bebas para Placar */}
                     <span className="font-bebas text-3xl md:text-4xl text-white tabular-nums flex-shrink-0 ml-2">{game.awayTeam.score}</span>
                   </div>
 
@@ -303,20 +308,22 @@ export default function NBAScoreboardV2() {
                         className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
                       />
                       <div className="text-left min-w-0">
+                        {/* Fonte Oswald para Tricode */}
                         <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.homeTeam.teamTricode}</span>
-                        <span className="font-inter text-xs text-gray-400 block truncate">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                        <span className="font-inter text-xs text-zinc-400 block truncate">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
                       </div>
                     </div>
+                    {/* Fonte Bebas para Placar */}
                     <span className="font-bebas text-3xl md:text-4xl text-white tabular-nums flex-shrink-0 ml-2">{game.homeTeam.score}</span>
                   </div>
                 </div>
 
                 {/* Status/Horário - Formato brasileiro */}
-                <div className="border-t border-gray-700 mt-3 pt-2 flex items-center justify-between text-xs font-inter">
-                  <span className={`font-bold ${game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400'}`}>
+                <div className="border-t border-white/10 mt-3 pt-2 flex items-center justify-between text-xs font-inter">
+                  <span className={cn("font-bold", game.gameStatus === 2 ? 'text-red-400' : 'text-cyan-400')}>
                     {getGameStatusDisplay(game)}
                   </span>
-                  <span className="text-gray-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
+                  <span className="text-zinc-400 group-hover:text-pink-400 transition-colors flex items-center gap-1 text-[10px] md:text-xs">
                     Estatísticas <Play className="w-3 h-3" />
                   </span>
                 </div>
