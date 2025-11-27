@@ -1,7 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+// No Next.js, chaves privadas não devem ter NEXT_PUBLIC_.
+// Usamos o nome limpo para o ambiente de produção/servidor.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Chave privada
 
 // Fallback para o ambiente Dyad/Vercel onde as chaves VITE_ podem não ser injetadas corretamente no cliente.
 const FALLBACK_URL = 'https://brerfpcfkyptkzygyzxl.supabase.co';
@@ -9,25 +11,22 @@ const FALLBACK_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3Mi
 
 let adminClient: SupabaseClient;
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
+// Prioriza a chave privada do Next.js, mas usa o fallback se não estiver definida
+const finalServiceKey = supabaseServiceRoleKey || FALLBACK_SERVICE_ROLE_KEY;
+const finalUrl = supabaseUrl || FALLBACK_URL;
+
+if (!finalServiceKey) {
   console.warn(
-    '⚠️ AVISO: VITE_SUPABASE_SERVICE_ROLE_KEY não configurada via ambiente. Usando fallback para Admin.'
+    '⚠️ AVISO: SUPABASE_SERVICE_ROLE_KEY não configurada. Usando fallback para Admin.'
   );
-  // Usar chaves de fallback para garantir que o painel Admin funcione no ambiente de desenvolvimento/Dyad
-  adminClient = createClient(FALLBACK_URL, FALLBACK_SERVICE_ROLE_KEY, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-} else {
-  adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
 }
+
+adminClient = createClient(finalUrl, finalServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 /**
  * Cliente Supabase Admin com Service Role Key
