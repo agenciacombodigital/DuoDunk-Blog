@@ -338,10 +338,23 @@ export default function NBAScoreboardV2() {
 
       {isModalOpen && selectedGame && (
         <GameStatsModalV3
-          game={selectedGame}
+          isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedGame(null);
+          }}
+          gameId={selectedGame.gameId}
+          homeTeam={{
+            name: selectedGame.homeTeam.teamName,
+            triCode: selectedGame.homeTeam.teamTricode,
+            logo: selectedGame.homeTeam.logo,
+            record: `${selectedGame.homeTeam.wins}-${selectedGame.homeTeam.losses}`,
+          }}
+          awayTeam={{
+            name: selectedGame.awayTeam.teamName,
+            triCode: selectedGame.awayTeam.teamTricode,
+            logo: selectedGame.awayTeam.logo,
+            record: `${selectedGame.awayTeam.wins}-${selectedGame.awayTeam.losses}`,
           }}
         />
       )}
