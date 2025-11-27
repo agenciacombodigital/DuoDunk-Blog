@@ -1,13 +1,15 @@
+"use client";
+
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
-import { Loader2 } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
-  isAdmin: boolean; // Adicionamos esta flag para controle de acesso
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,14 +19,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     // 1. Carregar sessão inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      // Por enquanto, consideramos qualquer usuário logado como admin para o painel
-      // Em um sistema real, usaríamos RLS ou roles no banco de dados.
       setIsAdmin(!!session); 
       setIsLoading(false);
     });
@@ -39,15 +41,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+  
+  // 3. Redirecionamento de proteção (Client-side check)
+  useEffect(() => {
+    if (!isLoading) {
+      const isAdminRoute = pathname.startsWith('/admin') && pathname !== '/admin/login';
+      
+      if (isAdminRoute && !isAdmin) {
+        router.replace('/admin/login');
+      }
+      
+      if (pathname === '/admin/login' && isAdmin) {
+        router.replace('/admin');
+      }
+    }
+  }, [isLoading, isAdmin, pathname, router]);
 
-  // Se estiver carregando, mostre um loader global
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   const value = {
     session,

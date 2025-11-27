@@ -1,11 +1,14 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Calendar } from 'lucide-react';
 import ThreadsIcon from './ThreadsIcon';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation();
+  const pathname = usePathname();
 
   const menuItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -17,6 +20,11 @@ export default function MobileMenu() {
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
+
+  // Fecha o menu ao mudar de rota
+  useEffect(() => {
+    closeMenu();
+  }, [pathname]);
 
   // Previne o scroll da página quando o menu está aberto
   useEffect(() => {
@@ -62,12 +70,12 @@ export default function MobileMenu() {
           <nav className="flex-grow space-y-2">
             {menuItems.map((item, index) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = pathname === item.path;
               
               return (
                 <Link
                   key={item.path}
-                  to={item.path}
+                  href={item.path}
                   onClick={closeMenu}
                   className={`
                     flex items-center gap-4 px-4 py-4 rounded-xl

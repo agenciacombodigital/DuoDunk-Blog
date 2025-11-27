@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Instagram } from 'lucide-react';
 import MobileMenu from './MobileMenu';
 import ThreadsIcon from './ThreadsIcon';
@@ -11,7 +11,7 @@ export default function Header() {
         {/* --- LAYOUT DESKTOP (lg e acima) --- */}
         <div className="hidden lg:flex items-center justify-between w-full">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             <img 
               src="/images/duodunk-logoV2.svg" 
               alt="Duo Dunk Logo" 
@@ -21,11 +21,11 @@ export default function Header() {
           
           {/* Navegação */}
           <nav className="flex items-center gap-8 text-sm uppercase tracking-widest font-inter font-semibold">
-            <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
-            <Link to="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
-            <Link to="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
-            <Link to="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
-            <Link to="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
+            <Link href="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
+            <Link href="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
+            <Link href="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
+            <Link href="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
+            <Link href="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
           </nav>
           
           {/* Sociais */}
@@ -52,7 +52,7 @@ export default function Header() {
         {/* --- LAYOUT MOBILE & TABLET (abaixo de lg) --- */}
         <div className="lg:hidden w-full flex items-center justify-between h-full">
           {/* Logo à Esquerda */}
-          <Link to="/" className="flex items-center h-16 w-16 flex-shrink-0">
+          <Link href="/" className="flex items-center h-16 w-16 flex-shrink-0">
             <img 
               src="/images/duodunk-logo-mobile.svg"
               alt="Duo Dunk Logo" 

@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 interface LatestNewsProps {
@@ -42,7 +44,7 @@ export default function LatestNews({ currentPostId, limit = 3 }: LatestNewsProps
       {posts.map((post) => (
         <Link
           key={post.id}
-          to={`/artigos/${post.slug}`}
+          href={`/artigos/${post.slug}`}
           className="group bg-white rounded-xl overflow-hidden border-2 border-gray-200 hover:border-pink-500 hover:shadow-lg transition-all"
         >
           {post.image_url && (

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { CheckCircle, Edit, Trash2 } from 'lucide-react';
 
 interface PublishedArticlesSectionProps {
@@ -27,7 +27,7 @@ export default function PublishedArticlesSection({ articles, onDelete }: Publish
               </div>
             </div>
             <div className="flex gap-2 ml-0 sm:ml-4 flex-shrink-0">
-              <Link to={`/admin/editar/${article.slug}`} className="p-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors" title="Editar"><Edit className="w-4 h-4" /></Link>
+              <Link href={`/admin/editar/${article.slug}`} className="p-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors" title="Editar"><Edit className="w-4 h-4" /></Link>
               <button onClick={() => onDelete(article.id)} className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" title="Deletar"><Trash2 className="w-4 h-4" /></button>
             </div>
           </div>

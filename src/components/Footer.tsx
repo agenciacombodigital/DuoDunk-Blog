@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
     <footer className="bg-black text-white border-t border-gray-800 py-12">
       <div className="container mx-auto px-4 text-center flex flex-col items-center gap-6">
-        <Link to="/">
+        <Link href="/">
           <img src="/images/duodunk-logoV2.svg" alt="Duo Dunk Logo" className="h-8 opacity-80 hover:opacity-100 transition-opacity" />
         </Link>
         
@@ -16,14 +16,14 @@ export default function Footer() {
             
             <div className="flex gap-4 text-sm">
               <Link 
-                to="/privacidade" 
+                href="/privacidade" 
                 className="text-gray-400 hover:text-[#FA007D] transition-colors"
               >
                 Política de Privacidade
               </Link>
               <span className="text-gray-600">|</span>
               <Link 
-                to="/cookies" 
+                href="/cookies" 
                 className="text-gray-400 hover:text-[#FA007D] transition-colors"
               >
                 Política de Cookies

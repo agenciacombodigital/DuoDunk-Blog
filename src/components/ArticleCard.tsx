@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 
@@ -17,7 +17,7 @@ interface Article {
 export default function ArticleCard({ article, index = 0 }: { article: Article, index?: number }) {
   return (
     <Link
-      to={`/artigos/${article.slug}`}
+      href={`/artigos/${article.slug}`}
       className="article-card group fade-in flex flex-col"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
