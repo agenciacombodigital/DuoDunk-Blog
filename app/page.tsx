@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { TrendingUp, Calendar, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Metadata } from 'next';
 
 // Função auxiliar para mostrar o tempo (h X horas/dias)
