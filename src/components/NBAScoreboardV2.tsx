@@ -173,7 +173,10 @@ export default function NBAScoreboardV2() {
 
   const loadGames = async () => {
     try {
+      console.log("Buscando jogos...");
       const { data, error } = await supabase.functions.invoke('nba-scoreboard-v2');
+      console.log("Resposta da API:", data, error); // <--- LOG DE DEBUG
+      
       if (error) throw error;
       
       if (data?.success && data?.scoreboard?.games) {
