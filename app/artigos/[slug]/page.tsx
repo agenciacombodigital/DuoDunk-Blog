@@ -70,8 +70,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const imageUrl = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
   const summary = article.meta_description || article.summary || article.title;
   const authorName = article.source?.includes('DuoDunk') || article.source?.includes('Editorial') ? 'Fernando Balley' : article.source || 'Duo Dunk Redação';
-  const articleKeywords = article.tags && article.tags.length > 0
-    ? [...new Set(article.tags)].join(', ')
+  
+  // ✅ Adicionando verificação de array para tags
+  const safeTags = Array.isArray(article.tags) ? article.tags : [];
+  
+  const articleKeywords = safeTags.length > 0
+    ? [...new Set(safeTags)].join(', ')
     : 'NBA, Basquete, Notícias, NBA Brasil';
 
   return {
@@ -162,6 +166,9 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
       </div>
     );
   };
+  
+  // ✅ Garantir que article.tags é um array para evitar falhas no .filter e .map
+  const safeTags = Array.isArray(article.tags) ? article.tags : [];
 
   return (
     <div className="bg-white">
@@ -215,9 +222,12 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
 
             {article.video_url && <VideoEmbed url={article.video_url} />}
 
-            {article.tags && article.tags.length > 0 && (
+            {safeTags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-8">
-                {article.tags
+                {safeTags
+                  .filter((tag: string | null | undefined): tag is string => 
+                    typeof tag === 'string' && tag.trim().length > 0
+                  )
                   .filter((tag: string) => {
                     const lowerTag = tag.toLowerCase();
                     return ['lakers', 'warriors', 'celtics', 'heat', 'bulls', 'knicks', 
@@ -243,11 +253,11 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             
             <AmazonCTA />
 
-            {article.tags && article.tags.length > 0 && (
+            {safeTags.length > 0 && (
               <div className="pt-8 border-t border-gray-200 mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 font-oswald">Tags:</h3>
                 <div className="flex flex-wrap gap-2 font-inter">
-                  {article.tags.map((tag: string) => (
+                  {safeTags.map((tag: string) => (
                     <span 
                       key={tag} 
                       className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium"
