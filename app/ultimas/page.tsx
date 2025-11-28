@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Loader2, ArrowLeft, Search, Filter, X } from 'lucide-react';
@@ -34,50 +34,14 @@ export default function Ultimas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    // Inicializa o termo de busca a partir da URL
-    const initialSearch = searchParams.get('q');
-    if (initialSearch) {
-      setSearchTerm(initialSearch);
-    }
-    
-    // Carrega as tags disponíveis
-    loadAllTags();
-  }, [searchParams]);
-
-  useEffect(() => {
-    // Recarrega a lista sempre que o termo de busca ou filtro mudar
-    setPage(1);
-    setArticles([]);
-    setHasMore(true);
-    loadArticles(1, searchTerm, filterTag);
-  }, [searchTerm, filterTag]);
-
-  const loadAllTags = async () => {
-    try {
-      // Busca todas as tags únicas (usando uma função RPC ou view se necessário, 
-      // mas por simplicidade, vamos buscar os 100 artigos mais recentes e extrair)
-      const { data } = await supabase
-        .from('articles')
-        .select('tags')
-        .eq('published', true)
-        .limit(100);
-        
-      if (data) {
-        const tags = data.flatMap(item => item.tags || []).filter(tag => tag && tag.toLowerCase() !== 'nba');
-        const uniqueTags = Array.from(new Set(tags)).sort();
-        setAllTags(uniqueTags);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar tags:', error);
-    }
-  };
-
-  const loadArticles = async (currentPage: number, currentSearchTerm: string, currentFilterTag: string | null) => {
+  // Função de busca de artigos (memoizada)
+  const loadArticles = useCallback(async (currentPage: number, currentSearchTerm: string, currentFilterTag: string | null) => {
     setLoading(true);
+    setError(null);
     const offset = (currentPage - 1) * ARTICLES_PER_PAGE;
 
     let query = supabase
@@ -107,12 +71,48 @@ export default function Ultimas() {
       setArticles(prev => currentPage === 1 ? newArticles : [...prev, ...newArticles]);
       setHasMore(newArticles.length === ARTICLES_PER_PAGE);
       setPage(currentPage);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar artigos:', error);
+      setError('Falha ao carregar notícias. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Carrega todas as tags disponíveis
+  const loadAllTags = async () => {
+    try {
+      const { data } = await supabase
+        .from('articles')
+        .select('tags')
+        .eq('published', true)
+        .limit(100);
+        
+      if (data) {
+        const tags = data.flatMap(item => item.tags || []).filter(tag => tag && tag.toLowerCase() !== 'nba');
+        const uniqueTags = Array.from(new Set(tags)).sort();
+        setAllTags(uniqueTags);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar tags:', error);
+    }
   };
+
+  // Efeito para inicializar e recarregar dados ao mudar filtros/busca
+  useEffect(() => {
+    const initialSearch = searchParams.get('q') || '';
+    setSearchTerm(initialSearch);
+    loadAllTags();
+  }, [searchParams]);
+
+  useEffect(() => {
+    // Recarrega a lista sempre que o termo de busca ou filtro mudar
+    setPage(1);
+    setArticles([]);
+    setHasMore(true);
+    loadArticles(1, searchTerm, filterTag);
+  }, [searchTerm, filterTag, loadArticles]);
+
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
@@ -191,6 +191,13 @@ export default function Ultimas() {
           </div>
         </div>
 
+        {/* Mensagem de Erro */}
+        {error && (
+          <div className="text-center py-10 text-red-600 bg-red-50 border border-red-200 rounded-xl max-w-4xl mx-auto mb-8">
+            <p className="font-inter font-semibold">{error}</p>
+          </div>
+        )}
+
         {/* Lista de Artigos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {articles.map((article, index) => (
@@ -205,7 +212,7 @@ export default function Ultimas() {
               <Loader2 className="w-5 h-5 animate-spin" />
               Carregando...
             </div>
-          ) : articles.length === 0 && !loading ? (
+          ) : articles.length === 0 && !loading && !error ? (
             <p className="text-gray-600">Nenhum artigo encontrado com os filtros aplicados.</p>
           ) : hasMore && !loading ? (
             <Button 
@@ -215,7 +222,7 @@ export default function Ultimas() {
               Carregar Mais Notícias
             </Button>
           ) : (
-            <p className="text-gray-500 text-sm">Fim da lista de notícias.</p>
+            !loading && articles.length > 0 && <p className="text-gray-500 text-sm">Fim da lista de notícias.</p>
           )}
         </div>
       </div>
