@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import { buscarJogosHoje, buscarJogosSemana, Jogo, formatBroadcast } from '../services/espnApi';
 import { Loader2, Tv, MapPin } from 'lucide-react';
