@@ -1,5 +1,7 @@
+'use client';
+
 import { Helmet } from 'react-helmet-async';
-import { useLocation } from 'react-router-dom';
+import { usePathname } from 'next/navigation';
 
 interface PageMetaProps {
   title: string;
@@ -14,10 +16,12 @@ export default function PageMeta({
   description, 
   canonicalPath 
 }: PageMetaProps) {
-  const location = useLocation();
+  const pathname = usePathname();
   
-  // Constrói a URL canônica baseada no path atual, ignorando query params
-  const canonicalUrl = `${SITE_URL}${canonicalPath || location.pathname}`;
+  // Constrói a URL canônica baseada no path atual (do Next.js)
+  // Se canonicalPath for fornecido, usa ele. Senão, usa o pathname atual.
+  const path = canonicalPath || pathname || '';
+  const canonicalUrl = `${SITE_URL}${path}`;
 
   return (
     <Helmet>
@@ -27,7 +31,7 @@ export default function PageMeta({
       {/* Canonical URL */}
       <link rel="canonical" href={canonicalUrl} />
 
-      {/* Open Graph e Twitter (usando as tags padrão do index.html como fallback) */}
+      {/* Open Graph e Twitter */}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonicalUrl} />
