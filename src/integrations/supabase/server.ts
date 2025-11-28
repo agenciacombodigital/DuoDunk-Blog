@@ -1,15 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Variáveis de ambiente do servidor (sem NEXT_PUBLIC_)
-// Usamos SUPABASE_URL (definida no Vercel) para a URL
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Usamos NEXT_PUBLIC_SUPABASE_ANON_KEY (definida no Vercel) para a chave anônima
+// Usamos as variáveis NEXT_PUBLIC_ que são garantidas de serem injetadas pelo Next.js/Vercel
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 let client: SupabaseClient;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("As variáveis de ambiente Supabase (URL/Anon Key) não estão definidas no servidor.");
+  console.error("As variáveis de ambiente NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY não estão definidas no servidor.");
   // Usamos valores dummy para evitar falha de inicialização
   const dummyUrl = 'https://dummy.supabase.co';
   const dummyKey = 'dummy_key';
