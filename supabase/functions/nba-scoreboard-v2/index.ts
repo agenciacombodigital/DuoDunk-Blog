@@ -36,6 +36,34 @@ const fetchBoxscore = async (gameId: string) => {
   }
 };
 
+// NOVO: Função para buscar a classificação e mapear por Tricode
+const fetchStandingsMap = async () => {
+    try {
+        const standingsUrl = 'https://cdn.nba.com/static/json/liveData/standings/leagueStandings.json';
+        const response = await fetch(standingsUrl);
+        if (!response.ok) {
+            console.warn('[Standings Fetch] Failed to fetch standings.');
+            return new Map();
+        }
+        const data = await response.json();
+        const standingsMap = new Map();
+
+        data.league.standard.conference.forEach((conf: any) => {
+            conf.team.forEach((team: any) => {
+                standingsMap.set(team.teamTricode, {
+                    wins: team.win,
+                    losses: team.loss,
+                });
+            });
+        });
+        return standingsMap;
+    } catch (error) {
+        console.error('[Standings Fetch] Error:', error.message);
+        return new Map();
+    }
+};
+
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -43,6 +71,7 @@ serve(async (req) => {
 
   try {
     const cacheBuster = new Date().getTime();
+    // Mantendo a URL da NBA para o placar, pois a Edge Function anterior já estava usando
     const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
     
     const response = await fetch(nbaApiUrl, {
@@ -70,14 +99,16 @@ serve(async (req) => {
         status: 200,
       });
     }
-
-    // Identify games that are potentially live to fetch real-time data
+    
+    // 1. Buscar a classificação atualizada
+    const standingsMap = await fetchStandingsMap();
+    
+    // 2. Identificar jogos potencialmente ao vivo e buscar boxscores
     const now = new Date();
     const potentiallyLiveGameIds = scoreboard.games
       .filter((game: any) => {
         const gameTime = new Date(game.gameTimeUTC);
         const isOfficiallyLive = game.gameStatus === 2;
-        // If game status is 1 (not started) but start time is in the past, it might be live
         const mightBeLive = game.gameStatus === 1 && gameTime <= now;
         return isOfficiallyLive || mightBeLive;
       })
@@ -96,46 +127,57 @@ serve(async (req) => {
         }
       });
 
-      // Update scoreboard games with real-time data from boxscores
+      // 3. Atualizar placar com dados em tempo real e classificação
       scoreboard.games.forEach((game: any) => {
-        if (liveGameDataMap.has(game.gameId)) {
-          const liveData = liveGameDataMap.get(game.gameId);
-          
-          // Update everything from the more reliable boxscore source
+        const liveData = liveGameDataMap.get(game.gameId);
+        
+        if (liveData) {
+          // Update scores and status from the more reliable boxscore source
           game.homeTeam.score = liveData.homeTeam.score;
           game.awayTeam.score = liveData.awayTeam.score;
-          game.gameStatus = liveData.gameStatus; // IMPORTANT: Update the status
+          game.gameStatus = liveData.gameStatus;
           game.gameClock = liveData.gameClock;
           game.period = liveData.period;
-
-          // Re-create the status text based on live data
-          if (liveData.gameStatus === 2) {
-              const clock = liveData.gameClock;
-              let formattedClock = '';
-              const match = clock.match(/PT(\d+)M([\d.]+)S/);
-              if (match) {
-                  const minutes = match[1].padStart(2, '0');
-                  const seconds = Math.floor(parseFloat(match[2])).toString().padStart(2, '0');
-                  formattedClock = `${minutes}:${seconds}`;
-              }
-              game.gameStatusText = `${liveData.period}º Quarto • ${formattedClock}`;
-          } else {
-              game.gameStatusText = liveData.gameStatusText; // Use the text from boxscore (e.g., "Final")
-          }
+          game.gameStatusText = liveData.gameStatusText;
+        }
+        
+        // 4. Injetar Wins/Losses da classificação (para jogos agendados/finalizados)
+        const homeRecord = standingsMap.get(game.homeTeam.teamTricode);
+        const awayRecord = standingsMap.get(game.awayTeam.teamTricode);
+        
+        if (homeRecord) {
+            game.homeTeam.wins = homeRecord.wins;
+            game.homeTeam.losses = homeRecord.losses;
+        }
+        if (awayRecord) {
+            game.awayTeam.wins = awayRecord.wins;
+            game.awayTeam.losses = awayRecord.losses;
         }
         
         // Adicionar informações de transmissão (broadcasts)
         if (game.broadcasters && game.broadcasters.video) {
             const nationalBroadcasts = game.broadcasters.video.national;
             if (nationalBroadcasts && nationalBroadcasts.length > 0) {
-                // Pega o primeiro canal nacional como referência
                 game.broadcastChannel = nationalBroadcasts[0].longName;
             }
         }
       });
     } else {
-        // Se não estiver ao vivo, apenas adiciona o canal de transmissão do scoreboard original
+        // Se não estiver ao vivo, apenas adiciona o canal de transmissão e o recorde
         scoreboard.games.forEach((game: any) => {
+            // Injetar Wins/Losses da classificação
+            const homeRecord = standingsMap.get(game.homeTeam.teamTricode);
+            const awayRecord = standingsMap.get(game.awayTeam.teamTricode);
+            
+            if (homeRecord) {
+                game.homeTeam.wins = homeRecord.wins;
+                game.homeTeam.losses = homeRecord.losses;
+            }
+            if (awayRecord) {
+                game.awayTeam.wins = awayRecord.wins;
+                game.awayTeam.losses = awayRecord.losses;
+            }
+            
             if (game.broadcasters && game.broadcasters.video) {
                 const nationalBroadcasts = game.broadcasters.video.national;
                 if (nationalBroadcasts && nationalBroadcasts.length > 0) {

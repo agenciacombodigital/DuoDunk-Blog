@@ -148,6 +148,19 @@ const getGameStatusDisplay = (game: Game): string => {
   return game.gameStatusText;
 };
 
+// Helper para obter a URL do logo com fallback
+const getLogoUrl = (initialUrl: string, triCode: string): string => {
+    if (initialUrl && !initialUrl.includes('undefined')) {
+        return initialUrl;
+    }
+    // Fallback para a URL da ESPN usando o triCode (ex: SA, UTA)
+    const abbr = triCode.toLowerCase();
+    // Tratamento de exceções comuns na URL da ESPN
+    const espnAbbr = abbr === 'uta' ? 'utah' : abbr === 'nop' ? 'no' : abbr;
+    return `https://a.espncdn.com/i/teamlogos/nba/500/${espnAbbr}.png`;
+};
+
+
 export default function NBAScoreboardV2() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,7 +204,7 @@ export default function NBAScoreboardV2() {
             // ✅ CORREÇÃO: Garante que wins/losses sejam números válidos, senão 0
             wins: g.homeTeam.wins || 0,
             losses: g.homeTeam.losses || 0,
-            logo: `https://cdn.nba.com/logos/nba/${g.homeTeam.teamId}/primary/L/logo.svg`,
+            logo: getLogoUrl(g.homeTeam.logo, g.homeTeam.teamTricode), // Usando helper
           },
           awayTeam: {
             teamName: g.awayTeam.teamName,
@@ -200,7 +213,7 @@ export default function NBAScoreboardV2() {
             // ✅ CORREÇÃO: Garante que wins/losses sejam números válidos, senão 0
             wins: g.awayTeam.wins || 0,
             losses: g.awayTeam.losses || 0,
-            logo: `https://cdn.nba.com/logos/nba/${g.awayTeam.teamId}/primary/L/logo.svg`,
+            logo: getLogoUrl(g.awayTeam.logo, g.awayTeam.teamTricode), // Usando helper
           },
         }));
         setGames(processed);
@@ -302,11 +315,15 @@ export default function NBAScoreboardV2() {
                         src={game.awayTeam.logo} 
                         alt={game.awayTeam.teamTricode} 
                         className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
+                        // Fallback para imagem ausente
+                        onError={(e) => {
+                            e.currentTarget.src = getLogoUrl('', game.awayTeam.teamTricode);
+                        }}
                       />
                       <div className="text-left min-w-0">
                         {/* Fonte Oswald para Tricode */}
                         <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.awayTeam.teamTricode}</span>
-                        {/* ✅ CORREÇÃO: Exibe o recorde, ou N/D se for 0-0 */}
+                        {/* Exibe o recorde, ou N/D se for 0-0 e agendado */}
                         <span className="font-inter text-xs text-zinc-400 block truncate">
                           {game.awayTeam.wins === 0 && game.awayTeam.losses === 0 && game.gameStatus === 1
                             ? 'N/D'
@@ -326,11 +343,15 @@ export default function NBAScoreboardV2() {
                         src={game.homeTeam.logo} 
                         alt={game.homeTeam.teamTricode} 
                         className="w-7 h-7 md:w-8 md:h-8 drop-shadow-lg flex-shrink-0" 
+                        // Fallback para imagem ausente
+                        onError={(e) => {
+                            e.currentTarget.src = getLogoUrl('', game.homeTeam.teamTricode);
+                        }}
                       />
                       <div className="text-left min-w-0">
                         {/* Fonte Oswald para Tricode */}
                         <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.homeTeam.teamTricode}</span>
-                        {/* ✅ CORREÇÃO: Exibe o recorde, ou N/D se for 0-0 */}
+                        {/* Exibe o recorde, ou N/D se for 0-0 e agendado */}
                         <span className="font-inter text-xs text-zinc-400 block truncate">
                           {game.homeTeam.wins === 0 && game.homeTeam.losses === 0 && game.gameStatus === 1
                             ? 'N/D'
