@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Instagram } from 'lucide-react';
 import MobileMenu from './MobileMenu';
