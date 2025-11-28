@@ -9,6 +9,7 @@ import NBAScoreboardV2 from '@/components/NBAScoreboardV2';
 import { usePathname } from 'next/navigation';
 import '@/globals.css';
 import { HelmetProvider } from 'react-helmet-async';
+import type { Metadata } from "next"; // Importação necessária
 
 // Configuração das Fontes Otimizadas
 const inter = Inter({ 
@@ -29,6 +30,37 @@ const bebas = Bebas_Neue({
   variable: '--font-bebas',
   display: 'swap',
 });
+
+// Metadados Globais (Next.js extrai isso mesmo em Client Components no layout raiz)
+export const metadata: Metadata = {
+  title: "Duo Dunk - O Jogo Dentro do Jogo",
+  description: "Notícias, análises e estatísticas da NBA.",
+  icons: {
+    icon: [
+      { url: '/images/icone-duodunk.png', href: '/images/icone-duodunk.png' },
+    ],
+    shortcut: ['/images/icone-duodunk.png'],
+    apple: [
+      { url: '/images/icone-duodunk.png' },
+    ],
+  },
+  // Adiciona OpenGraph padrão para compartilhamento
+  openGraph: {
+    title: "Duo Dunk - Notícias NBA",
+    description: "O Jogo Dentro do Jogo. Cobertura completa da NBA.",
+    siteName: "Duo Dunk",
+    images: [
+      {
+        url: '/images/duodunk-logoV2.svg', // Logo principal como fallback
+        width: 800,
+        height: 600,
+      },
+    ],
+    locale: 'pt_BR',
+    type: 'website',
+  },
+};
+
 
 export default function RootLayout({
   children,

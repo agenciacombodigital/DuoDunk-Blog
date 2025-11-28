@@ -49,13 +49,7 @@ async function loadArticles() {
   }
 }
 
-export const metadata: Metadata = {
-  title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
-  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA. Tudo sobre jogos, times e estrelas do melhor basquete do mundo!',
-  alternates: {
-    canonical: 'https://www.duodunk.com.br/',
-  },
-};
+// REMOVIDO: export const metadata: Metadata = { ... };
 
 export default async function Home() {
   const articles = await loadArticles();
@@ -164,7 +158,7 @@ export default async function Home() {
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
                         <Clock className="w-3 h-3" />
-                        <span>há {getTimeAgo(article.published_at)}</span>
+                        <span>há {getTimeAgo(featuredArticle.published_at)}</span>
                       </div>
                     </div>
                   </Link>
