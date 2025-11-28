@@ -26,6 +26,8 @@ export default function RootLayout({
   const headersList = headers();
   const pathname = headersList.get('x-invoke-path') || headersList.get('x-url') || '/';
   const isAdminRoute = pathname.startsWith('/admin');
+  
+  const toasterTheme = isAdminRoute ? 'dark' : 'light'; // Define o tema do toaster
 
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable} ${bebas.variable}`}>
@@ -42,7 +44,7 @@ export default function RootLayout({
           </main>
           {!isAdminRoute && <Footer />}
         </AuthProvider>
-        <Sonner richColors />
+        <Sonner richColors theme={toasterTheme} />
       </body>
     </html>
   );
