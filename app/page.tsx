@@ -4,7 +4,12 @@ import { TrendingUp, Calendar, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
-import { unstable_noStore as noStore } from 'next/cache'; // Importação necessária
+
+// ✅ CORREÇÃO CRÍTICA: Forçar renderização dinâmica (SSR)
+// Isso impede que a página seja cacheada estaticamente no build.
+// Toda vez que o usuário acessar, o servidor vai buscar as notícias novas.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Função auxiliar para mostrar o tempo (h X horas/dias)
 function getTimeAgo(dateString: string): string {
@@ -25,26 +30,27 @@ function getTimeAgo(dateString: string): string {
 
 // Função de busca de dados no servidor (SSR)
 async function loadArticles() {
-  // Desabilita o cache para garantir que o destaque seja sempre o mais recente
-  noStore(); 
-  
-  const { data, error } = await supabaseSSR // <-- USANDO supabaseSSR
-    .from('articles')
-    .select('*')
-    .eq('published', true)
-    .order('published_at', { ascending: false })
-    .limit(100);
+  try {
+    const { data, error } = await supabaseSSR
+      .from('articles')
+      .select('*')
+      .eq('published', true)
+      .order('published_at', { ascending: false })
+      .limit(100);
 
-  if (error) {
-    console.error('Erro ao carregar artigos:', error);
-    return []; 
+    if (error) {
+      console.error('Erro ao carregar artigos:', error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error('Erro fatal ao buscar artigos:', error);
+    return [];
   }
-  return data || [];
 }
 
-// Metadata estática (o layout.tsx já tem a base)
 export const metadata: Metadata = {
-  title: 'O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
+  title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
   description: 'DuoDunk é o seu portal de notícias quentes sobre NBA. Tudo sobre jogos, times e estrelas do melhor basquete do mundo!',
   alternates: {
     canonical: 'https://www.duodunk.com.br/',
@@ -52,34 +58,33 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const allArticles = await loadArticles();
-  
-  if (allArticles.length === 0) {
+  const articles = await loadArticles();
+
+  if (articles.length === 0) {
     return (
       <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center">
-        <p className="text-gray-600 text-lg font-inter">Nenhum artigo publicado ainda.</p>
+        <div className="text-center">
+           <h2 className="text-2xl font-oswald mb-2">Nenhum artigo publicado ainda.</h2>
+           <p className="text-gray-600 font-inter">Acesse o admin para criar ou processar notícias.</p>
+        </div>
       </div>
     );
   }
 
-  // 1. Encontrar o artigo em destaque
-  const featuredArticle = allArticles.find((a) => a.is_featured) || allArticles[0];
+  const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
+  // Remove o destaque da lista principal para não duplicar, se ele estiver entre os recentes
+  const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
-  // 2. Criar a lista de artigos secundários (excluindo o destaque)
-  const secondaryArticles = allArticles.filter((a) => a.id !== featuredArticle?.id);
-  
-  // 3. Fatiar a lista secundária de forma segura
-  const section1 = secondaryArticles.slice(0, 7); // 7 artigos para a primeira seção
-  const section2 = secondaryArticles.slice(7, 13); // 6 artigos para a segunda seção
-  const section3 = secondaryArticles.slice(13, 15); // 2 artigos para a terceira seção
-  const section4 = secondaryArticles.slice(15, 19); // 4 artigos para a quarta seção
-  const section5 = secondaryArticles.slice(19, 25); // 6 artigos para a quinta seção
-  const section6 = secondaryArticles.slice(25, 28); // 3 artigos para a sexta seção
-  const section7 = secondaryArticles.slice(28, 34); // 6 artigos para a sétima seção
-  const section8 = secondaryArticles.slice(34, 36); // 2 artigos para a oitava seção
-  const remaining = secondaryArticles.slice(36); // O restante
+  const section1 = otherArticles.slice(0, 7);
+  const section2 = otherArticles.slice(7, 13);
+  const section3 = otherArticles.slice(13, 15);
+  const section4 = otherArticles.slice(15, 19);
+  const section5 = otherArticles.slice(19, 25);
+  const section6 = otherArticles.slice(25, 28);
+  const section7 = otherArticles.slice(28, 34);
+  const section8 = otherArticles.slice(34, 36);
+  const remaining = otherArticles.slice(36);
 
-  // Para SSR, usamos o focal point desktop como padrão
   const focalPointStyle = getObjectPositionStyle(featuredArticle.image_focal_point, false);
 
   return (
@@ -87,8 +92,7 @@ export default async function Home() {
       {/* Featured Article */}
       {featuredArticle && (
         <section className="container mx-auto px-4 py-8">
-          {/* Título da Seção: Usando Oswald (ou Bebas se for o estilo desejado) */}
-          <h2 className="font-oswald text-2xl text-pink-600 mb-4 tracking-wide uppercase flex items-center gap-2 font-bold">
+          <h2 className="font-bebas text-2xl text-pink-600 mb-4 tracking-wide uppercase flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Em Destaque
           </h2>
@@ -103,7 +107,7 @@ export default async function Home() {
                     srcSet={`${getOptimizedImageUrl(featuredArticle.image_url, 400)} 400w, ${getOptimizedImageUrl(featuredArticle.image_url, 800)} 800w, ${getOptimizedImageUrl(featuredArticle.image_url, 1200)} 1200w`}
                     sizes="(max-width: 1023px) 100vw, 800px"
                     alt={featuredArticle.title}
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     style={focalPointStyle}
@@ -120,7 +124,6 @@ export default async function Home() {
                         Há {getTimeAgo(featuredArticle.published_at)}
                       </span>
                     </div>
-                    {/* Título Principal: Usando font-oswald (já definido no globals.css) */}
                     <h1 className="font-oswald text-2xl md:text-4xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
                       {featuredArticle.title}
                     </h1>
@@ -186,8 +189,7 @@ export default async function Home() {
                       className="w-full h-full object-cover"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
-                    {/* Número: Usando font-oswald para consistência, mas mantendo o estilo de badge */}
-                    <span className="absolute top-2 left-2 font-oswald text-lg bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                    <span className="absolute top-2 left-2 font-bebas text-lg bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
                       {index + 2}
                     </span>
                   </div>
@@ -220,8 +222,7 @@ export default async function Home() {
                     />
                   </div>
                   <div className="p-4">
-                    {/* Número: Usando font-oswald para consistência, mas mantendo o estilo de badge */}
-                    <span className="font-oswald text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2 font-bold">
+                    <span className="font-bebas text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2">
                       5
                     </span>
                     <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
@@ -237,11 +238,11 @@ export default async function Home() {
 
       {/* Seções Restantes */}
       <div className="container mx-auto px-4 space-y-16">
+        
         {/* Seção 2: Notícias em Destaque (NÃO PERCA) */}
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-4 md:p-8 border border-gray-100">
-            {/* Título da Seção: Usando Oswald (ou Bebas se for o estilo desejado) */}
-            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               📌 Não Perca
             </h2>
             <div className="space-y-4">
@@ -280,7 +281,7 @@ export default async function Home() {
         {/* Seção 3: Análises Profundas */}
         {section3.length > 0 && (
           <section>
-            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               🔥 Análises Profundas
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -318,7 +319,7 @@ export default async function Home() {
         {/* Seção 4: Destaques Rápidos */}
         {section4.length > 0 && (
           <section>
-            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               ⚡ Destaques Rápidos
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
@@ -352,7 +353,7 @@ export default async function Home() {
         {/* Seção 5: Mais Lidas */}
         {section5.length > 0 && (
           <section>
-            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               📊 Mais Lidas
             </h2>
             <div className="space-y-6">
@@ -387,7 +388,7 @@ export default async function Home() {
         {/* Seção 6: Mais da NBA */}
         {section6.length > 0 && (
           <section>
-            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               🏀 Mais da NBA
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -419,10 +420,10 @@ export default async function Home() {
           </section>
         )}
 
-        {/* Seção 7: No Perca (Segunda ocorrência) */}
+        {/* Seção 7: Não Perca (Segunda ocorrência) */}
         {section7.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
-            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
+            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
               📌 Não Perca
             </h2>
             <div className="space-y-4">
@@ -497,7 +498,7 @@ export default async function Home() {
         {remaining.length > 0 && (
           <section className="mt-20">
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="font-oswald text-5xl text-black font-bold">📚 ARQUIVO</h2>
+              <h2 className="font-bebas text-5xl text-black">📚 ARQUIVO</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-pink-500 to-transparent"></div>
             </div>
 
@@ -506,7 +507,6 @@ export default async function Home() {
                 if (!article) return null;
 
                 const layoutType = index % 6;
-
                 // Layout Wide (0, 3)
                 if (layoutType === 0 || layoutType === 3) {
                   return (

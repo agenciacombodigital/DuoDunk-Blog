@@ -12,6 +12,10 @@ import { getObjectPositionStyle } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import PageMeta from '@/components/PageMeta';
 
+// ✅ CORREÇÃO CRÍTICA: Forçar renderização dinâmica (SSR)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Article {
   id: string;
   title: string;
