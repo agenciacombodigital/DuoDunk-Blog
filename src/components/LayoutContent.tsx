@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from '@/hooks/useAuth';
 import { HelmetProvider } from 'react-helmet-async';
+import { cn } from '@/lib/utils'; // Importando cn para classes
 
 export default function LayoutContent({
   children,
@@ -20,16 +21,18 @@ export default function LayoutContent({
   return (
     <HelmetProvider>
       <AuthProvider>
-        {!isAdminRoute && (
-          <>
-            <Header />
-            <NBAScoreboardV2 />
-          </>
-        )}
-        <main className="flex-grow">
-          {children}
-        </main>
-        {!isAdminRoute && <Footer />}
+        <div className={cn("min-h-screen flex flex-col", isAdminRoute ? 'bg-black' : 'bg-white')}>
+          {!isAdminRoute && (
+            <>
+              <Header />
+              <NBAScoreboardV2 />
+            </>
+          )}
+          <main className="flex-grow">
+            {children}
+          </main>
+          {!isAdminRoute && <Footer />}
+        </div>
       </AuthProvider>
       <Sonner richColors theme={toasterTheme} />
     </HelmetProvider>

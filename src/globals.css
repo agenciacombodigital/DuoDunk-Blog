@@ -22,8 +22,8 @@
   }
 
   body {
-    /* Removendo font-inter daqui, pois será aplicado via layout.tsx */
-    @apply bg-white text-gray-900 antialiased;
+    /* Removendo bg-white para que o LayoutContent defina o fundo */
+    @apply text-gray-900 antialiased;
   }
 
   /* Estilos de Tipografia Aprimorados */
@@ -42,7 +42,7 @@
   p {
     @apply font-inter text-base md:text-lg leading-relaxed text-gray-700;
   }
-  /* Fim dos Estilos de Tipografia Aprimorados */
+  /* Fim dos Estilos de Tipografia Aprimados */
 
 
   /* Hero Section - Mantém preta */

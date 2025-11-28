@@ -59,12 +59,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // A lógica de pathname foi movida para LayoutContent
-  const isAdminRoute = children && (children as any).props?.segment === 'admin'; // Heurística para Server Component
+  // Removida a heurística isAdminRoute. O LayoutContent (Client) cuidará da renderização condicional.
 
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable} ${bebas.variable}`}>
-      <body className={`min-h-screen flex flex-col font-inter antialiased ${isAdminRoute ? 'bg-black' : 'bg-white'}`}>
+      {/* Removida a classe condicional do body. O LayoutContent (Client) cuidará do fundo. */}
+      <body className="min-h-screen flex flex-col font-inter antialiased">
         <LayoutContent>
           {children}
         </LayoutContent>
