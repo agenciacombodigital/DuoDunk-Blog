@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { ArrowLeft, Save, Loader2, Upload, Star, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { clearAllFeaturedArticlesServer } from '@/services/adminActions'; // Importando Server Action
 
 export default function AdminRodadaNBA() {
   const navigate = useNavigate();
@@ -98,6 +99,11 @@ export default function AdminRodadaNBA() {
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
         .substring(0, 100);
+
+      if (isFeatured) {
+        // Usando a Server Action para limpar destaques
+        await clearAllFeaturedArticlesServer();
+      }
 
       const { error: insertError } = await supabase.from('articles').insert({
         title: title.trim(),

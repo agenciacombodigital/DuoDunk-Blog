@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { clearAllFeaturedArticles } from '@/lib/adminUtils';
+import { clearAllFeaturedArticlesServer } from '@/services/adminActions'; // Importando Server Action
 import Link from 'next/link';
 
 export default function EditArticle({ params }: { params: { slug: string } }) {
@@ -117,7 +117,8 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
     const toastId = toast.loading("Salvando alterações...");
     try {
       if (formData.is_featured && !article.is_featured) {
-        await clearAllFeaturedArticles();
+        // Usando a Server Action para limpar destaques
+        await clearAllFeaturedArticlesServer();
       }
 
       const { error } = await supabase

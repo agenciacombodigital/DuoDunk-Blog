@@ -13,9 +13,9 @@ import PendingProcessingSection from '@/components/admin/PendingProcessingSectio
 import PublishedArticlesSection from '@/components/admin/PublishedArticlesSection';
 import EditArticleModal from '@/components/admin/EditArticleModal';
 import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
-import { clearAllFeaturedArticles } from '@/lib/adminUtils';
-import { retryRateLimitedArticles, getRateLimitStats } from '@/lib/retryRateLimitedArticles';
+import { retryRateLimitedArticles } from '@/lib/retryRateLimitedArticles';
 import { useAuth } from '@/hooks/useAuth';
+import { clearAllFeaturedArticlesServer, getRateLimitStatsServer } from '@/services/adminActions'; // Importando Server Actions
 
 export default function AdminPage() {
   const router = useRouter();
@@ -73,7 +73,8 @@ export default function AdminPage() {
   };
   
   const loadRateLimitStats = async () => {
-    const stats = await getRateLimitStats();
+    // Usando a Server Action para buscar stats
+    const stats = await getRateLimitStatsServer();
     if (stats.success) {
       setRateLimitStats(stats);
     }
@@ -83,7 +84,6 @@ export default function AdminPage() {
   const handleAutoAgenda = async () => {
     const toastId = toast.loading("🤖 Robô criando a agenda...");
     try {
-      // Chama a nova função renomeada
       const { error } = await supabase.functions.invoke('auto-rodada-nba');
       if (error) throw error;
       
@@ -132,6 +132,7 @@ export default function AdminPage() {
     setIsRetrying(true);
     const toastId = toast.loading("Retentando artigos com Rate Limit...");
     try {
+      // Esta função usa o cliente normal, então pode ser chamada diretamente
       const result = await retryRateLimitedArticles();
       if (result.success) {
         if (result.processed > 0) {
@@ -211,7 +212,8 @@ export default function AdminPage() {
     const toastId = toast.loading("Publicando artigo...");
     try {
       if (article.is_featured) {
-        await clearAllFeaturedArticles();
+        // Usando a Server Action para limpar destaques
+        await clearAllFeaturedArticlesServer();
       }
       const articleData = {
         title: article.title,
@@ -233,6 +235,7 @@ export default function AdminPage() {
         image_focal_point: article.image_focal_point || '50% 50%',
         image_focal_point_mobile: article.image_focal_point_mobile || '50%',
       };
+      // Usando o cliente normal para inserir (RLS deve estar desativado na tabela articles para admins)
       const { data: insertedData, error: insertError } = await supabase.from('articles').insert(articleData).select();
       if (insertError) throw insertError;
       if (!insertedData || insertedData.length === 0) throw new Error('Artigo não foi criado. INSERT vazio!');
@@ -309,6 +312,7 @@ export default function AdminPage() {
     setIsDeleting(true);
     const toastId = toast.loading("Deletando todas as notícias...");
     try {
+      // Usando o cliente normal, mas confiando que o RLS está desativado para admins
       await supabase.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       toast.success('Todas as notícias foram deletadas!', { id: toastId });
       await loadPublished();
