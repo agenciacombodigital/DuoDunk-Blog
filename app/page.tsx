@@ -82,7 +82,8 @@ export default async function Home() {
       {/* Featured Article */}
       {featuredArticle && (
         <section className="container mx-auto px-4 py-8">
-          <h2 className="font-bebas text-2xl text-pink-600 mb-4 tracking-wide uppercase flex items-center gap-2">
+          {/* Título da Seção: Usando Oswald (ou Bebas se for o estilo desejado) */}
+          <h2 className="font-oswald text-2xl text-pink-600 mb-4 tracking-wide uppercase flex items-center gap-2 font-bold">
             <TrendingUp className="w-5 h-5" />
             Em Destaque
           </h2>
@@ -114,6 +115,7 @@ export default async function Home() {
                         Há {getTimeAgo(featuredArticle.published_at)}
                       </span>
                     </div>
+                    {/* Título Principal: Usando font-oswald (já definido no globals.css) */}
                     <h1 className="font-oswald text-2xl md:text-4xl font-bold uppercase tracking-wide mb-3 text-white group-hover:text-pink-400 transition line-clamp-3 md:line-clamp-2">
                       {featuredArticle.title}
                     </h1>
@@ -179,7 +181,8 @@ export default async function Home() {
                       className="w-full h-full object-cover"
                       style={getObjectPositionStyle(article.image_focal_point)}
                     />
-                    <span className="absolute top-2 left-2 font-bebas text-lg bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center">
+                    {/* Número: Usando font-oswald para consistência, mas mantendo o estilo de badge */}
+                    <span className="absolute top-2 left-2 font-oswald text-lg bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
                       {index + 2}
                     </span>
                   </div>
@@ -212,7 +215,8 @@ export default async function Home() {
                     />
                   </div>
                   <div className="p-4">
-                    <span className="font-bebas text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2">
+                    {/* Número: Usando font-oswald para consistência, mas mantendo o estilo de badge */}
+                    <span className="font-oswald text-lg inline-block bg-pink-600 text-white px-3 py-1 rounded-full mb-2 font-bold">
                       5
                     </span>
                     <h3 className="font-oswald text-lg md:text-xl font-semibold uppercase text-gray-900 mb-2 group-hover:text-pink-600 transition line-clamp-2">
@@ -231,7 +235,8 @@ export default async function Home() {
         {/* Seção 2: Notícias em Destaque (NÃO PERCA) */}
         {section2.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-4 md:p-8 border border-gray-100">
-            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+            {/* Título da Seção: Usando Oswald (ou Bebas se for o estilo desejado) */}
+            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
               📌 Não Perca
             </h2>
             <div className="space-y-4">
@@ -270,7 +275,7 @@ export default async function Home() {
         {/* Seção 3: Análises Profundas */}
         {section3.length > 0 && (
           <section>
-            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
               🔥 Análises Profundas
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -308,7 +313,7 @@ export default async function Home() {
         {/* Seção 4: Destaques Rápidos */}
         {section4.length > 0 && (
           <section>
-            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
               ⚡ Destaques Rápidos
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
@@ -342,7 +347,7 @@ export default async function Home() {
         {/* Seção 5: Mais Lidas */}
         {section5.length > 0 && (
           <section>
-            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
               📊 Mais Lidas
             </h2>
             <div className="space-y-6">
@@ -377,7 +382,7 @@ export default async function Home() {
         {/* Seção 6: Mais da NBA */}
         {section6.length > 0 && (
           <section>
-            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
               🏀 Mais da NBA
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -412,7 +417,7 @@ export default async function Home() {
         {/* Seção 7: No Perca (Segunda ocorrência) */}
         {section7.length > 0 && (
           <section className="bg-gray-50 rounded-xl p-8 border border-gray-100">
-            <h2 className="font-bebas text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2">
+            <h2 className="font-oswald text-3xl md:text-5xl mb-4 md:mb-6 flex items-center gap-2 font-bold">
               📌 Não Perca
             </h2>
             <div className="space-y-4">
@@ -487,7 +492,7 @@ export default async function Home() {
         {remaining.length > 0 && (
           <section className="mt-20">
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="font-bebas text-5xl text-black">📚 ARQUIVO</h2>
+              <h2 className="font-oswald text-5xl text-black font-bold">📚 ARQUIVO</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-pink-500 to-transparent"></div>
             </div>
 
