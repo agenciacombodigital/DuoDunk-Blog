@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabaseSSR } from '@/lib/supabase';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import DisqusComments from '@/components/DisqusComments';
@@ -44,7 +44,7 @@ const formatDateTime = (dateString: string, includeTime: boolean = true): string
 
 // Função de busca de dados no servidor (SSR)
 async function getArticle(slug: string) {
-  const { data } = await supabase
+  const { data } = await supabaseSSR // <-- USANDO supabaseSSR
     .from('articles')
     .select('*')
     .eq('slug', slug)
@@ -130,7 +130,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
     articleAuthor = "Hugo Tamura";
   } else if (lowerSource.includes('espn')) {
     articleAuthor = "Maiara Pires";
-  } else if (lowerSource.includes('duodunk') || lowerSource.includes('editorial') || lowerSource.includes('auto-gerado')) {
+  } else if (lowerSource.includes('duodunk') || lowerSource.includes('editorial') || article.source?.includes('auto-gerado')) {
     articleAuthor = "Fernando Balley";
   } else if (article.source) {
     articleAuthor = article.source;

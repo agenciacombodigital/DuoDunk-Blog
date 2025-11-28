@@ -5,6 +5,8 @@ import { Metadata } from 'next';
 
 // Função de busca de dados no servidor (SSR)
 async function loadResults() {
+  // Esta função usa axios, então não precisa de supabaseSSR diretamente,
+  // mas mantemos a estrutura para garantir que o SSR funcione.
   return await buscarJogosOntemComBoxScore();
 }
 

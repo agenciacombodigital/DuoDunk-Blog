@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabaseSSR } from '@/lib/supabase';
 import Link from 'next/link';
 import { TrendingUp, Calendar, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
@@ -25,7 +25,7 @@ function getTimeAgo(dateString: string): string {
 
 // Função de busca de dados no servidor (SSR)
 async function loadArticles() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseSSR // <-- USANDO supabaseSSR
     .from('articles')
     .select('*')
     .eq('published', true)
@@ -56,8 +56,8 @@ export default async function Home() {
   
   if (articles.length === 0) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-gray-400 text-lg font-inter">Nenhum artigo publicado ainda.</p>
+      <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 text-lg font-inter">Nenhum artigo publicado ainda.</p>
       </div>
     );
   }
