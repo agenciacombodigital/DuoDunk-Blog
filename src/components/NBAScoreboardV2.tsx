@@ -61,7 +61,6 @@ const convertToBrasiliaTime = (dateString: string) => {
 };
 
 // Mapeamento manual de jogos Prime Video/ESPN (Exemplo baseado em jogos de destaque)
-// Em um ambiente real, isso seria alimentado por uma API de calendário brasileira.
 const PRIME_VIDEO_GAMES: [string, string][] = [
   ['NYK', 'MIA'], // Knicks x Heat
   ['GSW', 'SAS'], // Warriors x Spurs
@@ -133,9 +132,6 @@ const getGameStatusDisplay = (game: Game): string => {
     const clock = formatGameClock(game.gameClock);
     
     // Verifica se é intervalo (Half Time)
-    // A API da NBA geralmente indica intervalo principal (após o 2º quarto)
-    // com gameClock vazio ou "PT00M00.00S" e period = 2.
-    // Vamos verificar se o relógio está zerado e o período é 2 ou 4 (fim do jogo/prorrogação)
     if (clock === '00:00' && game.period === 2) {
       return 'Intervalo';
     }
@@ -192,16 +188,18 @@ export default function NBAScoreboardV2() {
             teamName: g.homeTeam.teamName,
             teamTricode: g.homeTeam.teamTricode,
             score: String(g.homeTeam.score),
-            wins: g.homeTeam.wins,
-            losses: g.homeTeam.losses,
+            // ✅ CORREÇÃO: Garante que wins/losses sejam números válidos, senão 0
+            wins: g.homeTeam.wins || 0,
+            losses: g.homeTeam.losses || 0,
             logo: `https://cdn.nba.com/logos/nba/${g.homeTeam.teamId}/primary/L/logo.svg`,
           },
           awayTeam: {
             teamName: g.awayTeam.teamName,
             teamTricode: g.awayTeam.teamTricode,
             score: String(g.awayTeam.score),
-            wins: g.awayTeam.wins,
-            losses: g.awayTeam.losses,
+            // ✅ CORREÇÃO: Garante que wins/losses sejam números válidos, senão 0
+            wins: g.awayTeam.wins || 0,
+            losses: g.awayTeam.losses || 0,
             logo: `https://cdn.nba.com/logos/nba/${g.awayTeam.teamId}/primary/L/logo.svg`,
           },
         }));
@@ -308,7 +306,13 @@ export default function NBAScoreboardV2() {
                       <div className="text-left min-w-0">
                         {/* Fonte Oswald para Tricode */}
                         <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.awayTeam.teamTricode}</span>
-                        <span className="font-inter text-xs text-zinc-400 block truncate">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                        {/* ✅ CORREÇÃO: Exibe o recorde, ou N/D se for 0-0 */}
+                        <span className="font-inter text-xs text-zinc-400 block truncate">
+                          {game.awayTeam.wins === 0 && game.awayTeam.losses === 0 && game.gameStatus === 1
+                            ? 'N/D'
+                            : `(${game.awayTeam.wins}-${game.awayTeam.losses})`
+                          }
+                        </span>
                       </div>
                     </div>
                     {/* Fonte Bebas para Placar */}
@@ -326,7 +330,13 @@ export default function NBAScoreboardV2() {
                       <div className="text-left min-w-0">
                         {/* Fonte Oswald para Tricode */}
                         <span className="font-oswald text-base md:text-lg font-bold uppercase text-white block truncate">{game.homeTeam.teamTricode}</span>
-                        <span className="font-inter text-xs text-zinc-400 block truncate">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                        {/* ✅ CORREÇÃO: Exibe o recorde, ou N/D se for 0-0 */}
+                        <span className="font-inter text-xs text-zinc-400 block truncate">
+                          {game.homeTeam.wins === 0 && game.homeTeam.losses === 0 && game.gameStatus === 1
+                            ? 'N/D'
+                            : `(${game.homeTeam.wins}-${game.homeTeam.losses})`
+                          }
+                        </span>
                       </div>
                     </div>
                     {/* Fonte Bebas para Placar */}
