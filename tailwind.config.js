@@ -21,10 +21,10 @@ module.exports = {
         '3/4': '3 / 4',
       },
       fontFamily: {
-        'bebas': ['Bebas Neue', 'cursive'],
-        'oswald': ['Oswald', 'sans-serif'],
-        'inter': ['Inter', 'sans-serif'],
-        'sans': ['Inter', 'sans-serif'],
+        sans: ['var(--font-inter)', 'sans-serif'],
+        inter: ['var(--font-inter)', 'sans-serif'],
+        oswald: ['var(--font-oswald)', 'sans-serif'], // Para Títulos
+        bebas: ['var(--font-bebas)', 'sans-serif'],   // Para Placares/Números
       },
       colors: {
         border: "hsl(var(--border))",

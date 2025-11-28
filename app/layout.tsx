@@ -9,10 +9,25 @@ import NBAScoreboardV2 from '@/components/NBAScoreboardV2';
 import { usePathname } from 'next/navigation';
 import '@/globals.css';
 
-// Configuração das fontes
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' });
-const bebas = Bebas_Neue({ subsets: ['latin'], weight: '400', variable: '--font-bebas' });
+// Configuração das Fontes Otimizadas
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const oswald = Oswald({ 
+  subsets: ['latin'],
+  variable: '--font-oswald',
+  display: 'swap',
+});
+
+const bebas = Bebas_Neue({ 
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-bebas',
+  display: 'swap',
+});
 
 export default function RootLayout({
   children,
@@ -25,7 +40,7 @@ export default function RootLayout({
   
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable} ${bebas.variable}`}>
-      <body className={`min-h-screen flex flex-col ${isAdminRoute ? 'bg-black' : 'bg-white'}`}>
+      <body className={`min-h-screen flex flex-col font-inter antialiased ${isAdminRoute ? 'bg-black' : 'bg-white'}`}>
         <AuthProvider>
           {!isAdminRoute && (
             <>

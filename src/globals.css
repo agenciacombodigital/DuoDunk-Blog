@@ -22,12 +22,28 @@
   }
 
   body {
-    @apply bg-white text-gray-900 font-inter antialiased;
+    /* Removendo font-inter daqui, pois será aplicado via layout.tsx */
+    @apply bg-white text-gray-900 antialiased;
   }
 
+  /* Estilos de Tipografia Aprimorados */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-oswald font-bold;
+    @apply font-oswald uppercase tracking-wide;
   }
+  
+  h1 {
+    @apply text-4xl md:text-6xl font-bold leading-tight;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl font-bold;
+  }
+  
+  p {
+    @apply font-inter text-base md:text-lg leading-relaxed text-gray-700;
+  }
+  /* Fim dos Estilos de Tipografia Aprimorados */
+
 
   /* Hero Section - Mantém preta */
   .hero-section {
@@ -284,9 +300,7 @@ html {
     -webkit-text-size-adjust: 100%;
   }
   
-  h1 { font-size: 1.75rem !important; }
-  h2 { font-size: 1.5rem !important; }
-  h3 { font-size: 1.25rem !important; }
+  /* Removendo regras de h1/h2/h3 aqui para usar as regras globais acima */
   
   /* Parágrafos do post */
   article p {
@@ -299,9 +313,6 @@ html {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
   }
-  
-  /* REMOVIDO: img { max-width: 100% !important; height: auto !important; } */
-  /* REMOVIDO: .aspect-\[3\/4\] img { object-fit: cover !important; } */
 }
 
 /* Responsividade mobile para Bebas */
