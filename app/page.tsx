@@ -4,6 +4,7 @@ import { TrendingUp, Calendar, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
+import { unstable_noStore as noStore } from 'next/cache'; // Importação necessária
 
 // Função auxiliar para mostrar o tempo (h X horas/dias)
 function getTimeAgo(dateString: string): string {
@@ -24,6 +25,9 @@ function getTimeAgo(dateString: string): string {
 
 // Função de busca de dados no servidor (SSR)
 async function loadArticles() {
+  // Desabilita o cache para garantir que o destaque seja sempre o mais recente
+  noStore(); 
+  
   const { data, error } = await supabaseSSR // <-- USANDO supabaseSSR
     .from('articles')
     .select('*')
