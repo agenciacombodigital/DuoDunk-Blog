@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // No Next.js, chaves privadas não devem ter NEXT_PUBLIC_.
 // Usamos o nome limpo para o ambiente de produção/servidor.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL; // Prioriza SUPABASE_URL
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Chave privada
 
 // Fallback para o ambiente Dyad/Vercel onde as chaves VITE_ podem não ser injetadas corretamente no cliente.
