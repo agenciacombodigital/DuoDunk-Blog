@@ -34,7 +34,6 @@ async function loadArticles() {
 
   if (error) {
     console.error('Erro ao carregar artigos:', error);
-    // Retorna um array vazio em caso de erro, em vez de lançar exceção
     return []; 
   }
   return data || [];
@@ -50,12 +49,9 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const articles = await loadArticles();
+  const allArticles = await loadArticles();
   
-  // O useIsMobile é um Client Component, então precisamos de um wrapper ou passá-lo para um Client Component
-  // Para o SSR, vamos assumir o corte desktop e deixar o CSS lidar com o mobile, ou usar um Client Component para o Hero.
-  
-  if (articles.length === 0) {
+  if (allArticles.length === 0) {
     return (
       <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center">
         <p className="text-gray-600 text-lg font-inter">Nenhum artigo publicado ainda.</p>
@@ -63,16 +59,22 @@ export default async function Home() {
     );
   }
 
-  const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
-  const section1 = articles.filter((a) => a.id !== featuredArticle?.id).slice(0, 7);
-  const section2 = articles.slice(8, 14);
-  const section3 = articles.slice(14, 16);
-  const section4 = articles.slice(16, 20);
-  const section5 = articles.slice(20, 26);
-  const section6 = articles.slice(26, 29);
-  const section7 = articles.slice(29, 35);
-  const section8 = articles.slice(35, 37);
-  const remaining = articles.slice(37);
+  // 1. Encontrar o artigo em destaque
+  const featuredArticle = allArticles.find((a) => a.is_featured) || allArticles[0];
+  
+  // 2. Criar a lista de artigos secundários (excluindo o destaque)
+  const secondaryArticles = allArticles.filter((a) => a.id !== featuredArticle?.id);
+  
+  // 3. Fatiar a lista secundária de forma segura
+  const section1 = secondaryArticles.slice(0, 7); // 7 artigos para a primeira seção
+  const section2 = secondaryArticles.slice(7, 13); // 6 artigos para a segunda seção
+  const section3 = secondaryArticles.slice(13, 15); // 2 artigos para a terceira seção
+  const section4 = secondaryArticles.slice(15, 19); // 4 artigos para a quarta seção
+  const section5 = secondaryArticles.slice(19, 25); // 6 artigos para a quinta seção
+  const section6 = secondaryArticles.slice(25, 28); // 3 artigos para a sexta seção
+  const section7 = secondaryArticles.slice(28, 34); // 6 artigos para a sétima seção
+  const section8 = secondaryArticles.slice(34, 36); // 2 artigos para a oitava seção
+  const remaining = secondaryArticles.slice(36); // O restante
 
   // Para SSR, usamos o focal point desktop como padrão
   const focalPointStyle = getObjectPositionStyle(featuredArticle.image_focal_point, false);
@@ -156,7 +158,7 @@ export default async function Home() {
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
                         <Clock className="w-3 h-3" />
-                        <span>há {getTimeAgo(featuredArticle.published_at)}</span>
+                        <span>há {getTimeAgo(article.published_at)}</span>
                       </div>
                     </div>
                   </Link>
@@ -192,7 +194,7 @@ export default async function Home() {
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 font-inter">
                       <Clock className="w-3 h-3" />
-                      <span>Há {getTimeAgo(featuredArticle.published_at)}</span>
+                      <span>Há {getTimeAgo(article.published_at)}</span>
                     </div>
                   </div>
                 </Link>
