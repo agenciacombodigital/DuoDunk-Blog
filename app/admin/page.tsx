@@ -240,6 +240,8 @@ export default function AdminPage() {
       if (insertError) throw insertError;
       if (!insertedData || insertedData.length === 0) throw new Error('Artigo não foi criado. INSERT vazio!');
       
+      console.log(`✅ Artigo publicado com sucesso: ${insertedData[0].id}`); // Adicionando log de sucesso
+      
       const { error: updateError } = await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       if (updateError) console.warn('⚠️ Erro ao atualizar fila:', updateError);
       
