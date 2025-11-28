@@ -30,6 +30,7 @@ export const config = {
 };
 
 export default async function middleware(request: Request) {
+  /*
   // 1. Identificar o User Agent (Robô ou Humano?)
   const userAgent = request.headers.get('user-agent')?.toLowerCase() || '';
   const isBot = botUserAgents.some(bot => userAgent.includes(bot));
@@ -70,4 +71,8 @@ export default async function middleware(request: Request) {
 
   // 3. Se for Humano ou der erro, o Vercel continua normal (serve o index.html do Vite)
   return fetch(request);
+  */
+  
+  // Se o middleware não fizer nada, o Next.js continua o fluxo normal.
+  // Se o problema for resolvido, reativaremos a lógica de bot/prerender.
 }
