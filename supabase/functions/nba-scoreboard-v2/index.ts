@@ -36,29 +36,35 @@ const fetchBoxscore = async (gameId: string) => {
   }
 };
 
-// NOVO: Função para buscar a classificação e mapear por Tricode
+// Função para buscar a classificação e mapear por Tricode
 const fetchStandingsMap = async () => {
     try {
         const standingsUrl = 'https://cdn.nba.com/static/json/liveData/standings/leagueStandings.json';
         const response = await fetch(standingsUrl);
         if (!response.ok) {
-            console.warn('[Standings Fetch] Failed to fetch standings.');
+            console.warn('[Standings Fetch] Failed to fetch standings. Status:', response.status);
             return new Map();
         }
         const data = await response.json();
         const standingsMap = new Map();
 
-        data.league.standard.conference.forEach((conf: any) => {
-            conf.team.forEach((team: any) => {
-                standingsMap.set(team.teamTricode, {
-                    wins: team.win,
-                    losses: team.loss,
+        // Verifica se a estrutura esperada existe
+        if (data?.league?.standard?.conference) {
+            data.league.standard.conference.forEach((conf: any) => {
+                conf.team.forEach((team: any) => {
+                    standingsMap.set(team.teamTricode, {
+                        wins: team.win,
+                        losses: team.loss,
+                    });
                 });
             });
-        });
+        } else {
+            console.warn('[Standings Fetch] Unexpected data structure in standings API.');
+        }
         return standingsMap;
     } catch (error) {
-        console.error('[Standings Fetch] Error:', error.message);
+        // Captura qualquer erro de parsing ou rede e retorna um mapa vazio
+        console.error('[Standings Fetch] Critical Error:', error.message);
         return new Map();
     }
 };
@@ -71,7 +77,7 @@ serve(async (req) => {
 
   try {
     const cacheBuster = new Date().getTime();
-    // Mantendo a URL da NBA para o placar, pois a Edge Function anterior já estava usando
+    // 1. Buscar o placar principal (Scoreboard)
     const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
     
     const response = await fetch(nbaApiUrl, {
@@ -87,6 +93,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error(`[nba-scoreboard-v2] NBA API request failed with status ${response.status}`);
+      // Se o placar principal falhar, retornamos um erro 500
       throw new Error(`NBA API request failed with status ${response.status}`);
     }
 
@@ -100,10 +107,10 @@ serve(async (req) => {
       });
     }
     
-    // 1. Buscar a classificação atualizada
+    // 2. Buscar a classificação (deve ser tolerante a falhas)
     const standingsMap = await fetchStandingsMap();
     
-    // 2. Identificar jogos potencialmente ao vivo e buscar boxscores
+    // 3. Processar jogos (incluindo busca de boxscores para jogos ao vivo)
     const now = new Date();
     const potentiallyLiveGameIds = scoreboard.games
       .filter((game: any) => {
@@ -127,7 +134,7 @@ serve(async (req) => {
         }
       });
 
-      // 3. Atualizar placar com dados em tempo real e classificação
+      // 4. Atualizar placar com dados em tempo real e classificação
       scoreboard.games.forEach((game: any) => {
         const liveData = liveGameDataMap.get(game.gameId);
         
@@ -141,7 +148,7 @@ serve(async (req) => {
           game.gameStatusText = liveData.gameStatusText;
         }
         
-        // 4. Injetar Wins/Losses da classificação (para jogos agendados/finalizados)
+        // Injetar Wins/Losses da classificação
         const homeRecord = standingsMap.get(game.homeTeam.teamTricode);
         const awayRecord = standingsMap.get(game.awayTeam.teamTricode);
         
