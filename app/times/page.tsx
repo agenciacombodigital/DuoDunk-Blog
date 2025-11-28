@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { NBA_TEAMS } from '@/lib/nbaTeams';
 import { Trophy } from 'lucide-react';
 import { Metadata } from 'next';
+import TeamLogo from '@/components/TeamLogo';
 
 export const metadata: Metadata = {
   title: 'Times da NBA - Conferências Leste e Oeste',
@@ -47,35 +48,11 @@ export default function Times() {
               >
                 <div className="mb-3">
                   <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition overflow-hidden">
-                    <img 
-                      src={`https://a.espncdn.com/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png`}
-                      alt={team.name}
+                    <TeamLogo
+                      abbreviation={team.abbreviation}
+                      name={team.name}
+                      initialSrc={`https://a.espncdn.com/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png`}
                       className="w-16 h-16 object-contain"
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        const abbr = team.abbreviation.toLowerCase();
-                        
-                        // Lista de URLs para tentar em ordem
-                        const alternatives = [
-                          `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${abbr}.png&h=200&w=200`,
-                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'uta' ? 'utah' : abbr}.png`,
-                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'nop' ? 'no' : abbr}.png`
-                        ];
-                        
-                        // Encontra a URL atual na lista de alternativas para tentar a próxima
-                        const currentSrcIndex = alternatives.findIndex(src => img.src.includes(src));
-                        const nextIndex = currentSrcIndex + 1;
-
-                        if (nextIndex < alternatives.length) {
-                          img.src = alternatives[nextIndex];
-                        } else {
-                          // Se todas falharem, mostra abreviação
-                          img.style.display = 'none';
-                          if (img.parentElement) {
-                            img.parentElement.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
-                          }
-                        }
-                      }}
                     />
                   </div>
                 </div>
@@ -103,35 +80,11 @@ export default function Times() {
               >
                 <div className="mb-3">
                   <div className="w-20 h-20 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition overflow-hidden">
-                    <img 
-                      src={`https://a.espncdn.com/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png`}
-                      alt={team.name}
+                    <TeamLogo
+                      abbreviation={team.abbreviation}
+                      name={team.name}
+                      initialSrc={`https://a.espncdn.com/i/teamlogos/nba/500/${team.abbreviation.toLowerCase()}.png`}
                       className="w-16 h-16 object-contain"
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        const abbr = team.abbreviation.toLowerCase();
-                        
-                        // Lista de URLs para tentar em ordem
-                        const alternatives = [
-                          `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${abbr}.png&h=200&w=200`,
-                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'uta' ? 'utah' : abbr}.png`,
-                          `https://a.espncdn.com/i/teamlogos/nba/500/${abbr === 'nop' ? 'no' : abbr}.png`
-                        ];
-                        
-                        // Encontra a URL atual na lista de alternativas para tentar a próxima
-                        const currentSrcIndex = alternatives.findIndex(src => img.src.includes(src));
-                        const nextIndex = currentSrcIndex + 1;
-
-                        if (nextIndex < alternatives.length) {
-                          img.src = alternatives[nextIndex];
-                        } else {
-                          // Se todas falharem, mostra abreviação
-                          img.style.display = 'none';
-                          if (img.parentElement) {
-                            img.parentElement.innerHTML = `<span class="text-3xl font-black text-gray-400">${team.abbreviation}</span>`;
-                          }
-                        }
-                      }}
                     />
                   </div>
                 </div>

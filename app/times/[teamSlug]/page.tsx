@@ -7,6 +7,7 @@ import {
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { Metadata } from 'next';
+import TeamLogo from '@/components/TeamLogo'; // Importando o novo componente
 
 interface TeamData {
   team: {
@@ -445,13 +446,12 @@ const TeamTabs = ({ teamData, teamInfo }: { teamData: TeamData, teamInfo: any })
                             <span className="font-bold text-gray-900 text-lg">
                               {opponentScore}
                             </span>
-                            <img 
-                              src={getLogo(opponent.logo, getTeamById(opponent.id)?.abbreviation)}
-                              alt={opponent.name}
+                            {/* Usando TeamLogo para o oponente */}
+                            <TeamLogo
+                              abbreviation={getTeamById(opponent.id)?.abbreviation || opponent.name}
+                              name={opponent.name}
+                              initialSrc={getLogo(opponent.logo, getTeamById(opponent.id)?.abbreviation)}
                               className="w-10 h-10 object-contain"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
                             />
                             <span className="text-gray-900 font-medium hidden sm:block">
                               {opponent.name}
@@ -503,13 +503,12 @@ const TeamTabs = ({ teamData, teamInfo }: { teamData: TeamData, teamInfo: any })
                               className="w-10 h-10 object-contain"
                             />
                             <span className="text-gray-400 font-bold text-lg">VS</span>
-                            <img 
-                              src={getLogo(opponent.logo, getTeamById(opponent.id)?.abbreviation)}
-                              alt={opponent.name}
+                            {/* Usando TeamLogo para o oponente */}
+                            <TeamLogo
+                              abbreviation={getTeamById(opponent.id)?.abbreviation || opponent.name}
+                              name={opponent.name}
+                              initialSrc={getLogo(opponent.logo, getTeamById(opponent.id)?.abbreviation)}
                               className="w-10 h-10 object-contain"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
                             />
                             <span className="text-gray-900 font-medium hidden sm:block">
                               {opponent.name}
