@@ -34,7 +34,8 @@ async function loadArticles() {
 
   if (error) {
     console.error('Erro ao carregar artigos:', error);
-    return [];
+    // Retorna um array vazio em caso de erro, em vez de lançar exceção
+    return []; 
   }
   return data || [];
 }

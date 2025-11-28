@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, Play, Tv } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Tv, Loader2 } from 'lucide-react';
 import GameStatsModalV3 from './GameStatsModalV3';
 import { cn } from '@/lib/utils'; // Importando cn para classes condicionais
 
@@ -226,11 +226,22 @@ export default function NBAScoreboardV2() {
     return () => clearInterval(interval);
   }, [games]);
 
-  if (loading || games.length === 0) {
+  if (loading) {
+    return (
+      <div className="bg-[#09090b] py-3 border-b border-white/10 text-center flex items-center justify-center gap-2">
+        <Loader2 className="w-4 h-4 text-pink-500 animate-spin" />
+        <span className="text-gray-400 text-sm font-medium font-inter">
+          Carregando jogos...
+        </span>
+      </div>
+    );
+  }
+  
+  if (games.length === 0) {
     return (
       <div className="bg-[#09090b] py-3 border-b border-white/10 text-center">
         <span className="text-gray-400 text-sm font-medium font-inter">
-          {loading ? 'Carregando jogos...' : 'Nenhum jogo hoje'}
+          Nenhum jogo hoje
         </span>
       </div>
     );
