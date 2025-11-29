@@ -8,6 +8,7 @@ import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import ArticleBody from '@/components/ArticleBody'; // Importando o novo componente
+import AmazonCTA from '@/components/AmazonCTA'; // Importando AmazonCTA
 
 // Helper para formatar a data no estilo "DD MMM YYYY, HH:MM"
 const formatDateTime = (dateString: string, includeTime: boolean = true): string => {
@@ -70,7 +71,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const summary = article.meta_description || article.summary || article.title;
   const authorName = article.source?.includes('DuoDunk') || article.source?.includes('Editorial') ? 'Fernando Balley' : article.source || 'Duo Dunk Redação';
   
-  // ✅ Adicionando verificação de array para tags
+  // ✅ Garantindo que article.tags é um array para evitar falhas no SSR
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
   
   const articleKeywords = safeTags.length > 0
