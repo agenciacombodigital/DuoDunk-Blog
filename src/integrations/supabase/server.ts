@@ -1,18 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Tenta ler as variáveis
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Fallback usando as chaves do contexto Supabase (seguro para a chave ANÔNIMA)
+const FALLBACK_URL = 'https://brerfpcfkyptkzygyzxl.supabase.co';
+const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyZXJmcGNma3lwdGt6eWd5enhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3MTM2MjUsImV4cCI6MjA3NTI4OTYyNX0.E_325y4DDXWxxeB19aYRQA9RHrqFF1aR6jkEYeq6H0M';
 
-console.log("--- DEBUG SUPABASE SERVER ---");
-console.log("URL Encontrada:", supabaseUrl ? "SIM" : "NÃO");
-console.log("Key Encontrada:", supabaseAnonKey ? "SIM (Tam: " + supabaseAnonKey.length + ")" : "NÃO");
+// Tenta ler as variáveis de ambiente, priorizando NEXT_PUBLIC_
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || FALLBACK_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || FALLBACK_ANON_KEY;
+
+let client;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("❌ ERRO FATAL: Variáveis de ambiente ausentes.");
-  // Cliente Dummy para não crashar o build, mas vai dar erro ao usar
-  export const supabaseServer = createClient('https://dummy.com', 'dummy');
+  console.error("❌ ERRO FATAL: Variáveis de ambiente Supabase ausentes.");
+  client = createClient('https://dummy.com', 'dummy');
 } else {
-  // Cliente Real
-  export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey);
+  // Conexão - Adicionando opções de auth para desativar persistência
+  client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
+
+/**
+ * Cliente Supabase para uso em Server Components (SSR/SSG).
+ */
+export const supabaseServer = client;
