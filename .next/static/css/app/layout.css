@@ -665,9 +665,7 @@ video {
 }
 
   body {
-    /* Removendo font-inter daqui, pois será aplicado via layout.tsx */
-    --tw-bg-opacity: 1;
-    background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+    /* Removendo bg-white para que o LayoutContent defina o fundo */
     --tw-text-opacity: 1;
     color: rgb(17 24 39 / var(--tw-text-opacity, 1));
     -webkit-font-smoothing: antialiased;
@@ -726,7 +724,7 @@ video {
     line-height: 1.75rem;
   }
 }
-  /* Fim dos Estilos de Tipografia Aprimorados */
+  /* Fim dos Estilos de Tipografia Aprimados */
 
 
   /* Hero Section - Mantém preta */
