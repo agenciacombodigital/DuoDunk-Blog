@@ -5,10 +5,10 @@ import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
-import DOMPurify from 'isomorphic-dompurify';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import AmazonCTA from '@/components/AmazonCTA';
 import { Metadata } from 'next';
+import ArticleBody from '@/components/ArticleBody'; // Importando o novo componente
 
 // Helper para formatar a data no estilo "DD MMM YYYY, HH:MM"
 const formatDateTime = (dateString: string, includeTime: boolean = true): string => {
@@ -144,29 +144,6 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   const isUpdated = article.updated_at && new Date(article.updated_at).getTime() > new Date(article.published_at).getTime() + 60000;
   const updatedDate = isUpdated ? formatDateTime(article.updated_at) : null;
 
-  const isHtmlContent = /<[a-z][\s\S]*>/i.test(article.body);
-  
-  const renderBody = () => {
-    if (isHtmlContent) {
-      return (
-        <div 
-          className="prose prose-lg max-w-none mb-12 font-inter"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.body) }}
-        />
-      );
-    }
-    
-    return (
-      <div className="prose prose-lg max-w-none mb-12 font-inter">
-        {article.body.split('\n\n').map((paragraph: string, index: number) => (
-          <p key={index} className="mb-4">
-            {paragraph}
-          </p>
-        ))}
-      </div>
-    );
-  };
-  
   // ✅ Garantir que article.tags é um array para evitar falhas no .filter e .map
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
 
@@ -249,7 +226,8 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
               </div>
             )}
 
-            {renderBody()}
+            {/* NOVO COMPONENTE DE CORPO DO ARTIGO */}
+            <ArticleBody content={article.body} />
             
             <AmazonCTA />
 
