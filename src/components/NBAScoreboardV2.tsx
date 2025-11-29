@@ -189,37 +189,29 @@ export default function NBAScoreboardV2() {
                      </div>
 
                      {/* Times e Placar */}
-                     <div className="flex flex-col gap-3 flex-1">
-                        {/* Time Visitante */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain" />
-                            <div>
-                               {/* Sigla do Time - Oswald */}
-                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
-                               <span className="block font-inter text-[10px] text-zinc-500 font-medium">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
-                            </div>
-                          </div>
-                          {/* Placar - Bebas Neue */}
-                          <span className={cn("font-bebas text-4xl text-white tabular-nums tracking-tight", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
-                            {game.awayTeam.score}
-                          </span>
+                     <div className="flex justify-between items-center w-full flex-1">
+                        {/* Away */}
+                        <div className="flex items-center gap-3">
+                           <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain drop-shadow-md" />
+                           <div className="text-left">
+                              <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
+                              <span className="block font-inter text-[10px] text-gray-400 font-medium">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                           </div>
                         </div>
                         
-                        {/* Time Casa */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain" />
-                            <div>
-                               {/* Sigla do Time - Oswald */}
-                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
-                               <span className="block font-inter text-[10px] text-zinc-500 font-medium">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
-                            </div>
-                          </div>
-                          {/* Placar - Bebas Neue */}
-                          <span className={cn("font-bebas text-4xl text-white tabular-nums tracking-tight", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
-                            {game.homeTeam.score}
-                          </span>
+                        <div className="flex items-center gap-2 font-bebas text-4xl tracking-tight">
+                           <span className={cn(awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.score}</span>
+                           <span className="text-gray-600 text-2xl mb-1">:</span>
+                           <span className={cn(homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.score}</span>
+                        </div>
+
+                        {/* Home */}
+                        <div className="flex items-center gap-3 flex-row-reverse">
+                           <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain drop-shadow-md" />
+                           <div className="text-right">
+                              <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
+                              <span className="block font-inter text-[10px] text-gray-400 font-medium">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                           </div>
                         </div>
                      </div>
                      
