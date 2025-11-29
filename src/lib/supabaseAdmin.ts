@@ -8,6 +8,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Fallback para o ambiente Dyad/Vercel onde as chaves VITE_ podem não ser injetadas corretamente no cliente.
 const FALLBACK_URL = 'https://brerfpcfkyptkzygyzxl.supabase.co';
+// ⚠️ Esta é a Service Role Key (Chave Secreta)
 const FALLBACK_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyZXJmcGNma3lwdGt6eWd5enhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTcxMzYyNSwiZXhwIjoyMDc1Mjg5NjI1fQ.PqG2WGGijMVbdI4a8jnk-piyZM8lbfbFKVDgO9cHJ_E';
 
 let adminClient: SupabaseClient;
@@ -16,7 +17,7 @@ let adminClient: SupabaseClient;
 const finalServiceKey = supabaseServiceRoleKey || FALLBACK_SERVICE_ROLE_KEY;
 const finalUrl = supabaseUrl || FALLBACK_URL;
 
-if (!finalServiceKey) {
+if (!finalServiceKey || finalServiceKey === FALLBACK_SERVICE_ROLE_KEY) {
   console.warn(
     '⚠️ AVISO: SUPABASE_SERVICE_ROLE_KEY não configurada. Usando fallback para Admin.'
   );
