@@ -11,18 +11,25 @@ export default function ArticleBody({ content }: ArticleBodyProps) {
   const [sanitizedContent, setSanitizedContent] = useState('');
 
   useEffect(() => {
-    // Sanitiza apenas no cliente (navegador)
-    setSanitizedContent(DOMPurify.sanitize(content));
+    // Sanitiza apenas no navegador
+    if (content) {
+      setSanitizedContent(DOMPurify.sanitize(content));
+    }
   }, [content]);
 
-  // Renderiza um esqueleto ou vazio enquanto sanitiza para evitar hidratação incorreta
   if (!sanitizedContent) {
-    return <div className="animate-pulse h-96 bg-gray-100 rounded-lg"></div>;
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded w-full"></div>
+        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+      </div>
+    );
   }
 
   return (
     <div 
-      className="prose prose-lg max-w-none mb-12 font-inter"
+      className="prose prose-lg max-w-none mb-12 font-inter text-gray-800 leading-relaxed"
       dangerouslySetInnerHTML={{ __html: sanitizedContent }}
     />
   );
