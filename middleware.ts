@@ -11,6 +11,5 @@ export const config = {
 
 export default async function middleware(request: NextRequest) {
   // Retorna o fluxo normal do Next.js.
-  // Isso garante que o roteamento funcione corretamente no ambiente local e de produção.
   return NextResponse.next();
 }
