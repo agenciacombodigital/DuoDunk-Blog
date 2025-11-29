@@ -1,8 +1,9 @@
 import { supabase as client } from '@/integrations/supabase/client';
-import { supabaseServer } from '@/integrations/supabase/server';
 
-// Exporta o cliente Supabase para uso em Client Components
+/**
+ * Cliente Supabase para uso em Client Components (Browser).
+ */
 export const supabase = client;
 
-// Exporta o cliente Supabase para uso em Server Components
-export const supabaseSSR = supabaseServer;
+// Removendo a exportação de supabaseSSR daqui para evitar problemas de contexto.
+// Server Components devem importar diretamente de '@/integrations/supabase/server'.

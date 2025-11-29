@@ -1,4 +1,4 @@
-import { supabaseSSR } from '@/lib/supabase';
+import { supabaseServer } from '@/integrations/supabase/server'; // Importação corrigida
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import DisqusComments from '@/components/DisqusComments';
@@ -6,7 +6,6 @@ import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
-import AmazonCTA from '@/components/AmazonCTA';
 import { Metadata } from 'next';
 import ArticleBody from '@/components/ArticleBody'; // Importando o novo componente
 
@@ -44,7 +43,7 @@ const formatDateTime = (dateString: string, includeTime: boolean = true): string
 
 // Função de busca de dados no servidor (SSR)
 async function getArticle(slug: string) {
-  const { data } = await supabaseSSR // <-- USANDO supabaseSSR
+  const { data } = await supabaseServer // <-- USANDO supabaseServer
     .from('articles')
     .select('*')
     .eq('slug', slug)
