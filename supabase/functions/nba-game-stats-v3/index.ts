@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'; // Atualizado para 0.190.0
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -102,8 +102,17 @@ serve(async (req) => {
   }
 
   try {
-    const { gameId, homeRecord, awayRecord } = await req.json();
-    if (!gameId) throw new Error('gameId is required');
+    const body = await req.json();
+    const gameId = body?.gameId;
+    const homeRecord = body?.homeRecord;
+    const awayRecord = body?.awayRecord;
+    
+    console.log(`[nba-game-stats-v3] Recebido gameId: ${gameId}`);
+
+    if (!gameId) {
+        console.error('[nba-game-stats-v3] gameId ausente na requisição.');
+        throw new Error('gameId is required');
+    }
 
     const cacheBuster = new Date().getTime();
     const apiUrl = `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json?_=${cacheBuster}`;
@@ -119,16 +128,22 @@ serve(async (req) => {
       }
     });
 
-    if (!response.ok) throw new Error(`NBA API request failed with status ${response.status}`);
+    if (!response.ok) {
+        console.error(`[nba-game-stats-v3] Falha na API da NBA. Status: ${response.status}`);
+        throw new Error(`NBA API request failed with status ${response.status}`);
+    }
 
     const data = await response.json();
     const game = data.game;
 
     if (!game) {
-      return new Response(JSON.stringify({ success: false, message: 'Game data not found.' }), {
-        headers: { ...corsHeaders }, status: 404
-      });
+        console.warn(`[nba-game-stats-v3] Dados do jogo ${gameId} não encontrados no boxscore.`);
+        return new Response(JSON.stringify({ success: false, message: 'Game data not found.' }), {
+            headers: { ...corsHeaders }, status: 404
+        });
     }
+    
+    console.log(`[nba-game-stats-v3] Dados do jogo ${gameId} carregados. Status: ${game.gameStatusText}`);
 
     // Se o jogo ainda não começou, retorna um status especial
     if (game.gameStatus === 1) {
