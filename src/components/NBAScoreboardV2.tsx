@@ -85,7 +85,7 @@ const TeamLine = ({ team, score, isWinner, isFinal }: { team: any, score: string
           className="w-8 h-8 object-contain drop-shadow-md flex-shrink-0" 
         />
         <div className="flex flex-col">
-          <span className={cn("font-oswald text-2xl font-black tracking-wide leading-none", triCodeColor)}>
+          <span className={cn("font-oswald text-xl font-black tracking-wide leading-none", triCodeColor)}>
             {team.teamTricode}
           </span>
           <span className="font-inter text-[10px] text-zinc-500 font-medium mt-0.5">
@@ -93,7 +93,7 @@ const TeamLine = ({ team, score, isWinner, isFinal }: { team: any, score: string
           </span>
         </div>
       </div>
-      <span className={cn("font-bebas text-4xl tracking-tighter leading-none", scoreColor)}>
+      <span className={cn("font-bebas text-3xl tracking-tighter leading-none", scoreColor)}>
         {score}
       </span>
     </div>
