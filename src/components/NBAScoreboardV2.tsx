@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, Play, Tv, Loader2 } from 'lucide-react';
-import GameStatsModalV3 from './GameStatsModalV3'; // ✅ Importando a versão V3 (Design Novo)
+import { ChevronLeft, ChevronRight, Tv, Play } from 'lucide-react';
+import GameStatsModalV3 from './GameStatsModalV3';
 import { cn } from '@/lib/utils';
 
+// Interfaces e Helpers (Resumidos para brevidade, use a lógica Turbo existente)
 interface Game {
   gameId: string;
   gameStatus: number;
@@ -21,7 +22,7 @@ interface Game {
     wins: number;
     losses: number;
     logo: string;
-    teamId: string; // Importante para a API de stats
+    teamId: string;
   };
   awayTeam: {
     teamName: string;
@@ -30,38 +31,22 @@ interface Game {
     wins: number;
     losses: number;
     logo: string;
-    teamId: string; // Importante para a API de stats
+    teamId: string;
   };
 }
 
-// Helpers de formatação
-const formatBroadcast = (game: Game) => {
-  const channel = game.broadcastChannel?.toLowerCase() || '';
-  if (channel.includes('espn')) return 'ESPN';
-  if (channel.includes('amazon') || channel.includes('prime')) return 'Prime Video';
-  if (channel.includes('tnt')) return 'TNT';
-  if (channel) return channel;
-  return 'League Pass';
+const getGameStatusDisplay = (game: any) => {
+  if (game.gameStatus === 3) return 'FINAL';
+  if (game.gameStatus === 1) return game.gameTimeBrasilia; // Ex: 19:00
+  if (game.gameStatus === 2) return `AO VIVO • ${game.gameStatusText}`; // Ex: AO VIVO • 4º Q 2:00
+  return '';
 };
 
-const getGameStatusDisplay = (game: Game) => {
-  // Status 3: Finalizado
-  if (game.gameStatus === 3) {
-    return game.gameStatusText; // Ex: "Final"
-  }
-  
-  // Status 1: Agendado
-  if (game.gameStatus === 1) {
-    return game.gameTimeBrasilia;
-  }
-
-  // Status 2: Em Andamento (Ao Vivo)
-  if (game.gameStatus === 2) {
-    // A Edge Function nba-game-stats-v3 já formata o gameStatusText para o status do quarto/relógio
-    return game.gameStatusText; 
-  }
-  
-  return game.gameStatusText;
+const formatBroadcast = (channel?: string) => {
+  const c = (channel || '').toLowerCase();
+  if (c.includes('espn')) return 'ESPN';
+  if (c.includes('prime') || c.includes('amazon')) return 'Prime Video';
+  return 'League Pass';
 };
 
 // Helper para obter a URL do logo com fallback
@@ -85,186 +70,154 @@ export default function NBAScoreboardV2() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gamesPerView, setGamesPerView] = useState(3);
 
-  // Responsividade
+  // Lógica de Resize e Fetch (Igual ao anterior)
   useEffect(() => {
-    const updateView = () => setGamesPerView(window.innerWidth < 768 ? 1 : 3);
-    window.addEventListener('resize', updateView);
-    updateView();
-    return () => window.removeEventListener('resize', updateView);
+    const handleResize = () => setGamesPerView(window.innerWidth < 768 ? 1 : 3);
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Busca de Jogos
   const loadGames = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('nba-scoreboard-v2');
-      if (error) throw error;
-      
-      if (data?.success && data?.scoreboard?.games) {
-        // Processamento dos dados (mantendo sua lógica Turbo/Híbrida)
-        const processed = data.scoreboard.games.map((g: any): Game => ({
-          gameId: g.gameId,
-          gameStatus: g.gameStatus,
-          gameStatusText: g.gameStatusText,
-          gameTimeBrasilia: new Date(g.gameTimeUTC).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone: 'America/Sao_Paulo' }),
-          gameClock: g.gameClock,
-          period: g.period,
-          broadcastChannel: g.broadcastChannel,
-          homeTeam: { 
-            teamName: g.homeTeam.teamName,
-            teamTricode: g.homeTeam.teamTricode,
-            score: String(g.homeTeam.score),
-            wins: g.homeTeam.wins || 0,
-            losses: g.homeTeam.losses || 0,
-            logo: getLogoUrl(g.homeTeam.logo, g.homeTeam.teamTricode),
-            teamId: g.homeTeam.teamId,
-          },
-          awayTeam: { 
-            teamName: g.awayTeam.teamName,
-            teamTricode: g.awayTeam.teamTricode,
-            score: String(g.awayTeam.score),
-            wins: g.awayTeam.wins || 0,
-            losses: g.awayTeam.losses || 0,
-            logo: getLogoUrl(g.awayTeam.logo, g.awayTeam.teamTricode),
-            teamId: g.awayTeam.teamId,
-          },
-        }));
-        setGames(processed);
-      }
-    } catch (err) {
-      console.error('[Scoreboard] Erro ao carregar:', err);
-    } finally {
-      setLoading(false);
-    }
+     try {
+       const { data } = await supabase.functions.invoke('nba-scoreboard-v2');
+       if (data?.success && data?.scoreboard?.games) {
+          const processed = data.scoreboard.games.map((g: any): Game => ({
+            gameId: g.gameId,
+            gameStatus: g.gameStatus,
+            gameStatusText: g.gameStatusText,
+            gameTimeBrasilia: new Date(g.gameTimeUTC).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone: 'America/Sao_Paulo' }),
+            gameClock: g.gameClock,
+            period: g.period,
+            broadcastChannel: g.broadcastChannel,
+            homeTeam: { 
+              teamName: g.homeTeam.teamName,
+              teamTricode: g.homeTeam.teamTricode,
+              score: String(g.homeTeam.score),
+              wins: g.homeTeam.wins || 0,
+              losses: g.homeTeam.losses || 0,
+              logo: getLogoUrl(g.homeTeam.logo, g.homeTeam.teamTricode),
+              teamId: g.homeTeam.teamId,
+            },
+            awayTeam: { 
+              teamName: g.awayTeam.teamName,
+              teamTricode: g.awayTeam.teamTricode,
+              score: String(g.awayTeam.score),
+              wins: g.awayTeam.wins || 0,
+              losses: g.awayTeam.losses || 0,
+              logo: getLogoUrl(g.awayTeam.logo, g.awayTeam.teamTricode),
+              teamId: g.awayTeam.teamId,
+            },
+          }));
+          setGames(processed);
+       }
+     } catch (e) { console.error(e); } 
+     finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadGames();
+  useEffect(() => { 
+    loadGames(); 
     const interval = setInterval(loadGames, 30000); // Atualiza a cada 30s
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <div className="bg-black py-4 text-center text-gray-500 text-xs uppercase tracking-widest animate-pulse">Carregando...</div>;
-  if (games.length === 0) return <div className="bg-black py-4 text-center text-gray-500 text-xs uppercase tracking-widest">Nenhum jogo hoje</div>;
+  // Renderização
+  if (loading) return <div className="bg-black h-16 border-b border-white/10 animate-pulse" />;
+  if (games.length === 0) return <div className="bg-black py-3 text-center text-zinc-500 text-xs font-bold uppercase tracking-widest border-b border-white/10">Nenhum jogo hoje</div>;
 
   const visibleGames = games.slice(currentIndex, currentIndex + gamesPerView);
 
   return (
     <>
-      <div className="bg-black py-4 border-b border-white/10">
+      <div className="bg-black border-b border-white/10 py-4 select-none">
         <div className="container mx-auto px-4 flex items-center gap-4">
-          {games.length > gamesPerView && (
-            <button 
-              onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white disabled:opacity-30"
-              disabled={currentIndex === 0}
-            >
-              <ChevronLeft size={24} />
-            </button>
-          )}
+           {/* Botão Esq */}
+           <button 
+             onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+             disabled={currentIndex === 0}
+             className="text-zinc-500 hover:text-white disabled:opacity-20 transition-colors"
+           >
+             <ChevronLeft size={24} />
+           </button>
 
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {visibleGames.map((game) => {
-              const isLive = game.gameStatus === 2;
-              const isFinal = game.gameStatus === 3;
-              const isScheduled = game.gameStatus === 1;
-              const broadcast = formatBroadcast(game);
-              
-              // Determinar o time vencedor para cores
-              const homeScore = parseInt(game.homeTeam.score);
-              const awayScore = parseInt(game.awayTeam.score);
-              const homeWon = isFinal && homeScore > awayScore;
-              const awayWon = isFinal && awayScore > homeScore;
+           {/* Grid de Jogos */}
+           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {visibleGames.map(game => {
+                const isFinal = game.gameStatus === 3;
+                const homeScore = parseInt(game.homeTeam.score);
+                const awayScore = parseInt(game.awayTeam.score);
+                const homeWon = isFinal && homeScore > awayScore;
+                const awayWon = isFinal && awayScore > homeScore;
+                
+                return (
+                  <div 
+                    key={game.gameId}
+                    onClick={() => { setSelectedGame(game); setIsModalOpen(true); }}
+                    className="relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 hover:border-pink-600/40 rounded-xl p-4 transition-all cursor-pointer"
+                  >
+                     {/* Status Topo */}
+                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider mb-3">
+                        <span className={cn(game.gameStatus === 2 ? "text-red-500 animate-pulse" : "text-cyan-400")}>
+                          {getGameStatusDisplay(game)}
+                        </span>
+                        <span className="flex items-center gap-1 text-zinc-500 bg-white/5 px-2 py-0.5 rounded">
+                          <Tv size={10} /> {formatBroadcast(game.broadcastChannel)}
+                        </span>
+                     </div>
 
-              return (
-                <button
-                  key={game.gameId}
-                  onClick={() => {
-                    setSelectedGame(game);
-                    setIsModalOpen(true);
-                  }}
-                  className="group relative bg-zinc-900/50 hover:bg-zinc-900 rounded-xl p-4 border border-white/5 hover:border-pink-600/50 transition-all duration-300 flex flex-col"
-                >
-                  {/* Conteúdo Principal (Placar e Times) */}
-                  <div className="flex-1 flex flex-col justify-center gap-2">
-                    
-                    {/* Header do Card (Transmissão e Status) */}
-                    <div className="flex justify-between items-center w-full mb-3">
-                       <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded text-gray-400 text-[10px] font-bold uppercase">
-                          <Tv size={10} /> {broadcast}
-                       </span>
-                       {isLive && (
-                          <span className="bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">
-                             AO VIVO
-                          </span>
-                       )}
-                       {isScheduled && (
-                          <span className="bg-gray-700 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">
-                             {game.gameTimeBrasilia}
-                          </span>
-                       )}
-                    </div>
-
-                    {/* Time Visitante */}
-                    <div className="flex justify-between items-center">
-                       <div className="flex items-center gap-3">
+                     {/* Times e Placar */}
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                           <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-8 h-8 object-contain" />
-                          <div className="text-left">
-                             <span className={cn("block font-oswald text-xl leading-none", awayWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
-                             <span className="block font-inter text-[10px] text-gray-500">{game.awayTeam.wins}-{game.awayTeam.losses}</span>
+                          <div>
+                             <span className={cn("block font-oswald text-xl leading-none", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
+                             <span className="block font-inter text-[10px] text-zinc-500">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
                           </div>
-                       </div>
-                       <span className={cn("font-bebas text-4xl", awayWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>
-                          {game.awayTeam.score}
-                       </span>
-                    </div>
-                    
-                    {/* Time da Casa */}
-                    <div className="flex justify-between items-center">
-                       <div className="flex items-center gap-3">
+                        </div>
+                        
+                        <div className="font-bebas text-3xl text-white tabular-nums flex gap-1">
+                           <span className={cn(awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.score}</span>
+                           <span className="text-zinc-700">:</span>
+                           <span className={cn(homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.score}</span>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-row-reverse text-right">
                           <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-8 h-8 object-contain" />
-                          <div className="text-left">
-                             <span className={cn("block font-oswald text-xl leading-none", homeWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
-                             <span className="block font-inter text-[10px] text-gray-500">{game.homeTeam.wins}-{game.homeTeam.losses}</span>
+                          <div>
+                             <span className={cn("block font-oswald text-xl leading-none", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
+                             <span className="block font-inter text-[10px] text-zinc-500">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
                           </div>
-                       </div>
-                       <span className={cn("font-bebas text-4xl", homeWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>
-                          {game.homeTeam.score}
-                       </span>
-                    </div>
+                        </div>
+                     </div>
+                     
+                     {/* Hover Action */}
+                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] rounded-xl">
+                        <span className="bg-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                           <Play size={10} fill="currentColor" /> Ver Detalhes
+                        </span>
+                     </div>
                   </div>
+                );
+              })}
+           </div>
 
-                  {/* Footer do Card (Status do Jogo e Botão) */}
-                  <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
-                    <span className={cn("text-xs font-bold font-oswald uppercase", isLive ? "text-red-500" : "text-gray-400")}>
-                       {isLive ? game.gameStatusText : isFinal ? 'FINAL' : game.gameTimeBrasilia}
-                    </span>
-                    <span className="text-xs font-bold text-gray-400 group-hover:text-pink-500 transition-colors flex items-center gap-1">
-                       Estatísticas <ChevronRight size={12} />
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {games.length > gamesPerView && (
-            <button 
-              onClick={() => setCurrentIndex(Math.min(games.length - gamesPerView, currentIndex + 1))}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white disabled:opacity-30"
-              disabled={currentIndex >= games.length - gamesPerView}
-            >
-              <ChevronRight size={24} />
-            </button>
-          )}
+           {/* Botão Dir */}
+           <button 
+             onClick={() => setCurrentIndex(Math.min(games.length - gamesPerView, currentIndex + 1))}
+             disabled={currentIndex >= games.length - gamesPerView}
+             className="text-zinc-500 hover:text-white disabled:opacity-20 transition-colors"
+           >
+             <ChevronRight size={24} />
+           </button>
         </div>
       </div>
 
-      {/* ✅ MODAL V3 (Design Novo) */}
+      {/* Modal Conectado */}
       {isModalOpen && selectedGame && (
         <GameStatsModalV3 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
-          gameId={selectedGame?.gameId || ''}
+          gameId={selectedGame.gameId}
           homeTeam={{
             name: selectedGame.homeTeam.teamName,
             triCode: selectedGame.homeTeam.teamTricode,
