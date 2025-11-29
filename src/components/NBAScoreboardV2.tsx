@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight, Tv, Play, ChevronRight as ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Tv, Play } from 'lucide-react';
 import GameStatsModalV3 from './GameStatsModalV3';
 import { cn } from '@/lib/utils';
 
@@ -69,35 +69,6 @@ const getLogoUrl = (initialUrl: string, triCode: string): string => {
     // Tratamento de exceções comuns na URL da ESPN
     const espnAbbr = abbr === 'uta' ? 'utah' : abbr === 'nop' ? 'no' : abbr;
     return `https://a.espncdn.com/i/teamlogos/nba/500/${espnAbbr}.png`;
-};
-
-// Componente auxiliar para renderizar a linha do time
-const TeamLine = ({ team, score, isWinner, isFinal }: { team: any, score: string, isWinner: boolean, isFinal: boolean }) => {
-  const scoreColor = isFinal ? (isWinner ? 'text-white' : 'text-zinc-500') : 'text-white';
-  const triCodeColor = isFinal ? (isWinner ? 'text-white' : 'text-zinc-500') : 'text-white';
-  
-  return (
-    <div className="flex items-center justify-between mb-2">
-      <div className="flex items-center gap-3">
-        <img 
-          src={team.logo} 
-          alt={team.teamTricode} 
-          className="w-8 h-8 object-contain drop-shadow-md flex-shrink-0" 
-        />
-        <div className="flex flex-col">
-          <span className={cn("font-oswald text-xl font-black tracking-wide leading-none", triCodeColor)}>
-            {team.teamTricode}
-          </span>
-          <span className="font-inter text-[10px] text-zinc-500 font-medium mt-0.5">
-            ({team.wins}-{team.losses})
-          </span>
-        </div>
-      </div>
-      <span className={cn("font-bebas text-3xl tracking-tighter leading-none", scoreColor)}>
-        {score}
-      </span>
-    </div>
-  );
 };
 
 
@@ -181,62 +152,96 @@ export default function NBAScoreboardV2() {
 
            {/* Grid de Jogos */}
            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {visibleGames.map((game) => {
-              const isFinal = game.gameStatus === 3;
-              const isLive = game.gameStatus === 2;
-              const homeScore = parseInt(game.homeTeam.score);
-              const awayScore = parseInt(game.awayTeam.score);
-              const homeWon = isFinal && homeScore > awayScore;
-              const awayWon = isFinal && awayScore > homeScore;
-              
-              const gameStatusDisplay = getGameStatusDisplay(game);
-              
-              return (
-                <div
-                  key={game.gameId}
-                  onClick={() => { setSelectedGame(game); setIsModalOpen(true); }}
-                  className="relative group bg-[#09090b] hover:bg-zinc-900 border border-white/10 rounded-2xl p-4 transition-all duration-300 cursor-pointer overflow-hidden"
-                  style={{ minHeight: '150px' }}
-                >
-                  {/* 1. Cabeçalho: Transmissão */}
-                  <div className="relative mb-4">
-                    <span className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-400 bg-zinc-800/50 px-2 py-1 rounded-md w-fit">
-                       <Tv size={10} /> 
-                       <span className="uppercase">{formatBroadcast(game.broadcastChannel)}</span>
-                    </span>
-                  </div>
+              {visibleGames.map(game => {
+                const isFinal = game.gameStatus === 3;
+                const isLive = game.gameStatus === 2;
+                const homeScore = parseInt(game.homeTeam.score);
+                const awayScore = parseInt(game.awayTeam.score);
+                const homeWon = isFinal && homeScore > awayScore;
+                const awayWon = isFinal && awayScore > homeScore;
+                
+                const gameStatusDisplay = getGameStatusDisplay(game);
+                
+                // Determina a cor da borda
+                const borderColor = isLive ? 'border-red-600' : isFinal ? 'border-cyan-600' : 'border-pink-600';
+                
+                return (
+                  <div 
+                    key={game.gameId}
+                    onClick={() => { setSelectedGame(game); setIsModalOpen(true); }}
+                    className={cn(
+                      "relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-xl p-4 transition-all cursor-pointer flex flex-col justify-between",
+                      `hover:${borderColor}/40`,
+                      isLive && `border-l-4 ${borderColor}` // Borda lateral para jogos ao vivo
+                    )}
+                    style={{ minHeight: '180px' }} // Aumenta a altura mínima
+                  >
+                     {/* Topo: Transmissão e Status AO VIVO */}
+                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider mb-4">
+                        <span className="flex items-center gap-1 text-zinc-500 bg-white/5 px-2 py-0.5 rounded">
+                          <Tv size={10} /> {formatBroadcast(game.broadcastChannel)}
+                        </span>
+                        {isLive && (
+                          <span className="bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
+                            AO VIVO
+                          </span>
+                        )}
+                     </div>
 
-                  {/* 2. Times e Placar (Vertical) */}
-                  <div className="relative">
-                    <TeamLine 
-                      team={game.awayTeam} 
-                      score={game.awayTeam.score} 
-                      isWinner={awayWon} 
-                      isFinal={isFinal} 
-                    />
-                    <TeamLine 
-                      team={game.homeTeam} 
-                      score={game.homeTeam.score} 
-                      isWinner={homeWon} 
-                      isFinal={isFinal} 
-                    />
+                     {/* Times e Placar */}
+                     <div className="flex flex-col gap-3 flex-1">
+                        {/* Time Visitante */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain" />
+                            <div>
+                               {/* Sigla do Time - Oswald */}
+                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
+                               <span className="block font-inter text-[10px] text-zinc-500 font-medium">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                            </div>
+                          </div>
+                          {/* Placar - Bebas Neue */}
+                          <span className={cn("font-bebas text-4xl text-white tabular-nums tracking-tight", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
+                            {game.awayTeam.score}
+                          </span>
+                        </div>
+                        
+                        {/* Time Casa */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain" />
+                            <div>
+                               {/* Sigla do Time - Oswald */}
+                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
+                               <span className="block font-inter text-[10px] text-zinc-500 font-medium">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                            </div>
+                          </div>
+                          {/* Placar - Bebas Neue */}
+                          <span className={cn("font-bebas text-4xl text-white tabular-nums tracking-tight", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
+                            {game.homeTeam.score}
+                          </span>
+                        </div>
+                     </div>
+                     
+                     {/* Rodapé: Status e Detalhes */}
+                     <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-4">
+                        <span className={cn("text-xs font-bold font-oswald uppercase", isLive ? "text-red-500 animate-pulse" : "text-zinc-500")}>
+                          {gameStatusDisplay}
+                        </span>
+                        <span className="text-xs font-bold text-pink-600 group-hover:text-pink-400 flex items-center gap-1">
+                           Estatísticas <ChevronRight size={12} />
+                        </span>
+                     </div>
+                     
+                     {/* Hover Action (Mantido, mas menos intrusivo) */}
+                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] rounded-xl">
+                        <span className="bg-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                           <Play size={10} fill="currentColor" /> Ver Detalhes
+                        </span>
+                     </div>
                   </div>
-
-                  {/* 3. Rodapé Fixo (Status e Estatísticas) */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 flex justify-between items-center">
-                    <span className={cn(
-                      "text-xs font-bold font-oswald uppercase", 
-                      isLive ? "text-red-500 animate-pulse" : "text-zinc-500"
-                    )}>
-                      {isFinal ? 'FINAL' : gameStatusDisplay}
-                    </span>
-                    <span className="text-xs font-bold text-pink-600 group-hover:text-pink-400 flex items-center gap-1">
-                       Estatísticas <ArrowRight size={12} />
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
            </div>
 
            {/* Botão Dir */}
