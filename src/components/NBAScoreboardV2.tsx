@@ -174,7 +174,7 @@ export default function NBAScoreboardV2() {
                       `hover:${borderColor}/40`,
                       isLive && `border-l-4 ${borderColor}` // Borda lateral para jogos ao vivo
                     )}
-                    style={{ minHeight: '180px' }} // Aumenta a altura mínima
+                    style={{ minHeight: '180px' }} // Mantendo minHeight para garantir espaço
                   >
                      {/* Topo: Transmissão e Status AO VIVO */}
                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider mb-4">
@@ -192,14 +192,15 @@ export default function NBAScoreboardV2() {
                      <div className="flex justify-between items-center w-full flex-1">
                         {/* Away */}
                         <div className="flex items-center gap-3">
-                           <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain drop-shadow-md" />
-                           <div className="text-left">
+                           <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain drop-shadow-md flex-shrink-0" />
+                           <div className="text-left flex-shrink-0">
                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
                               <span className="block font-inter text-[10px] text-gray-400 font-medium">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
                            </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 font-bebas text-4xl tracking-tight">
+                        {/* Placar Centralizado */}
+                        <div className="flex items-center gap-2 font-bebas text-4xl tracking-tight flex-shrink-0">
                            <span className={cn(awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.score}</span>
                            <span className="text-gray-600 text-2xl mb-1">:</span>
                            <span className={cn(homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.score}</span>
@@ -207,8 +208,8 @@ export default function NBAScoreboardV2() {
 
                         {/* Home */}
                         <div className="flex items-center gap-3 flex-row-reverse">
-                           <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain drop-shadow-md" />
-                           <div className="text-right">
+                           <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain drop-shadow-md flex-shrink-0" />
+                           <div className="text-right flex-shrink-0">
                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
                               <span className="block font-inter text-[10px] text-gray-400 font-medium">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
                            </div>
