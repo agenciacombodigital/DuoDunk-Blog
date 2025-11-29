@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Oswald, Bebas_Neue } from 'next/font/google';
-import "./globals.css";
+import "@/globals.css"; // Caminho corrigido
 import ClientLayout from "@/components/ClientLayout";
 
 // Configuração de Fontes
