@@ -5,6 +5,7 @@ import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import PageMeta from '@/components/PageMeta'; // Importando PageMeta
+import { Suspense } from 'react'; // Importando Suspense
 
 // ✅ CORREÇÃO CRÍTICA: Forçar renderização dinâmica (SSR)
 // Isso impede que a página seja cacheada estaticamente no build.
@@ -59,7 +60,8 @@ async function loadArticles() {
   }
 }
 
-export default async function Home() {
+// Componente principal da Home (assíncrono)
+async function HomeContent() {
   const articles = await loadArticles();
 
   if (articles.length === 0) {
@@ -710,5 +712,13 @@ export default async function Home() {
         <div className="h-20" />
       </div>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600 py-20">Carregando destaques...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
