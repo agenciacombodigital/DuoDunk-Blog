@@ -23,27 +23,30 @@ export const metadata: Metadata = {
 
 // Função de busca de dados no servidor (SSR)
 async function loadArticles(): Promise<Article[]> {
-  try {
-    const { data, error } = await supabaseServer
-      .from('articles')
-      .select('*')
-      .eq('published', true)
-      .order('published_at', { ascending: false })
-      .limit(100);
+  // Adicionando um log para rastrear a execução
+  console.log('⚙️ [SSR] Tentando carregar artigos...');
+  
+  // A busca é simples e direta, o que é bom.
+  const { data, error } = await supabaseServer
+    .from('articles')
+    .select('*')
+    .eq('published', true)
+    .order('published_at', { ascending: false })
+    .limit(100);
 
-    if (error) {
-      console.error('Erro ao carregar artigos:', error);
-      return [];
-    }
-    return data || [];
-  } catch (error) {
-    console.error('Erro fatal ao buscar artigos:', error);
-    return [];
+  if (error) {
+    console.error('❌ [SSR] Erro ao carregar artigos:', error);
+    // Lançar o erro fará com que o error.tsx seja acionado, o que é o comportamento esperado.
+    throw new Error(`Falha ao carregar artigos do Supabase: ${error.message}`);
   }
+  
+  console.log(`✅ [SSR] Carregados ${data?.length || 0} artigos.`);
+  return data || [];
 }
 
 // Componente principal da Home (assíncrono)
 async function HomeContent() {
+  // Se loadArticles falhar, o erro será capturado pelo Error Boundary (app/error.tsx)
   const articles = await loadArticles();
 
   if (articles.length === 0) {
