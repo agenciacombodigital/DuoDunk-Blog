@@ -186,24 +186,25 @@ export default function NBAScoreboardV2() {
                 {/* Placar */}
                 <div className="flex justify-between items-center w-full">
                    {/* Away */}
-                   <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-2 flex-shrink-0">
                       <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-8 h-8 object-contain" />
-                      <div className="text-left">
+                      <div className="text-left min-w-[40px]">
                          <span className="block font-oswald text-xl text-white leading-none">{game.awayTeam.teamTricode}</span>
                          <span className="block font-inter text-[10px] text-gray-500">{game.awayTeam.wins}-{game.awayTeam.losses}</span>
                       </div>
                    </div>
                    
-                   <div className="flex items-center gap-3 font-bebas text-3xl text-white">
-                      <span>{game.awayTeam.score}</span>
+                   {/* Scores Centralizados */}
+                   <div className="flex items-center gap-3 font-bebas text-3xl text-white flex-shrink-0">
+                      <span className="min-w-[30px] text-right">{game.awayTeam.score}</span>
                       <span className="text-gray-600 text-xl">:</span>
-                      <span>{game.homeTeam.score}</span>
+                      <span className="min-w-[30px] text-left">{game.homeTeam.score}</span>
                    </div>
 
                    {/* Home */}
-                   <div className="flex items-center gap-3 flex-row-reverse">
+                   <div className="flex items-center gap-2 flex-row-reverse flex-shrink-0">
                       <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-8 h-8 object-contain" />
-                      <div className="text-right">
+                      <div className="text-right min-w-[40px]">
                          <span className="block font-oswald text-xl text-white leading-none">{game.homeTeam.teamTricode}</span>
                          <span className="block font-inter text-[10px] text-gray-500">{game.homeTeam.wins}-{game.homeTeam.losses}</span>
                       </div>
