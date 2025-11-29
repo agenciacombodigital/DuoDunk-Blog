@@ -163,62 +163,88 @@ export default function NBAScoreboardV2() {
           )}
 
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {visibleGames.map((game) => (
-              <button
-                key={game.gameId}
-                onClick={() => {
-                  console.log("Abrindo jogo:", game.gameId); // Debug
-                  setSelectedGame(game);
-                  setIsModalOpen(true);
-                }}
-                className="group relative bg-zinc-900/50 hover:bg-zinc-900 rounded-xl p-4 border border-white/5 hover:border-pink-600/50 transition-all duration-300 flex flex-col gap-4"
-              >
-                {/* Header do Card */}
-                <div className="flex justify-between items-center w-full text-[10px] uppercase tracking-wider font-bold text-gray-500">
-                   <span className={cn("flex items-center gap-1", game.gameStatus === 2 && "text-red-500 animate-pulse")}>
-                      {game.gameStatus === 2 ? '● Ao Vivo' : getGameStatusDisplay(game)}
-                   </span>
-                   <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded text-gray-400">
-                      <Tv size={10} /> {formatBroadcast(game)}
-                   </span>
-                </div>
+            {visibleGames.map((game) => {
+              const isLive = game.gameStatus === 2;
+              const isFinal = game.gameStatus === 3;
+              const isScheduled = game.gameStatus === 1;
+              const broadcast = formatBroadcast(game);
+              
+              // Determinar o time vencedor para cores
+              const homeScore = parseInt(game.homeTeam.score);
+              const awayScore = parseInt(game.awayTeam.score);
+              const homeWon = isFinal && homeScore > awayScore;
+              const awayWon = isFinal && awayScore > homeScore;
 
-                {/* Placar */}
-                <div className="flex justify-between items-center w-full">
-                   {/* Away */}
-                   <div className="flex items-center gap-2 flex-shrink-0">
-                      <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-8 h-8 object-contain" />
-                      <div className="text-left min-w-[40px]">
-                         <span className="block font-oswald text-xl text-white leading-none">{game.awayTeam.teamTricode}</span>
-                         <span className="block font-inter text-[10px] text-gray-500">{game.awayTeam.wins}-{game.awayTeam.losses}</span>
-                      </div>
-                   </div>
-                   
-                   {/* Scores Centralizados */}
-                   <div className="flex items-center gap-3 font-bebas text-3xl text-white flex-shrink-0">
-                      <span className="min-w-[30px] text-right">{game.awayTeam.score}</span>
-                      <span className="text-gray-600 text-xl">:</span>
-                      <span className="min-w-[30px] text-left">{game.homeTeam.score}</span>
-                   </div>
+              return (
+                <button
+                  key={game.gameId}
+                  onClick={() => {
+                    setSelectedGame(game);
+                    setIsModalOpen(true);
+                  }}
+                  className="group relative bg-zinc-900/50 hover:bg-zinc-900 rounded-xl p-4 border border-white/5 hover:border-pink-600/50 transition-all duration-300 flex flex-col"
+                >
+                  {/* Conteúdo Principal (Placar e Times) */}
+                  <div className="flex-1 flex flex-col justify-center gap-2">
+                    
+                    {/* Header do Card (Transmissão e Status) */}
+                    <div className="flex justify-between items-center w-full mb-3">
+                       <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded text-gray-400 text-[10px] font-bold uppercase">
+                          <Tv size={10} /> {broadcast}
+                       </span>
+                       {isLive && (
+                          <span className="bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">
+                             AO VIVO
+                          </span>
+                       )}
+                       {isScheduled && (
+                          <span className="bg-gray-700 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                             {game.gameTimeBrasilia}
+                          </span>
+                       )}
+                    </div>
 
-                   {/* Home */}
-                   <div className="flex items-center gap-2 flex-row-reverse flex-shrink-0">
-                      <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-8 h-8 object-contain" />
-                      <div className="text-right min-w-[40px]">
-                         <span className="block font-oswald text-xl text-white leading-none">{game.homeTeam.teamTricode}</span>
-                         <span className="block font-inter text-[10px] text-gray-500">{game.homeTeam.wins}-{game.homeTeam.losses}</span>
-                      </div>
-                   </div>
-                </div>
+                    {/* Time Visitante */}
+                    <div className="flex justify-between items-center">
+                       <div className="flex items-center gap-3">
+                          <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-8 h-8 object-contain" />
+                          <div className="text-left">
+                             <span className={cn("block font-oswald text-xl leading-none", awayWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
+                             <span className="block font-inter text-[10px] text-gray-500">{game.awayTeam.wins}-{game.awayTeam.losses}</span>
+                          </div>
+                       </div>
+                       <span className={cn("font-bebas text-4xl", awayWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>
+                          {game.awayTeam.score}
+                       </span>
+                    </div>
+                    
+                    {/* Time da Casa */}
+                    <div className="flex justify-between items-center">
+                       <div className="flex items-center gap-3">
+                          <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-8 h-8 object-contain" />
+                          <div className="text-left">
+                             <span className={cn("block font-oswald text-xl leading-none", homeWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
+                             <span className="block font-inter text-[10px] text-gray-500">{game.homeTeam.wins}-{game.homeTeam.losses}</span>
+                          </div>
+                       </div>
+                       <span className={cn("font-bebas text-4xl", homeWon ? "text-white" : isFinal ? "text-gray-500" : "text-white")}>
+                          {game.homeTeam.score}
+                       </span>
+                    </div>
+                  </div>
 
-                {/* Botão Hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-[1px] rounded-xl">
-                    <span className="bg-pink-600 text-white px-4 py-2 rounded-full text-xs font-bold font-oswald uppercase tracking-wide shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
-                       Ver Estatísticas
+                  {/* Footer do Card (Status do Jogo e Botão) */}
+                  <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                    <span className={cn("text-xs font-bold font-oswald uppercase", isLive ? "text-red-500" : "text-gray-400")}>
+                       {isLive ? game.gameStatusText : isFinal ? 'FINAL' : game.gameTimeBrasilia}
                     </span>
-                </div>
-              </button>
-            ))}
+                    <span className="text-xs font-bold text-gray-400 group-hover:text-pink-500 transition-colors flex items-center gap-1">
+                       Estatísticas <ChevronRight size={12} />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {games.length > gamesPerView && (
