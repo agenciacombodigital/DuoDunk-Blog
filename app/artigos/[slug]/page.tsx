@@ -5,7 +5,7 @@ import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
-import DOMPurify from 'dompurify';
+import DOMPurify from 'isomorphic-dompurify';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import AmazonCTA from '@/components/AmazonCTA';
 import { Metadata } from 'next';
