@@ -1,27 +1,13 @@
-import { Inter, Oswald, Bebas_Neue } from 'next/font/google';
-import LayoutContent from '@/components/LayoutContent';
-import '@/globals.css';
 import type { Metadata } from "next";
+import { Inter, Oswald, Bebas_Neue } from 'next/font/google';
+import { HelmetProvider } from 'react-helmet-async';
+import '@/globals.css';
+import ClientLayout from "@/components/ClientLayout";
 
-// Configuração das Fontes Otimizadas
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const oswald = Oswald({ 
-  subsets: ['latin'],
-  variable: '--font-oswald',
-  display: 'swap',
-});
-
-const bebas = Bebas_Neue({ 
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-bebas',
-  display: 'swap',
-});
+// Configuração das Fontes
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
+const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald', display: 'swap' });
+const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas', display: 'swap' });
 
 // Metadados Globais (Server Component)
 export const metadata: Metadata = {
@@ -36,14 +22,13 @@ export const metadata: Metadata = {
       { url: '/images/icone-duodunk.png' },
     ],
   },
-  // Adiciona OpenGraph padrão para compartilhamento
   openGraph: {
     title: "Duo Dunk - Notícias NBA",
     description: "O Jogo Dentro do Jogo. Cobertura completa da NBA.",
     siteName: "Duo Dunk",
     images: [
       {
-        url: '/images/duodunk-logoV2.svg', // Logo principal como fallback
+        url: '/images/duodunk-logoV2.svg',
         width: 800,
         height: 600,
       },
@@ -53,21 +38,19 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Removida a heurística isAdminRoute. O LayoutContent (Client) cuidará da renderização condicional.
-
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable} ${bebas.variable}`}>
-      {/* Removida a classe condicional do body. O LayoutContent (Client) cuidará do fundo. */}
-      <body className="min-h-screen flex flex-col font-inter antialiased">
-        <LayoutContent>
-          {children}
-        </LayoutContent>
+      <body className="font-inter antialiased min-h-screen flex flex-col bg-white text-gray-900">
+        <HelmetProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </HelmetProvider>
       </body>
     </html>
   );
