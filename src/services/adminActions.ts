@@ -1,7 +1,6 @@
 "use server";
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { getRateLimitStats as getRateLimitStatsClient } from '@/lib/retryRateLimitedArticles';
 
 /**
  * Desmarca todos os artigos atualmente marcados como destaque (is_featured = true).
@@ -21,16 +20,29 @@ export async function clearAllFeaturedArticlesServer() {
 }
 
 /**
- * Obtém estatísticas de artigos com rate limit.
- * Esta função pode usar o cliente normal, mas a mantemos aqui para consistência.
+ * Obtém estatísticas de artigos com rate limit usando o cliente Admin.
  */
 export async function getRateLimitStatsServer() {
-  // Reutilizamos a lógica do cliente, mas garantimos que o módulo não quebre
-  // Se a lógica de retryRateLimitedArticles for movida para o servidor, ela deve ser atualizada.
-  // Por enquanto, vamos apenas chamar a função existente que usa o cliente normal.
-  return getRateLimitStatsClient();
-}
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('articles_queue')
+      .select('id, retry_after')
+      .eq('status', 'rate_limited');
 
-// Nota: A função retryRateLimitedArticles usa o cliente normal (supabase) e não o admin,
-// então ela pode permanecer em src/lib/retryRateLimitedArticles.ts.
-// No entanto, se ela for chamada de um Server Component, ela deve ser marcada como 'use server'.
+    if (error) throw error;
+
+    const now = new Date();
+    const ready = data?.filter(a => new Date(a.retry_after) <= now).length || 0;
+    const waiting = data?.filter(a => new Date(a.retry_after) > now).length || 0;
+
+    return {
+      success: true,
+      total: data?.length || 0,
+      ready_to_retry: ready,
+      still_waiting: waiting
+    };
+  } catch (error: any) {
+    console.error('❌ Erro ao buscar stats (Server):', error.message);
+    return { success: false, error: error.message };
+  }
+}

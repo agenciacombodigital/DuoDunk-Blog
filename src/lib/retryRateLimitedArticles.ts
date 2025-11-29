@@ -11,6 +11,8 @@ export async function retryRateLimitedArticles() {
     console.log('🔄 Verificando artigos com rate limit...');
 
     // ✅ BUSCAR ARTIGOS QUE FALHARAM POR RATE LIMIT E JÁ PASSARAM DO TEMPO DE ESPERA
+    // Nota: Esta função usa o cliente normal (anon key), mas como está no admin,
+    // assumimos que o usuário está autenticado e tem permissão via RLS/Policy.
     const { data: articles, error: fetchError } = await supabase
       .from('articles_queue')
       .select('id, original_title, retry_after')
@@ -76,34 +78,6 @@ export async function retryRateLimitedArticles() {
 
   } catch (error: any) {
     console.error('❌ Erro geral:', error.message);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * ✅ FUNÇÃO PARA OBTER ESTATÍSTICAS DE ARTIGOS COM RATE LIMIT
- */
-export async function getRateLimitStats() {
-  try {
-    const { data, error } = await supabase
-      .from('articles_queue')
-      .select('id, retry_after')
-      .eq('status', 'rate_limited');
-
-    if (error) throw error;
-
-    const now = new Date();
-    const ready = data?.filter(a => new Date(a.retry_after) <= now).length || 0;
-    const waiting = data?.filter(a => new Date(a.retry_after) > now).length || 0;
-
-    return {
-      success: true,
-      total: data?.length || 0,
-      ready_to_retry: ready,
-      still_waiting: waiting
-    };
-  } catch (error: any) {
-    console.error('❌ Erro ao buscar stats:', error.message);
     return { success: false, error: error.message };
   }
 }
