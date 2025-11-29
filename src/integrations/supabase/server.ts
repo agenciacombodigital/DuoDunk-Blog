@@ -14,8 +14,13 @@ if (supabaseUrl === FALLBACK_URL && supabaseAnonKey === FALLBACK_ANON_KEY) {
   console.warn("⚠️ AVISO: Usando chaves de fallback do Supabase. Defina as variáveis de ambiente localmente.");
 }
 
-// Conexão
-client = createClient(supabaseUrl, supabaseAnonKey);
+// Conexão - Adicionando opções de auth para desativar persistência
+client = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 /**
  * Cliente Supabase para uso em Server Components (SSR/SSG).
