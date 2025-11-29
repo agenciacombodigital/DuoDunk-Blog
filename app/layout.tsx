@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Oswald, Bebas_Neue } from 'next/font/google';
-import { HelmetProvider } from 'react-helmet-async';
 import '@/globals.css';
 import ClientLayout from "@/components/ClientLayout";
+import HelmetClientProvider from "@/components/HelmetClientProvider"; // Importando o wrapper
 
 // Configuração das Fontes
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -46,11 +46,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable} ${bebas.variable}`}>
       <body className="font-inter antialiased min-h-screen flex flex-col bg-white text-gray-900">
-        <HelmetProvider>
+        <HelmetClientProvider>
           <ClientLayout>
             {children}
           </ClientLayout>
-        </HelmetProvider>
+        </HelmetClientProvider>
       </body>
     </html>
   );
