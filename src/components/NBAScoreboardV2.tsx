@@ -195,11 +195,13 @@ export default function NBAScoreboardV2() {
                           <div className="flex items-center gap-3">
                             <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain" />
                             <div>
-                               <span className={cn("block font-oswald text-2xl leading-none", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
-                               <span className="block font-inter text-xs text-zinc-500">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                               {/* Sigla do Time - Oswald */}
+                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
+                               <span className="block font-inter text-[10px] text-zinc-500 font-medium">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
                             </div>
                           </div>
-                          <span className={cn("font-bebas text-4xl text-white tabular-nums", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
+                          {/* Placar - Bebas Neue */}
+                          <span className={cn("font-bebas text-4xl text-white tabular-nums tracking-tight", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
                             {game.awayTeam.score}
                           </span>
                         </div>
@@ -209,11 +211,13 @@ export default function NBAScoreboardV2() {
                           <div className="flex items-center gap-3">
                             <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain" />
                             <div>
-                               <span className={cn("block font-oswald text-2xl leading-none", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
-                               <span className="block font-inter text-xs text-zinc-500">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                               {/* Sigla do Time - Oswald */}
+                               <span className={cn("block font-oswald text-2xl font-bold leading-none tracking-wide", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
+                               <span className="block font-inter text-[10px] text-zinc-500 font-medium">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
                             </div>
                           </div>
-                          <span className={cn("font-bebas text-4xl text-white tabular-nums", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
+                          {/* Placar - Bebas Neue */}
+                          <span className={cn("font-bebas text-4xl text-white tabular-nums tracking-tight", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
                             {game.homeTeam.score}
                           </span>
                         </div>
@@ -221,7 +225,7 @@ export default function NBAScoreboardV2() {
                      
                      {/* Rodapé: Status e Detalhes */}
                      <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-4">
-                        <span className={cn("text-xs font-bold font-mono", isLive ? "text-red-500" : "text-zinc-500")}>
+                        <span className={cn("text-xs font-bold font-oswald uppercase", isLive ? "text-red-500 animate-pulse" : "text-zinc-500")}>
                           {gameStatusDisplay}
                         </span>
                         <span className="text-xs font-bold text-pink-600 group-hover:text-pink-400 flex items-center gap-1">
