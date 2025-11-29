@@ -321,3 +321,11 @@ html {
     letter-spacing: 0.03em;
   }
 }
+
+/* Forçar fontes caso o Tailwind falhe */
+.font-oswald {
+  font-family: var(--font-oswald), sans-serif !important;
+}
+.font-bebas {
+  font-family: var(--font-bebas), sans-serif !important;
+}
