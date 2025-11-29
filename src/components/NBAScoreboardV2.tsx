@@ -38,7 +38,17 @@ interface Game {
 const getGameStatusDisplay = (game: any) => {
   if (game.gameStatus === 3) return 'FINAL';
   if (game.gameStatus === 1) return game.gameTimeBrasilia; // Ex: 19:00
-  if (game.gameStatus === 2) return `AO VIVO • ${game.gameStatusText}`; // Ex: AO VIVO • 4º Q 2:00
+  if (game.gameStatus === 2) {
+    // Extrai o tempo e o período
+    let clock = game.gameClock || '';
+    const match = clock.match(/PT(\d+)M([\d.]+)S/);
+    if (match) clock = `${match[1].padStart(1, '0')}:${Math.floor(parseFloat(match[2])).toString().padStart(2, '0')}`;
+    
+    const periodText = game.period > 4 ? 'PRORROGAÇÃO' : `${game.period}º Quarto`;
+    
+    // Retorna apenas o período e o tempo para o rodapé
+    return `${periodText} • ${clock}`;
+  }
   return '';
 };
 
@@ -144,53 +154,82 @@ export default function NBAScoreboardV2() {
            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
               {visibleGames.map(game => {
                 const isFinal = game.gameStatus === 3;
+                const isLive = game.gameStatus === 2;
                 const homeScore = parseInt(game.homeTeam.score);
                 const awayScore = parseInt(game.awayTeam.score);
                 const homeWon = isFinal && homeScore > awayScore;
                 const awayWon = isFinal && awayScore > homeScore;
                 
+                const gameStatusDisplay = getGameStatusDisplay(game);
+                
+                // Determina a cor da borda
+                const borderColor = isLive ? 'border-red-600' : isFinal ? 'border-cyan-600' : 'border-pink-600';
+                
                 return (
                   <div 
                     key={game.gameId}
                     onClick={() => { setSelectedGame(game); setIsModalOpen(true); }}
-                    className="relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 hover:border-pink-600/40 rounded-xl p-4 transition-all cursor-pointer"
+                    className={cn(
+                      "relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-xl p-4 transition-all cursor-pointer flex flex-col justify-between",
+                      `hover:${borderColor}/40`,
+                      isLive && `border-l-4 ${borderColor}` // Borda lateral para jogos ao vivo
+                    )}
+                    style={{ minHeight: '180px' }} // Aumenta a altura mínima
                   >
-                     {/* Status Topo */}
-                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider mb-3">
-                        <span className={cn(game.gameStatus === 2 ? "text-red-500 animate-pulse" : "text-cyan-400")}>
-                          {getGameStatusDisplay(game)}
-                        </span>
+                     {/* Topo: Transmissão e Status AO VIVO */}
+                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider mb-4">
                         <span className="flex items-center gap-1 text-zinc-500 bg-white/5 px-2 py-0.5 rounded">
                           <Tv size={10} /> {formatBroadcast(game.broadcastChannel)}
                         </span>
+                        {isLive && (
+                          <span className="bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
+                            AO VIVO
+                          </span>
+                        )}
                      </div>
 
                      {/* Times e Placar */}
-                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-8 h-8 object-contain" />
-                          <div>
-                             <span className={cn("block font-oswald text-xl leading-none", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
-                             <span className="block font-inter text-[10px] text-zinc-500">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                     <div className="flex flex-col gap-3 flex-1">
+                        {/* Time Visitante */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <img src={game.awayTeam.logo} alt={game.awayTeam.teamTricode} className="w-10 h-10 object-contain" />
+                            <div>
+                               <span className={cn("block font-oswald text-2xl leading-none", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.teamTricode}</span>
+                               <span className="block font-inter text-xs text-zinc-500">({game.awayTeam.wins}-{game.awayTeam.losses})</span>
+                            </div>
                           </div>
+                          <span className={cn("font-bebas text-4xl text-white tabular-nums", awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
+                            {game.awayTeam.score}
+                          </span>
                         </div>
                         
-                        <div className="font-bebas text-3xl text-white tabular-nums flex gap-1">
-                           <span className={cn(awayWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.awayTeam.score}</span>
-                           <span className="text-zinc-700">:</span>
-                           <span className={cn(homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.score}</span>
-                        </div>
-
-                        <div className="flex items-center gap-3 flex-row-reverse text-right">
-                          <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-8 h-8 object-contain" />
-                          <div>
-                             <span className={cn("block font-oswald text-xl leading-none", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
-                             <span className="block font-inter text-[10px] text-zinc-500">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                        {/* Time Casa */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <img src={game.homeTeam.logo} alt={game.homeTeam.teamTricode} className="w-10 h-10 object-contain" />
+                            <div>
+                               <span className={cn("block font-oswald text-2xl leading-none", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>{game.homeTeam.teamTricode}</span>
+                               <span className="block font-inter text-xs text-zinc-500">({game.homeTeam.wins}-{game.homeTeam.losses})</span>
+                            </div>
                           </div>
+                          <span className={cn("font-bebas text-4xl text-white tabular-nums", homeWon ? "text-white" : isFinal ? "text-zinc-500" : "text-white")}>
+                            {game.homeTeam.score}
+                          </span>
                         </div>
                      </div>
                      
-                     {/* Hover Action */}
+                     {/* Rodapé: Status e Detalhes */}
+                     <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-4">
+                        <span className={cn("text-xs font-bold font-mono", isLive ? "text-red-500" : "text-zinc-500")}>
+                          {gameStatusDisplay}
+                        </span>
+                        <span className="text-xs font-bold text-pink-600 group-hover:text-pink-400 flex items-center gap-1">
+                           Estatísticas <ChevronRight size={12} />
+                        </span>
+                     </div>
+                     
+                     {/* Hover Action (Mantido, mas menos intrusivo) */}
                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] rounded-xl">
                         <span className="bg-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
                            <Play size={10} fill="currentColor" /> Ver Detalhes
