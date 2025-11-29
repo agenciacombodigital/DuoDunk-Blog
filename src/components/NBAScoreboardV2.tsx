@@ -188,7 +188,7 @@ export default function NBAScoreboardV2() {
                         )}
                      </div>
 
-                     {/* Times e Placar */}
+                     {/* Times e Placar (Layout Horizontal Corrigido) */}
                      <div className="flex justify-between items-center w-full flex-1">
                         {/* Away */}
                         <div className="flex items-center gap-3">
