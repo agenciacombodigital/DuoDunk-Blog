@@ -1,12 +1,12 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
-import { TrendingUp, Calendar, Clock, Star, Play } from 'lucide-react';
+import { TrendingUp, Calendar, Clock, Star, Zap, BarChart2, BookOpen } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import AmazonCTA from '@/components/AmazonCTA';
 
-// Força atualização constante (SSR Real)
+// Configurações de Servidor
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -25,6 +25,7 @@ interface Article {
   image_focal_point?: string;
   is_featured?: boolean;
   video_url?: string;
+  author?: string; // Adicionado para evitar erro de tipagem no uso
 }
 
 function getTimeAgo(dateString: string): string {
@@ -62,7 +63,7 @@ async function loadArticles(): Promise<Article[]> {
 
 export const metadata: Metadata = {
   title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
-  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA.',
+  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA. Tudo sobre jogos, times e estrelas do melhor basquete do mundo!',
   alternates: {
     canonical: '/',
   },
@@ -72,137 +73,211 @@ export default async function Home() {
   const articles = await loadArticles();
 
   if (articles.length === 0) {
-    return (
-      <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center">
-        <h2 className="text-2xl font-oswald">Nenhuma notícia encontrada.</h2>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-2xl font-oswald">Carregando notícias...</div>;
   }
 
-  // Lógica de Distribuição
+  // Distribuição de Conteúdo
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
-  // Fatiamento (Slices)
-  const section1 = otherArticles.slice(0, 6);   // Lateral do Destaque
-  const section2 = otherArticles.slice(6, 12);  // "Não Perca"
-  // const section3 = otherArticles.slice(12, 16); // "Destaques Rápidos" - Removido para simplificar o layout
-  const remaining = otherArticles.slice(12);    // Todo o resto (Arquivo)
+  // Fatias para Layouts Diferentes
+  const sidebarArticles = otherArticles.slice(0, 5);
+  const mustRead = otherArticles.slice(5, 8);
+  const deepDive = otherArticles.slice(8, 10);
+  const quickHits = otherArticles.slice(10, 14);
+  const trending = otherArticles.slice(14, 18);
+  const archive = otherArticles.slice(18);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20">
       
-      {/* SEÇÃO 1: HERO (Destaque + Lateral) */}
-      {featuredArticle && (
-        <section className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Destaque Principal */}
-            <div className="lg:col-span-8">
-              <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative aspect-video rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all">
-                <img
-                  src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
-                  alt={featuredArticle.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 p-6 md:p-8 w-full z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                      <Star size={12} fill="currentColor"/> Destaque
+      {/* --- SEÇÃO 1: HERO (Destaque + Sidebar) --- */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Destaque Gigante */}
+          <div className="lg:col-span-8">
+            <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl">
+              <img
+                src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
+                alt={featuredArticle.title}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
+                <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-flex items-center gap-1">
+                  <Star size={12} fill="currentColor"/> Destaque
+                </span>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-oswald font-bold text-white leading-tight mb-3 group-hover:text-pink-400 transition-colors drop-shadow-lg">
+                  {featuredArticle.title}
+                </h1>
+                <p className="text-gray-300 text-sm md:text-base font-inter line-clamp-2 mb-4 max-w-2xl hidden md:block">
+                  {featuredArticle.summary}
+                </p>
+                <div className="flex items-center gap-3 text-gray-400 text-xs font-inter uppercase tracking-widest">
+                  <span className="flex items-center gap-1"><Clock size={12} /> Há {getTimeAgo(featuredArticle.published_at)}</span>
+                  <span>•</span>
+                  <span>Por {featuredArticle.author || 'Redação'}</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Sidebar Lateral */}
+          <div className="lg:col-span-4 flex flex-col gap-6 h-full">
+            <div className="flex items-center gap-2 border-b-2 border-black pb-2">
+              <TrendingUp className="text-pink-600" size={24} />
+              <h2 className="font-bebas text-3xl text-gray-900">Últimas</h2>
+            </div>
+            <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 max-h-[600px]">
+              {sidebarArticles.map((article, index) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-start">
+                  <span className="font-bebas text-3xl text-gray-200 group-hover:text-pink-600 transition-colors w-6 text-center shrink-0">
+                    {index + 1}
+                  </span>
+                  <div className="flex-1 pb-4 border-b border-gray-100 group-last:border-0">
+                    <h3 className="font-oswald text-base font-bold text-gray-900 leading-snug group-hover:text-pink-600 transition-colors line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                       Há {getTimeAgo(article.published_at)}
                     </span>
                   </div>
-                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-3 group-hover:text-pink-400 transition-colors line-clamp-3">
-                    {featuredArticle.title}
-                  </h1>
-                  <div className="flex items-center gap-2 text-gray-300 text-sm font-inter">
-                    <Clock size={14} />
-                    Há {getTimeAgo(featuredArticle.published_at)}
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              ))}
             </div>
-
-            {/* Lista Lateral */}
-            <div className="lg:col-span-4 flex flex-col gap-4 h-full">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="text-pink-600" size={20} />
-                <h2 className="font-bebas text-2xl text-gray-900">Últimas do dia</h2>
-              </div>
-              <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-2 max-h-[500px] lg:max-h-full">
-                {section1.map((article) => (
-                  <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 bg-gray-50 p-3 rounded-xl hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100 transition-all">
-                    <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg">
-                      <img src={getOptimizedImageUrl(article.image_url, 200)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" alt="" />
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h3 className="font-oswald text-sm font-bold text-gray-900 line-clamp-3 group-hover:text-pink-600 leading-snug">
-                        {article.title}
-                      </h3>
-                      <span className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                         <Clock size={10} /> {getTimeAgo(article.published_at)}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+            
+            {/* CTA Amazon na Sidebar */}
+            <div className="mt-auto pt-4">
+               <AmazonCTA />
             </div>
           </div>
-        </section>
-      )}
-      
-      <div className="container mx-auto px-4">
-        <AmazonCTA />
-      </div>
+        </div>
+      </section>
 
-      {/* SEÇÃO 2: NÃO PERCA (Horizontal Cards) */}
-      {section2.length > 0 && (
-        <section className="container mx-auto px-4 py-8">
-            <h2 className="font-bebas text-3xl text-gray-900 mb-6 flex items-center gap-2 border-b-2 border-gray-100 pb-2">
-              📌 Não Perca
+      {/* --- SEÇÃO 2: NÃO PERCA (Cards Horizontais) --- */}
+      {mustRead.length > 0 && (
+        <section className="bg-gray-50 py-12 border-y border-gray-100">
+          <div className="container mx-auto px-4">
+            <h2 className="font-bebas text-4xl text-gray-900 mb-8 flex items-center gap-2">
+              <Zap className="text-yellow-500" /> Não Perca
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {section2.map(article => (
-                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100">
-                    <div className="aspect-[16/9] overflow-hidden">
-                       <img src={getOptimizedImageUrl(article.image_url, 600)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt=""/>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               {mustRead.map(article => (
+                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100">
+                    <div className="aspect-[16/9] overflow-hidden relative">
+                       <img src={getOptimizedImageUrl(article.image_url, 600)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt=""/>
+                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold uppercase">
+                          {article.tags?.[0] || 'NBA'}
+                       </div>
                     </div>
-                    <div className="p-4">
-                       <h3 className="font-oswald text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-pink-600 mb-2">{article.title}</h3>
+                    <div className="p-5">
+                       <h3 className="font-oswald text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-pink-600 mb-2 leading-tight">{article.title}</h3>
                        <p className="font-inter text-sm text-gray-500 line-clamp-2">{article.summary}</p>
                     </div>
                  </Link>
                ))}
             </div>
+          </div>
         </section>
       )}
 
-      {/* SEÇÃO 3: ARQUIVO (Restante das Notícias) */}
-      {remaining.length > 0 && (
-        <section className="container mx-auto px-4 py-8 mt-8 border-t border-gray-100 pt-12">
+      {/* --- SEÇÃO 3: ANÁLISES (Big Cards) --- */}
+      {deepDive.length > 0 && (
+        <section className="container mx-auto px-4 py-12">
+            <h2 className="font-bebas text-4xl text-gray-900 mb-8 flex items-center gap-2">
+              <BarChart2 className="text-purple-600" /> Análises & Opinião
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {deepDive.map((article) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative aspect-[2/1] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all">
+                  <img
+                    src={getOptimizedImageUrl(article.image_url, 800)}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-75 group-hover:brightness-100"
+                    style={getObjectPositionStyle(article.image_focal_point)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 p-8">
+                    <span className="text-pink-400 text-xs font-bold uppercase tracking-widest mb-2 block">Análise</span>
+                    <h3 className="font-oswald text-2xl md:text-4xl font-bold text-white leading-tight group-hover:underline decoration-pink-500 underline-offset-4">
+                      {article.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+        </section>
+      )}
+
+      {/* --- SEÇÃO 4: DESTAQUES RÁPIDOS (Grid 4) --- */}
+      {quickHits.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {quickHits.map((article) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
+                  <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-gray-100 relative">
+                    <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" alt=""/>
+                  </div>
+                  <h3 className="font-oswald text-sm md:text-base font-bold text-gray-900 leading-snug group-hover:text-pink-600 transition-colors line-clamp-3">
+                    {article.title}
+                  </h3>
+                </Link>
+              ))}
+            </div>
+        </section>
+      )}
+
+      {/* --- SEÇÃO 5: MAIS LIDAS (Listão Alternado) --- */}
+      {trending.length > 0 && (
+        <section className="bg-zinc-900 text-white py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="font-bebas text-4xl mb-10 text-center">🔥 Em Alta na Semana</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+               {trending.map((article, idx) => (
+                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-6 items-center">
+                    <span className="text-6xl font-bebas text-zinc-700 group-hover:text-pink-600 transition-colors select-none">0{idx+1}</span>
+                    <div>
+                       <div className="text-xs font-bold text-zinc-500 uppercase mb-1">{article.tags?.[0]}</div>
+                       <h3 className="font-oswald text-xl md:text-2xl font-bold group-hover:text-zinc-300 transition-colors leading-tight">
+                         {article.title}
+                       </h3>
+                    </div>
+                 </Link>
+               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* --- SEÇÃO FINAL: ARQUIVO (Grid Infinito) --- */}
+      {archive.length > 0 && (
+        <section className="container mx-auto px-4 py-16">
            <div className="flex items-center gap-4 mb-8">
-              <h2 className="font-bebas text-4xl text-black">📚 Mais Notícias</h2>
+              <h2 className="font-bebas text-4xl text-black flex items-center gap-2">
+                 <BookOpen className="text-gray-400"/> Mais Notícias
+              </h2>
               <div className="flex-1 h-px bg-gray-200"></div>
            </div>
            
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
-              {remaining.map((article) => (
+              {archive.map((article) => (
                  <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                    <div className="aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-gray-100 relative">
-                       <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt=""/>
-                       <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-white text-xs font-inter flex items-center gap-1"><Clock size={10}/> {getTimeAgo(article.published_at)}</span>
+                    <div className="aspect-[3/2] rounded-xl overflow-hidden mb-4 bg-gray-100 shadow-sm group-hover:shadow-md transition-all relative">
+                       <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt=""/>
+                       <div className="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold">
+                          Há {getTimeAgo(article.published_at)}
                        </div>
                     </div>
-                    <h3 className="font-oswald text-sm md:text-base font-bold text-gray-900 leading-snug group-hover:text-pink-600 transition-colors line-clamp-3">
+                    <h3 className="font-oswald text-lg font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-2">
                        {article.title}
                     </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-2 line-clamp-2">{article.summary}</p>
                  </Link>
               ))}
            </div>
         </section>
       )}
-
     </div>
   );
 }
