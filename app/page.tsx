@@ -6,7 +6,7 @@ import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import AmazonCTA from '@/components/AmazonCTA';
 
-// Configurações de Servidor
+// Configurações de Servidor (SSR)
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -95,9 +95,12 @@ export default async function Home() {
       <section className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Destaque Gigante */}
+          {/* Destaque Gigante (Responsivo: Alto no Mobile, Wide no PC) */}
           <div className="lg:col-span-8">
-            <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl">
+            <Link 
+              href={`/artigos/${featuredArticle.slug}`} 
+              className="group block relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
+            >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                 alt={featuredArticle.title}
@@ -152,7 +155,7 @@ export default async function Home() {
                       {article.title}
                     </h3>
                     <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                       {getTimeAgo(article.published_at)}
+                       Há {getTimeAgo(article.published_at)}
                     </span>
                   </div>
                 </Link>
