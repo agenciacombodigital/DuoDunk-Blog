@@ -95,15 +95,19 @@ export default async function Home() {
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
+              // CORREÇÃO: aspect-[4/3] para mobile (mais alto) e 16/10 para desktop
               className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                 alt={featuredArticle.title}
+                // CORREÇÃO: 'absolute inset-0 h-full object-cover' força a imagem a preencher o quadrado
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              
+              {/* Conteúdo sobre a imagem */}
               <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
                 <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-flex items-center gap-1">
                   <Star size={12} fill="currentColor"/> Destaque
