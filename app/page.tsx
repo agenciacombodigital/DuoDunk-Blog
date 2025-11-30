@@ -1,18 +1,27 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
-import { TrendingUp, Calendar, Clock, Star } from 'lucide-react';
+import { TrendingUp, Clock, Star } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import AmazonCTA from '@/components/AmazonCTA';
-import { Suspense } from 'react';
-import PageMeta from '@/components/PageMeta';
-import { Article } from '@/components/home/ArticleTypes';
-import FeaturedSection from '@/components/home/FeaturedSection';
-import ListSection from '@/components/home/ListSection';
-import NewsGridSection from '@/components/home/NewsGridSection';
-import ArchiveSection from '@/components/home/ArchiveSection';
 
+// Tipagem simplificada para o artigo
+interface Article {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  slug: string;
+  summary: string;
+  image_url: string;
+  source: string;
+  tags: string[];
+  published_at: string;
+  updated_at?: string;
+  image_focal_point?: string;
+  is_featured?: boolean;
+  video_url?: string;
+}
 
 // ✅ Forçar renderização dinâmica (SSR) para sempre ter notícias frescas
 export const dynamic = 'force-dynamic';
@@ -43,13 +52,12 @@ async function loadArticles(): Promise<Article[]> {
 
     if (error) {
       console.error('Erro ao carregar artigos:', error);
-      // Lançar o erro fará com que o error.tsx seja acionado
-      throw new Error(`Falha ao carregar artigos do Supabase: ${error.message}`);
+      return [];
     }
     return data || [];
   } catch (error) {
     console.error('Erro fatal ao buscar artigos:', error);
-    throw error; // Re-lança para ser pego pelo Error Boundary
+    return [];
   }
 }
 
@@ -61,129 +69,76 @@ export const metadata: Metadata = {
   },
 };
 
-// Componente principal da Home (assíncrono)
-async function HomeContent() {
+export default async function Home() {
   const articles = await loadArticles();
 
   if (articles.length === 0) {
     return (
       <div className="min-h-screen bg-white text-gray-900 flex items-center justify-center flex-col gap-4">
-        <h2 className="text-2xl font-oswald">Nenhum artigo publicado ainda.</h2>
-        <p className="text-gray-500">Acesse o admin para criar ou processar notícias.</p>
+        <h2 className="text-2xl font-oswald">Carregando notícias...</h2>
+        <p className="text-gray-500">Se demorar, verifique a conexão com o Supabase.</p>
       </div>
     );
   }
 
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
-  
-  // Divisão dos artigos em seções (usando a lógica modular anterior)
-  const section1 = otherArticles.slice(0, 7); 
-  const section2 = otherArticles.slice(7, 13); 
-  const section3 = otherArticles.slice(13, 15); 
-  const section4 = otherArticles.slice(15, 19); 
-  const section5 = otherArticles.slice(19, 25); 
-  const section6 = otherArticles.slice(25, 28); 
-  const section7 = otherArticles.slice(28, 34); 
-  const section8 = otherArticles.slice(34, 36); 
-  const remaining = otherArticles.slice(36); 
+  const section1 = otherArticles.slice(0, 6);
 
   return (
-    <>
-      <PageMeta 
-        title={metadata.title as string} 
-        description={metadata.description as string}
-        canonicalPath={metadata.alternates?.canonical as string}
-      />
-      
-      <div className="min-h-screen bg-white text-gray-900">
-        {/* Featured Section */}
-        {featuredArticle && (
-          <FeaturedSection featuredArticle={featuredArticle} section1={section1} />
-        )}
+    <div className="min-h-screen bg-white text-gray-900">
+      {featuredArticle && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Destaque Principal */}
+            <div className="lg:col-span-8">
+              <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative aspect-video rounded-2xl overflow-hidden shadow-xl">
+                <img
+                  src={getOptimizedImageUrl(featuredArticle.image_url, 800)}
+                  alt={featuredArticle.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 p-6 w-full">
+                  <span className="bg-pink-600 text-white px-2 py-1 text-xs font-bold uppercase rounded mb-2 inline-block">Destaque</span>
+                  <h1 className="text-3xl md:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-pink-400 transition-colors">
+                    {featuredArticle.title}
+                  </h1>
+                  <div className="flex items-center gap-2 text-gray-300 text-sm">
+                    <Clock size={14} />
+                    Há {getTimeAgo(featuredArticle.published_at)}
+                  </div>
+                </div>
+              </Link>
+            </div>
 
-        {/* Seções Restantes */}
-        <div className="container mx-auto px-4 space-y-16">
+            {/* Lateral */}
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              {section1.slice(0, 3).map((article) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 bg-gray-50 p-3 rounded-xl hover:bg-gray-100 transition">
+                  <img 
+                    src={getOptimizedImageUrl(article.image_url, 200)} 
+                    className="w-24 h-24 object-cover rounded-lg"
+                    alt=""
+                  />
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="font-oswald text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-pink-600 leading-snug">
+                      {article.title}
+                    </h3>
+                    <span className="text-xs text-gray-500 mt-1">Há {getTimeAgo(article.published_at)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
           
-          {/* Seção 2: Não Perca (Lista) */}
-          <ListSection 
-            title="Não Perca" 
-            articles={section2} 
-            icon="pin" 
-            isBoxed={true}
-          />
-
-          {/* Seção 3: Análises Profundas (Grid 2) */}
-          <NewsGridSection 
-            title="Análises Profundas" 
-            articles={section3} 
-            icon="fire" 
-            gridCols={2} 
-            aspectRatio="16/9" 
-            titleSize="lg"
-            showSummary={true}
-          />
-
-          {/* Seção 4: Destaques Rápidos (Grid 4) */}
-          <NewsGridSection 
-            title="Destaques Rápidos" 
-            articles={section4} 
-            icon="zap" 
-            gridCols={4} 
-            aspectRatio="4/3" 
-            titleSize="sm"
-          />
-
-          {/* Seção 5: Mais Lidas (Lista Alternada) */}
-          <ListSection 
-            title="Mais Lidas" 
-            articles={section5} 
-            icon="chart" 
-            isAlternating={true}
-          />
-
-          {/* Seção 6: Mais da NBA (Grid 3) */}
-          <NewsGridSection 
-            title="Mais da NBA" 
-            articles={section6} 
-            icon="ball" 
-            gridCols={3} 
-            aspectRatio="4/3" 
-            titleSize="md"
-            showSummary={true}
-          />
-
-          {/* Seção 7: Não Perca (Lista Boxed) */}
-          <ListSection 
-            title="Não Perca" 
-            articles={section7} 
-            icon="pin" 
-            isBoxed={true}
-          />
-
-          {/* Seção 8: Grid 2 */}
-          <NewsGridSection 
-            articles={section8} 
-            gridCols={2} 
-            aspectRatio="16/9" 
-            titleSize="md"
-            showSummary={true}
-          />
-
-          {/* Seção ARQUIVO */}
-          <ArchiveSection articles={remaining} />
-        </div>
-
-        <div className="h-20" />
-      </div>
-    </>
-  );
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600 py-20">Carregando destaques...</div>}>
-      <HomeContent />
-    </Suspense>
+          {/* Banner Amazon */}
+          <div className="mt-8">
+             <AmazonCTA />
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
