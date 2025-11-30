@@ -124,30 +124,40 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* 2. Sidebar Lateral (Direita) */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-2">
+          {/* 2. Sidebar Lateral (Direita - Ocupa toda a altura) */}
+          <div className="lg:col-span-4 flex flex-col h-full">
+            
+            {/* Título da Seção */}
+            <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
               <TrendingUp className="text-pink-600" size={24} />
               <h2 className="font-bebas text-3xl text-gray-900">Últimas</h2>
             </div>
-            <div className="flex flex-col gap-4 h-full">
-              {sidebarArticles.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-start h-full">
-                  {/* CORREÇÃO: Imagem maior no mobile (w-36), compacta no desktop (lg:w-28) */}
-                  <div className="relative w-36 h-24 lg:w-28 lg:h-20 shrink-0 rounded-lg overflow-hidden">
+
+            {/* Lista de Notícias (Flex Grow para ocupar altura total) */}
+            <div className="flex flex-col justify-between h-full gap-4">
+              {sidebarArticles.map((article, index) => (
+                <Link 
+                  key={article.id} 
+                  href={`/artigos/${article.slug}`} 
+                  className="group flex gap-4 items-stretch h-full"
+                >
+                  {/* Imagem Maior e Responsiva */}
+                  <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-xl overflow-hidden aspect-[16/10]">
                      <img 
-                        src={getOptimizedImageUrl(article.image_url, 300)} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                        src={getOptimizedImageUrl(article.image_url, 400)} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={article.title}
                         style={getObjectPositionStyle(article.image_focal_point, true)}
                      />
                   </div>
-                  <div className="flex-1 pb-2 border-b border-gray-100 group-last:border-0">
-                    <h3 className="font-oswald text-sm md:text-base font-bold text-gray-900 leading-snug group-hover:text-pink-600 transition-colors line-clamp-3">
+                  
+                  {/* Texto (Flex column para alinhar) */}
+                  <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
+                    <h3 className="font-oswald text-sm lg:text-lg font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-3">
                       {article.title}
                     </h3>
-                    <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                       <Clock size={10} /> {getTimeAgo(article.published_at)}
+                    <span className="text-xs text-gray-500 mt-2 flex items-center gap-1 font-inter">
+                       <Clock size={12} /> {getTimeAgo(article.published_at)}
                     </span>
                   </div>
                 </Link>
