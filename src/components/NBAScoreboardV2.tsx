@@ -162,7 +162,7 @@ export default function NBAScoreboardV2() {
                 
                 const gameStatusDisplay = getGameStatusDisplay(game);
                 
-                // Determina a cor da borda
+                // Determina a cor da borda (mantida para referência, mas não usada na borda lateral)
                 const borderColor = isLive ? 'border-red-600' : isFinal ? 'border-cyan-600' : 'border-pink-600';
                 
                 return (
@@ -172,7 +172,7 @@ export default function NBAScoreboardV2() {
                     className={cn(
                       "relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-xl p-4 transition-all cursor-pointer flex flex-col justify-between",
                       `hover:${borderColor}/40`,
-                      isLive && `border-l-4 ${borderColor}` // Borda lateral para jogos ao vivo
+                      // REMOVIDO: isLive && `border-l-4 ${borderColor}`
                     )}
                     style={{ minHeight: '180px' }} // Aumenta a altura mínima
                   >
