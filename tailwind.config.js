@@ -19,6 +19,8 @@ module.exports = {
     extend: {
       aspectRatio: {
         '3/4': '3 / 4',
+        '4/3': '4 / 3', // Adicionado
+        '16/10': '16 / 10', // Adicionado
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'sans-serif'],
