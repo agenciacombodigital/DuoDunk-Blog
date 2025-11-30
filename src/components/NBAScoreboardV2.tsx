@@ -172,7 +172,6 @@ export default function NBAScoreboardV2() {
                     className={cn(
                       "relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-xl p-4 transition-all cursor-pointer flex flex-col justify-between",
                       `hover:${borderColor}/40`,
-                      // REMOVIDO: isLive && `border-l-4 ${borderColor}`
                     )}
                     style={{ minHeight: '180px' }} // Aumenta a altura mínima
                   >
@@ -233,12 +232,7 @@ export default function NBAScoreboardV2() {
                         </span>
                      </div>
                      
-                     {/* Hover Action (Mantido, mas menos intrusivo) */}
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] rounded-xl">
-                        <span className="bg-pink-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                           <Play size={10} fill="currentColor" /> Ver Detalhes
-                        </span>
-                     </div>
+                     {/* Hover Action (REMOVIDO) */}
                   </div>
                 );
               })}
