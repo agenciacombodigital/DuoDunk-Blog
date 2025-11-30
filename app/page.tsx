@@ -95,8 +95,8 @@ export default async function Home() {
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
-              // CORREÇÃO: aspect-[4/3] para mobile (mais alto) e 16/10 para desktop
-              className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
+              // CORREÇÃO: Usando aspect-[3/4] para mobile (vertical) e lg:aspect-[16/10] para desktop
+              className="group block relative w-full aspect-[3/4] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
