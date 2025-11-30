@@ -97,7 +97,8 @@ export default async function Home() {
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
-              className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
+              className="group block relative w-full lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
+              style={{ aspectRatio: '4/3' }} // Força bruta no mobile
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
@@ -321,7 +322,7 @@ export default async function Home() {
                          style={getObjectPositionStyle(article.image_focal_point)}
                        />
                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold">
-                          {getTimeAgo(article.published_at)}
+                          Há {getTimeAgo(article.published_at)}
                        </div>
                     </div>
                     <h3 className="font-oswald text-lg font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-2">
