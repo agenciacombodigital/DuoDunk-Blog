@@ -124,7 +124,7 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* Sidebar Lateral */}
+          {/* Sidebar Lateral - ÚLTIMAS (AGORA COM IMAGEM) */}
           <div className="lg:col-span-4 flex flex-col gap-6 h-full">
             <div className="flex items-center gap-2 border-b-2 border-black pb-2">
               <TrendingUp className="text-pink-600" size={24} />
@@ -132,16 +132,27 @@ export default async function Home() {
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 max-h-[600px]">
               {sidebarArticles.map((article, index) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-start">
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 items-start">
                   <span className="font-bebas text-3xl text-gray-200 group-hover:text-pink-600 transition-colors w-6 text-center shrink-0">
                     {index + 1}
                   </span>
+                  
+                  {/* Imagem Adicionada */}
+                  <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg">
+                    <img 
+                      src={getOptimizedImageUrl(article.image_url, 100)} 
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      style={getObjectPositionStyle(article.image_focal_point, true)}
+                    />
+                  </div>
+                  
                   <div className="flex-1 pb-4 border-b border-gray-100 group-last:border-0">
                     <h3 className="font-oswald text-base font-bold text-gray-900 leading-snug group-hover:text-pink-600 transition-colors line-clamp-2">
                       {article.title}
                     </h3>
                     <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                       Há {getTimeAgo(article.published_at)}
+                       {getTimeAgo(article.published_at)}
                     </span>
                   </div>
                 </Link>
@@ -183,7 +194,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 3: ANÁLISES (Big Cards) --- */}
+      {/* --- SEÇÃO 3: ANÁLISES (Big Cards) - TÍTULO ABAIXO DA IMAGEM --- */}
       {deepDive.length > 0 && (
         <section className="container mx-auto px-4 py-12">
             <h2 className="font-bebas text-4xl text-gray-900 mb-8 flex items-center gap-2">
@@ -191,16 +202,18 @@ export default async function Home() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {deepDive.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative aspect-[2/1] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all">
-                  <img
-                    src={getOptimizedImageUrl(article.image_url, 800)}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-75 group-hover:brightness-100"
-                    style={getObjectPositionStyle(article.image_focal_point)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
-                  <div className="absolute bottom-0 p-8">
-                    <span className="text-pink-400 text-xs font-bold uppercase tracking-widest mb-2 block">Análise</span>
-                    <h3 className="font-oswald text-2xl md:text-4xl font-bold text-white leading-tight group-hover:underline decoration-pink-500 underline-offset-4">
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
+                  <div className="relative aspect-[2/1] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all">
+                    <img
+                      src={getOptimizedImageUrl(article.image_url, 800)}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-90"
+                      style={getObjectPositionStyle(article.image_focal_point)}
+                    />
+                  </div>
+                  {/* Título movido para fora do overlay */}
+                  <div className="pt-4">
+                    <span className="text-pink-600 text-xs font-bold uppercase tracking-widest mb-1 block">Análise</span>
+                    <h3 className="font-oswald text-2xl md:text-3xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors">
                       {article.title}
                     </h3>
                   </div>
@@ -228,7 +241,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 5: MAIS LIDAS (Listão Alternado) --- */}
+      {/* --- SEÇÃO 5: MAIS LIDAS (Listão Alternado) - AGORA COM IMAGEM --- */}
       {trending.length > 0 && (
         <section className="bg-zinc-900 text-white py-16">
           <div className="container mx-auto px-4">
@@ -237,6 +250,17 @@ export default async function Home() {
                {trending.map((article, idx) => (
                  <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-6 items-center">
                     <span className="text-6xl font-bebas text-zinc-700 group-hover:text-pink-600 transition-colors select-none">0{idx+1}</span>
+                    
+                    {/* Imagem Adicionada */}
+                    <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg">
+                      <img 
+                        src={getOptimizedImageUrl(article.image_url, 150)} 
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        style={getObjectPositionStyle(article.image_focal_point, true)}
+                      />
+                    </div>
+                    
                     <div>
                        <div className="text-xs font-bold text-zinc-500 uppercase mb-1">{article.tags?.[0]}</div>
                        <h3 className="font-oswald text-xl md:text-2xl font-bold group-hover:text-zinc-300 transition-colors leading-tight">
