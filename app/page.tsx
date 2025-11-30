@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/integrations/supabase/server';
+import { supabaseServer } from '@/integrations/supabase/server'; // Importação correta do SSR
 import Link from 'next/link';
 import { TrendingUp, Calendar, Clock, Star, Zap, BarChart2, BookOpen, Play } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
@@ -10,7 +10,7 @@ import AmazonCTA from '@/components/AmazonCTA';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Tipagem simplificada para o artigo
+// Tipagem do Artigo
 interface Article {
   id: string;
   title: string;
@@ -21,11 +21,9 @@ interface Article {
   source: string;
   tags: string[];
   published_at: string;
-  updated_at?: string;
   image_focal_point?: string;
   is_featured?: boolean;
-  video_url?: string;
-  author?: string; // Adicionado para evitar erro de tipagem no uso
+  author?: string;
 }
 
 function getTimeAgo(dateString: string): string {
@@ -49,19 +47,19 @@ async function loadArticles(): Promise<Article[]> {
       .order('published_at', { ascending: false })
       .limit(100);
     if (error) {
-      console.error('Erro Supabase:', error.message);
-      return [];
+        console.error("Erro Supabase:", error);
+        return [];
     }
     return data || [];
-  } catch (error) {
-    console.error('Erro Fatal:', error);
-    return [];
+  } catch (e) { 
+      console.error("Erro Fatal:", e);
+      return []; 
   }
 }
 
 export const metadata: Metadata = {
   title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
-  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA.',
+  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA. Tudo sobre jogos, times e estrelas do melhor basquete do mundo!',
   alternates: {
     canonical: '/',
   },
@@ -77,9 +75,9 @@ export default async function Home() {
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
-  // Fatiamento para o Grid Denso
-  const sidebarArticles = otherArticles.slice(0, 3); // 3 na lateral
-  const bottomHeroArticles = otherArticles.slice(3, 7); // 4 abaixo do destaque
+  // Fatias para Layouts Diferentes
+  const sidebarArticles = otherArticles.slice(0, 3);
+  const bottomHeroArticles = otherArticles.slice(3, 7);
   const mustRead = otherArticles.slice(7, 10);
   const deepDive = otherArticles.slice(10, 12);
   const quickHits = otherArticles.slice(12, 16);
@@ -89,16 +87,15 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20">
       
-      {/* --- SEÇÃO 1: HERO COMPLEXO --- */}
+      {/* --- SEÇÃO 1: HERO (Destaque + Sidebar) --- */}
       <section className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* 1. Destaque Gigante (Esquerda - 8 colunas) */}
+          {/* 1. Destaque Gigante (Esquerda) */}
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
-              className="group block relative w-full lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
-              style={{ aspectRatio: '4/3' }} // Força bruta no mobile
+              className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
@@ -114,9 +111,8 @@ export default async function Home() {
                 <h1 className="text-3xl md:text-5xl lg:text-6xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-pink-400 transition-colors drop-shadow-lg">
                   {featuredArticle.title}
                 </h1>
-                {/* Resumo removido conforme pedido */}
                 <div className="flex items-center gap-3 text-gray-400 text-xs font-inter uppercase tracking-widest mt-4">
-                  <span className="flex items-center gap-1"><Clock size={12} /> Há {getTimeAgo(featuredArticle.published_at)}</span>
+                  <span className="flex items-center gap-1"><Clock size={12} /> {getTimeAgo(featuredArticle.published_at)}</span>
                   <span>•</span>
                   <span>Por {featuredArticle.author || 'Redação'}</span>
                 </div>
@@ -124,21 +120,21 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* 2. Sidebar Lateral (Direita - 4 colunas - 3 Itens) */}
+          {/* 2. Sidebar Lateral (Direita) */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-2">
               <TrendingUp className="text-pink-600" size={24} />
               <h2 className="font-bebas text-3xl text-gray-900">Últimas</h2>
             </div>
             <div className="flex flex-col gap-4 h-full">
-              {sidebarArticles.map((article, index) => (
+              {sidebarArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-start h-full">
                   <div className="relative w-28 h-20 shrink-0 rounded-lg overflow-hidden">
                      <img 
-                       src={getOptimizedImageUrl(article.image_url, 200)} 
-                       className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
-                       alt={article.title}
-                       style={getObjectPositionStyle(article.image_focal_point, true)}
+                        src={getOptimizedImageUrl(article.image_url, 200)} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                        alt={article.title}
+                        style={getObjectPositionStyle(article.image_focal_point, true)}
                      />
                   </div>
                   <div className="flex-1 pb-2 border-b border-gray-100 group-last:border-0">
@@ -146,7 +142,7 @@ export default async function Home() {
                       {article.title}
                     </h3>
                     <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                       <Clock size={10} /> Há {getTimeAgo(article.published_at)}
+                       <Clock size={10} /> {getTimeAgo(article.published_at)}
                     </span>
                   </div>
                 </Link>
@@ -154,7 +150,7 @@ export default async function Home() {
             </div>
           </div>
           
-          {/* 3. Linha Inferior (4 Notícias lado a lado) */}
+          {/* 3. Linha Inferior (4 Notícias) */}
           <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
              {bottomHeroArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-gray-50 rounded-xl overflow-hidden hover:shadow-md transition-all">
@@ -174,14 +170,14 @@ export default async function Home() {
                          {article.title}
                       </h3>
                    </div>
-                </Link>
+                </Link>             
              ))}
           </div>
 
         </div>
       </section>
 
-      {/* CTA AMAZON (Posicionado após o bloco principal) */}
+      {/* CTA AMAZON */}
       <div className="container mx-auto px-4 mb-12">
          <AmazonCTA />
       </div>
@@ -215,7 +211,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 3: ANÁLISES (Big Cards) --- */}
+      {/* --- SEÇÃO 3: ANÁLISES --- */}
       {deepDive.length > 0 && (
         <section className="container mx-auto px-4 py-12">
             <h2 className="font-bebas text-4xl text-gray-900 mb-8 flex items-center gap-2">
@@ -245,7 +241,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 4: MAIS LIDAS (Listão) --- */}
+      {/* --- SEÇÃO 4: MAIS LIDAS --- */}
       {trending.length > 0 && (
         <section className="bg-zinc-900 text-white py-16">
           <div className="container mx-auto px-4">
@@ -254,17 +250,14 @@ export default async function Home() {
                {trending.map((article, idx) => (
                  <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-6 items-center border-b border-zinc-800 pb-4 last:border-0">
                     <span className="text-5xl font-bebas text-zinc-700 group-hover:text-pink-600 transition-colors select-none w-12 text-center">0{idx+1}</span>
-                    
-                    {/* Imagem Adicionada */}
                     <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg">
                       <img 
-                        src={getOptimizedImageUrl(article.image_url, 150)} 
-                        alt={article.title}
+                         src={getOptimizedImageUrl(article.image_url, 150)} 
+                         alt={article.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         style={getObjectPositionStyle(article.image_focal_point, true)}
                       />
                     </div>
-                    
                     <div>
                        <div className="text-xs font-bold text-zinc-500 uppercase mb-1">{article.tags?.[0]}</div>
                        <h3 className="font-oswald text-lg md:text-xl font-bold group-hover:text-zinc-300 transition-colors leading-tight">
@@ -278,7 +271,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 5: DESTAQUES RÁPIDOS (Grid 4) --- */}
+      {/* --- SEÇÃO 5: DESTAQUES RÁPIDOS --- */}
       {quickHits.length > 0 && (
         <section className="container mx-auto px-4 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -301,7 +294,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO FINAL: ARQUIVO (Grid Infinito) --- */}
+      {/* --- SEÇÃO FINAL: ARQUIVO --- */}
       {archive.length > 0 && (
         <section className="container mx-auto px-4 py-16 border-t border-gray-100">
            <div className="flex items-center gap-4 mb-8">
@@ -322,7 +315,7 @@ export default async function Home() {
                          style={getObjectPositionStyle(article.image_focal_point)}
                        />
                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold">
-                          Há {getTimeAgo(article.published_at)}
+                          {getTimeAgo(article.published_at)}
                        </div>
                     </div>
                     <h3 className="font-oswald text-lg font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-2">
