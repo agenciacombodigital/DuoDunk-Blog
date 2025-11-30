@@ -133,9 +133,10 @@ export default async function Home() {
             <div className="flex flex-col gap-4 h-full">
               {sidebarArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-start h-full">
-                  <div className="relative w-28 h-20 shrink-0 rounded-lg overflow-hidden">
+                  {/* CORREÇÃO: Imagem maior no mobile (w-36), compacta no desktop (lg:w-28) */}
+                  <div className="relative w-36 h-24 lg:w-28 lg:h-20 shrink-0 rounded-lg overflow-hidden">
                      <img 
-                        src={getOptimizedImageUrl(article.image_url, 200)} 
+                        src={getOptimizedImageUrl(article.image_url, 300)} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
                         alt={article.title}
                         style={getObjectPositionStyle(article.image_focal_point, true)}
