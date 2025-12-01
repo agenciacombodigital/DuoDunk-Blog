@@ -77,13 +77,13 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* === HERO (Mantido Mobile 4:3) === */}
+      {/* === HERO (Mobile 4:3, Desktop 16:9) === */}
       <section className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
-              className="group block relative w-full aspect-[4/3] lg:aspect-16/10 rounded-2xl overflow-hidden shadow-xl"
+              className="group block relative w-full aspect-[4/3] lg:aspect-video rounded-2xl overflow-hidden shadow-xl"
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
