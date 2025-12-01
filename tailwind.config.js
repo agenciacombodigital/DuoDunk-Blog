@@ -19,7 +19,8 @@ module.exports = {
     extend: {
       aspectRatio: {
         '3/4': '3 / 4',
-        '4/3': '4 / 3', // Adicionado para o destaque principal no mobile
+        '4/3': '4 / 3',
+        '16/10': '16 / 10', // Adicionado 16/10
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'sans-serif'],
