@@ -83,7 +83,7 @@ export default async function Home() {
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
-              className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
+              className="group block relative w-full aspect-[3/4] lg:aspect-[16/10] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
