@@ -54,12 +54,17 @@ export default function AdminPage() {
   };
 
   const loadQueue = async () => {
+    // BUSCA ATÉ 200 ITENS DA FILA (Aumentado)
     const { data, error } = await supabase
       .from('articles_queue')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(100); // GARANTIR QUE O LIMITE SEJA ALTO (100)
-    if (error) throw error;
+      .limit(200); 
+    
+    if (error) {
+        toast.error("Erro ao carregar fila");
+        return;
+    }
     setQueue(data || []);
   };
 
@@ -366,9 +371,17 @@ export default function AdminPage() {
     return null; 
   }
 
+  // --- FILTROS CORRIGIDOS (Mais permissivos) ---
   const pendingApproval = queue.filter(a => a.status === 'processed');
-  const pendingProcessing = queue.filter(a => (a.status === 'pending_approval' || a.status === 'pending' || a.status === null || a.status === '') && a.body === null);
+  
+  // CORREÇÃO: Aceita body null OU vazio, e aceita status pending_approval OU pending
+  const pendingProcessing = queue.filter(a => 
+    (a.status === 'pending_approval' || a.status === 'pending' || !a.status) && 
+    (!a.body || a.body.trim() === '')
+  );
+  
   const autoApproved = queue.filter(a => a.status === 'auto_approved');
+  // ---------------------------------------------
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
