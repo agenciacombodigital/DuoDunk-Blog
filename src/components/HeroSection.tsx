@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { TrendingUp, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -93,7 +93,7 @@ export default function HeroSection() {
           <div className="lg:col-span-2 space-y-8">
             {/* Featured Article - Grande */}
             <Link
-              to={`/artigos/${featuredArticle.slug}`}
+              href={`/artigos/${featuredArticle.slug}`}
               className="group block"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300">
@@ -125,7 +125,7 @@ export default function HeroSection() {
                 {miniGridArticles.map((article) => (
                   <Link
                     key={article.id}
-                    to={`/artigos/${article.slug}`}
+                    href={`/artigos/${article.slug}`}
                     className="group"
                   >
                     <div className="bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-all h-full flex flex-col">
@@ -159,7 +159,7 @@ export default function HeroSection() {
             {sideArticles.map((article, index) => (
               <Link
                 key={article.id}
-                to={`/artigos/${article.slug}`}
+                href={`/artigos/${article.slug}`}
                 className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 <div className="relative h-48">
@@ -188,7 +188,7 @@ export default function HeroSection() {
         {/* CTA Bottom */}
         <div className="text-center mt-12">
           <Link
-            to="/ultimas"
+            href="/ultimas"
             className="btn-magenta"
           >
             Ver Todas as Notícias

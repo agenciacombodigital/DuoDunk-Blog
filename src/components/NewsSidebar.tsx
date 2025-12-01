@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Clock, TrendingUp } from 'lucide-react';
 
 interface SidebarArticle {
@@ -84,7 +84,7 @@ export default function NewsSidebar() {
         {articles.map((article, index) => (
           <Link
             key={article.id}
-            to={`/artigos/${article.slug}`}
+            href={`/artigos/${article.slug}`}
             className="flex gap-4 p-4 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent transition-all duration-300 group relative"
           >
             {/* Número de ranking */}
@@ -119,7 +119,7 @@ export default function NewsSidebar() {
 
       {/* Footer */}
       <Link
-        to="/ultimas"
+        href="/ultimas"
         className="block bg-gradient-to-r from-gray-50 to-gray-100 hover:from-[#FA007D]/10 hover:to-[#FA007D]/5 transition-all text-center py-4 border-t border-gray-200"
       >
         <span className="text-[#FA007D] font-bold text-sm uppercase tracking-wider hover:tracking-widest transition-all">
