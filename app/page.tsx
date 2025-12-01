@@ -75,6 +75,11 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
+      {/* DIAGNÓSTICO TEMPORÁRIO */}
+      <div className="container mx-auto px-4 py-2 bg-yellow-100 text-yellow-800 text-sm font-bold text-center">
+        DIAGNÓSTICO: {articles.length} artigos carregados. Mínimo de 18 necessários para todas as seções.
+      </div>
+      
       {/* === SEÇÃO 1: HERO (Mantida igual) === */}
       <section className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
