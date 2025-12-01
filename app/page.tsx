@@ -96,7 +96,7 @@ export default async function Home() {
                 <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-flex items-center gap-1">
                   <Star size={12} fill="currentColor"/> Destaque
                 </span>
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors drop-shadow-lg">
+                <h1 className="text-3xl md:text-5xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors drop-shadow-lg">
                   {featuredArticle.title}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-400 text-xs font-inter uppercase tracking-widest mt-4">
