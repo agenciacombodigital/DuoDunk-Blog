@@ -57,7 +57,8 @@ export default function AdminPage() {
     const { data, error } = await supabase
       .from('articles_queue')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100); // GARANTIR QUE O LIMITE SEJA ALTO (100)
     if (error) throw error;
     setQueue(data || []);
   };
