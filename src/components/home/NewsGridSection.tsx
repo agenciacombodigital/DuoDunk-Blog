@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Article } from './ArticleTypes';
-import { Flame, Zap, BasketballIcon } from 'lucide-react';
+import { Flame, Zap } from 'lucide-react'; // Removendo BasketballIcon
 
 interface NewsGridSectionProps {
   title?: string;
