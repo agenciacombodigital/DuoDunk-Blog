@@ -1,16 +1,14 @@
-import { supabaseServer } from '@/integrations/supabase/server'; // Importação correta do SSR
+import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
-import { TrendingUp, Calendar, Clock, Star, Zap, BarChart2, BookOpen, Play } from 'lucide-react';
+import { TrendingUp, Calendar, Clock, Star, Zap, BarChart2, BookOpen, ArrowRight } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import AmazonCTA from '@/components/AmazonCTA';
 
-// Configurações de Servidor (SSR)
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Tipagem do Artigo
 interface Article {
   id: string;
   title: string;
@@ -45,24 +43,15 @@ async function loadArticles(): Promise<Article[]> {
       .select('*')
       .eq('published', true)
       .order('published_at', { ascending: false })
-      .limit(100);
-    if (error) {
-        console.error("Erro Supabase:", error);
-        return [];
-    }
+      .limit(200);
+    if (error) return [];
     return data || [];
-  } catch (e) { 
-      console.error("Erro Fatal:", e);
-      return []; 
-  }
+  } catch { return []; }
 }
 
 export const metadata: Metadata = {
   title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
-  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA. Tudo sobre jogos, times e estrelas do melhor basquete do mundo!',
-  alternates: {
-    canonical: '/',
-  },
+  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA.',
 };
 
 export default async function Home() {
@@ -75,44 +64,39 @@ export default async function Home() {
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
-  // Fatias para Layouts Diferentes
+  // Fatiamento
   const sidebarArticles = otherArticles.slice(0, 3);
   const bottomHeroArticles = otherArticles.slice(3, 7);
   const mustRead = otherArticles.slice(7, 10);
-  const deepDive = otherArticles.slice(10, 12);
-  const quickHits = otherArticles.slice(12, 16);
-  const trending = otherArticles.slice(16, 20);
-  const archive = otherArticles.slice(20);
+  const deepDive = otherArticles.slice(10, 13); // 3 artigos para layout assimétrico
+  const trending = otherArticles.slice(13, 17);
+  const archive = otherArticles.slice(17);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 pb-20">
+    <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque + Sidebar) --- */}
+      {/* === SEÇÃO 1: HERO (Mantida igual) === */}
       <section className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* 1. Destaque Gigante (Esquerda) */}
+          {/* Destaque Gigante */}
           <div className="lg:col-span-8">
             <Link 
               href={`/artigos/${featuredArticle.slug}`} 
-              // CORREÇÃO: Usando aspect-[3/4] para mobile (vertical) e lg:aspect-[16/10] para desktop
-              className="group block relative w-full aspect-[3/4] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl"
+              className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
             >
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                 alt={featuredArticle.title}
-                // CORREÇÃO: 'absolute inset-0 h-full object-cover' força a imagem a preencher o quadrado
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-              
-              {/* Conteúdo sobre a imagem */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
               <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
-                <span className="bg-pink-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-flex items-center gap-1">
+                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-flex items-center gap-1 shadow-lg">
                   <Star size={12} fill="currentColor"/> Destaque
                 </span>
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-pink-400 transition-colors drop-shadow-lg">
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors drop-shadow-lg">
                   {featuredArticle.title}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-400 text-xs font-inter uppercase tracking-widest mt-4">
@@ -124,36 +108,20 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* 2. Sidebar Lateral (Direita - Ocupa toda a altura) */}
+          {/* Sidebar */}
           <div className="lg:col-span-4 flex flex-col h-full">
-            
-            {/* Título da Seção */}
             <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
-              <TrendingUp className="text-pink-600" size={24} />
+              <TrendingUp className="text-[#FA007D]" size={24} />
               <h2 className="font-bebas text-3xl text-gray-900">Últimas</h2>
             </div>
-
-            {/* Lista de Notícias (Flex Grow para ocupar altura total) */}
             <div className="flex flex-col justify-between h-full gap-4">
               {sidebarArticles.map((article, index) => (
-                <Link 
-                  key={article.id} 
-                  href={`/artigos/${article.slug}`} 
-                  className="group flex gap-4 items-stretch h-full"
-                >
-                  {/* Imagem Maior e Responsiva */}
-                  <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-xl overflow-hidden aspect-[16/10]">
-                     <img 
-                        src={getOptimizedImageUrl(article.image_url, 400)} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        alt={article.title}
-                        style={getObjectPositionStyle(article.image_focal_point, true)}
-                     />
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-stretch h-full">
+                  <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-lg overflow-hidden aspect-[16/10] shadow-sm">
+                     <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={article.title}/>
                   </div>
-                  
-                  {/* Texto (Flex column para alinhar) */}
                   <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
-                    <h3 className="font-oswald text-sm lg:text-lg font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-3">
+                    <h3 className="font-oswald text-sm lg:text-lg font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors line-clamp-3">
                       {article.title}
                     </h3>
                     <span className="text-xs text-gray-500 mt-2 flex items-center gap-1 font-inter">
@@ -165,179 +133,143 @@ export default async function Home() {
             </div>
           </div>
           
-          {/* 3. Linha Inferior (4 Notícias) */}
-          <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+          {/* Linha Inferior */}
+          <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
              {bottomHeroArticles.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-gray-50 rounded-xl overflow-hidden hover:shadow-md transition-all">
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
                    <div className="aspect-video overflow-hidden relative">
-                      <img 
-                        src={getOptimizedImageUrl(article.image_url, 400)} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        alt={article.title}
-                        style={getObjectPositionStyle(article.image_focal_point)}
-                      />
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">
+                      <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={article.title}/>
+                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-black text-[10px] px-2 py-1 rounded font-bold uppercase shadow-sm">
                         {article.tags?.[0] || 'NBA'}
                       </div>
                    </div>
-                   <div className="p-3">
-                      <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-pink-600 line-clamp-2">
+                   <div className="p-4">
+                      <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-2">
                          {article.title}
                       </h3>
                    </div>
                 </Link>             
              ))}
           </div>
-
         </div>
       </section>
 
-      {/* CTA AMAZON */}
-      <div className="container mx-auto px-4 mb-12">
-         <AmazonCTA />
-      </div>
+      <div className="container mx-auto px-4 mb-16"><AmazonCTA /></div>
 
-      {/* --- SEÇÃO 2: NÃO PERCA --- */}
+      {/* === SEÇÃO 2: NÃO PERCA (Clean Grid) === */}
       {mustRead.length > 0 && (
-        <section className="bg-gray-50 py-12 border-y border-gray-100">
-          <div className="container mx-auto px-4">
-            <h2 className="font-bebas text-4xl text-gray-900 mb-8 flex items-center gap-2">
-              <Zap className="text-yellow-500" /> Não Perca
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               {mustRead.map(article => (
-                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100">
-                    <div className="aspect-[16/9] overflow-hidden relative">
-                       <img 
-                         src={getOptimizedImageUrl(article.image_url, 600)} 
-                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                         alt={article.title}
-                         style={getObjectPositionStyle(article.image_focal_point)}
-                       />
-                    </div>
-                    <div className="p-5">
-                       <h3 className="font-oswald text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-pink-600 mb-2 leading-tight">{article.title}</h3>
-                       <p className="font-inter text-sm text-gray-500 line-clamp-2">{article.summary}</p>
-                    </div>
-                 </Link>
-               ))}
-            </div>
+        <section className="container mx-auto px-4 py-12 border-t border-gray-200">
+          <div className="flex items-center gap-3 mb-8">
+             <Zap className="text-yellow-500 w-6 h-6" />
+             <h2 className="font-bebas text-4xl text-gray-900">Imperdível</h2>
           </div>
-        </section>
-      )}
-
-      {/* --- SEÇÃO 3: ANÁLISES --- */}
-      {deepDive.length > 0 && (
-        <section className="container mx-auto px-4 py-12">
-            <h2 className="font-bebas text-4xl text-gray-900 mb-8 flex items-center gap-2">
-              <BarChart2 className="text-purple-600" /> Análises
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {deepDive.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                  <div className="relative aspect-[2/1] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all">
-                    <img
-                      src={getOptimizedImageUrl(article.image_url, 800)}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-90"
-                      style={getObjectPositionStyle(article.image_focal_point)}
-                      alt={article.title}
-                    />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             {mustRead.map(article => (
+               <Link key={article.id} href={`/artigos/${article.slug}`} className="group">
+                  <div className="aspect-[16/10] rounded-xl overflow-hidden mb-4 relative shadow-sm">
+                     <img src={getOptimizedImageUrl(article.image_url, 600)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt=""/>
+                     <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
                   </div>
-                  {/* Título fora do overlay */}
-                  <div className="pt-4">
-                    <span className="text-pink-600 text-xs font-bold uppercase tracking-widest mb-1 block">Opinião</span>
-                    <h3 className="font-oswald text-2xl md:text-3xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors">
-                      {article.title}
-                    </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                     <span className="w-8 h-0.5 bg-[#FA007D]"></span>
+                     <span className="text-xs font-bold uppercase text-gray-500">{article.tags?.[0]}</span>
                   </div>
-                </Link>
-              ))}
-            </div>
-        </section>
-      )}
-
-      {/* --- SEÇÃO 4: MAIS LIDAS --- */}
-      {trending.length > 0 && (
-        <section className="bg-zinc-900 text-white py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="font-bebas text-4xl mb-10 text-center">🔥 Em Alta</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               {trending.map((article, idx) => (
-                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-6 items-center border-b border-zinc-800 pb-4 last:border-0">
-                    <span className="text-5xl font-bebas text-zinc-700 group-hover:text-pink-600 transition-colors select-none w-12 text-center">0{idx+1}</span>
-                    <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg">
-                      <img 
-                         src={getOptimizedImageUrl(article.image_url, 150)} 
-                         alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        style={getObjectPositionStyle(article.image_focal_point, true)}
-                      />
-                    </div>
-                    <div>
-                       <div className="text-xs font-bold text-zinc-500 uppercase mb-1">{article.tags?.[0]}</div>
-                       <h3 className="font-oswald text-lg md:text-xl font-bold group-hover:text-zinc-300 transition-colors leading-tight">
-                         {article.title}
-                       </h3>
-                    </div>
-                 </Link>
-               ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* --- SEÇÃO 5: DESTAQUES RÁPIDOS --- */}
-      {quickHits.length > 0 && (
-        <section className="container mx-auto px-4 py-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {quickHits.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                  <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-gray-100 relative">
-                    <img 
-                      src={getOptimizedImageUrl(article.image_url, 400)} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                      alt={article.title}
-                      style={getObjectPositionStyle(article.image_focal_point)}
-                    />
-                  </div>
-                  <h3 className="font-oswald text-sm md:text-base font-bold text-gray-900 leading-snug group-hover:text-pink-600 transition-colors line-clamp-3">
+                  <h3 className="font-oswald text-2xl font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors mb-2">
                     {article.title}
                   </h3>
-                </Link>
-              ))}
-            </div>
+                  <p className="text-gray-600 text-sm line-clamp-2 font-inter">{article.summary}</p>
+               </Link>
+             ))}
+          </div>
         </section>
       )}
 
-      {/* --- SEÇÃO FINAL: ARQUIVO --- */}
+      {/* === SEÇÃO 3: ANÁLISES (Layout Assimétrico) === */}
+      {deepDive.length > 0 && (
+        <section className="bg-gray-50 py-16">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+               <h2 className="font-bebas text-4xl text-gray-900 flex items-center gap-2"><BarChart2 className="text-purple-600"/> Análises & Opinião</h2>
+               <Link href="/ultimas" className="text-sm font-bold uppercase flex items-center gap-1 hover:text-purple-600 transition-colors">Ver todas <ArrowRight size={16}/></Link>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+               {/* Card Grande Esquerda */}
+               <Link href={`/artigos/${deepDive[0].slug}`} className="group relative h-96 lg:h-auto rounded-2xl overflow-hidden shadow-lg">
+                  <img src={getOptimizedImageUrl(deepDive[0].image_url, 800)} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt=""/>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                  <div className="absolute bottom-0 p-8 w-full">
+                     <span className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold uppercase mb-3 inline-block">Análise</span>
+                     <h3 className="font-oswald text-3xl md:text-4xl font-bold text-white leading-none group-hover:text-purple-300 transition-colors">{deepDive[0].title}</h3>
+                  </div>
+               </Link>
+
+               {/* Lista Direita */}
+               <div className="flex flex-col gap-6">
+                  {deepDive.slice(1).map(article => (
+                    <Link key={article.id} href={`/artigos/${article.slug}`} className="flex gap-4 group bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all h-full">
+                       <div className="w-1/3 relative rounded-lg overflow-hidden">
+                          <img src={getOptimizedImageUrl(article.image_url, 400)} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform" alt=""/>
+                       </div>
+                       <div className="w-2/3 flex flex-col justify-center">
+                          <span className="text-xs font-bold text-purple-600 uppercase mb-1">Opinião</span>
+                          <h3 className="font-oswald text-lg md:text-xl font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors line-clamp-3">{article.title}</h3>
+                       </div>
+                    </Link>
+                  ))}
+               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* === SEÇÃO 4: MAIS LIDAS (Clean List) === */}
+      {trending.length > 0 && (
+        <section className="container mx-auto px-4 py-16">
+          <h2 className="font-bebas text-4xl text-gray-900 mb-10 text-center">🔥 Em Alta na Semana</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+             {trending.map((article, idx) => (
+               <Link key={article.id} href={`/artigos/${article.slug}`} className="group border-t-4 border-gray-100 hover:border-[#FA007D] pt-4 transition-all">
+                  <span className="text-4xl font-bebas text-gray-200 group-hover:text-[#FA007D] transition-colors block mb-2">0{idx+1}</span>
+                  <h3 className="font-oswald text-lg font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] transition-colors line-clamp-3">
+                    {article.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-2">{getTimeAgo(article.published_at)}</p>
+               </Link>
+             ))}
+          </div>
+        </section>
+      )}
+
+      {/* === SEÇÃO FINAL: ARQUIVO === */}
       {archive.length > 0 && (
-        <section className="container mx-auto px-4 py-16 border-t border-gray-100">
-           <div className="flex items-center gap-4 mb-8">
-              <h2 className="font-bebas text-4xl text-black flex items-center gap-2">
+        <section className="container mx-auto px-4 py-12 border-t border-gray-200">
+           <div className="flex items-center justify-between mb-8">
+              <h2 className="font-bebas text-4xl text-gray-900 flex items-center gap-2">
                  <BookOpen className="text-gray-400"/> Mais Notícias
               </h2>
-              <div className="flex-1 h-px bg-gray-200"></div>
            </div>
            
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
               {archive.map((article) => (
                  <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                    <div className="aspect-[3/2] rounded-xl overflow-hidden mb-4 bg-gray-100 shadow-sm group-hover:shadow-md transition-all relative">
-                       <img 
-                         src={getOptimizedImageUrl(article.image_url, 400)} 
-                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                         alt={article.title}
-                         style={getObjectPositionStyle(article.image_focal_point)}
-                       />
-                       <div className="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold">
+                    <div className="aspect-[3/2] rounded-xl overflow-hidden mb-4 bg-gray-100 relative">
+                       <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={article.title}/>
+                       <div className="absolute top-2 left-2 bg-white/90 backdrop-blur text-black text-[10px] px-2 py-1 rounded uppercase font-bold shadow-sm">
                           {getTimeAgo(article.published_at)}
                        </div>
                     </div>
-                    <h3 className="font-oswald text-lg font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors line-clamp-2">
+                    <h3 className="font-oswald text-lg font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors line-clamp-2">
                        {article.title}
                     </h3>
                  </Link>
               ))}
+           </div>
+           
+           <div className="mt-16 text-center">
+              <Link href="/ultimas" className="inline-flex items-center gap-2 px-8 py-3 border-2 border-black text-black hover:bg-black hover:text-white rounded-full font-bold font-oswald uppercase tracking-wide transition-colors">
+                 Ver Arquivo Completo <ArrowRight size={16} />
+              </Link>
            </div>
         </section>
       )}
