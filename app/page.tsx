@@ -69,15 +69,17 @@ export default async function Home() {
   const bottomHeroArticles = otherArticles.slice(3, 7);
   const mustRead = otherArticles.slice(7, 10);
   const deepDive = otherArticles.slice(10, 13); // 3 artigos para layout assimétrico
-  const trending = otherArticles.slice(13, 17);
-  const archive = otherArticles.slice(17);
+  const trending = otherArticles.slice(13, 17); // Seção 4
+  const archive = otherArticles.slice(17); // Seção 5
+
+  console.log(`[Home Load] Total: ${articles.length}, Trending: ${trending.length}, Archive: ${archive.length}`);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
       {/* DIAGNÓSTICO TEMPORÁRIO */}
       <div className="container mx-auto px-4 py-2 bg-yellow-100 text-yellow-800 text-sm font-bold text-center">
-        DIAGNÓSTICO: {articles.length} artigos carregados. Mínimo de 18 necessários para todas as seções.
+        DIAGNÓSTICO: {articles.length} artigos carregados. Trending: {trending.length}. Arquivo: {archive.length}. Mínimo de 18 necessários para todas as seções.
       </div>
       
       {/* === SEÇÃO 1: HERO (Mantida igual) === */}
