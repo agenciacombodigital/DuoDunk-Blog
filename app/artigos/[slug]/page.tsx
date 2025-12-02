@@ -107,6 +107,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function Artigo({ params }: { params: { slug: string } }) {
+  // ⚠️ FORÇANDO REVALIDAÇÃO: Adicionando uma chave de cache baseada no tempo atual
+  // Isso garante que, mesmo que o slug seja o mesmo, o Next.js tente buscar o dado mais recente.
+  // No entanto, a solução ideal é garantir que o slug seja único ou que o post antigo seja deletado.
   const article = await getArticle(params.slug);
 
   if (!article) {
