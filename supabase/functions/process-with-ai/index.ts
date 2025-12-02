@@ -128,7 +128,9 @@ Resumo: ${article.summary}
     if (!aiResponse) throw new Error("Falha em todos os modelos Gemini 2.5. Verifique a chave ou limites.");
 
     // 4. Tratamento Final
-    const bodyText = aiResponse.paragraphs.join('\n\n');
+    // ✅ CORREÇÃO: Envolver parágrafos em tags <p>
+    const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
+    
     const finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
     const finalImage = article.image_url || DEFAULT_IMAGE;
     const authorName = getAuthorBySource(article.source);
@@ -162,7 +164,7 @@ Resumo: ${article.summary}
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Erro Fatal:', error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
