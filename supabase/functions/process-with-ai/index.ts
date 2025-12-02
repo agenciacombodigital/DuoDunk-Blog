@@ -15,12 +15,12 @@ const GEMINI_MODELS = [
 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
-// Helper de Autor por Fonte
+// Helper de Autor por Fonte (ATUALIZADO)
 const getAuthorBySource = (source: string) => {
     const s = (source || '').toLowerCase();
     if (s.includes('cbs')) return 'Hugo Tamura';
     if (s.includes('yahoo')) return 'Maiara Pires';
-    return 'Fernando Balley';
+    return 'Fernando Balley'; // Padrão para ESPN, Manual, Rodada Manual e Auto Rodada
 };
 
 serve(async (req) => {

@@ -50,6 +50,20 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
       <div className="p-4 md:p-6">
+        {/* NOVO CABEÇALHO COM AUTOR E FONTE */}
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold font-inter">{article.source}</span>
+            <span className="text-xs font-bold text-pink-500 flex items-center gap-1 font-inter">
+              Por: {article.author || 'Duo Dunk'}
+            </span>
+          </div>
+          <span className="text-gray-500 text-xs font-inter">
+            {new Date(article.processed_at || article.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+        {/* FIM NOVO CABEÇALHO */}
+
         <h3 className="font-oswald text-lg md:text-xl font-bold uppercase text-white mb-2">{article.title}</h3>
         <p className="text-cyan-400 text-sm mb-4 line-clamp-2 leading-snug font-inter">{article.summary}</p>
         

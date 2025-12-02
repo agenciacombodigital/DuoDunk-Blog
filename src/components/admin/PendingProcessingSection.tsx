@@ -31,7 +31,7 @@ export default function PendingProcessingSection({ articles, onDelete }: Pending
                 </span>
               </div>
               <h4 
-                className="text-white font-semibold text-sm mt-2 line-clamp-2 leading-snug" 
+                className="text-white font-medium text-base mt-2 line-clamp-2 leading-snug" 
                 title={article.original_title}
               >
                 {article.original_title}
