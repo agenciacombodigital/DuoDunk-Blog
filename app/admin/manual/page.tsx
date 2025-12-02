@@ -13,13 +13,13 @@ export default function AdminManual() {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [form, setForm] = useState({
-    title: 'Artigo de Teste - Conexão Supabase OK',
-    subtitle: 'Teste de publicação manual para verificar o SSR',
-    summary: 'Este é um artigo de teste para confirmar que a conexão do servidor com o Supabase está funcionando e que os dados aparecem na Home Page.',
-    body: '<p>Se você está lendo isso, a conexão SSR está funcionando corretamente!</p><h2>Próximos Passos</h2><p>Agora podemos focar na automação da IA.</p>',
-    image_url: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1200&h=630&fit=crop',
-    tags: 'nba, teste, conexao',
-    video_url: '',
+    title: '', // Campo limpo
+    subtitle: '', // Campo limpo
+    summary: '', // Campo limpo
+    body: '', // Campo limpo
+    image_url: '', // Campo limpo
+    tags: '', // Campo limpo
+    video_url: '', // Campo limpo
     is_featured: true,
   });
 
@@ -76,16 +76,17 @@ export default function AdminManual() {
       // Inserir direto na tabela articles (publicar)
       const { error } = await supabase.from('articles').insert({
         title: form.title,
-        subtitle: form.subtitle,
+        subtitle: form.subtitle || null,
         summary: form.summary,
         body: form.body,
         image_url: form.image_url || null,
-        tags: form.tags.split(',').map(t => t.trim()),
+        tags: form.tags.split(',').map(t => t.trim()).filter(t => t),
         slug,
         meta_description: form.summary.substring(0, 160),
         published: true,
         published_at: new Date().toISOString(),
         source: 'Editorial DuoDunk',
+        author: 'Fernando Balley', // <-- AUTOR CORRIGIDO
         original_link: null,
         views: 0,
         video_url: form.video_url || null,
