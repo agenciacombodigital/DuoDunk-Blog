@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/integrations/supabase/server'; // Importação corrigida
+import { supabaseServer } from '@/integrations/supabase/server';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import DisqusComments from '@/components/DisqusComments';
@@ -7,139 +7,77 @@ import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
-import ArticleBody from '@/components/ArticleBody'; // Importando o novo componente
-import AmazonCTA from '@/components/AmazonCTA'; // Importando AmazonCTA
+import ArticleBody from '@/components/ArticleBody';
+import AmazonCTA from '@/components/AmazonCTA';
 
-// Helper para formatar a data no estilo "DD MMM YYYY, HH:MM"
+// ✅ CORREÇÃO FINAL: Força o Next.js a NÃO usar cache nesta página.
+// Isso garante que se o artigo for atualizado ou recriado, o site mostra a versão nova.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const formatDateTime = (dateString: string, includeTime: boolean = true): string => {
   try {
     const date = new Date(dateString);
-    
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'America/Sao_Paulo',
-    };
-
-    const timeOptions: Intl.DateTimeFormatOptions = {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo',
-    };
-
-    const formattedDate = date.toLocaleDateString('pt-BR', dateOptions).replace(/\./g, ''); // Ex: 20 nov 2025
-    
+    const dateOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Sao_Paulo' };
+    const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' };
+    const formattedDate = date.toLocaleDateString('pt-BR', dateOptions).replace(/\./g, '');
     if (includeTime) {
-      const time = date.toLocaleTimeString('pt-BR', timeOptions); // Ex: 11:25
-      return `${formattedDate}, ${time}`; // Ex: 20 nov 2025, 11:25
+      const time = date.toLocaleTimeString('pt-BR', timeOptions);
+      return `${formattedDate}, ${time}`;
     }
-    
     return formattedDate;
-
-  } catch (e) {
-    return 'Data Indisponível';
-  }
+  } catch (e) { return 'Data Indisponível'; }
 };
 
-// Função de busca de dados no servidor (SSR)
 async function getArticle(slug: string) {
-  const { data } = await supabaseServer // <-- USANDO supabaseServer
+  const { data } = await supabaseServer
     .from('articles')
     .select('*')
     .eq('slug', slug)
     .eq('published', true)
-    .single();
-  
-  return data;
+    .maybeSingle(); // Usa maybeSingle para não dar erro 406 se tiver duplicado (pega o primeiro)
+    return data;
 }
 
-// Função de metadados dinâmicos (SSR)
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await getArticle(params.slug);
-
-  if (!article) {
-    return {
-      title: 'Artigo não encontrado',
-      description: 'O artigo solicitado não existe ou foi removido.',
-    };
-  }
-
+  if (!article) return { title: 'Artigo não encontrado' };
+  
   const siteUrl = 'https://www.duodunk.com.br';
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
   const imageUrl = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
-  const summary = article.meta_description || article.summary || article.title;
   
-  // Prioriza o campo 'author' do banco de dados, senão usa um fallback genérico
-  const authorName = article.author || 'Duo Dunk Redação'; 
-  
-  // ✅ Garantindo que article.tags é um array para evitar falhas no SSR
-  const safeTags = Array.isArray(article.tags) ? article.tags : [];
-  
-  const articleKeywords = safeTags.length > 0
-    ? [...new Set(safeTags)].join(', ')
-    : 'NBA, Basquete, Notícias, NBA Brasil';
-
   return {
-    title: `${article.title}`,
-    description: summary,
-    keywords: articleKeywords,
-    alternates: {
-      canonical: currentUrl,
-    },
+    title: `${article.title} | Duo Dunk`,
+    description: article.meta_description || article.summary,
     openGraph: {
       title: article.title,
-      description: summary,
+      description: article.meta_description || article.summary,
       url: currentUrl,
       images: [{ url: imageUrl }],
       type: 'article',
-      publishedTime: new Date(article.published_at).toISOString(),
-      modifiedTime: article.updated_at ? new Date(article.updated_at).toISOString() : new Date(article.published_at).toISOString(),
-      authors: [authorName],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: article.title,
-      description: summary,
-      images: [imageUrl],
+      authors: [article.author || 'Duo Dunk'],
     },
   };
 }
 
 export default async function Artigo({ params }: { params: { slug: string } }) {
-  // ⚠️ FORÇANDO REVALIDAÇÃO: Adicionando uma chave de cache baseada no tempo atual
-  // Isso garante que, mesmo que o slug seja o mesmo, o Next.js tente buscar o dado mais recente.
-  // No entanto, a solução ideal é garantir que o slug seja único ou que o post antigo seja deletado.
   const article = await getArticle(params.slug);
 
   if (!article) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 font-oswald">
-            Artigo não encontrado
-          </h1>
-          <Link 
-            href="/" 
-            className="text-[#00DBFB] hover:text-[#FA007D] transition-colors inline-flex items-center gap-2 font-inter"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar para Home
-          </Link>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 font-oswald">Artigo não encontrado (404)</h1>
+          <Link href="/" className="text-pink-600 hover:text-black transition-colors font-bold">Voltar para Home</Link>
         </div>
       </div>
     );
   }
 
-  // Determinar o nome do autor para exibição
-  // ✅ AGORA PRIORIZA O CAMPO AUTHOR DO BANCO DE DADOS
-  const articleAuthor = article.author || 'Duo Dunk Redação';
-  
   const publishedDate = formatDateTime(article.published_at);
   const isUpdated = article.updated_at && new Date(article.updated_at).getTime() > new Date(article.published_at).getTime() + 60000;
   const updatedDate = isUpdated ? formatDateTime(article.updated_at) : null;
-
-  // ✅ Garantir que article.tags é um array para evitar falhas no .filter e .map
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
 
   return (
@@ -147,96 +85,45 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
           <article>
-            <Link 
-              href="/"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-[#FA007D] transition-colors mb-8 font-semibold font-inter"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Voltar
+            <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-colors mb-8 font-bold font-inter">
+              <ArrowLeft className="w-4 h-4" /> Voltar
             </Link>
-
-            <h1 className="font-oswald text-3xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight tracking-wide">
+            <h1 className="font-oswald text-3xl md:text-5xl font-bold uppercase text-gray-900 mb-4 leading-tight">
               {article.title}
             </h1>
-
-            <p className="text-lg md:text-xl text-gray-600 mb-6 leading-relaxed font-inter">
-              {article.summary}
-            </p>
+            {article.subtitle && <h2 className="text-xl text-gray-700 mb-6 font-inter font-medium">{article.subtitle}</h2>}
             
-            <div className="text-sm text-gray-600 mb-8 font-inter space-y-1">
-              <p className="font-bold">Por {articleAuthor}</p>
-              <p className="text-xs">
-                Postado em {publishedDate}
-                {isUpdated && (
-                  <span className="ml-2 text-gray-500 italic">
-                    (Atualizado em {updatedDate})
-                  </span>
-                )}
-              </p>
+            <div className="flex items-center gap-3 mb-8 text-sm text-gray-500 font-inter border-b border-gray-100 pb-6">
+               <span className="font-bold text-pink-600 uppercase">Por {article.author || 'Redação'}</span>
+               <span>•</span>
+               <span>{publishedDate}</span>
+               {isUpdated && <span className="italic text-gray-400">(Atualizado: {updatedDate})</span>}
             </div>
 
             {article.image_url && (
               <img
                 src={getOptimizedImageUrl(article.image_url, 800)}
-                srcSet={`
-                  ${getOptimizedImageUrl(article.image_url, 400)} 400w,
-                  ${getOptimizedImageUrl(article.image_url, 800)} 800w,
-                  ${getOptimizedImageUrl(article.image_url, 1200)} 1200w
-                `}
-                sizes="(max-width: 1023px) 100vw, 800px"
                 alt={article.title}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-auto rounded-2xl object-cover mb-10 shadow-lg"
+                className="w-full h-auto rounded-xl object-cover mb-8 shadow-lg"
                 style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point, false) }}
               />
             )}
 
             {article.video_url && <VideoEmbed url={article.video_url} />}
 
-            {safeTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-8">
-                {safeTags
-                  .filter((tag: string | null | undefined): tag is string => 
-                    typeof tag === 'string' && tag.trim().length > 0
-                  )
-                  .filter((tag: string) => {
-                    const lowerTag = tag.toLowerCase();
-                    return ['lakers', 'warriors', 'celtics', 'heat', 'bulls', 'knicks', 
-                            'nets', 'cavaliers', 'mavericks', 'spurs', 'rockets', 'thunder', 
-                            'bucks', 'suns', '76ers', 'hawks', 'magic', 'hornets', 'pistons',
-                            'pacers', 'clippers', 'pelicans', 'timberwolves', 'trail-blazers',
-                            'kings', 'raptors', 'jazz', 'wizards', 'grizzlies', 'nuggets'].includes(lowerTag);
-                  })
-                  .map((tag: string) => (
-                    <Link
-                      key={tag}
-                      href={`/times/${tag.toLowerCase()}`}
-                      className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 text-pink-900 px-4 py-2 rounded-full text-sm font-medium transition group font-inter"
-                    >
-                      🏀 <span className="group-hover:underline">Ver página do {tag}</span>
-                    </Link>
-                  ))
-                }
-              </div>
-            )}
-
-            {/* NOVO COMPONENTE DE CORPO DO ARTIGO */}
+            {/* Corpo da Notícia com Renderização Segura */}
             <ArticleBody content={article.body} />
             
-            <AmazonCTA />
+            {/* Banner Amazon */}
+            <div className="my-10">
+                <AmazonCTA />
+            </div>
 
             {safeTags.length > 0 && (
-              <div className="pt-8 border-t border-gray-200 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 font-oswald">Tags:</h3>
-                <div className="flex flex-wrap gap-2 font-inter">
+              <div className="pt-6 border-t border-gray-100">
+                <div className="flex flex-wrap gap-2">
                   {safeTags.map((tag: string) => (
-                    <span 
-                      key={tag} 
-                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium"
-                    >
-                      #{tag}
-                    </span>
+                    <span key={tag} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase hover:bg-gray-200 transition-colors">#{tag}</span>
                   ))}
                 </div>
               </div>
@@ -246,17 +133,12 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
       </div>
 
       <div className="container mx-auto px-4 max-w-4xl pb-12">
-        <div className="mt-12 mb-12">
-          <h2 className="font-bebas text-3xl text-gray-900 mb-6 pb-3 border-b-2 border-gray-200">
-            📰 Últimas Notícias
-          </h2>
-          <LatestNews currentPostId={article.id} limit={3} />
-        </div>
-        <DisqusComments
-          identifier={article.slug}
-          title={article.title}
-          url={`https://duo-dunk-blog.vercel.app/artigos/${article.slug}`}
-        />
+         <div className="h-px bg-gray-200 my-12" />
+         <h2 className="font-bebas text-3xl text-gray-900 mb-6">Veja Também</h2>
+         <LatestNews currentPostId={article.id} limit={3} />
+         <div className="mt-12">
+            <DisqusComments identifier={article.slug} title={article.title} url={`https://www.duodunk.com.br/artigos/${article.slug}`} />
+         </div>
       </div>
     </div>
   );
