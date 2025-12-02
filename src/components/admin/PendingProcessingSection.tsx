@@ -31,11 +31,17 @@ export default function PendingProcessingSection({ articles, onDelete }: Pending
                 </span>
               </div>
               <h4 
-                className="text-white font-medium text-base mt-2 line-clamp-2 leading-snug" 
+                className="text-white font-oswald uppercase font-bold text-base mt-2 line-clamp-2 leading-snug" 
                 title={article.original_title}
               >
                 {article.original_title}
               </h4>
+              
+              {/* Data e Hora de Coleta */}
+              <p className="text-gray-400 text-xs mt-1 font-inter">
+                Coletado em: {new Date(article.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às {new Date(article.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+              
               <a href={article.original_link} target="_blank" rel="noreferrer" className="text-blue-400 text-xs mt-2 block hover:underline truncate">
                 Ver original
               </a>
