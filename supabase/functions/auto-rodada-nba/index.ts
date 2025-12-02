@@ -122,8 +122,8 @@ serve(async (req) => {
     const linkUnico = `https://www.espn.com.br/nba/calendario?date=${dateParam}`;
     const slug = `onde-assistir-nba-hoje-${dataISO}`;
     
-    // Verifica se já existe um post de agenda para hoje (usando o link único como identificador)
-    const { data: existing } = await supabase.from('articles_queue').select('id').eq('original_link', linkUnico).maybeSingle();
+    // ✅ CORREÇÃO: Usar o SLUG como identificador único na fila
+    const { data: existing } = await supabase.from('articles_queue').select('id').eq('slug', slug).maybeSingle();
 
     const articleData = {
         title: `Onde assistir NBA hoje (${dataHojePT})`,
