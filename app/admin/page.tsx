@@ -381,6 +381,8 @@ export default function AdminPage() {
         image_focal_point: articleToSave.image_focal_point,
         image_focal_point_mobile: articleToSave.image_focal_point_mobile,
         is_featured: articleToSave.is_featured,
+        subtitle: articleToSave.subtitle, // Incluindo subtitle
+        author: articleToSave.author, // Incluindo author
         // Apenas para artigos publicados, atualiza o timestamp
         ...(isPublished && { updated_at: new Date().toISOString() }),
       };
