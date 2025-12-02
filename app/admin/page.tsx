@@ -171,13 +171,18 @@ export default function AdminPage() {
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from('article-images').getPublicUrl(fileName);
       if (!data.publicUrl) throw new Error("URL da imagem não encontrada.");
-      const { error: updateError } = await supabase.from('articles_queue').update({ image_url: data.publicUrl }).eq('id', articleId);
+      
+      // Determina a tabela correta para atualização
+      const table = published.some(p => p.id === articleId) ? 'articles' : 'articles_queue';
+      
+      const { error: updateError } = await supabase.from(table).update({ image_url: data.publicUrl }).eq('id', articleId);
       if (updateError) throw updateError;
+      
       if (editingArticle && editingArticle.id === articleId) {
         setEditingArticle((prev: any) => ({ ...prev, image_url: data.publicUrl }));
       }
       toast.success('Imagem atualizada!', { id: toastId });
-      await loadQueue();
+      await loadData(); // Recarrega ambas as listas
     } catch (error: any) {
       toast.error('Erro no upload', { id: toastId, description: error.message });
     } finally {
@@ -187,8 +192,12 @@ export default function AdminPage() {
 
   const handleFocalPointCommit = async (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
+    
+    // Determina a tabela correta para atualização
+    const table = published.some(p => p.id === articleId) ? 'articles' : 'articles_queue';
+    
     const { error } = await supabase
-      .from('articles_queue')
+      .from(table)
       .update({ 
         image_focal_point: desktopFocalPoint,
         image_focal_point_mobile: mobileFocalPoint,
@@ -196,14 +205,27 @@ export default function AdminPage() {
       .eq('id', articleId);
     if (error) {
       toast.error('Erro ao salvar o foco da imagem.');
-      loadQueue();
+      loadData();
     }
   };
 
   const handleFocalPointChange = (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
+    
+    // Atualiza o estado local da fila
     setQueue(prevQueue =>
       prevQueue.map(a =>
+        a.id === articleId ? { 
+          ...a, 
+          image_focal_point: desktopFocalPoint,
+          image_focal_point_mobile: mobileFocalPoint,
+        } : a
+      )
+    );
+    
+    // Se for um artigo publicado, atualiza o estado local de published também (para o modal)
+    setPublished(prevPublished =>
+      prevPublished.map(a =>
         a.id === articleId ? { 
           ...a, 
           image_focal_point: desktopFocalPoint,
@@ -232,7 +254,7 @@ export default function AdminPage() {
         tags: Array.isArray(article.tags) ? article.tags : [],
         image_url: article.image_url || '',
         source: article.source || 'DuoDunk',
-        author: article.author || 'Duo Dunk Redação', // <-- CAMPO AUTHOR INCLUÍDO
+        author: article.author || 'Duo Dunk Redação',
         ...(article.queue_id && { queue_id: article.queue_id }),
         ...(article.original_link && { original_link: article.original_link }),
         ...(article.video_url && { video_url: article.video_url }),
@@ -247,7 +269,7 @@ export default function AdminPage() {
       if (insertError) throw insertError;
       if (!insertedData || insertedData.length === 0) throw new Error('Artigo não foi criado. INSERT vazio!');
       
-      console.log(`✅ Artigo publicado com sucesso: ${insertedData[0].id}`); // Adicionando log de sucesso
+      console.log(`✅ Artigo publicado com sucesso: ${insertedData[0].id}`);
       
       const { error: updateError } = await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
       if (updateError) console.warn('⚠️ Erro ao atualizar fila:', updateError);
@@ -334,33 +356,51 @@ export default function AdminPage() {
 
   const handleSaveEdit = async (articleToSave: any) => {
     if (!articleToSave || !articleToSave.title || !articleToSave.body) {
-      toast.error('Título e corpo do artigo são obrigatórios.');
+      toast.error('Título e corpo são obrigatórios.');
       return;
     }
+    
     setLocalLoading(true);
-    const toastId = toast.loading("Salvando edição...");
+    const toastId = toast.loading("Salvando alterações...");
+
     try {
+      // Verifica se é um artigo publicado ou da fila
+      const isPublished = published.some(p => p.id === articleToSave.id);
+      const table = isPublished ? 'articles' : 'articles_queue';
+
+      // Campos a serem atualizados
+      const updatePayload = {
+        title: articleToSave.title,
+        slug: articleToSave.slug,
+        summary: articleToSave.summary,
+        body: articleToSave.body,
+        image_url: articleToSave.image_url,
+        meta_description: articleToSave.meta_description,
+        tags: articleToSave.tags,
+        video_url: articleToSave.video_url,
+        image_focal_point: articleToSave.image_focal_point,
+        image_focal_point_mobile: articleToSave.image_focal_point_mobile,
+        is_featured: articleToSave.is_featured,
+        // Apenas para artigos publicados, atualiza o timestamp
+        ...(isPublished && { updated_at: new Date().toISOString() }),
+      };
+
       const { error } = await supabase
-        .from('articles_queue')
-        .update({
-          title: articleToSave.title,
-          summary: articleToSave.summary,
-          body: articleToSave.body,
-          meta_description: articleToSave.meta_description,
-          tags: articleToSave.tags,
-          image_url: articleToSave.image_url,
-          video_url: articleToSave.video_url,
-          is_featured: articleToSave.is_featured,
-          image_focal_point: articleToSave.image_focal_point,
-          image_focal_point_mobile: articleToSave.image_focal_point_mobile,
-        })
+        .from(table) // ✅ Escolhe a tabela certa dinamicamente
+        .update(updatePayload)
         .eq('id', articleToSave.id);
+
       if (error) throw error;
-      toast.success('Edição salva na fila!', { id: toastId });
+
+      toast.success('Alterações salvas com sucesso!', { id: toastId });
       setShowEditModal(false);
+      
+      // Recarrega tudo para garantir
       await loadQueue();
+      await loadPublished();
+
     } catch (error: any) {
-      toast.error('Erro ao salvar edição', { id: toastId, description: error.message });
+      toast.error('Erro ao salvar', { id: toastId, description: error.message });
     } finally {
       setLocalLoading(false);
     }
