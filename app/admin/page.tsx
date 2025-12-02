@@ -232,7 +232,7 @@ export default function AdminPage() {
         tags: Array.isArray(article.tags) ? article.tags : [],
         image_url: article.image_url || '',
         source: article.source || 'DuoDunk',
-        author: article.author || 'Duo Dunk Redação', // <-- CORREÇÃO AQUI
+        author: article.author || 'Duo Dunk Redação', // <-- CAMPO AUTHOR INCLUÍDO
         ...(article.queue_id && { queue_id: article.queue_id }),
         ...(article.original_link && { original_link: article.original_link }),
         ...(article.video_url && { video_url: article.video_url }),
