@@ -13,7 +13,14 @@ export default function ArticleBody({ content }: ArticleBodyProps) {
   useEffect(() => {
     // Sanitiza apenas no navegador
     if (content) {
-      setSanitizedContent(DOMPurify.sanitize(content));
+      // Configurações para permitir links e estilos básicos
+      const cleanContent = DOMPurify.sanitize(content, {
+        // Permite tags comuns de formatação e listas
+        ALLOWED_TAGS: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'strong', 'em', 'a', 'img', 'div', 'span', 'br', 'blockquote', 'hr'],
+        // Permite atributos de link e estilo
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'style', 'class', 'src', 'alt', 'width', 'height'],
+      });
+      setSanitizedContent(cleanContent);
     }
   }, [content]);
 
