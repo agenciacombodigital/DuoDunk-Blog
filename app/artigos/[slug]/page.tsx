@@ -69,7 +69,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
   const imageUrl = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
   const summary = article.meta_description || article.summary || article.title;
-  const authorName = article.source?.includes('DuoDunk') || article.source?.includes('Editorial') ? 'Fernando Balley' : article.source || 'Duo Dunk Redação';
+  
+  // Prioriza o campo 'author' do banco de dados, senão usa um fallback genérico
+  const authorName = article.author || 'Duo Dunk Redação'; 
   
   // ✅ Garantindo que article.tags é um array para evitar falhas no SSR
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
@@ -126,19 +128,9 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
     );
   }
 
-  // Determinar o nome do autor para o Schema Markup e exibição
-  let articleAuthor = "Duo Dunk";
-  const lowerSource = article.source ? article.source.toLowerCase() : '';
-  
-  if (lowerSource.includes('yahoo sports')) {
-    articleAuthor = "Hugo Tamura";
-  } else if (lowerSource.includes('espn')) {
-    articleAuthor = "Maiara Pires";
-  } else if (lowerSource.includes('duodunk') || lowerSource.includes('editorial') || article.source?.includes('auto-gerado')) {
-    articleAuthor = "Fernando Balley";
-  } else if (article.source) {
-    articleAuthor = article.source;
-  }
+  // Determinar o nome do autor para exibição
+  // ✅ AGORA PRIORIZA O CAMPO AUTHOR DO BANCO DE DADOS
+  const articleAuthor = article.author || 'Duo Dunk Redação';
   
   const publishedDate = formatDateTime(article.published_at);
   const isUpdated = article.updated_at && new Date(article.updated_at).getTime() > new Date(article.published_at).getTime() + 60000;
