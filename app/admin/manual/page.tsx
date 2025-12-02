@@ -86,7 +86,7 @@ export default function AdminManual() {
         published: true,
         published_at: new Date().toISOString(),
         source: 'Editorial DuoDunk',
-        author: 'Fernando Balley', // <-- AUTOR CORRIGIDO
+        author: 'Fernando Balley', // <-- AUTOR DEFINIDO AQUI
         original_link: null,
         views: 0,
         video_url: form.video_url || null,
