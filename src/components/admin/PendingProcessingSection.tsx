@@ -30,7 +30,10 @@ export default function PendingProcessingSection({ articles, onDelete }: Pending
                   {new Date(article.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <h4 className="text-white font-semibold text-sm mt-2 line-clamp-2 leading-snug" title={article.original_title}>
+              <h4 
+                className="text-white font-oswald uppercase font-bold text-sm mt-2 line-clamp-2 leading-snug" 
+                title={article.original_title}
+              >
                 {article.original_title}
               </h4>
               <a href={article.original_link} target="_blank" rel="noreferrer" className="text-blue-400 text-xs mt-2 block hover:underline truncate">
