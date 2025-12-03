@@ -15,7 +15,8 @@ import EditArticleModal from '@/components/admin/EditArticleModal';
 import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 import { retryRateLimitedArticles } from '@/lib/retryRateLimitedArticles';
 import { useAuth } from '@/hooks/useAuth';
-import { clearAllFeaturedArticlesServer, getRateLimitStatsServer } from '@/services/adminActions'; // Importando Server Actions
+import { clearAllFeaturedArticlesServer, getRateLimitStatsServer } from '@/services/adminActions'; 
+import { approveAndPublishArticleServer } from '@/services/articleActions'; // Importando a nova Server Action
 
 export default function AdminPage() {
   const router = useRouter();
@@ -239,51 +240,22 @@ export default function AdminPage() {
     if (!window.confirm('Aprovar e publicar este artigo?')) return;
     const toastId = toast.loading("Publicando artigo...");
     try {
-      if (article.is_featured) {
-        // Usando a Server Action para limpar destaques
-        await clearAllFeaturedArticlesServer();
+      // Usando a Server Action para aprovar e revalidar o cache
+      const result = await approveAndPublishArticleServer(article);
+      
+      if (!result.success) {
+        if (result.code === '23505') {
+          throw new Error('Slug Duplicado. Edite o título ou slug.');
+        }
+        throw new Error(result.error);
       }
-      const articleData = {
-        title: article.title,
-        body: article.body,
-        slug: article.slug,
-        published: true,
-        published_at: new Date().toISOString(),
-        summary: article.summary || '',
-        meta_description: article.meta_description || article.summary || article.title.substring(0, 160),
-        tags: Array.isArray(article.tags) ? article.tags : [],
-        image_url: article.image_url || '',
-        source: article.source || 'DuoDunk',
-        author: article.author || 'Duo Dunk Redação',
-        ...(article.queue_id && { queue_id: article.queue_id }),
-        ...(article.original_link && { original_link: article.original_link }),
-        ...(article.video_url && { video_url: article.video_url }),
-        ...(article.subtitle && { subtitle: article.subtitle }),
-        is_featured: article.is_featured || false,
-        views: 0,
-        image_focal_point: article.image_focal_point || '50% 50%',
-        image_focal_point_mobile: article.image_focal_point_mobile || '50%',
-      };
-      // Usando o cliente normal para inserir (RLS deve estar desativado na tabela articles para admins)
-      const { data: insertedData, error: insertError } = await supabase.from('articles').insert(articleData).select();
-      if (insertError) throw insertError;
-      if (!insertedData || insertedData.length === 0) throw new Error('Artigo não foi criado. INSERT vazio!');
-      
-      console.log(`✅ Artigo publicado com sucesso: ${insertedData[0].id}`);
-      
-      const { error: updateError } = await supabase.from('articles_queue').update({ status: 'approved' }).eq('id', article.id);
-      if (updateError) console.warn('⚠️ Erro ao atualizar fila:', updateError);
       
       toast.success('Artigo publicado! 🚀', { id: toastId });
       await loadData();
       setShowEditModal(false);
     } catch (error: any) {
       console.error('❌ ERRO:', error);
-      if (error.code === '23505') {
-        toast.error('Slug Duplicado', { id: toastId, description: 'Este slug já existe. Edite o título ou slug.' });
-      } else {
-        toast.error('Erro ao publicar', { id: toastId, description: error.message });
-      }
+      toast.error('Erro ao publicar', { id: toastId, description: error.message });
     }
   };
 
@@ -329,6 +301,8 @@ export default function AdminPage() {
       await supabase.from('articles').delete().eq('id', articleId);
       toast.success('Artigo publicado deletado.', { id: toastId });
       await loadPublished();
+      // Revalida a home e ultimas após deletar um artigo publicado
+      router.refresh(); 
     } catch (error: any) {
       toast.error('Erro ao deletar', { id: toastId, description: error.message });
     }
@@ -347,6 +321,8 @@ export default function AdminPage() {
       await supabase.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       toast.success('Todas as notícias foram deletadas!', { id: toastId });
       await loadPublished();
+      // Revalida a home e ultimas após deletar tudo
+      router.refresh(); 
     } catch (error: any) {
       toast.error('Erro ao deletar', { id: toastId, description: error.message });
     } finally {
@@ -400,6 +376,11 @@ export default function AdminPage() {
       // Recarrega tudo para garantir
       await loadQueue();
       await loadPublished();
+      
+      // Se for um artigo publicado, revalida o cache
+      if (isPublished) {
+        router.refresh();
+      }
 
     } catch (error: any) {
       toast.error('Erro ao salvar', { id: toastId, description: error.message });

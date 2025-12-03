@@ -21,19 +21,20 @@ serve(async (req) => {
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY não encontrada.");
 
-    // 1. Data BRASIL (Lógica mais robusta)
+    // 1. Data BRASIL
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Sao_Paulo',
-      year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' // Incluindo weekday para garantir todas as partes
+      year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long'
     });
-    
     const parts = formatter.formatToParts(now);
     
     // Acessando as partes de forma segura
     const day = parts.find(p => p.type === 'day')?.value;
     const month = parts.find(p => p.type === 'month')?.value;
     const year = parts.find(p => p.type === 'year')?.value;
+    // O weekday não é usado na lógica de slug/data, mas mantemos a extração segura
+    // const weekday = parts.find(p => p.type === 'weekday')?.value; 
     
     if (!day || !month || !year) {
         throw new Error("Falha ao extrair partes da data.");
@@ -53,7 +54,7 @@ serve(async (req) => {
     const jogos = espnData.events || [];
 
     if (jogos.length === 0) {
-      return new Response(JSON.stringify({ success: true, message: "Nenhum jogo hoje" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, message: "Nenhum jogo hoje." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // 3. Prompt Gemini
@@ -108,6 +109,7 @@ serve(async (req) => {
 
       if (temTransmissaoBR) {
           const canaisFiltrados = canais.filter((c: string) => !c.includes("NBA")); 
+          // ✅ Apenas junta o texto, SEM criar tags <a>
           canalFormatado = canaisFiltrados.length > 0 ? canaisFiltrados.join(" / ") : canais.join(" / ");
           icon = "📺"; 
       }
@@ -122,7 +124,7 @@ serve(async (req) => {
     // Banner Amazon (Link Único)
     htmlBody += `<p style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-left: 5px solid #00A8E1;"><strong>Dica DuoDunk:</strong> <a href="${AMAZON_AFFILIATE_LINK}" target="_blank">Teste Amazon Prime Grátis</a>!</p>`;
 
-    // 5. Salvar/Atualizar (Usando UPSERT)
+    // 5. Salvar/Atualizar
     const linkUnico = `https://www.espn.com.br/nba/calendario?date=${dateParam}`;
     const slug = `onde-assistir-nba-hoje-${dataISO}`;
     
@@ -136,13 +138,15 @@ serve(async (req) => {
         slug: slug,
         source: 'DuoDunk Agenda',
         image_url: 'https://duodunk.com.br/images/agenda-nba-padrao.jpg',
-        status: 'processed', // Garante que volta para a lista
+        status: 'processed',
         created_at: new Date().toISOString(),
         is_featured: false,
         author: 'Fernando Balley'
     };
 
-    // Usando upsert com o slug como chave de conflito
+    // Upsert inteligente
+    // O erro anterior (ON CONFLICT) deve ser resolvido pelo fato de a restrição UNIQUE existir.
+    // Se o erro persistir, o problema é no Deno/Supabase-js, mas a sintaxe é a correta.
     const { data, error } = await supabase.from('articles_queue').upsert(articleData, { onConflict: 'slug' }).select();
 
     if (error) throw error;
