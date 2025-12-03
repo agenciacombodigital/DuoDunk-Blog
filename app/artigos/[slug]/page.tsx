@@ -6,6 +6,7 @@ import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata, ResolvingMetadata } from 'next';
 import ArticleBody from '@/components/ArticleBody';
 import nextDynamic from 'next/dynamic'; // Importação dinâmica renomeada
+import { cn } from '@/lib/utils'; // Importando cn
 
 // Imports Dinâmicos (Lazy)
 const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
@@ -100,7 +101,8 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   }
 
   const date = new Date(article.published_at);
-  const publishedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const publishedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  const publishedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
 
   return (
@@ -114,28 +116,42 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             </Link>
 
             {/* Cabeçalho */}
+            {/* Título: font-oswald semibold (usando font-bold que é 700) */}
             <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight">
               {article.title}
             </h1>
-            {article.subtitle && <h2 className="text-xl md:text-2xl text-gray-600 mb-6 font-inter leading-relaxed">{article.subtitle}</h2>}
             
-            <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-gray-500 font-inter border-y border-gray-100 py-4">
-               <span className="font-bold text-pink-600 uppercase flex items-center gap-2">
-                 By {article.author || 'Redação'}
+            {/* Subtítulo: Exibido aqui */}
+            {article.subtitle && (
+              <h2 className="text-xl md:text-2xl text-gray-600 mb-6 font-inter leading-relaxed">
+                {article.subtitle}
+              </h2>
+            )}
+            
+            {/* Bloco de Meta (Autor e Data) */}
+            <div className="flex flex-col items-start gap-1 mb-8 text-sm text-gray-500 font-inter">
+               {/* Autor na cor rosa/magenta */}
+               <span className="font-bold text-[#FA007D] uppercase flex items-center gap-2">
+                 BY {article.author || 'REDAÇÃO'}
                </span>
-               <span className="hidden sm:inline">•</span>
-               <span className="flex items-center gap-1"><Calendar size={14}/> {publishedDate}</span>
+               {/* Data e Hora na linha de baixo */}
+               <span className="flex items-center gap-1 text-gray-500">
+                 <Calendar size={14}/> {publishedDate} às {publishedTime}
+               </span>
             </div>
 
             {/* Imagem Principal */}
             {article.image_url && (
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-10 shadow-lg">
+              <div className={cn(
+                "relative w-full rounded-2xl overflow-hidden mb-10 shadow-lg",
+                // Ajuste para mobile: usa aspect-[4/3] no mobile e aspect-video no desktop
+                "aspect-[4/3] md:aspect-video"
+              )}>
                  <img
                     src={getOptimizedImageUrl(article.image_url, 1200)}
                     alt={article.title}
                     className="w-full h-full object-cover"
                     style={getObjectPositionStyle(article.image_focal_point, false)}
-                    // ✅ PERFORMANCE: Otimização LCP para a imagem principal do artigo
                     fetchPriority="high"
                     decoding="sync"
                     srcSet={`

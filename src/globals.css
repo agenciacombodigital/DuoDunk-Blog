@@ -99,7 +99,17 @@
   }
 
   .prose p {
+    /* Ajuste para mobile: texto menor e espaçamento mais apertado */
     @apply mb-4 leading-relaxed text-gray-700;
+  }
+  
+  /* Ajuste específico para o corpo do texto no mobile */
+  @media (max-width: 768px) {
+    .prose p {
+      font-size: 1rem; /* 16px */
+      line-height: 1.6;
+      margin-bottom: 1rem; /* Espaçamento menor entre parágrafos */
+    }
   }
 
   .prose a {
@@ -300,12 +310,10 @@ html {
     -webkit-text-size-adjust: 100%;
   }
   
-  /* Removendo regras de h1/h2/h3 aqui para usar as regras globais acima */
-  
   /* Parágrafos do post */
   article p {
-    line-height: 1.8 !important;
-    margin-bottom: 1.5rem !important;
+    line-height: 1.6 !important; /* Ajuste para 1.6 */
+    margin-bottom: 1rem !important; /* Ajuste para 1rem */
   }
   
   /* Padding lateral mobile */
