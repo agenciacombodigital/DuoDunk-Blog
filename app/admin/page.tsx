@@ -251,7 +251,14 @@ export default function AdminPage() {
       }
       
       toast.success('Artigo publicado! 🚀', { id: toastId });
-      await loadData();
+      
+      // ✅ CORREÇÃO: Usar router.refresh() para recarregar o Server Component (AdminPage)
+      router.refresh(); 
+      
+      // Recarregar apenas os stats e a fila localmente (o published será recarregado pelo refresh)
+      await loadQueue();
+      await loadRateLimitStats();
+      
       setShowEditModal(false);
     } catch (error: any) {
       console.error('❌ ERRO:', error);

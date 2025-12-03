@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { revalidatePath } from 'next/cache';
+// import { revalidatePath } from 'next/cache'; // Removido
 
 /**
  * Aprova um artigo da fila e o publica na tabela 'articles'.
@@ -59,12 +59,9 @@ export async function approveAndPublishArticleServer(article: any) {
       
     if (updateError) console.warn('⚠️ Erro ao atualizar fila:', updateError);
 
-    // 5. Revalidar o cache do Next.js
-    revalidatePath('/'); // Home Page
-    revalidatePath('/ultimas'); // Últimas Notícias
-    revalidatePath(`/artigos/${article.slug}`); // Página do Artigo
+    // 5. Revalidar o cache do Next.js (REMOVIDO: revalidatePath)
     
-    console.log(`✅ Artigo ${article.slug} publicado e cache revalidado.`);
+    console.log(`✅ Artigo ${article.slug} publicado.`);
 
     return { success: true, slug: article.slug };
   } catch (error: any) {
