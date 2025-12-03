@@ -108,24 +108,25 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="lg:col-span-4 flex flex-col h-full">
+          <div className="lg:col-span-4 flex flex-col">
             {/* Ajuste do cabeçalho "Últimas" */}
             <div className="flex items-center gap-2 border-b-2 border-black pb-1 mb-3 pt-1">
-              <TrendingUp className="text-[#FA007D]" size={20} /> {/* Diminuído o ícone */}
-              <h2 className="font-bebas text-2xl text-gray-900">Últimas</h2> {/* Diminuído o texto */}
+              <TrendingUp className="text-[#FA007D]" size={20} />
+              {/* Diminuindo o tamanho do texto 'Últimas' */}
+              <h2 className="font-bebas text-xl text-gray-900">Últimas</h2> 
             </div>
             
-            {/* Container para alinhar a altura */}
-            <div className="flex flex-col justify-between h-full gap-4">
+            {/* Container para alinhar a altura - Usando flex-1 para esticar */}
+            <div className="flex flex-col justify-between flex-1 gap-4">
               {sidebarArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-stretch h-full">
-                  {/* Ajuste da imagem lateral para 16/10 */}
+                  {/* Imagem lateral com altura fixa para preencher o espaço */}
                   <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-xl overflow-hidden aspect-[16/10] shadow-sm">
                      <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={article.title}/>
                   </div>
                   <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
-                    {/* Ajuste do tamanho do título lateral */}
-                    <h3 className="font-oswald text-sm lg:text-base font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors line-clamp-3">
+                    {/* Aumentando o tamanho do título lateral para text-base lg:text-lg */}
+                    <h3 className="font-oswald text-base lg:text-lg font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors line-clamp-3">
                       {article.title}
                     </h3>
                     <span className="text-xs text-gray-500 mt-2 flex items-center gap-1 font-inter">
