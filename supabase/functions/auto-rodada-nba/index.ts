@@ -10,9 +10,7 @@ const AMAZON_AFFILIATE_LINK = "https://amzn.to/3KaOGB9";
 const GEMINI_MODEL = "gemini-2.5-flash"; 
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const supabase = createClient(
@@ -20,19 +18,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
     
-    const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY não encontrada.");
 
     // 1. Data BRASIL
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Sao_Paulo',
-      year: 'numeric', month: '2-digit', day: '2-digit'
+      year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long'
     });
     const parts = formatter.formatToParts(now);
     const day = parts.find(p => p.type === 'day').value;
     const month = parts.find(p => p.type === 'month').value;
     const year = parts.find(p => p.type === 'year').value;
+    const weekday = parts.find(p => p.type === 'weekday').value;
     
     const dataHojePT = `${day}/${month}/${year}`; 
     const dateParam = `${year}${month}${day}`;
@@ -48,7 +47,7 @@ serve(async (req) => {
     const jogos = espnData.events || [];
 
     if (jogos.length === 0) {
-      return new Response(JSON.stringify({ success: false, message: "Nenhum jogo hoje" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: false, message: "Nenhum jogo hoje." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // 3. Prompt Gemini
@@ -103,28 +102,25 @@ serve(async (req) => {
 
       if (temTransmissaoBR) {
           const canaisFiltrados = canais.filter((c: string) => !c.includes("NBA")); 
-          // ✅ REMOVIDA A CRIAÇÃO DE LINKS AQUI. APENAS TEXTO.
+          // ✅ Apenas junta o texto, SEM links
           canalFormatado = canaisFiltrados.length > 0 ? canaisFiltrados.join(" / ") : canais.join(" / ");
           icon = "📺"; 
       }
 
-      htmlBody += `<li><strong>${horario}</strong> – ${timeVisitante.team.displayName} x ${timeCasa.team.displayName} – ${icon} ${canalFormatado}</li>`;
+      htmlBody += `<li><strong>${horario}</strong> – ${timeVisitante.team.displayName} @ ${timeCasa.team.displayName} – ${icon} ${canalFormatado}</li>`;
       tags.push(timeCasa.team.displayName);
       tags.push(timeVisitante.team.displayName);
     });
 
     htmlBody += `</ul><p><em>* Horários de Brasília.</em></p>`;
     
-    // Banner Amazon (Link Único)
+    // Banner Amazon (Único Link)
     htmlBody += `<p style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-left: 5px solid #00A8E1;"><strong>Dica DuoDunk:</strong> <a href="${AMAZON_AFFILIATE_LINK}" target="_blank">Teste Amazon Prime Grátis</a>!</p>`;
 
-    // 5. Salvar ou Atualizar
+    // 5. Salvar/Atualizar
     const linkUnico = `https://www.espn.com.br/nba/calendario?date=${dateParam}`;
     const slug = `onde-assistir-nba-hoje-${dataISO}`;
     
-    // ✅ CORREÇÃO: Usar o SLUG como identificador único na fila
-    const { data: existing } = await supabase.from('articles_queue').select('id').eq('slug', slug).maybeSingle();
-
     const articleData = {
         title: `Onde assistir NBA hoje (${dataHojePT})`,
         original_title: `Onde assistir NBA hoje (${dataHojePT})`,
@@ -135,25 +131,18 @@ serve(async (req) => {
         slug: slug,
         source: 'DuoDunk Agenda',
         image_url: 'https://duodunk.com.br/images/agenda-nba-padrao.jpg',
-        status: 'processed', // Garante que volta para a lista
+        status: 'processed',
         created_at: new Date().toISOString(),
         is_featured: false,
-        author: 'Fernando Balley' // Autor definido
+        author: 'Fernando Balley'
     };
 
-    if (existing) {
-        console.log("Atualizando registro existente...");
-        // Atualiza o registro existente
-        const { error: updateError } = await supabase.from('articles_queue').update(articleData).eq('id', existing.id);
-        if (updateError) throw updateError;
-    } else {
-        console.log("Criando novo registro...");
-        // Cria um novo registro
-        const { error: insertError } = await supabase.from('articles_queue').insert([articleData]);
-        if (insertError) throw insertError;
-    }
+    // Upsert inteligente
+    const { data, error } = await supabase.from('articles_queue').upsert(articleData, { onConflict: 'slug' }).select();
 
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (error) throw error;
+
+    return new Response(JSON.stringify({ success: true, data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
