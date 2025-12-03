@@ -11,9 +11,39 @@ const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-
 export const metadata: Metadata = {
   title: "Duo Dunk - O Jogo Dentro do Jogo",
   description: "Notícias, análises e estatísticas da NBA.",
+  // Configuração Completa de Ícones
   icons: {
-    icon: '/images/icone-duodunk.png',
-  }
+    icon: [
+      { url: '/images/icone-duodunk.png' }, // Padrão para navegadores modernos
+      { url: '/images/icone-duodunk.png', sizes: '32x32', type: 'image/png' },
+      { url: '/images/icone-duodunk.png', sizes: '16x16', type: 'image/png' },
+    ],
+    shortcut: ['/images/icone-duodunk.png'], // Para navegadores antigos
+    apple: [
+      { url: '/images/icone-duodunk.png', sizes: '180x180', type: 'image/png' }, // iPhone/iPad Home Screen
+    ],
+    other: [
+      {
+        rel: 'apple-touch-icon-precomposed',
+        url: '/images/icone-duodunk.png',
+      },
+    ],
+  },
+  manifest: '/manifest.json', // Arquivo para Android/Chrome
+  openGraph: {
+    title: "Duo Dunk - Notícias NBA",
+    description: "O Jogo Dentro do Jogo. Cobertura completa da NBA.",
+    siteName: "Duo Dunk",
+    images: [
+      {
+        url: '/images/duodunk-logoV2.svg',
+        width: 800,
+        height: 600,
+      },
+    ],
+    locale: 'pt_BR',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
