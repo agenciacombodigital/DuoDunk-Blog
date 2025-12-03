@@ -1,14 +1,17 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import DisqusComments from '@/components/DisqusComments';
-import VideoEmbed from '@/components/VideoEmbed';
-import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
-import { Metadata, ResolvingMetadata } from 'next'; // Importação correta
+import { Metadata, ResolvingMetadata } from 'next';
 import ArticleBody from '@/components/ArticleBody';
-import AmazonCTA from '@/components/AmazonCTA';
+import dynamic from 'next/dynamic'; // Importação dinâmica
+
+// Imports Dinâmicos (Lazy)
+const VideoEmbed = dynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
+const DisqusComments = dynamic(() => import('@/components/DisqusComments'), { ssr: false });
+const LatestNews = dynamic(() => import('@/components/LatestNews'), { ssr: true });
+const AmazonCTA = dynamic(() => import('@/components/AmazonCTA'), { ssr: true }); // SSR true para SEO do link
 
 // ⚠️ Configurações de Servidor
 export const dynamic = 'force-dynamic';
@@ -132,10 +135,20 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
                     alt={article.title}
                     className="w-full h-full object-cover"
                     style={getObjectPositionStyle(article.image_focal_point, false)}
+                    // ✅ PERFORMANCE: Otimização LCP para a imagem principal do artigo
+                    fetchPriority="high"
+                    decoding="sync"
+                    srcSet={`
+                      ${getOptimizedImageUrl(article.image_url, 640)} 640w,
+                      ${getOptimizedImageUrl(article.image_url, 1024)} 1024w,
+                      ${getOptimizedImageUrl(article.image_url, 1200)} 1200w
+                    `}
+                    sizes="(max-width: 768px) 100vw, 800px"
                  />
               </div>
             )}
 
+            {/* Vídeo (Lazy Loaded) */}
             {article.video_url && <div className="mb-10"><VideoEmbed url={article.video_url} /></div>}
 
             {/* Corpo da Notícia */}
@@ -143,7 +156,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
                <ArticleBody content={article.body} />
             </div>
             
-            {/* Banner Amazon */}
+            {/* Banner Amazon (Lazy Loaded) */}
             <div className="my-12">
                 <AmazonCTA />
             </div>
@@ -167,6 +180,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
         <div className="container mx-auto px-4 max-w-5xl">
            <h2 className="font-bebas text-3xl text-gray-900 mb-8 border-l-4 border-pink-600 pl-3">Continue Lendo</h2>
            <LatestNews currentPostId={article.id} limit={3} />
+           {/* Comentários (Lazy Loaded) */}
            <div className="mt-12">
               <DisqusComments identifier={article.slug} title={article.title} url={`https://www.duodunk.com.br/artigos/${article.slug}`} />
            </div>

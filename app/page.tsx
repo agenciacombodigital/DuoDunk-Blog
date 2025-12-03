@@ -1,14 +1,16 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
-import { TrendingUp, Calendar, Clock, Star, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-react';
+import { TrendingUp, Clock, Star, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import AmazonCTA from '@/components/AmazonCTA';
 import { cn } from '@/lib/utils';
 
+// ✅ PERFORMANCE: Cache de 60 segundos. 
+// O site fica instantâneo (vem do cache da Vercel/Edge) e atualiza a cada minuto.
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60; 
 
 interface Article {
   id: string;
@@ -41,35 +43,32 @@ async function loadArticles(): Promise<Article[]> {
   try {
     const { data, error } = await supabaseServer
       .from('articles')
-      .select('*')
+      .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, image_focal_point, is_featured, author')
       .eq('published', true)
       .order('published_at', { ascending: false })
-      .limit(200);
+      .limit(100);
     if (error) return [];
     return data || [];
   } catch { return []; }
 }
 
 export const metadata: Metadata = {
-  title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias sobre o mundo da NBA',
-  description: 'DuoDunk é o seu portal de notícias quentes sobre NBA.',
+  title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias NBA',
+  description: 'Notícias, análises e estatísticas da NBA em tempo real.',
 };
 
 export default async function Home() {
   const articles = await loadArticles();
-
-  if (articles.length === 0) {
-    return <div className="min-h-screen flex items-center justify-center text-2xl font-oswald">Carregando notícias...</div>;
-  }
+  if (articles.length === 0) return <div className="min-h-screen flex items-center justify-center font-oswald text-xl">Carregando...</div>;
 
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
   // Fatiamento Estratégico
   const sidebarArticles = otherArticles.slice(0, 3);
-  const bottomHero = otherArticles.slice(3, 7);
-  const dontMiss = otherArticles.slice(7, 10);
-  const analysis = otherArticles.slice(10, 13);
+  const bottomHeroArticles = otherArticles.slice(3, 7);
+  const mustRead = otherArticles.slice(7, 10);
+  const deepDive = otherArticles.slice(10, 13);
   const trending = otherArticles.slice(13, 17);
   const moreNews = otherArticles.slice(17, 32); // Limite de 15
   const archive = otherArticles.slice(32); // Restante
@@ -77,80 +76,90 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* === HERO (Mobile 3:4, Desktop 16:10) === */}
-      <section className="container mx-auto px-4 py-8">
+      {/* SEÇÃO 1: HERO */}
+      <section className="container mx-auto px-4 py-6 md:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Destaque Principal (LCP - Largest Contentful Paint) */}
           <div className="lg:col-span-8">
-            <Link 
-              href={`/artigos/${featuredArticle.slug}`} 
-              className="group block relative w-full aspect-[3/4] lg:aspect-16/10 rounded-2xl overflow-hidden shadow-xl"
-            >
+            <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-xl">
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                 alt={featuredArticle.title}
+                // ✅ PERFORMANCE: Priority carrega a imagem imediatamente (sem lazy load)
+                fetchPriority="high"
+                decoding="sync"
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
+                srcSet={`
+                  ${getOptimizedImageUrl(featuredArticle.image_url, 640)} 640w,
+                  ${getOptimizedImageUrl(featuredArticle.image_url, 1024)} 1024w,
+                  ${getOptimizedImageUrl(featuredArticle.image_url, 1280)} 1280w
+                `}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 800px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
               <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
-                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-flex items-center gap-1">
-                  <Star size={12} fill="currentColor"/> Destaque
-                </span>
-                <h1 className="text-3xl md:text-5xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors drop-shadow-lg">
+                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-3 inline-block">Destaque</span>
+                <h1 className="text-2xl md:text-4xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors">
                   {featuredArticle.title}
                 </h1>
-                <div className="flex items-center gap-3 text-gray-400 text-xs font-inter uppercase tracking-widest mt-4">
-                  <span className="flex items-center gap-1"><Clock size={12} /> {getTimeAgo(featuredArticle.published_at)}</span>
+                <div className="flex items-center gap-3 text-gray-300 text-xs font-inter uppercase tracking-widest mt-2">
+                  <span className="flex items-center gap-1"><Clock size={12}/> {getTimeAgo(featuredArticle.published_at)}</span>
                   <span>•</span>
-                  <span>Por {featuredArticle.author || 'Redação'}</span>
+                  <span>{featuredArticle.author || 'Redação'}</span>
                 </div>
               </div>
             </Link>
           </div>
 
-          <div className="lg:col-span-4 flex flex-col">
-            {/* Ajuste do cabeçalho "Últimas" */}
-            <div className="flex items-center gap-2 border-b-2 border-black pb-1 mb-3 pt-1">
+          {/* Sidebar */}
+          <div className="lg:col-span-4 flex flex-col h-full">
+            <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
               <TrendingUp className="text-[#FA007D]" size={20} />
-              {/* Diminuindo o tamanho do texto 'Últimas' */}
-              <h2 className="font-bebas text-xl text-gray-900">Últimas</h2> 
+              <h2 className="font-bebas text-2xl text-gray-900">Últimas</h2>
             </div>
-            
-            {/* Container para alinhar a altura - Usando flex-1 para esticar */}
-            <div className="flex flex-col justify-between flex-1 gap-4">
+            <div className="flex flex-col justify-between h-full gap-3">
               {sidebarArticles.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-stretch h-full">
-                  {/* Imagem lateral com altura fixa para preencher o espaço */}
-                  <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-xl overflow-hidden aspect-[16/10] shadow-sm">
-                     <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={article.title}/>
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 items-stretch h-full">
+                  <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-lg overflow-hidden aspect-[16/10] bg-gray-100">
+                     <img 
+                        src={getOptimizedImageUrl(article.image_url, 400)} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        alt={article.title}
+                        loading="lazy"
+                        sizes="(max-width: 768px) 40vw, 20vw"
+                     />
                   </div>
                   <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
-                    {/* Aumentando o tamanho do título lateral para text-base lg:text-lg */}
-                    <h3 className="font-oswald text-base lg:text-lg font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors line-clamp-3">
+                    <h3 className="font-oswald text-sm lg:text-base font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3">
                       {article.title}
                     </h3>
-                    <span className="text-xs text-gray-500 mt-2 flex items-center gap-1 font-inter">
-                       <Clock size={12} /> {getTimeAgo(article.published_at)}
-                    </span>
+                    <span className="text-[10px] text-gray-500 mt-1 font-inter">{getTimeAgo(article.published_at)}</span>
                   </div>
                 </Link>
               ))}
             </div>
           </div>
           
+          {/* Linha Inferior */}
           <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-             {bottomHero.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
-                   <div className="aspect-video overflow-hidden relative">
-                      <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={article.title}/>
-                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-black text-[10px] px-2 py-1 rounded font-bold uppercase shadow-sm">
+             {bottomHeroArticles.map((article) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all">
+                   <div className="aspect-video overflow-hidden relative bg-gray-100">
+                      <img 
+                        src={getOptimizedImageUrl(article.image_url, 400)} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        alt={article.title}
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                      />
+                      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm text-black text-[10px] px-2 py-0.5 rounded font-bold uppercase">
                         {article.tags?.[0] || 'NBA'}
                       </div>
                    </div>
-                   <div className="p-4">
-                      <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-2">
-                         {article.title}
-                      </h3>
+                   <div className="p-3">
+                      <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-2">{article.title}</h3>
                    </div>
                 </Link>             
              ))}
@@ -158,20 +167,26 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 mb-16"><AmazonCTA /></div>
+      <div className="container mx-auto px-4 mb-12"><AmazonCTA /></div>
 
-      {/* === SEÇÃO 2: NÃO PERCA === */}
-      {dontMiss.length > 0 && (
+      {/* === SEÇÃO 2: IMPERDÍVEL === */}
+      {mustRead.length > 0 && (
         <section className="container mx-auto px-4 py-12 border-t border-gray-100">
           <div className="flex items-center gap-3 mb-8">
              <Zap className="text-yellow-500 w-6 h-6" />
              <h2 className="font-bebas text-4xl text-gray-900">Imperdível</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-             {dontMiss.map(article => (
+             {mustRead.map(article => (
                <Link key={article.id} href={`/artigos/${article.slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all">
-                  <div className="aspect-[16/10] overflow-hidden relative">
-                     <img src={getOptimizedImageUrl(article.image_url, 600)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt=""/>
+                  <div className="aspect-[16/10] overflow-hidden relative bg-gray-100">
+                     <img 
+                        src={getOptimizedImageUrl(article.image_url, 600)} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        alt={article.title}
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
                      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
                   </div>
                   <div className="p-6">
@@ -190,7 +205,7 @@ export default async function Home() {
       )}
 
       {/* === SEÇÃO 3: ANÁLISES === */}
-      {analysis.length > 0 && (
+      {deepDive.length > 0 && (
         <section className="bg-gray-50 py-16">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
@@ -198,19 +213,31 @@ export default async function Home() {
                <Link href="/ultimas" className="text-sm font-bold uppercase flex items-center gap-1 hover:text-purple-600 transition-colors">Ver todas <ArrowRight size={16}/></Link>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-               <Link href={`/artigos/${analysis[0].slug}`} className="group relative h-96 lg:h-auto rounded-2xl overflow-hidden shadow-lg">
-                  <img src={getOptimizedImageUrl(analysis[0].image_url, 800)} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt=""/>
+               <Link href={`/artigos/${deepDive[0].slug}`} className="group relative h-96 lg:h-auto rounded-2xl overflow-hidden shadow-lg bg-gray-100">
+                  <img 
+                    src={getOptimizedImageUrl(deepDive[0].image_url, 800)} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                    alt={deepDive[0].title}
+                    loading="lazy"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
                   <div className="absolute bottom-0 p-8 w-full">
                      <span className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold uppercase mb-3 inline-block">Análise</span>
-                     <h3 className="font-oswald text-3xl md:text-4xl font-bold text-white leading-none group-hover:text-purple-300 transition-colors">{analysis[0].title}</h3>
+                     <h3 className="font-oswald text-3xl md:text-4xl font-bold text-white leading-none group-hover:text-purple-300 transition-colors">{deepDive[0].title}</h3>
                   </div>
                </Link>
                <div className="flex flex-col gap-6">
-                  {analysis.slice(1).map(article => (
+                  {deepDive.slice(1).map(article => (
                     <Link key={article.id} href={`/artigos/${article.slug}`} className="flex gap-4 group bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all h-full">
-                       <div className="w-1/3 relative rounded-lg overflow-hidden aspect-video">
-                          <img src={getOptimizedImageUrl(article.image_url, 400)} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform" alt=""/>
+                       <div className="w-1/3 relative rounded-lg overflow-hidden aspect-video bg-gray-100">
+                          <img 
+                            src={getOptimizedImageUrl(article.image_url, 400)} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                            alt={article.title}
+                            loading="lazy"
+                            sizes="33vw"
+                          />
                        </div>
                        <div className="w-2/3 flex flex-col justify-center">
                           <span className="text-xs font-bold text-purple-600 uppercase mb-1">Opinião</span>
@@ -230,9 +257,15 @@ export default async function Home() {
           <h2 className="font-bebas text-4xl text-gray-900 mb-10 text-center">🔥 Em Alta na Semana</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
              {trending.map((article, idx) => (
-               <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative block rounded-xl overflow-hidden">
+               <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative block rounded-xl overflow-hidden bg-gray-100">
                   <div className="aspect-[4/3] overflow-hidden mb-3 relative">
-                    <img src={getOptimizedImageUrl(article.image_url, 400)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt=""/>
+                    <img 
+                      src={getOptimizedImageUrl(article.image_url, 400)} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      alt={article.title}
+                      loading="lazy"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
                     <div className="absolute top-0 left-0 bg-[#FA007D] text-white font-bebas text-2xl px-3 py-1 rounded-br-lg shadow-md">
                        0{idx+1}
                     </div>
@@ -246,7 +279,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* === SEÇÃO 5: MAIS LIDAS (Lista 15) === */}
+      {/* === SEÇÃO 5: MAIS NOTÍCIAS (Lista 15) === */}
       {moreNews.length > 0 && (
         <section className="bg-gray-50 py-16 border-y border-gray-200">
            <div className="container mx-auto px-4">
@@ -256,8 +289,14 @@ export default async function Home() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                 {moreNews.map((article) => (
                    <Link key={article.id} href={`/artigos/${article.slug}`} className="flex items-start gap-4 group py-2 border-b border-gray-200 last:border-0 hover:bg-white rounded-lg transition p-2">
-                      <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden">
-                         <img src={getOptimizedImageUrl(article.image_url, 200)} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt=""/>
+                      <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                         <img 
+                            src={getOptimizedImageUrl(article.image_url, 200)} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                            alt={article.title}
+                            loading="lazy"
+                            sizes="100px"
+                          />
                       </div>
                       <div>
                          <h3 className="font-oswald text-base font-bold text-gray-800 leading-tight group-hover:text-blue-600 line-clamp-2 mb-1">
@@ -297,7 +336,13 @@ export default async function Home() {
                        isWide ? "sm:col-span-2 min-h-[280px]" : "min-h-[220px]"
                      )}
                    >
-                      <img src={getOptimizedImageUrl(article.image_url, 600)} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt=""/>
+                      <img 
+                        src={getOptimizedImageUrl(article.image_url, 600)} 
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                        alt={article.title}
+                        loading="lazy"
+                        sizes={isWide ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90" />
                       <div className="absolute bottom-0 left-0 p-6 w-full">
                          <span className="text-[#00DBFB] text-[10px] font-bold uppercase tracking-widest mb-1 block">{article.tags?.[0]}</span>
@@ -308,6 +353,9 @@ export default async function Home() {
                    </Link>
                  )
               })}
+           </div>
+           <div className="mt-12 text-center">
+              <Link href="/ultimas" className="inline-flex items-center gap-2 px-8 py-3 bg-black text-white rounded-full font-bold font-oswald uppercase hover:bg-[#FA007D] transition-colors">Ver Tudo <ArrowRight size={16} /></Link>
            </div>
         </section>
       )}
