@@ -93,12 +93,13 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             </h1>
             {article.subtitle && <h2 className="text-xl text-gray-700 mb-4 font-inter font-medium">{article.subtitle}</h2>}
             
-            {/* Ajustado: mb-4, removido border-b e pb-6, removido uppercase do autor */}
-            <div className="flex items-center gap-3 mb-4 text-sm text-gray-500 font-inter">
+            {/* Bloco de Metadados em Duas Linhas */}
+            <div className="flex flex-col gap-1 mb-4 text-sm text-gray-500 font-inter">
                <span className="font-bold text-gray-700">Por {article.author || 'Redação'}</span>
-               <span>•</span>
-               <span>{publishedDate}</span>
-               {isUpdated && <span className="italic text-gray-400">(Atualizado: {updatedDate})</span>}
+               <div className="flex items-center gap-3">
+                 <span className="text-gray-500">Postado em {publishedDate}</span>
+                 {isUpdated && <span className="italic text-gray-400">(Atualizado: {updatedDate})</span>}
+               </div>
             </div>
 
             {article.image_url && (
