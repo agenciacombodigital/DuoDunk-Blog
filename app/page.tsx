@@ -106,8 +106,7 @@ export default async function Home() {
                 </h1>
                 <div className="flex items-center gap-3 text-gray-300 text-xs font-inter uppercase tracking-widest mt-2">
                   <span className="flex items-center gap-1"><Clock size={12}/> {getTimeAgo(featuredArticle.published_at)}</span>
-                  <span>•</span>
-                  <span>{featuredArticle.author || 'Redação'}</span>
+                  {/* Removido o nome do autor aqui */}
                 </div>
               </div>
             </Link>
