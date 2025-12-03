@@ -82,7 +82,7 @@ export default async function Home() {
           
           {/* Destaque Principal (LCP - Largest Contentful Paint) */}
           <div className="lg:col-span-8">
-            <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative w-full aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-xl">
+            <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative w-full aspect-[3/4] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-xl">
               <img
                 src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
                 alt={featuredArticle.title}
