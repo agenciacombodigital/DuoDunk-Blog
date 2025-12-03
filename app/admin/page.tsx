@@ -293,6 +293,25 @@ export default function AdminPage() {
       toast.error('Erro ao deletar', { id: toastId, description: error.message });
     }
   };
+  
+  // --- NOVA FUNÇÃO: DELETAR MÚLTIPLOS DA FILA ---
+  const deleteMultipleFromQueue = async (articleIds: string[]) => {
+    if (articleIds.length === 0) return;
+    if (!window.confirm(`DELETAR ${articleIds.length} artigos da fila permanentemente? Esta ação é irreversível.`)) return;
+    
+    const toastId = toast.loading(`Deletando ${articleIds.length} artigos da fila...`);
+    try {
+      const { error } = await supabase.from('articles_queue').delete().in('id', articleIds);
+      
+      if (error) throw error;
+      
+      toast.success(`${articleIds.length} artigos deletados da fila.`, { id: toastId });
+      await loadQueue();
+    } catch (error: any) {
+      toast.error('Erro ao deletar múltiplos artigos', { id: toastId, description: error.message });
+    }
+  };
+  // ---------------------------------------------
 
   const deletePublishedArticle = async (articleId: string) => {
     if (!window.confirm('DELETAR este artigo publicado permanentemente? Esta ação é irreversível.')) return;
@@ -442,7 +461,11 @@ export default function AdminPage() {
         onProcess={processOneWithAI}
         onDelete={deleteFromQueue}
       />
-      <PendingProcessingSection articles={pendingProcessing} onDelete={deleteFromQueue} />
+      <PendingProcessingSection 
+        articles={pendingProcessing} 
+        onDelete={deleteFromQueue} 
+        onDeleteMultiple={deleteMultipleFromQueue} // Passando a nova função
+      />
       <PublishedArticlesSection articles={published} onDelete={deletePublishedArticle} />
       
       <EditArticleModal
