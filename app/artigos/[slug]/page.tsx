@@ -117,14 +117,14 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             </Link>
 
             {/* Cabeçalho */}
-            {/* Título: Adicionado uppercase */}
+            {/* Título: Mantido uppercase (via globals.css) */}
             <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight">
               {article.title}
             </h1>
             
-            {/* Subtítulo: Diminuindo o tamanho da fonte */}
+            {/* Subtítulo: Diminuindo o tamanho da fonte e removendo uppercase */}
             {article.subtitle && (
-              <h2 className="text-lg md:text-xl text-gray-600 mb-6 font-inter leading-relaxed">
+              <h2 className="text-base md:text-xl text-gray-600 mb-6 font-inter leading-relaxed normal-case">
                 {article.subtitle}
               </h2>
             )}
