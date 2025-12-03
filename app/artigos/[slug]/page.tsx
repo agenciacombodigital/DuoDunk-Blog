@@ -5,13 +5,13 @@ import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata, ResolvingMetadata } from 'next';
 import ArticleBody from '@/components/ArticleBody';
-import dynamic from 'next/dynamic'; // Importação dinâmica
+import nextDynamic from 'next/dynamic'; // Importação dinâmica renomeada
 
 // Imports Dinâmicos (Lazy)
-const VideoEmbed = dynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
-const DisqusComments = dynamic(() => import('@/components/DisqusComments'), { ssr: false });
-const LatestNews = dynamic(() => import('@/components/LatestNews'), { ssr: true });
-const AmazonCTA = dynamic(() => import('@/components/AmazonCTA'), { ssr: true }); // SSR true para SEO do link
+const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
+const DisqusComments = nextDynamic(() => import('@/components/DisqusComments'), { ssr: false });
+const LatestNews = nextDynamic(() => import('@/components/LatestNews'), { ssr: true });
+const AmazonCTA = nextDynamic(() => import('@/components/AmazonCTA'), { ssr: true }); // SSR true para SEO do link
 
 // ⚠️ Configurações de Servidor
 export const dynamic = 'force-dynamic';
