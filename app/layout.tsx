@@ -21,9 +21,29 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  
+  // Dados Estruturados da Organização
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Duo Dunk",
+    "url": "https://www.duodunk.com.br",
+    "logo": "https://www.duodunk.com.br/images/duodunk-logoV2.svg",
+    "sameAs": [
+      "https://www.instagram.com/duodunk/",
+      "https://www.threads.net/@duodunk"
+    ]
+  };
+
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable} ${bebas.variable}`}>
-      <body className="font-inter bg-white text-gray-900 antialiased">
+      <body className="font-inter bg-white text-gray-900 antialiased min-h-screen flex flex-col">
+        {/* Script JSON-LD para o Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        
         <ClientLayout>
           {children}
         </ClientLayout>

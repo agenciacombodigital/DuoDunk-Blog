@@ -1,16 +1,12 @@
 import { MetadataRoute } from 'next';
 import { supabaseServer } from '@/integrations/supabase/server';
 
-// ✅ TEMPO REAL (ZERO CACHE)
-// Isso garante que o sitemap seja gerado na hora que o Googlebot acessa,
-// incluindo a notícia que você acabou de publicar há 1 segundo.
-export const dynamic = 'force-dynamic';
-export const revalidate = 0; 
+export const revalidate = 3600; // Atualiza o sitemap a cada 1 hora (ISR)
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.duodunk.com.br';
 
-  // 1. Páginas Estáticas Principais (Prioridade Máxima)
+  // 1. Páginas Estáticas Principais
   const routes = [
     '',
     '/ultimas',
@@ -22,15 +18,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'hourly' as const, // Indica alta frequência de atualização
-    priority: route === '' ? 1 : 0.9,
+    changeFrequency: 'daily' as const,
+    priority: route === '' ? 1 : 0.8,
   }));
 
-  // 2. Buscar Artigos no Banco (Até 10.000 mais recentes)
+  // 2. Buscar Artigos no Banco (Até 10000 mais recentes)
   try {
     const { data: articles } = await supabaseServer
       .from('articles')
-      .select('slug, updated_at, published_at')
+      .select('slug, updated_at')
       .eq('published', true)
       .order('published_at', { ascending: false })
       .limit(10000);
@@ -38,9 +34,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (articles) {
       const articleUrls = articles.map((article) => ({
         url: `${baseUrl}/artigos/${article.slug}`,
-        lastModified: new Date(article.updated_at || article.published_at),
-        changeFrequency: 'daily' as const,
-        priority: 0.8, // Prioridade alta para conteúdo de notícias
+        lastModified: new Date(article.updated_at),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
       }));
 
       return [...routes, ...articleUrls];
@@ -49,6 +45,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Erro ao gerar sitemap:', error);
   }
 
-  // Se o banco falhar, retorna pelo menos as páginas estáticas
   return routes;
 }
