@@ -1,7 +1,10 @@
 import { MetadataRoute } from 'next';
 import { supabaseServer } from '@/integrations/supabase/server';
 
-export const revalidate = 3600; // Atualiza o sitemap a cada 1 hora (ISR)
+// ✅ TEMPO REAL: 0 significa "sem cache". 
+// Sempre que o Google pedir, entregamos a lista mais fresca possível.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.duodunk.com.br';
@@ -13,20 +16,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/calendario',
     '/classificacao',
     '/times',
-    '/privacidade',
-    '/cookies',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency: 'hourly' as const, // Avisa ao Google que mudamos muito
+    priority: route === '' ? 1 : 0.9,
   }));
 
-  // 2. Buscar Artigos no Banco (Até 10000 mais recentes)
+  // 2. Buscar Artigos no Banco (Tempo Real)
   try {
     const { data: articles } = await supabaseServer
       .from('articles')
-      .select('slug, updated_at')
+      .select('slug, updated_at, published_at')
       .eq('published', true)
       .order('published_at', { ascending: false })
       .limit(10000);
@@ -34,15 +35,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (articles) {
       const articleUrls = articles.map((article) => ({
         url: `${baseUrl}/artigos/${article.slug}`,
-        lastModified: new Date(article.updated_at),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
+        lastModified: new Date(article.updated_at || article.published_at),
+        changeFrequency: 'daily' as const,
+        priority: 0.8, // Prioridade alta para notícias
       }));
 
       return [...routes, ...articleUrls];
     }
   } catch (error) {
-    console.error('Erro ao gerar sitemap:', error);
+    console.error('Erro sitemap:', error);
   }
 
   return routes;
