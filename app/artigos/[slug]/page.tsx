@@ -88,13 +88,14 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-colors mb-8 font-bold font-inter">
               <ArrowLeft className="w-4 h-4" /> Voltar
             </Link>
-            <h1 className="font-oswald text-3xl md:text-5xl font-bold uppercase text-gray-900 mb-4 leading-tight">
+            <h1 className="font-oswald text-3xl md:text-5xl font-bold uppercase text-gray-900 mb-2 leading-tight">
               {article.title}
             </h1>
-            {article.subtitle && <h2 className="text-xl text-gray-700 mb-6 font-inter font-medium">{article.subtitle}</h2>}
+            {article.subtitle && <h2 className="text-xl text-gray-700 mb-4 font-inter font-medium">{article.subtitle}</h2>}
             
-            <div className="flex items-center gap-3 mb-8 text-sm text-gray-500 font-inter border-b border-gray-100 pb-6">
-               <span className="font-bold text-pink-600 uppercase">Por {article.author || 'Redação'}</span>
+            {/* Ajustado: mb-4, removido border-b e pb-6, removido uppercase do autor */}
+            <div className="flex items-center gap-3 mb-4 text-sm text-gray-500 font-inter">
+               <span className="font-bold text-gray-700">Por {article.author || 'Redação'}</span>
                <span>•</span>
                <span>{publishedDate}</span>
                {isUpdated && <span className="italic text-gray-400">(Atualizado: {updatedDate})</span>}
