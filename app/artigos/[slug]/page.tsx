@@ -1,66 +1,87 @@
 import { supabaseServer } from '@/integrations/supabase/server';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import DisqusComments from '@/components/DisqusComments';
 import VideoEmbed from '@/components/VideoEmbed';
 import LatestNews from '@/components/LatestNews';
 import { getObjectPositionStyle } from '@/lib/utils';
 import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
-import { Metadata } from 'next';
+import { Metadata, ResolvingMetadata } from 'next'; // Importação correta
 import ArticleBody from '@/components/ArticleBody';
 import AmazonCTA from '@/components/AmazonCTA';
 
-// ✅ CORREÇÃO FINAL: Força o Next.js a NÃO usar cache nesta página.
-// Isso garante que se o artigo for atualizado ou recriado, o site mostra a versão nova.
+// ⚠️ Configurações de Servidor
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const formatDateTime = (dateString: string, includeTime: boolean = true): string => {
-  try {
-    const date = new Date(dateString);
-    const dateOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Sao_Paulo' };
-    const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' };
-    const formattedDate = date.toLocaleDateString('pt-BR', dateOptions).replace(/\./g, '');
-    if (includeTime) {
-      const time = date.toLocaleTimeString('pt-BR', timeOptions);
-      return `${formattedDate}, ${time}`;
-    }
-    return formattedDate;
-  } catch (e) { return 'Data Indisponível'; }
-};
-
+// Função para buscar dados (Reutilizável para o componente e para o Metadata)
 async function getArticle(slug: string) {
   const { data } = await supabaseServer
     .from('articles')
     .select('*')
     .eq('slug', slug)
     .eq('published', true)
-    .maybeSingle(); // Usa maybeSingle para não dar erro 406 se tiver duplicado (pega o primeiro)
+    .maybeSingle();
     return data;
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+// ✅ GERAÇÃO DE METADATA (Isso controla o WhatsApp/Google)
+export async function generateMetadata(
+  { params }: { params: { slug: string } },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // Busca os dados da notícia
   const article = await getArticle(params.slug);
-  if (!article) return { title: 'Artigo não encontrado' };
-  
+
+  // Se não achar, retorna padrão
+  if (!article) {
+    return {
+      title: 'Artigo não encontrado | Duo Dunk',
+    };
+  }
+
   const siteUrl = 'https://www.duodunk.com.br';
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
-  const imageUrl = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
   
+  // Define a imagem (prioriza a da notícia, senão usa logo)
+  const ogImage = article.image_url 
+    ? getOptimizedImageUrl(article.image_url, 1200) 
+    : `${siteUrl}/images/duodunk-logoV2.svg`;
+
+  // Define a descrição (prioriza meta_description, senão summary)
+  const description = article.meta_description || article.summary || 'Notícias da NBA no Duo Dunk.';
+
   return {
     title: `${article.title} | Duo Dunk`,
-    description: article.meta_description || article.summary,
+    description: description,
+    authors: [{ name: article.author || 'Duo Dunk' }],
     openGraph: {
       title: article.title,
-      description: article.meta_description || article.summary,
+      description: description, // <--- Isso aparece no WhatsApp
       url: currentUrl,
-      images: [{ url: imageUrl }],
+      siteName: 'Duo Dunk',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+      locale: 'pt_BR',
       type: 'article',
-      authors: [article.author || 'Duo Dunk'],
+      publishedTime: article.published_at,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: description,
+      images: [ogImage],
     },
   };
 }
 
+// --- COMPONENTE DA PÁGINA ---
 export default async function Artigo({ params }: { params: { slug: string } }) {
   const article = await getArticle(params.slug);
 
@@ -75,58 +96,64 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
     );
   }
 
-  const publishedDate = formatDateTime(article.published_at);
-  const isUpdated = article.updated_at && new Date(article.updated_at).getTime() > new Date(article.published_at).getTime() + 60000;
-  const updatedDate = isUpdated ? formatDateTime(article.updated_at) : null;
+  const date = new Date(article.published_at);
+  const publishedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
 
   return (
-    <div className="bg-white">
+    <div className="bg-white text-gray-900">
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <article>
-            <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-colors mb-8 font-bold font-inter">
-              <ArrowLeft className="w-4 h-4" /> Voltar
+            {/* Navegação */}
+            <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 transition-colors mb-8 font-bold font-inter text-sm uppercase tracking-wide">
+              <ArrowLeft className="w-4 h-4" /> Voltar para Home
             </Link>
-            <h1 className="font-oswald text-3xl md:text-5xl font-bold uppercase text-gray-900 mb-2 leading-tight">
+
+            {/* Cabeçalho */}
+            <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight">
               {article.title}
             </h1>
-            {/* Subtítulo agora usa h3 para evitar herdar estilos de h2/h1 e garantir que não seja uppercase */}
-            {article.subtitle && <h3 className="text-xl text-gray-700 mb-4 font-inter font-medium normal-case">{article.subtitle}</h3>}
+            {article.subtitle && <h2 className="text-xl md:text-2xl text-gray-600 mb-6 font-inter leading-relaxed">{article.subtitle}</h2>}
             
-            {/* Bloco de Metadados em Duas Linhas */}
-            <div className="flex flex-col gap-1 mb-4 text-sm text-gray-500 font-inter">
-               <span className="font-bold text-gray-700">Por {article.author || 'Redação'}</span>
-               <div className="flex items-center gap-3">
-                 <span className="text-gray-500">Postado em {publishedDate}</span>
-                 {isUpdated && <span className="italic text-gray-400">(Atualizado: {updatedDate})</span>}
-               </div>
+            <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-gray-500 font-inter border-y border-gray-100 py-4">
+               <span className="font-bold text-pink-600 uppercase flex items-center gap-2">
+                 By {article.author || 'Redação'}
+               </span>
+               <span className="hidden sm:inline">•</span>
+               <span className="flex items-center gap-1"><Calendar size={14}/> {publishedDate}</span>
             </div>
 
+            {/* Imagem Principal */}
             {article.image_url && (
-              <img
-                src={getOptimizedImageUrl(article.image_url, 800)}
-                alt={article.title}
-                className="w-full h-auto rounded-xl object-cover mb-8 shadow-lg"
-                style={{ maxHeight: '500px', ...getObjectPositionStyle(article.image_focal_point, false) }}
-              />
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-10 shadow-lg">
+                 <img
+                    src={getOptimizedImageUrl(article.image_url, 1200)}
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                    style={getObjectPositionStyle(article.image_focal_point, false)}
+                 />
+              </div>
             )}
 
-            {article.video_url && <VideoEmbed url={article.video_url} />}
+            {article.video_url && <div className="mb-10"><VideoEmbed url={article.video_url} /></div>}
 
-            {/* Corpo da Notícia com Renderização Segura */}
-            <ArticleBody content={article.body} />
+            {/* Corpo da Notícia */}
+            <div className="max-w-none">
+               <ArticleBody content={article.body} />
+            </div>
             
             {/* Banner Amazon */}
-            <div className="my-10">
+            <div className="my-12">
                 <AmazonCTA />
             </div>
 
+            {/* Tags */}
             {safeTags.length > 0 && (
-              <div className="pt-6 border-t border-gray-100">
+              <div className="pt-8 border-t border-gray-100">
                 <div className="flex flex-wrap gap-2">
                   {safeTags.map((tag: string) => (
-                    <span key={tag} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase hover:bg-gray-200 transition-colors">#{tag}</span>
+                    <Link key={tag} href={`/ultimas?tag=${tag}`} className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors">#{tag}</Link>
                   ))}
                 </div>
               </div>
@@ -135,13 +162,15 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 max-w-4xl pb-12">
-         <div className="h-px bg-gray-200 my-12" />
-         <h2 className="font-bebas text-3xl text-gray-900 mb-6">Veja Também</h2>
-         <LatestNews currentPostId={article.id} limit={3} />
-         <div className="mt-12">
-            <DisqusComments identifier={article.slug} title={article.title} url={`https://www.duodunk.com.br/artigos/${article.slug}`} />
-         </div>
+      {/* Rodapé de Artigos Relacionados */}
+      <div className="bg-gray-50 py-12 mt-12">
+        <div className="container mx-auto px-4 max-w-5xl">
+           <h2 className="font-bebas text-3xl text-gray-900 mb-8 border-l-4 border-pink-600 pl-3">Continue Lendo</h2>
+           <LatestNews currentPostId={article.id} limit={3} />
+           <div className="mt-12">
+              <DisqusComments identifier={article.slug} title={article.title} url={`https://www.duodunk.com.br/artigos/${article.slug}`} />
+           </div>
+        </div>
       </div>
     </div>
   );
