@@ -101,7 +101,7 @@ export default async function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
               <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
                 <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-3 inline-block">Destaque</span>
-                <h1 className="text-2xl md:text-4xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors">
+                <h1 className="text-2xl md:text-4xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors uppercase">
                   {featuredArticle.title}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-300 text-xs font-inter uppercase tracking-widest mt-2">
@@ -131,7 +131,8 @@ export default async function Home() {
                      />
                   </div>
                   <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
-                    <h3 className="font-oswald text-sm lg:text-base font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3">
+                    {/* Aumentando o tamanho da fonte aqui */}
+                    <h3 className="font-oswald text-base lg:text-lg font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3 uppercase">
                       {article.title}
                     </h3>
                     <span className="text-[10px] text-gray-500 mt-1 font-inter">{getTimeAgo(article.published_at)}</span>
@@ -158,7 +159,7 @@ export default async function Home() {
                       </div>
                    </div>
                    <div className="p-3">
-                      <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-2">{article.title}</h3>
+                      <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-2 uppercase">{article.title}</h3>
                    </div>
                 </Link>             
              ))}
@@ -193,7 +194,7 @@ export default async function Home() {
                        <span className="w-8 h-0.5 bg-[#FA007D]"></span>
                        <span className="text-xs font-bold uppercase text-gray-500">{article.tags?.[0]}</span>
                     </div>
-                    <h3 className="font-oswald text-2xl font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors">
+                    <h3 className="font-oswald text-2xl font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors uppercase">
                       {article.title}
                     </h3>
                   </div>
@@ -223,7 +224,7 @@ export default async function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
                   <div className="absolute bottom-0 p-8 w-full">
                      <span className="bg-purple-600 text-white px-3 py-1 rounded text-xs font-bold uppercase mb-3 inline-block">Análise</span>
-                     <h3 className="font-oswald text-3xl md:text-4xl font-bold text-white leading-none group-hover:text-purple-300 transition-colors">{deepDive[0].title}</h3>
+                     <h3 className="font-oswald text-3xl md:text-4xl font-bold text-white leading-none group-hover:text-purple-300 transition-colors uppercase">{deepDive[0].title}</h3>
                   </div>
                </Link>
                <div className="flex flex-col gap-6">
@@ -240,7 +241,7 @@ export default async function Home() {
                        </div>
                        <div className="w-2/3 flex flex-col justify-center">
                           <span className="text-xs font-bold text-purple-600 uppercase mb-1">Opinião</span>
-                          <h3 className="font-oswald text-lg md:text-xl font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors line-clamp-3">{article.title}</h3>
+                          <h3 className="font-oswald text-lg md:text-xl font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors line-clamp-3 uppercase">{article.title}</h3>
                        </div>
                     </Link>
                   ))}
@@ -269,7 +270,7 @@ export default async function Home() {
                        0{idx+1}
                     </div>
                   </div>
-                  <h3 className="font-oswald text-lg font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] transition-colors line-clamp-3 px-1">
+                  <h3 className="font-oswald text-lg font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] transition-colors line-clamp-3 uppercase">
                     {article.title}
                   </h3>
                </Link>
@@ -298,7 +299,7 @@ export default async function Home() {
                           />
                       </div>
                       <div>
-                         <h3 className="font-oswald text-base font-bold text-gray-800 leading-tight group-hover:text-blue-600 line-clamp-2 mb-1">
+                         <h3 className="font-oswald text-base font-bold text-gray-800 leading-tight group-hover:text-blue-600 line-clamp-2 mb-1 uppercase">
                             {article.title}
                          </h3>
                          <span className="text-xs text-gray-400">{getTimeAgo(article.published_at)}</span>
@@ -345,7 +346,7 @@ export default async function Home() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90" />
                       <div className="absolute bottom-0 left-0 p-6 w-full">
                          <span className="text-[#00DBFB] text-[10px] font-bold uppercase tracking-widest mb-1 block">{article.tags?.[0]}</span>
-                         <h3 className={cn("font-oswald font-bold text-white leading-tight group-hover:underline decoration-[#FA007D]", isWide ? "text-2xl md:text-3xl" : "text-lg")}>
+                         <h3 className={cn("font-oswald font-bold text-white leading-tight group-hover:underline decoration-[#FA007D]", isWide ? "text-2xl md:text-3xl" : "text-lg", "uppercase")}>
                             {article.title}
                          </h3>
                       </div>

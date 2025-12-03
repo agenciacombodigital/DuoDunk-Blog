@@ -26,9 +26,9 @@
     @apply text-gray-900 antialiased;
   }
 
-  /* Estilos de Tipografia Aprimorados */
+  /* Estilos de Tipografia Aprimados */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-oswald tracking-wide; /* REMOVIDO uppercase */
+    @apply font-oswald tracking-wide uppercase; /* REAPLICADO uppercase */
   }
   
   h1 {
