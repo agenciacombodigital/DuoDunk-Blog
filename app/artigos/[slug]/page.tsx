@@ -108,7 +108,8 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   return (
     <div className="bg-white text-gray-900">
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
+        {/* Ajustando a largura máxima do container para ser menor no desktop (max-w-3xl) */}
+        <div className="max-w-3xl mx-auto">
           <article>
             {/* Navegação */}
             <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 transition-colors mb-8 font-bold font-inter text-sm uppercase tracking-wide">
@@ -116,12 +117,12 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             </Link>
 
             {/* Cabeçalho */}
-            {/* Título: font-oswald semibold (usando font-bold que é 700) */}
-            <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight">
+            {/* Título: Removendo uppercase */}
+            <h1 className="font-oswald text-4xl md:text-6xl font-bold text-gray-900 mb-4 leading-tight">
               {article.title}
             </h1>
             
-            {/* Subtítulo: Exibido aqui */}
+            {/* Subtítulo: Removendo uppercase */}
             {article.subtitle && (
               <h2 className="text-xl md:text-2xl text-gray-600 mb-6 font-inter leading-relaxed">
                 {article.subtitle}
@@ -130,13 +131,13 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             
             {/* Bloco de Meta (Autor e Data) */}
             <div className="flex flex-col items-start gap-1 mb-8 text-sm text-gray-500 font-inter">
-               {/* Autor na cor rosa/magenta */}
-               <span className="font-bold text-[#FA007D] uppercase flex items-center gap-2">
-                 BY {article.author || 'REDAÇÃO'}
+               {/* Autor no formato 'Por [Nome]' */}
+               <span className="font-bold text-[#FA007D] flex items-center gap-2">
+                 Por {article.author || 'Redação Duo Dunk'}
                </span>
-               {/* Data e Hora na linha de baixo */}
+               {/* Data e Hora na linha de baixo, formatado como no exemplo */}
                <span className="flex items-center gap-1 text-gray-500">
-                 <Calendar size={14}/> {publishedDate} às {publishedTime}
+                 Postado em {publishedDate} às {publishedTime}
                </span>
             </div>
 
