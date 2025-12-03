@@ -3,10 +3,6 @@
     {
       "source": "/feed.xml",
       "destination": "https://brerfpcfkyptkzygyzxl.supabase.co/functions/v1/rss-feed"
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": "https://brerfpcfkyptkzygyzxl.supabase.co/functions/v1/sitemap"
     }
   ],
   "headers": [
