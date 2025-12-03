@@ -91,8 +91,8 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             <h1 className="font-oswald text-3xl md:text-5xl font-bold uppercase text-gray-900 mb-2 leading-tight">
               {article.title}
             </h1>
-            {/* REMOVIDO: uppercase */}
-            {article.subtitle && <h2 className="text-xl text-gray-700 mb-4 font-inter font-medium">{article.subtitle}</h2>}
+            {/* Subtítulo agora usa h3 para evitar herdar estilos de h2/h1 e garantir que não seja uppercase */}
+            {article.subtitle && <h3 className="text-xl text-gray-700 mb-4 font-inter font-medium normal-case">{article.subtitle}</h3>}
             
             {/* Bloco de Metadados em Duas Linhas */}
             <div className="flex flex-col gap-1 mb-4 text-sm text-gray-500 font-inter">
