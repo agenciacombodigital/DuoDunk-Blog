@@ -101,21 +101,19 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   }
 
   const date = new Date(article.published_at);
-  
-  // ✅ CORREÇÃO: Forçar o fuso horário de Brasília (America/Sao_Paulo)
   const timeZone = 'America/Sao_Paulo';
   
   const publishedDate = date.toLocaleDateString('pt-BR', { 
     day: '2-digit', 
     month: 'short', 
     year: 'numeric',
-    timeZone: timeZone, // Adicionado
+    timeZone: timeZone,
   });
   
   const publishedTime = date.toLocaleTimeString('pt-BR', { 
     hour: '2-digit', 
     minute: '2-digit',
-    timeZone: timeZone, // Adicionado
+    timeZone: timeZone,
   });
   
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
@@ -139,9 +137,16 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             
             {/* Subtítulo: Diminuindo o tamanho da fonte e removendo uppercase */}
             {article.subtitle && (
-              <h2 className="text-base md:text-xl text-gray-600 mb-6 font-inter leading-relaxed">
+              <h2 className="text-lg md:text-xl text-gray-600 mb-4 font-inter leading-relaxed normal-case">
                 {article.subtitle}
               </h2>
+            )}
+            
+            {/* NOVO: Resumo (Summary) */}
+            {article.summary && (
+              <p className="text-lg md:text-xl font-semibold text-gray-800 mb-6 leading-relaxed border-l-4 border-pink-600 pl-4 italic">
+                {article.summary}
+              </p>
             )}
             
             {/* Bloco de Meta (Autor e Data) */}
