@@ -142,7 +142,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             
             {/* Subtítulo/Resumo */}
             {leadText && (
-              <h2 className="text-base md:text-xl text-gray-600 mb-6 font-inter leading-relaxed">
+              <h2 className="text-lg md:text-xl text-gray-600 mb-6 font-inter leading-relaxed normal-case">
                 {leadText}
               </h2>
             )}
