@@ -119,6 +119,9 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   });
   
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
+  
+  // Determina o lead/subtítulo: prioriza subtitle, usa summary como fallback
+  const leadText = article.subtitle || article.summary;
 
   return (
     <div className="bg-white text-gray-900">
@@ -137,10 +140,10 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
               {article.title}
             </h1>
             
-            {/* Subtítulo: Diminuindo o tamanho da fonte e removendo uppercase */}
-            {article.subtitle && (
+            {/* Subtítulo/Resumo */}
+            {leadText && (
               <h2 className="text-base md:text-xl text-gray-600 mb-6 font-inter leading-relaxed">
-                {article.subtitle}
+                {leadText}
               </h2>
             )}
             
