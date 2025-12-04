@@ -121,13 +121,14 @@ export default async function Home() {
             <div className="flex flex-col justify-between gap-3 flex-1">
               {sidebarArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 items-stretch flex-1">
-                  <div className="relative w-32 shrink-0 rounded-lg overflow-hidden aspect-[16/10] bg-gray-100">
+                  {/* Ajuste para w-24 e aspect-[4/3] */}
+                  <div className="relative w-24 shrink-0 rounded-lg overflow-hidden aspect-[4/3] bg-gray-100">
                      <img 
                         src={getOptimizedImageUrl(article.image_url, 400)} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={article.title}
                         loading="lazy"
-                        sizes="128px"
+                        sizes="96px"
                      />
                   </div>
                   <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
