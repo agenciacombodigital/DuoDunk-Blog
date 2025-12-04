@@ -142,9 +142,9 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
               </h2>
             )}
             
-            {/* NOVO: Resumo (Summary) */}
+            {/* NOVO: Resumo (Summary) - Sem barra e sem itálico */}
             {article.summary && (
-              <p className="text-lg md:text-xl font-semibold text-gray-800 mb-6 leading-relaxed border-l-4 border-pink-600 pl-4 italic">
+              <p className="text-lg md:text-xl font-semibold text-gray-800 mb-6 leading-relaxed">
                 {article.summary}
               </p>
             )}
