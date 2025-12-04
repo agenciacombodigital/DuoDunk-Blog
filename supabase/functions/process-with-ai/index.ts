@@ -63,6 +63,7 @@ Título: ${article.original_title}
 Resumo: ${article.summary}
 
 🎯 TAREFA: Escrever uma matéria jornalística profissional em Português do Brasil (PT-BR).
+O resumo já será exibido separadamente. O corpo do texto deve começar com o primeiro parágrafo da matéria, sem repetir o resumo.
 
 ⚠️ DIRETRIZ DE TAMANHO (ADAPTÁVEL):
 - Nota Rápida: 3-4 parágrafos.
@@ -79,7 +80,7 @@ Resumo: ${article.summary}
   "title": "Título Otimizado (Max 80 chars)",
   "subtitle": "Subtítulo complementar",
   "summary": "Resumo curto (Max 140 chars)",
-  "paragraphs": ["P1...", "P2...", "..."],
+  "paragraphs": ["P1 (Primeiro parágrafo do corpo da matéria)...", "P2...", "..."],
   "tags": ["nba", "tag2", "tag3"],
   "meta_description": "SEO (150 chars)",
   "slug": "titulo-url-amigavel"
