@@ -6,8 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// ✅ MODELOS 2.5 FLASH (RÁPIDOS E EFICIENTES)
-// Removemos o 3.0 Pro para evitar erros de quota/pagamento
 const GEMINI_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite'
@@ -15,19 +13,18 @@ const GEMINI_MODELS = [
 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
-// Helper de Autor por Fonte (ATUALIZADO)
 const getAuthorBySource = (source: string) => {
     const s = (source || '').toLowerCase();
     if (s.includes('cbs')) return 'Hugo Tamura';
     if (s.includes('yahoo')) return 'Maiara Pires';
-    return 'Fernando Balley'; // Padrão para ESPN, Manual, Rodada Manual e Auto Rodada
+    return 'Fernando Balley';
 };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    console.log('🚀 [AI] Iniciando processamento com Gemini 2.5 Flash...');
+    console.log('🚀 [AI] Iniciando processamento (Modo Fiel)...');
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY não encontrada.');
@@ -37,7 +34,7 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Buscar artigo pendente
+    // 1. Buscar artigo
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
@@ -48,87 +45,76 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !article) {
-      return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // 2. Prompt Otimizado
-    const prompt = `🏀 VOCÊ É UM JORNALISTA SÊNIOR DA NBA (PORTAL DUODUNK)
+    // 2. Prompt Blindado contra Alucinações
+    const prompt = `🏀 ATUE COMO REDATOR JORNALÍSTICO (PORTAL DUODUNK)
 
-NOTÍCIA ORIGINAL (FONTE: ${article.source}):
-Título: ${article.original_title}
-Resumo: ${article.summary}
+FONTE: ${article.source}
+TITULO ORIGINAL: ${article.original_title}
+TEXTO ORIGINAL: "${article.summary}"
 
-🎯 TAREFA: Escrever uma matéria jornalística profissional em Português do Brasil (PT-BR).
+🎯 TAREFA: Reescrever a notícia acima em Português do Brasil (PT-BR).
 
-⚠️ DIRETRIZ DE TAMANHO (ADAPTÁVEL):
-- Nota Rápida: 3-4 parágrafos.
-- Análise: 5-8 parágrafos.
+⛔ REGRAS DE OURO (FIDELIDADE TOTAL):
+1. USE APENAS AS INFORMAÇÕES DO "TEXTO ORIGINAL".
+2. NÃO ADICIONE informações externas que não estejam no texto (não cite jogadores, times ou estatísticas que não foram mencionados).
+3. NÃO INVENTE cenários. Se o texto é curto, faça uma notícia curta.
+4. Se o texto original estiver incompleto, traduza apenas o que existe.
 
-📝 ESTILO:
-- Use termos técnicos (turnover, garrafão, clutch).
-- Tom: Informativo, energético.
-- Lead forte no primeiro parágrafo.
-- Sem Markdown no texto final.
+📝 FORMATO:
+- Linguagem profissional de basquete.
+- Separação clara de parágrafos.
 
 🎯 JSON DE RESPOSTA:
 {
-  "title": "Título Otimizado (Max 80 chars)",
+  "title": "Título em PT-BR (Baseado estritamente no original)",
   "subtitle": "Subtítulo complementar",
   "summary": "Resumo curto (Max 140 chars)",
-  "paragraphs": ["P1...", "P2...", "..."],
-  "tags": ["nba", "tag2", "tag3"],
-  "meta_description": "SEO (150 chars)",
-  "slug": "titulo-url-amigavel"
+  "paragraphs": ["Parágrafo 1...", "Parágrafo 2..."],
+  "tags": ["nba", "tag_do_texto"],
+  "meta_description": "SEO",
+  "slug": "slug-url"
 }
 `;
 
-    // 3. Chamada ao Gemini (Loop de Tentativa)
+    // 3. Chamada AI
     let aiResponse = null;
     let modelUsed = '';
 
     for (const model of GEMINI_MODELS) {
         try {
-            // console.log(`Tentando ${model}...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.7,
+                  temperature: 0.3, // ❄️ BAIXA TEMPERATURA PARA EVITAR INVENÇÕES
                   responseMimeType: "application/json"
                 }
               })
             });
 
-            if (!response.ok) {
-                const errText = await response.text();
-                console.warn(`⚠️ Falha no ${model}: ${response.status} - ${errText.substring(0, 100)}`);
-                continue; 
-            }
-
+            if (!response.ok) continue;
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
             
             if (rawText) {
-                const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-                aiResponse = JSON.parse(cleanJson);
+                aiResponse = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
                 modelUsed = model;
-                break; // Sucesso
+                break;
             }
-        } catch (e: any) {
-            console.error(`Erro técnico no ${model}:`, e.message);
-        }
+        } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error("Falha em todos os modelos Gemini 2.5. Verifique a chave ou limites.");
+    if (!aiResponse) throw new Error("Falha na IA.");
 
     // 4. Tratamento Final
-    // ✅ CORREÇÃO: Envolver parágrafos em tags <p>
+    // Envolve parágrafos em <p>
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
     const finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
@@ -159,13 +145,11 @@ Resumo: ${article.summary}
     return new Response(JSON.stringify({ 
       success: true, 
       message: `Processado (${modelUsed}): ${aiResponse.title}`,
-      model: modelUsed
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('❌ Erro Fatal:', error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
