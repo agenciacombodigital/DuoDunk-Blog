@@ -113,14 +113,14 @@ export default async function Home() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-4 flex flex-col h-full">
+          <div className="lg:col-span-4 flex flex-col">
             <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
               <TrendingUp className="text-[#FA007D]" size={20} />
               <h2 className="font-bebas text-2xl text-gray-900">Últimas</h2>
             </div>
-            <div className="flex flex-col justify-between h-full gap-3">
+            <div className="flex flex-col justify-between gap-3">
               {sidebarArticles.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 items-stretch h-full">
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 items-stretch h-24">
                   <div className="relative w-5/12 lg:w-1/2 shrink-0 rounded-lg overflow-hidden aspect-[16/10] bg-gray-100">
                      <img 
                         src={getOptimizedImageUrl(article.image_url, 400)} 
