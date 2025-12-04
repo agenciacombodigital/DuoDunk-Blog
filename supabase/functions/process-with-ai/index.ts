@@ -63,7 +63,7 @@ Título: ${article.original_title}
 Resumo: ${article.summary}
 
 🎯 TAREFA: Escrever uma matéria jornalística profissional em Português do Brasil (PT-BR).
-O resumo já será exibido separadamente. O corpo do texto deve começar com o primeiro parágrafo da matéria, sem repetir o resumo.
+O corpo do texto deve começar com o primeiro parágrafo da matéria, que deve ser um lead forte.
 
 ⚠️ DIRETRIZ DE TAMANHO (ADAPTÁVEL):
 - Nota Rápida: 3-4 parágrafos.
@@ -72,7 +72,6 @@ O resumo já será exibido separadamente. O corpo do texto deve começar com o p
 📝 ESTILO:
 - Use termos técnicos (turnover, garrafão, clutch).
 - Tom: Informativo, energético.
-- Lead forte no primeiro parágrafo.
 - Sem Markdown no texto final.
 
 🎯 JSON DE RESPOSTA:

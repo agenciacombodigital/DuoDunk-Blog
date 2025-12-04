@@ -190,7 +190,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
 
             {/* Corpo da Notícia */}
             <div className="max-w-none">
-               <ArticleBody content={article.body} />
+               <ArticleBody content={article.body} summary={article.summary} />
             </div>
             
             {/* Banner Amazon (Lazy Loaded) */}
