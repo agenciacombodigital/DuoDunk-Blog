@@ -1,88 +1,128 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
-import * as cheerio from 'https://esm.sh/cheerio@1.0.0-rc.12';
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+
+const RSS_FEEDS = [
+  { name: 'ESPN', url: 'https://www.espn.com/espn/rss/nba/news' },
+  { name: 'CBS Sports', url: 'https://www.cbssports.com/rss/headlines/nba/' },
+  { name: 'Yahoo Sports', url: 'https://sports.yahoo.com/nba/rss' } 
+];
+
+// Headers para evitar bloqueios 403
+const FAKE_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+};
+
+const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
+
+const cleanText = (str: string) => str ? str.trim().replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/\s+/g, ' ') : '';
+
+function extractTag(itemXml: string, tagName: string) {
+  const regex = new RegExp(`<${tagName}[^>]*>(.*?)</${tagName}>`, 'is');
+  const match = itemXml.match(regex);
+  return match ? cleanText(match[1]) : null;
+}
+
+function extractImage(itemXml: string) {
+  const enclosureMatch = itemXml.match(/<enclosure[^>]*url=["']([^"']+)["'][^>]*>/i);
+  if (enclosureMatch) return enclosureMatch[1];
+  const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]*url=["']([^"']+)["'][^>]*>/i);
+  if (mediaMatch) return mediaMatch[1];
+  const imgMatch = itemXml.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))["']/i);
+  if (imgMatch) return imgMatch[1];
+  return null;
+}
 
 serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
   try {
-    const supabaseUrl = Deno.env.get('PROJECT_URL');
-    const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY');
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase URL and Key must be defined in environment variables');
-    }
+    let allArticles: any[] = [];
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // 1. Coleta Multi-Fonte
+    for (const feed of RSS_FEEDS) {
+      try {
+        console.log(`--- Buscando em: ${feed.name} ---`);
+        const response = await fetch(feed.url, { headers: FAKE_HEADERS, signal: AbortSignal.timeout(10000) });
+        
+        if (!response.ok) {
+          console.error(`Erro HTTP ${feed.name}: ${response.status}`);
+          continue;
+        }
 
-    const response = await fetch('https://www.espn.com.br/nba/');
-    const html = await response.text();
-    const $ = cheerio.load(html);
+        const xmlText = await response.text();
+        const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
+        
+        // Pega as 8 últimas de cada
+        const recentItems = items.slice(0, 8); 
 
-    const articles: any[] = [];
+        console.log(`${feed.name}: Encontrou ${recentItems.length} itens.`);
 
-    $('div.contentItem__content').each((_i, el) => {
-      const title = $(el).find('h2.contentItem__title').text().trim();
-      const summary = $(el).find('p.contentItem__description').text().trim();
-      const link = $(el).find('a.contentItem__anchor').attr('href');
-      const imageUrl = $(el).find('img.contentItem__image').attr('src');
+        for (const itemXml of recentItems) {
+          const title = extractTag(itemXml, 'title');
+          const link = extractTag(itemXml, 'link');
+          const description = extractTag(itemXml, 'description');
+          const image_url = extractImage(itemXml);
 
-      if (title && link) {
-        articles.push({ 
-          original_title: title, 
-          summary, 
-          original_link: link, 
-          image_url: imageUrl 
-        });
+          if (title && link) {
+            const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
+            const finalImage = image_url || DEFAULT_IMAGE;
+
+            allArticles.push({
+              title: title.slice(0, 200),
+              original_title: title.slice(0, 200),
+              original_link: link,
+              summary: summary,
+              image_url: finalImage,
+              source: feed.name,
+              status: 'pending_approval', // Status correto para o Admin ver
+              created_at: new Date().toISOString()
+            });
+          }
+        }
+      } catch (e) {
+        console.error(`Falha na fonte ${feed.name}:`, e.message);
       }
+    }
+
+    console.log(`Total coletado: ${allArticles.length}`);
+
+    // 2. Salvamento Seguro
+    let savedCount = 0;
+    
+    for (const article of allArticles) {
+      // Verifica duplicidade na fila e nos publicados
+      const { data: existing } = await supabase.from('articles_queue').select('id').eq('original_link', article.original_link).maybeSingle();
+      const { data: existingPub } = await supabase.from('articles').select('id').eq('original_link', article.original_link).maybeSingle();
+
+      if (!existing && !existingPub) {
+        const { error } = await supabase.from('articles_queue').insert(article);
+        if (!error) savedCount++;
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      found: allArticles.length,
+      saved: savedCount,
+      message: `Coleta finalizada. Novos: ${savedCount}.`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-    if (articles.length === 0) {
-      return new Response(JSON.stringify({ message: 'Nenhum artigo encontrado para coletar.' }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    }
-
-    const { data: existingArticles, error: fetchError } = await supabase
-      .from('articles_queue')
-      .select('original_link')
-      .in('original_link', articles.map(a => a.original_link));
-
-    if (fetchError) {
-      console.error('Error fetching existing articles:', fetchError);
-      throw fetchError;
-    }
-
-    const existingLinks = new Set(existingArticles?.map(a => a.original_link));
-    const newArticles = articles.filter(a => !existingLinks.has(a.original_link));
-
-    if (newArticles.length === 0) {
-      return new Response(JSON.stringify({ message: 'Nenhum novo artigo para adicionar à fila.' }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    }
-
-    const { error: insertError } = await supabase
-      .from('articles_queue')
-      .insert(newArticles.map(article => ({
-        ...article,
-        status: 'pending', // A IA vai procurar por este status
-      })));
-
-    if (insertError) {
-      console.error('Error inserting new articles:', insertError);
-      throw insertError;
-    }
-
-    return new Response(JSON.stringify({ message: `Coletados ${newArticles.length} novos artigos e adicionados à fila.` }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 200,
-    });
-  } catch (error) {
-    console.error('Error in scrape-news function:', error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 500,
+  } catch (error: any) {
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
