@@ -101,8 +101,23 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   }
 
   const date = new Date(article.published_at);
-  const publishedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-  const publishedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
+  // ✅ CORREÇÃO: Forçar o fuso horário de Brasília (America/Sao_Paulo)
+  const timeZone = 'America/Sao_Paulo';
+  
+  const publishedDate = date.toLocaleDateString('pt-BR', { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric',
+    timeZone: timeZone, // Adicionado
+  });
+  
+  const publishedTime = date.toLocaleTimeString('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    timeZone: timeZone, // Adicionado
+  });
+  
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
 
   return (
@@ -124,7 +139,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             
             {/* Subtítulo: Diminuindo o tamanho da fonte e removendo uppercase */}
             {article.subtitle && (
-              <h2 className="text-base md:text-xl text-gray-600 mb-6 font-inter leading-relaxed normal-case">
+              <h2 className="text-base md:text-xl text-gray-600 mb-6 font-inter leading-relaxed">
                 {article.subtitle}
               </h2>
             )}
