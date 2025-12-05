@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// ✅ MODELOS 2.5 (Rápidos e Eficientes)
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -21,7 +20,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    console.log('🚀 [AI] Iniciando processamento (Modo Proporcional)...');
+    console.log('🚀 [AI] Iniciando processamento (Correção String)...');
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY não encontrada.');
@@ -31,7 +30,6 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Buscar artigo
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
@@ -45,7 +43,6 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // 2. Prompt Ajustado para PROPORCIONALIDADE
     const prompt = `🏀 ATUE COMO JORNALISTA SÊNIOR (PORTAL DUODUNK)
 
 FONTE: ${article.source}
@@ -55,8 +52,8 @@ TEXTO ORIGINAL: "${article.summary}"
 🎯 TAREFA: Traduzir e adaptar a notícia para PT-BR.
 
 📏 DIRETRIZ DE TAMANHO (IMPORTANTE):
-1. SEJA PROPORCIONAL: Se o texto original for curto (uma nota), escreva uma notícia curta (3-4 parágrafos). Se for longo (análise/jogo), escreva um texto longo e detalhado.
-2. NÃO ENCHA LINGUIÇA: Não invente informações que não estão no texto original apenas para aumentar o tamanho.
+1. SEJA PROPORCIONAL: Se o texto original for curto, escreva curto (3-4 parágrafos). Se for longo, escreva longo.
+2. NÃO ENCHA LINGUIÇA: Não invente fatos.
 3. FOCO NO FATO: Vá direto ao ponto no primeiro parágrafo (Lead).
 
 JSON RESPOSTA:
@@ -82,8 +79,7 @@ JSON RESPOSTA:
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.3, // Baixa temperatura para fidelidade
-                  maxOutputTokens: 8192, // Limite técnico alto, mas o prompt controla o tamanho real
+                  temperature: 0.3,
                   responseMimeType: "application/json"
                 }
               })
@@ -102,10 +98,10 @@ JSON RESPOSTA:
 
     if (!aiResponse) throw new Error("Falha na IA.");
 
-    // 4. Salvar (HTML Formatado)
+    // ✅ CORREÇÃO APLICADA AQUI
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
-    const finalSlug = finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    const finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
     const finalImage = article.image_url || DEFAULT_IMAGE;
     const authorName = getAuthorBySource(article.source);
 
@@ -130,7 +126,7 @@ JSON RESPOSTA:
 
     return new Response(JSON.stringify({ success: true, message: `Processado (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
