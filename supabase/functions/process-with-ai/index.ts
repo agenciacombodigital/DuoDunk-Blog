@@ -6,11 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-const GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite'
-];
-
+// ✅ MODELOS 2.5 (Rápidos e Eficientes)
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
 const getAuthorBySource = (source: string) => {
@@ -24,7 +21,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    console.log('🚀 [AI] Iniciando processamento (Modo Fiel)...');
+    console.log('🚀 [AI] Iniciando processamento (Modo Proporcional)...');
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY não encontrada.');
@@ -44,44 +41,36 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    if (fetchError || !article) {
-      return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    if (fetchError || !article) return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // 2. Prompt Blindado contra Alucinações
-    const prompt = `🏀 ATUE COMO REDATOR JORNALÍSTICO (PORTAL DUODUNK)
+    // 2. Prompt Ajustado para PROPORCIONALIDADE
+    const prompt = `🏀 ATUE COMO JORNALISTA SÊNIOR (PORTAL DUODUNK)
 
 FONTE: ${article.source}
 TITULO ORIGINAL: ${article.original_title}
 TEXTO ORIGINAL: "${article.summary}"
 
-🎯 TAREFA: Reescrever a notícia acima em Português do Brasil (PT-BR).
+🎯 TAREFA: Traduzir e adaptar a notícia para PT-BR.
 
-⛔ REGRAS DE OURO (FIDELIDADE TOTAL):
-1. USE APENAS AS INFORMAÇÕES DO "TEXTO ORIGINAL".
-2. NÃO ADICIONE informações externas que não estejam no texto (não cite jogadores, times ou estatísticas que não foram mencionados).
-3. NÃO INVENTE cenários. Se o texto é curto, faça uma notícia curta.
-4. Se o texto original estiver incompleto, traduza apenas o que existe.
+📏 DIRETRIZ DE TAMANHO (IMPORTANTE):
+1. SEJA PROPORCIONAL: Se o texto original for curto (uma nota), escreva uma notícia curta (3-4 parágrafos). Se for longo (análise/jogo), escreva um texto longo e detalhado.
+2. NÃO ENCHA LINGUIÇA: Não invente informações que não estão no texto original apenas para aumentar o tamanho.
+3. FOCO NO FATO: Vá direto ao ponto no primeiro parágrafo (Lead).
 
-📝 FORMATO:
-- Linguagem profissional de basquete.
-- Separação clara de parágrafos.
-
-🎯 JSON DE RESPOSTA:
+JSON RESPOSTA:
 {
-  "title": "Título em PT-BR (Baseado estritamente no original)",
+  "title": "Título em PT-BR (Max 80 chars)",
   "subtitle": "Subtítulo complementar",
   "summary": "Resumo curto (Max 140 chars)",
-  "paragraphs": ["Parágrafo 1...", "Parágrafo 2..."],
-  "tags": ["nba", "tag_do_texto"],
-  "meta_description": "SEO",
+  "paragraphs": ["Parágrafo 1...", "Parágrafo 2...", "..."],
+  "tags": ["nba", "tag_relevante"],
+  "meta_description": "SEO (150 chars)",
   "slug": "slug-url"
 }
 `;
 
-    // 3. Chamada AI
     let aiResponse = null;
     let modelUsed = '';
 
@@ -93,7 +82,8 @@ TEXTO ORIGINAL: "${article.summary}"
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.3, // ❄️ BAIXA TEMPERATURA PARA EVITAR INVENÇÕES
+                  temperature: 0.3, // Baixa temperatura para fidelidade
+                  maxOutputTokens: 8192, // Limite técnico alto, mas o prompt controla o tamanho real
                   responseMimeType: "application/json"
                 }
               })
@@ -102,7 +92,6 @@ TEXTO ORIGINAL: "${article.summary}"
             if (!response.ok) continue;
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-            
             if (rawText) {
                 aiResponse = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
                 modelUsed = model;
@@ -113,45 +102,35 @@ TEXTO ORIGINAL: "${article.summary}"
 
     if (!aiResponse) throw new Error("Falha na IA.");
 
-    // 4. Tratamento Final
-    // Envolve parágrafos em <p>
+    // 4. Salvar (HTML Formatado)
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
-    const finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    const finalSlug = finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
     const finalImage = article.image_url || DEFAULT_IMAGE;
     const authorName = getAuthorBySource(article.source);
 
-    const updateData = {
-        title: aiResponse.title,
-        subtitle: aiResponse.subtitle,
-        summary: aiResponse.summary,
-        body: bodyText,
-        meta_description: aiResponse.meta_description,
-        tags: aiResponse.tags,
-        slug: finalSlug,
-        image_url: finalImage,
-        author: authorName,
-        status: 'processed',
-        processed_at: new Date().toISOString()
-    };
-
     const { error: updateError } = await supabaseAdmin
         .from('articles_queue')
-        .update(updateData)
+        .update({
+            title: aiResponse.title,
+            subtitle: aiResponse.subtitle,
+            summary: aiResponse.summary,
+            body: bodyText,
+            meta_description: aiResponse.meta_description,
+            tags: aiResponse.tags,
+            slug: finalSlug,
+            image_url: finalImage,
+            author: authorName,
+            status: 'processed',
+            processed_at: new Date().toISOString()
+        })
         .eq('id', article.id);
 
     if (updateError) throw updateError;
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: `Processado (${modelUsed}): ${aiResponse.title}`,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(JSON.stringify({ success: true, message: `Processado (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
