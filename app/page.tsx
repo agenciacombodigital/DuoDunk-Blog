@@ -47,9 +47,17 @@ async function loadArticles(): Promise<Article[]> {
       .eq('published', true)
       .order('published_at', { ascending: false })
       .limit(100);
-    if (error) return [];
+    
+    if (error) {
+      console.error("❌ Erro ao buscar artigos do Supabase:", error);
+      // Se houver erro, retornamos um array vazio, mas o erro é logado.
+      return [];
+    }
     return data || [];
-  } catch { return []; }
+  } catch (e) { 
+    console.error("❌ Erro de conexão ou execução em loadArticles:", e);
+    return []; 
+  }
 }
 
 export const metadata: Metadata = {
@@ -59,7 +67,18 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const articles = await loadArticles();
-  if (articles.length === 0) return <div className="min-h-screen flex items-center justify-center font-oswald text-xl">Carregando...</div>;
+  
+  if (articles.length === 0) {
+    // Se não houver artigos, exibe uma mensagem clara
+    return (
+      <div className="min-h-screen flex items-center justify-center py-20">
+        <div className="text-center">
+          <h1 className="font-oswald text-3xl text-gray-900 mb-4">Nenhuma notícia encontrada.</h1>
+          <p className="text-gray-600">Verifique a conexão com o banco de dados ou se há artigos publicados.</p>
+        </div>
+      </div>
+    );
+  }
 
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
