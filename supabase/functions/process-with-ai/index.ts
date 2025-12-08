@@ -6,6 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// MODELOS 2.5 (Rápidos)
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -20,7 +21,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    console.log('🚀 [AI] Iniciando processamento (Correção String)...');
+    console.log('🚀 [AI] Iniciando processamento (Modo Texto Completo)...');
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY não encontrada.');
@@ -43,28 +44,45 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    const prompt = `🏀 ATUE COMO JORNALISTA SÊNIOR (PORTAL DUODUNK)
+    // --- PROMPT AJUSTADO PARA MANTER O TAMANHO ---
+    const prompt = `🏀 ATUE COMO JORNALISTA SÊNIOR DA NBA (PORTAL DUODUNK)
 
 FONTE: ${article.source}
 TITULO ORIGINAL: ${article.original_title}
-TEXTO ORIGINAL: "${article.summary}"
+CONTEÚDO ORIGINAL: "${article.summary}"
 
-🎯 TAREFA: Traduzir e adaptar a notícia para PT-BR.
+🎯 TAREFA: Reescrever a notícia em PT-BR mantendo a PROFUNDIDADE e o TAMANHO do original.
 
-📏 DIRETRIZ DE TAMANHO (IMPORTANTE):
-1. SEJA PROPORCIONAL: Se o texto original for curto, escreva curto (3-4 parágrafos). Se for longo, escreva longo.
-2. NÃO ENCHA LINGUIÇA: Não invente fatos.
-3. FOCO NO FATO: Vá direto ao ponto no primeiro parágrafo (Lead).
+🚫 PROIBIDO RESUMIR:
+- Se o texto original é longo, sua resposta DEVE ser longa.
+- Não corte detalhes técnicos, citações ou estatísticas.
+- Não simplifique a linguagem, mantenha o nível técnico.
+
+✅ ESTRUTURA OBRIGATÓRIA:
+1. LEAD (P1): O que aconteceu, quem, quando e onde (4-5 linhas).
+2. DESENVOLVIMENTO (P2-P4): Detalhes do jogo/fato, estatísticas, aspas dos jogadores.
+3. CONTEXTO (P5): Impacto na classificação ou histórico recente.
+4. CONCLUSÃO (P6): O que vem a seguir.
+
+⚠️ IMPORTANTE: 
+- Use termos da NBA (turnover, triple-double, garrafão).
+- NÃO invente fatos que não estão no texto original. Apenas expanda a escrita para torná-la fluida.
 
 JSON RESPOSTA:
 {
-  "title": "Título em PT-BR (Max 80 chars)",
+  "title": "Título Impactante em PT-BR (Max 80 chars)",
   "subtitle": "Subtítulo complementar",
-  "summary": "Resumo curto (Max 140 chars)",
-  "paragraphs": ["Parágrafo 1...", "Parágrafo 2...", "..."],
-  "tags": ["nba", "tag_relevante"],
-  "meta_description": "SEO (150 chars)",
-  "slug": "slug-url"
+  "summary": "Resumo curto para o card (Max 140 chars)",
+  "paragraphs": [
+    "Parágrafo 1...", 
+    "Parágrafo 2...", 
+    "Parágrafo 3...",
+    "Parágrafo 4...",
+    "Parágrafo 5..."
+  ],
+  "tags": ["nba", "time", "jogador"],
+  "meta_description": "SEO Description (150 chars)",
+  "slug": "titulo-url-amigavel"
 }
 `;
 
@@ -79,7 +97,8 @@ JSON RESPOSTA:
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.3,
+                  temperature: 0.4, // Um pouco mais fluido para permitir reescrita longa
+                  maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
               })
@@ -98,7 +117,7 @@ JSON RESPOSTA:
 
     if (!aiResponse) throw new Error("Falha na IA.");
 
-    // ✅ CORREÇÃO APLICADA AQUI
+    // Tratamento de HTML para parágrafos
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
     const finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
