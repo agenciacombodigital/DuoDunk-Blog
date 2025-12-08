@@ -12,7 +12,6 @@ const RSS_FEEDS = [
   { name: 'Yahoo Sports', url: 'https://sports.yahoo.com/nba/rss' } 
 ];
 
-// Headers para evitar bloqueios 403
 const FAKE_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
@@ -49,7 +48,7 @@ serve(async (req) => {
 
     let allArticles: any[] = [];
 
-    // 1. Coleta Multi-Fonte
+    // 1. Coleta
     for (const feed of RSS_FEEDS) {
       try {
         console.log(`--- Buscando em: ${feed.name} ---`);
@@ -62,8 +61,6 @@ serve(async (req) => {
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        
-        // Pega as 8 últimas de cada
         const recentItems = items.slice(0, 8); 
 
         console.log(`${feed.name}: Encontrou ${recentItems.length} itens.`);
@@ -85,7 +82,7 @@ serve(async (req) => {
               summary: summary,
               image_url: finalImage,
               source: feed.name,
-              status: 'pending_approval', // Status correto para o Admin ver
+              status: 'pending_approval',
               created_at: new Date().toISOString()
             });
           }
@@ -95,27 +92,24 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Total coletado: ${allArticles.length}`);
+    console.log(`Tentando salvar ${allArticles.length} artigos...`);
 
-    // 2. Salvamento Seguro
-    let savedCount = 0;
-    
-    for (const article of allArticles) {
-      // Verifica duplicidade na fila e nos publicados
-      const { data: existing } = await supabase.from('articles_queue').select('id').eq('original_link', article.original_link).maybeSingle();
-      const { data: existingPub } = await supabase.from('articles').select('id').eq('original_link', article.original_link).maybeSingle();
+    // 2. Salvamento Inteligente (Upsert)
+    const { data, error } = await supabase
+        .from('articles_queue')
+        .upsert(allArticles, { 
+            onConflict: 'original_link', 
+            ignoreDuplicates: true 
+        })
+        .select();
 
-      if (!existing && !existingPub) {
-        const { error } = await supabase.from('articles_queue').insert(article);
-        if (!error) savedCount++;
-      }
-    }
+    if (error) throw error;
 
+    // Como ignoreDuplicates não retorna count preciso de inserções, retornamos o total processado
     return new Response(JSON.stringify({ 
       success: true, 
       found: allArticles.length,
-      saved: savedCount,
-      message: `Coleta finalizada. Novos: ${savedCount}.`
+      message: `Processamento finalizado. O banco filtrou as duplicatas automaticamente.`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
