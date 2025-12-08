@@ -1,6 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { getObjectPositionStyle } from '@/lib/utils';
-import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 
 interface Article {
   id: string;
@@ -23,18 +23,14 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
     >
       {/* Imagem */}
       <div className="relative overflow-hidden h-48">
-        <img
-          src={getOptimizedImageUrl(article.image_url, 400)}
-          srcSet={`
-            ${getOptimizedImageUrl(article.image_url, 400)} 400w,
-            ${getOptimizedImageUrl(article.image_url, 800)} 800w
-          `}
-          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 33vw, 25vw"
+        <Image
+          src={article.image_url}
           alt={article.title}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          fill
+          sizes="(max-width: 767px) 100vw, 33vw" // ✅ TASK 1.1: Sizes para miniatura
+          className="object-cover transition-transform duration-300 group-hover:scale-110"
           style={getObjectPositionStyle(article.image_focal_point)}
+          loading="lazy"
         />
       </div>
       

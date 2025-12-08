@@ -13,7 +13,7 @@ export default function Header() {
         {/* --- LAYOUT DESKTOP (lg e acima) --- */}
         <div className="hidden lg:flex items-center justify-between w-full">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0" aria-label="Página Inicial Duo Dunk">
             <img 
               src="/images/duodunk-logoV2.svg" 
               alt="Duo Dunk Logo" 
@@ -37,6 +37,7 @@ export default function Header() {
               target="_blank" 
               rel="noopener noreferrer" 
               className="text-gray-400 hover:text-primary transition-colors"
+              aria-label="Siga Duo Dunk no Instagram"
             >
               <Instagram size={20} />
             </a>
@@ -45,6 +46,7 @@ export default function Header() {
               target="_blank" 
               rel="noopener noreferrer" 
               className="text-gray-400 hover:text-primary transition-colors"
+              aria-label="Siga Duo Dunk no Threads"
             >
               <ThreadsIcon className="w-5 h-5" />
             </a>
@@ -54,7 +56,7 @@ export default function Header() {
         {/* --- LAYOUT MOBILE & TABLET (abaixo de lg) --- */}
         <div className="lg:hidden w-full flex items-center justify-between h-full">
           {/* Logo à Esquerda */}
-          <Link href="/" className="flex items-center h-16 w-16 flex-shrink-0">
+          <Link href="/" className="flex items-center h-16 w-16 flex-shrink-0" aria-label="Página Inicial Duo Dunk">
             <img 
               src="/images/duodunk-logo-mobile.svg"
               alt="Duo Dunk Logo" 

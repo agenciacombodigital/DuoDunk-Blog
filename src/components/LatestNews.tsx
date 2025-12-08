@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { supabase } from '@/lib/supabase';
 
 interface LatestNewsProps {
@@ -48,11 +49,16 @@ export default function LatestNews({ currentPostId, limit = 3 }: LatestNewsProps
           className="group bg-white rounded-xl overflow-hidden border-2 border-gray-200 hover:border-pink-500 hover:shadow-lg transition-all"
         >
           {post.image_url && (
-            <img
-              src={post.image_url}
-              alt={post.title}
-              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+            <div className="relative w-full h-48">
+              <Image
+                src={post.image_url}
+                alt={post.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
+            </div>
           )}
           <div className="p-4">
             <h3 className="font-oswald text-lg font-bold uppercase text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-2">

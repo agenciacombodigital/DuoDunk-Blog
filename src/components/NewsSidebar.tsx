@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { Clock, TrendingUp } from 'lucide-react';
 
 interface SidebarArticle {
@@ -94,10 +95,13 @@ export default function NewsSidebar() {
 
             {/* Imagem */}
             <div className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden shadow-lg">
-              <img
+              <Image
                 src={article.image_url}
                 alt={article.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                fill
+                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                loading="lazy"
+                sizes="96px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>

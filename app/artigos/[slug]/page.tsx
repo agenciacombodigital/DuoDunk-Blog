@@ -1,8 +1,8 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { getObjectPositionStyle } from '@/lib/utils';
-import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata, ResolvingMetadata } from 'next';
 import ArticleBody from '@/components/ArticleBody';
 import nextDynamic from 'next/dynamic'; // Importação dinâmica renomeada
@@ -48,17 +48,27 @@ export async function generateMetadata(
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
   
   // Define a imagem (prioriza a da notícia, senão usa logo)
+  // Não usamos getOptimizedImageUrl aqui, pois o Next.js fará isso
   const ogImage = article.image_url 
-    ? getOptimizedImageUrl(article.image_url, 1200) 
+    ? article.image_url 
     : `${siteUrl}/images/duodunk-logoV2.svg`;
 
   // Define a descrição (prioriza meta_description, senão summary)
   const description = article.meta_description || article.summary || 'Notícias da NBA no Duo Dunk.';
+  
+  // Lógica aprimorada para Keywords
+  const articleKeywords = article.tags && Array.isArray(article.tags) && article.tags.length > 0
+    ? [...new Set(article.tags)].join(', ')
+    : 'NBA, Basquete, Notícias, NBA Brasil';
 
   return {
-    title: `${article.title} | Duo Dunk`,
+    title: article.title, // O template do layout adiciona "| Duo Dunk"
     description: description,
+    keywords: articleKeywords, // Adicionado keywords
     authors: [{ name: article.author || 'Duo Dunk' }],
+    alternates: {
+      canonical: currentUrl,
+    },
     openGraph: {
       title: article.title,
       description: description, // <--- Isso aparece no WhatsApp
@@ -75,6 +85,8 @@ export async function generateMetadata(
       locale: 'pt_BR',
       type: 'article',
       publishedTime: article.published_at,
+      modifiedTime: article.updated_at || article.published_at,
+      tags: article.tags, // Adicionado tags ao OG
     },
     twitter: {
       card: 'summary_large_image',
@@ -166,19 +178,14 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
                 // Ajuste para mobile: usa aspect-[4/3] no mobile e aspect-video no desktop
                 "aspect-[4/3] md:aspect-video"
               )}>
-                 <img
-                    src={getOptimizedImageUrl(article.image_url, 1200)}
+                 <Image
+                    src={article.image_url}
                     alt={article.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    priority={true} // ✅ Priority para LCP
+                    className="object-cover"
                     style={getObjectPositionStyle(article.image_focal_point, false)}
-                    fetchPriority="high"
-                    decoding="sync"
-                    srcSet={`
-                      ${getOptimizedImageUrl(article.image_url, 640)} 640w,
-                      ${getOptimizedImageUrl(article.image_url, 1024)} 1024w,
-                      ${getOptimizedImageUrl(article.image_url, 1200)} 1200w
-                    `}
-                    sizes="(max-width: 768px) 100vw, 800px"
+                    sizes="100vw"
                  />
               </div>
             )}

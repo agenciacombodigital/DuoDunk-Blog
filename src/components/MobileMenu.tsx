@@ -44,7 +44,7 @@ export default function MobileMenu() {
       <button
         onClick={toggleMenu}
         className="z-[100] relative text-gray-300 hover:text-white transition-colors"
-        aria-label="Abrir menu"
+        aria-label={isOpen ? "Fechar Menu" : "Abrir Menu"}
       >
         {isOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
       </button>
@@ -105,6 +105,7 @@ export default function MobileMenu() {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-gray-400 hover:text-primary transition-colors"
+                aria-label="Instagram"
               >
                 <Instagram size={24} />
               </a>
@@ -113,6 +114,7 @@ export default function MobileMenu() {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-gray-400 hover:text-primary transition-colors"
+                aria-label="Threads"
               >
                 <ThreadsIcon className="w-6 h-6" />
               </a>

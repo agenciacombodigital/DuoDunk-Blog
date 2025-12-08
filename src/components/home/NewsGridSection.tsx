@@ -1,6 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { getObjectPositionStyle } from '@/lib/utils';
-import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Article } from './ArticleTypes';
 import { Flame, Zap } from 'lucide-react'; // Removendo BasketballIcon
 
@@ -54,13 +54,14 @@ export default function NewsGridSection({
             href={`/artigos/${article.slug}`}
             className="group bg-gray-50 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300"
           >
-            <div className={`${aspectClass} overflow-hidden`}>
-              <img
-                src={getOptimizedImageUrl(article.image_url, 600)}
+            <div className={`${aspectClass} overflow-hidden relative`}>
+              <Image
+                src={article.image_url}
                 alt={article.title}
+                fill
                 loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
                 style={getObjectPositionStyle(article.image_focal_point)}
               />
             </div>

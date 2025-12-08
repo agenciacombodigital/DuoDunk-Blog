@@ -1,6 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { getObjectPositionStyle } from '@/lib/utils';
-import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Article } from './ArticleTypes';
 
 interface ArchiveSectionProps {
@@ -33,14 +33,17 @@ export default function ArchiveSection({ articles }: ArchiveSectionProps) {
               >
                 <div className="flex flex-col sm:flex-row">
                   <div className="sm:w-2/5 relative">
-                    <img
-                      src={getOptimizedImageUrl(article.image_url, 400)}
-                      alt={article.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-56 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      style={getObjectPositionStyle(article.image_focal_point)}
-                    />
+                    <div className="relative w-full h-56 sm:h-full">
+                      <Image
+                        src={article.image_url}
+                        alt={article.title}
+                        fill
+                        loading="lazy"
+                        sizes="(max-width: 640px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        style={getObjectPositionStyle(article.image_focal_point)}
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                   </div>
                   <div className="sm:w-3/5 p-6 flex flex-col justify-between">
@@ -95,14 +98,17 @@ export default function ArchiveSection({ articles }: ArchiveSectionProps) {
               >
                 <div className="grid lg:grid-cols-2">
                   <div className="relative rounded-xl overflow-hidden">
-                    <img
-                      src={getOptimizedImageUrl(article.image_url, 600)}
-                      alt={article.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      style={getObjectPositionStyle(article.image_focal_point)}
-                    />
+                    <div className="relative w-full h-full aspect-video lg:aspect-auto">
+                      <Image
+                        src={article.image_url}
+                        alt={article.title}
+                        fill
+                        loading="lazy"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        style={getObjectPositionStyle(article.image_focal_point)}
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col justify-center p-8">
                     <div className="flex items-center gap-2 mb-4 font-inter">
@@ -154,12 +160,13 @@ export default function ArchiveSection({ articles }: ArchiveSectionProps) {
               className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 block"
             >
               <div className="relative overflow-hidden aspect-[4/3]">
-                <img
-                  src={getOptimizedImageUrl(article.image_url, 400)}
+                <Image
+                  src={article.image_url}
                   alt={article.title}
+                  fill
                   loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
                   style={getObjectPositionStyle(article.image_focal_point)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>

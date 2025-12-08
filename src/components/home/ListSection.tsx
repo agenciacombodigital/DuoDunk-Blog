@@ -1,7 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { Calendar } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
-import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Article } from './ArticleTypes';
 
 interface ListSectionProps {
@@ -43,14 +43,17 @@ export default function ListSection({ title, articles, icon, isAlternating = fal
                 isAlternating ? (isReversed ? 'md:flex-row-reverse' : 'md:flex-row') : 'md:flex-row'
               }`}
             >
-              <img
-                src={getOptimizedImageUrl(article.image_url, 400)}
-                alt={article.title}
-                loading="lazy"
-                decoding="async"
-                className="w-full md:w-1/3 h-48 object-cover flex-shrink-0"
-                style={getObjectPositionStyle(article.image_focal_point)}
-              />
+              <div className="relative w-full md:w-1/3 h-48 flex-shrink-0">
+                <Image
+                  src={article.image_url}
+                  alt={article.title}
+                  fill
+                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
+                  style={getObjectPositionStyle(article.image_focal_point)}
+                />
+              </div>
               <div className="flex-1 p-6 flex flex-col justify-center">
                 <h3 className="font-oswald text-sm md:text-lg font-bold uppercase mb-3 group-hover:text-pink-400 transition line-clamp-2">
                   {article.title}

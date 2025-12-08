@@ -9,8 +9,16 @@ const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald', display: 
 const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: "Duo Dunk - O Jogo Dentro do Jogo",
-  description: "Notícias, análises e estatísticas da NBA.",
+  metadataBase: new URL('https://www.duodunk.com.br'), // Define a base para todas as canônicas
+  title: {
+    default: 'DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje',
+    template: '%s | Duo Dunk',
+  },
+  description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. O melhor conteúdo de basquete em português do Brasil.",
+  alternates: {
+    canonical: './', // Gera a canônica automática para cada página filha
+  },
+  keywords: ['NBA hoje', 'Onde assistir NBA', 'Notícias Basquete', 'Duo Dunk', 'Estatísticas NBA'],
   // Configuração Completa de Ícones
   icons: {
     icon: [
@@ -31,8 +39,9 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json', // Arquivo para Android/Chrome
   openGraph: {
-    title: "Duo Dunk - Notícias NBA",
-    description: "O Jogo Dentro do Jogo. Cobertura completa da NBA.",
+    title: "DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje",
+    description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. O melhor conteúdo de basquete em português do Brasil.",
+    url: 'https://www.duodunk.com.br',
     siteName: "Duo Dunk",
     images: [
       {
@@ -43,6 +52,12 @@ export const metadata: Metadata = {
     ],
     locale: 'pt_BR',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@duodunk',
+    creator: '@duodunk',
+    images: ['/images/duodunk-logoV2.svg'],
   },
 };
 

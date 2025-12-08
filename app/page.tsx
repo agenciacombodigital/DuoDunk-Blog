@@ -1,8 +1,8 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
+import Image from 'next/image'; // Importando Image
 import { TrendingUp, Clock, Star, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
-import { getOptimizedImageUrl } from '@/utils/imageOptimizer';
 import { Metadata } from 'next';
 import AmazonCTA from '@/components/AmazonCTA';
 import { cn } from '@/lib/utils';
@@ -60,11 +60,6 @@ async function loadArticles(): Promise<Article[]> {
   }
 }
 
-export const metadata: Metadata = {
-  title: 'Duo Dunk - O Jogo Dentro do Jogo | Notícias NBA',
-  description: 'Notícias, análises e estatísticas da NBA em tempo real.',
-};
-
 export default async function Home() {
   const articles = await loadArticles();
   
@@ -102,20 +97,14 @@ export default async function Home() {
           {/* Destaque Principal (LCP - Largest Contentful Paint) */}
           <div className="lg:col-span-8">
             <Link href={`/artigos/${featuredArticle.slug}`} className="group block relative w-full aspect-[3/4] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-xl">
-              <img
-                src={getOptimizedImageUrl(featuredArticle.image_url, 1200)}
+              <Image
+                src={featuredArticle.image_url}
                 alt={featuredArticle.title}
-                // ✅ PERFORMANCE: Priority carrega a imagem imediatamente (sem lazy load)
-                fetchPriority="high"
-                decoding="sync"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                fill
+                priority={true} // ✅ TASK 1.1: Priority para LCP
+                sizes="100vw" // ✅ TASK 1.1: Sizes para LCP
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
-                srcSet={`
-                  ${getOptimizedImageUrl(featuredArticle.image_url, 640)} 640w,
-                  ${getOptimizedImageUrl(featuredArticle.image_url, 1024)} 1024w,
-                  ${getOptimizedImageUrl(featuredArticle.image_url, 1280)} 1280w
-                `}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 800px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
               <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
@@ -135,16 +124,18 @@ export default async function Home() {
           <div className="lg:col-span-4 flex flex-col">
             <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
               <TrendingUp className="text-[#FA007D]" size={20} />
-              <h2 className="font-bebas text-2xl text-gray-900">Últimas</h2>
+              {/* ✅ TASK 2.4: Título Otimizado */}
+              <h2 className="font-bebas text-2xl text-gray-900">Últimas Notícias da NBA</h2>
             </div>
             <div className="flex flex-col justify-between gap-3 flex-1">
               {sidebarArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-3 items-stretch flex-1">
                   {/* Ajuste para w-40 e aspect-video (16/9) */}
                   <div className="relative w-40 shrink-0 rounded-lg overflow-hidden aspect-video bg-gray-100">
-                     <img 
-                        src={getOptimizedImageUrl(article.image_url, 400)} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                     <Image 
+                        src={article.image_url} 
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={article.title}
                         loading="lazy"
                         sizes="160px"
@@ -166,9 +157,10 @@ export default async function Home() {
              {bottomHeroArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all">
                    <div className="aspect-video overflow-hidden relative bg-gray-100">
-                      <img 
-                        src={getOptimizedImageUrl(article.image_url, 400)} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      <Image 
+                        src={article.image_url} 
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={article.title}
                         loading="lazy"
                         sizes="(max-width: 768px) 100vw, 25vw"
@@ -193,15 +185,17 @@ export default async function Home() {
         <section className="container mx-auto px-4 py-12 border-t border-gray-100">
           <div className="flex items-center gap-3 mb-8">
              <Zap className="text-yellow-500 w-6 h-6" />
-             <h2 className="font-bebas text-4xl text-gray-900">Imperdível</h2>
+             {/* ✅ TASK 2.4: Título Otimizado */}
+             <h2 className="font-bebas text-4xl text-gray-900">Destaques e Jogos de Hoje</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              {mustRead.map(article => (
                <Link key={article.id} href={`/artigos/${article.slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all">
                   <div className="aspect-[16/10] overflow-hidden relative bg-gray-100">
-                     <img 
-                        src={getOptimizedImageUrl(article.image_url, 600)} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                     <Image 
+                        src={article.image_url} 
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
                         alt={article.title}
                         loading="lazy"
                         sizes="(max-width: 768px) 100vw, 33vw"
@@ -233,9 +227,10 @@ export default async function Home() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                <Link href={`/artigos/${deepDive[0].slug}`} className="group relative h-96 lg:h-auto rounded-2xl overflow-hidden shadow-lg bg-gray-100">
-                  <img 
-                    src={getOptimizedImageUrl(deepDive[0].image_url, 800)} 
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                  <Image 
+                    src={deepDive[0].image_url} 
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700" 
                     alt={deepDive[0].title}
                     loading="lazy"
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -250,9 +245,10 @@ export default async function Home() {
                   {deepDive.slice(1).map(article => (
                     <Link key={article.id} href={`/artigos/${article.slug}`} className="flex gap-4 group bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all h-full">
                        <div className="w-1/3 relative rounded-lg overflow-hidden aspect-video bg-gray-100">
-                          <img 
-                            src={getOptimizedImageUrl(article.image_url, 400)} 
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                          <Image 
+                            src={article.image_url} 
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform" 
                             alt={article.title}
                             loading="lazy"
                             sizes="33vw"
@@ -273,14 +269,16 @@ export default async function Home() {
       {/* === SEÇÃO 4: EM ALTA (Com Imagens) === */}
       {trending.length > 0 && (
         <section className="container mx-auto px-4 py-16">
-          <h2 className="font-bebas text-4xl text-gray-900 mb-10 text-center">🔥 Em Alta na Semana</h2>
+          {/* ✅ TASK 2.4: Título Otimizado */}
+          <h2 className="font-bebas text-4xl text-gray-900 mb-10 text-center">Onde Assistir e Mais Lidas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
              {trending.map((article, idx) => (
                <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative block rounded-xl overflow-hidden bg-gray-100">
                   <div className="aspect-[4/3] overflow-hidden mb-3 relative">
-                    <img 
-                      src={getOptimizedImageUrl(article.image_url, 400)} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    <Image 
+                      src={article.image_url} 
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500" 
                       alt={article.title}
                       loading="lazy"
                       sizes="(max-width: 768px) 50vw, 25vw"
@@ -308,10 +306,11 @@ export default async function Home() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                 {moreNews.map((article) => (
                    <Link key={article.id} href={`/artigos/${article.slug}`} className="flex items-start gap-4 group py-2 border-b border-gray-200 last:border-0 hover:bg-white rounded-lg transition p-2">
-                      <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                         <img 
-                            src={getOptimizedImageUrl(article.image_url, 200)} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                      <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+                         <Image 
+                            src={article.image_url} 
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform" 
                             alt={article.title}
                             loading="lazy"
                             sizes="100px"
@@ -355,9 +354,10 @@ export default async function Home() {
                        isWide ? "sm:col-span-2 min-h-[280px]" : "min-h-[220px]"
                      )}
                    >
-                      <img 
-                        src={getOptimizedImageUrl(article.image_url, 600)} 
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      <Image 
+                        src={article.image_url} 
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700" 
                         alt={article.title}
                         loading="lazy"
                         sizes={isWide ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
