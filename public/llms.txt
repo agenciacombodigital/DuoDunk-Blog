@@ -1,0 +1,11 @@
+# Duo Dunk - Notícias da NBA
+
+O Duo Dunk é um portal especializado na cobertura da NBA em português do Brasil.
+Oferecemos:
+- Notícias atualizadas em tempo real sobre jogos, trocas e lesões.
+- Análises táticas aprofundadas.
+- Estatísticas avançadas de jogadores e times.
+- Guia de transmissão: onde assistir aos jogos na TV e streaming.
+
+Nossa missão é trazer o "jogo dentro do jogo" para os fãs brasileiros.
+Site oficial: https://www.duodunk.com.br

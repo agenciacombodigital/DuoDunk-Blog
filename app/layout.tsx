@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Oswald, Bebas_Neue } from 'next/font/google';
 import "@/globals.css"; // Caminho corrigido
 import ClientLayout from "@/components/ClientLayout";
+import { Analytics } from '@vercel/analytics/react'; // Importando Analytics
 
 // Configuração de Fontes
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     default: 'DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje',
     template: '%s | Duo Dunk',
   },
-  description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. O melhor conteúdo de basquete em português do Brasil.",
+  description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. Cobertura completa do basquete em português.",
   alternates: {
     canonical: './', // Gera a canônica automática para cada página filha
   },
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json', // Arquivo para Android/Chrome
   openGraph: {
     title: "DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje",
-    description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. O melhor conteúdo de basquete em português do Brasil.",
+    description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. Cobertura completa do basquete em português.",
     url: 'https://www.duodunk.com.br',
     siteName: "Duo Dunk",
     images: [
@@ -92,6 +93,7 @@ export default function RootLayout({
         <ClientLayout>
           {children}
         </ClientLayout>
+        <Analytics />
       </body>
     </html>
   );
