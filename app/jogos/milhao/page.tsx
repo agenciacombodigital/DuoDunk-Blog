@@ -12,8 +12,7 @@ export const metadata: Metadata = {
 export default function MilhaoPage() {
   return (
     <div className="min-h-screen bg-zinc-950 relative">
-      {/* Background estilizado */}
-      <div className="absolute inset-0 bg-[url('/images/bg-quiz.jpg')] bg-cover bg-center opacity-30" />
+      {/* Background estilizado (Usando uma cor sólida ou gradiente simples) */}
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
 
       <div className="relative min-h-screen py-12 px-4 flex flex-col items-center">
