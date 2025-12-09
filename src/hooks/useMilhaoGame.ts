@@ -21,6 +21,9 @@ export function useMilhaoGame() {
     cards: true,  
     rookies: true 
   });
+  
+  // Anti-Trapaça (Adicionado para consistência com MilhaoInterface)
+  const [cheatAttempts, setCheatAttempts] = useState(0);
 
   // Carregar Perguntas (Lógica de Sorteio)
   const startGame = useCallback(async () => {
@@ -55,6 +58,7 @@ export function useMilhaoGame() {
             setPrize(0);
             setTimer(45);
             setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
+            setCheatAttempts(0); // Reset cheat attempts
         } else {
             toast.error(`Erro: Banco de perguntas incompleto. Encontradas: ${selectedQuestions.length}/23.`);
         }
@@ -106,6 +110,12 @@ export function useMilhaoGame() {
   const handleStop = () => {
       setGameState('stopped');
   };
+  
+  // Placeholder para ajudas (para evitar erros no MilhaoInterface)
+  const useFiftyFifty = () => { return null; };
+  const useSkip = () => {};
+  const useCards = () => {};
+  const useRookies = () => {};
 
   return { 
       gameState, 
@@ -118,6 +128,13 @@ export function useMilhaoGame() {
       handleStop,
       lifelines, 
       setLifelines,
-      timer 
+      timer,
+      cheatAttempts, // Adicionado
+      currentQIndex, // Adicionado
+      questions, // Adicionado
+      useFiftyFifty, // Adicionado
+      useSkip, // Adicionado
+      useCards, // Adicionado
+      useRookies, // Adicionado
   };
 }

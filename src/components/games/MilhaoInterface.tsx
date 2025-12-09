@@ -79,7 +79,9 @@ export default function MilhaoInterface() {
   }
 
   if (gameState === 'won' || gameState === 'lost') {
-    const finalPrize = gameState === 'won' ? PRIZE_LADDER[PRIZE_LADDER.length - 1] : prize; // Se perdeu, o prêmio é o último marco seguro (ou 0 se for a primeira)
+    // O erro 'length' estava aqui, pois questions era undefined.
+    // Agora questions é garantido no retorno do hook.
+    const finalPrize = gameState === 'won' ? PRIZE_LADDER[questions.length] : prize; 
     
     return (
       <div className="text-center p-10 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-md max-w-lg mx-auto animate-in fade-in zoom-in">
@@ -117,6 +119,7 @@ export default function MilhaoInterface() {
   if (!currentQuestion) return null;
 
   const currentPrizeIndex = PRIZE_LADDER.indexOf(prize);
+  // Acesso seguro a questions.length
   const isLastQuestion = currentQIndex + 1 >= questions.length;
 
   return (
@@ -164,7 +167,7 @@ export default function MilhaoInterface() {
           className="bg-gradient-to-b from-zinc-800 to-zinc-900 p-6 md:p-8 rounded-3xl border-2 border-yellow-500/20 shadow-2xl mb-8 text-center"
         >
           <span className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 block font-inter">
-              Nível {currentQuestion.level} • Pergunta {currentQuestion.sequence_num}
+              Nível {currentQuestion.level} • Pergunta {currentQIndex + 1}
           </span>
           <h3 className="text-2xl md:text-3xl text-white font-bold leading-relaxed font-oswald tracking-wide">
               {currentQuestion.question}
