@@ -5,8 +5,25 @@ import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Zap, RefreshCw, X, ArrowRight, AlertTriangle, SkipForward, Users, BookOpen, Play, Clock } from 'lucide-react';
+import { Zap, RefreshCw, X, AlertTriangle, SkipForward, Users, BookOpen, Play } from 'lucide-react';
 import MilhaoTimer from './MilhaoTimer';
+import { supabase } from '@/lib/supabase'; // Importando supabase
+
+// Interface para as configurações visuais
+interface QuizSettings {
+  logo_url?: string;
+  victory_image_url?: string;
+  defeat_image_url?: string;
+  cards_image_url?: string;
+  rookies_image_url?: string;
+}
+
+const DEFAULT_SETTINGS: QuizSettings = {
+  logo_url: '/images/duodunk-logoV2.svg',
+  victory_image_url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  defeat_image_url: 'https://images.unsplash.com/photo-1518091043521-49e79c9eb6e8?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+};
+
 
 export default function MilhaoInterface() {
   const { 
@@ -34,6 +51,22 @@ export default function MilhaoInterface() {
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [settings, setSettings] = useState<QuizSettings>(DEFAULT_SETTINGS); // Estado para settings
+
+  // Buscar configurações ao carregar
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const { data } = await supabase.from('quiz_settings').select('*').eq('id', 1).single();
+        if (data) {
+          setSettings(prev => ({ ...prev, ...data }));
+        }
+      } catch (e) {
+        console.error("Erro ao carregar settings:", e);
+      }
+    }
+    loadSettings();
+  }, []);
 
   // Limpa as opções escondidas quando muda a pergunta
   useEffect(() => {
@@ -76,9 +109,20 @@ export default function MilhaoInterface() {
   if (gameState === 'start') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
-        <h2 className="text-5xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-r from-[#ff00ff] to-[#00bfff] drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
-          O DESAFIO DO MILHÃO
-        </h2>
+        
+        {/* LOGO PERSONALIZADO OU TEXTO PADRÃO */}
+        {settings.logo_url ? (
+          <img 
+            src={settings.logo_url} 
+            alt="Milhão NBA" 
+            className="w-full max-w-md md:max-w-lg object-contain drop-shadow-[0_0_25px_rgba(255,0,255,0.6)] mb-4"
+          />
+        ) : (
+          <h2 className="text-5xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-r from-[#ff00ff] to-[#00bfff] drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
+            O DESAFIO DO MILHÃO
+          </h2>
+        )}
+
         <p className="text-gray-300 text-lg max-w-md font-inter">
           Responda corretamente 23 perguntas sobre a NBA e conquiste o prêmio máximo.
         </p>
@@ -95,8 +139,20 @@ export default function MilhaoInterface() {
     const isWon = gameState === 'won';
     const isStopped = gameState === 'stopped';
     
+    // Escolher imagem baseada no resultado
+    const resultImage = isWon ? settings.victory_image_url : settings.defeat_image_url;
+
     return (
       <div className="text-center p-10 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-md max-w-lg mx-auto animate-in fade-in zoom-in">
+        
+        {resultImage && (
+          <img 
+            src={resultImage} 
+            alt={isWon ? "Vitória" : "Derrota"} 
+            className="w-48 h-48 mx-auto mb-6 object-cover rounded-full border-4 border-[#ff00ff]" 
+          />
+        )}
+
         <h2 className="text-6xl font-bebas mb-4 text-white">
             {isWon ? '🏆 CAMPEÃO!' : isStopped ? '🛑 PAROU!' : '❌ ELIMINADO!'}
         </h2>
@@ -184,7 +240,7 @@ export default function MilhaoInterface() {
           className="bg-gradient-to-b from-zinc-800 to-zinc-900 p-6 md:p-8 rounded-3xl border-2 border-[#ff00ff]/50 shadow-2xl mb-8 text-center"
         >
           <span className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 block font-inter">
-              Nível {currentQuestion.level} • Pergunta {currentQIndex + 1}
+              Nível {currentQIndex + 1} • Pergunta {currentQIndex + 1}
           </span>
           <h3 className="text-2xl md:text-3xl text-white font-bold leading-relaxed font-oswald tracking-wide drop-shadow-[0_0_5px_rgba(255,0,255,0.3)]">
               {currentQuestion.question}
