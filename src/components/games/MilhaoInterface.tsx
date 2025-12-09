@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner'; // Importando toast
-import { Zap, RefreshCw, X, ArrowRight, AlertTriangle, SkipForward, Users, BookOpen, Play } from 'lucide-react'; // Importando Play
+import { toast } from 'sonner';
+import { Zap, RefreshCw, X, ArrowRight, AlertTriangle, SkipForward, Users, BookOpen, Play, Clock } from 'lucide-react';
+import MilhaoTimer from './MilhaoTimer';
 
 export default function MilhaoInterface() {
   const { 
@@ -16,14 +17,18 @@ export default function MilhaoInterface() {
     loading, 
     startGame, 
     handleAnswer, 
+    handleStop,
     useFiftyFifty, 
     useSkip,
     useCards,
     useRookies,
     lifelines,
+    timer,
     cheatAttempts,
     currentQIndex,
     questions,
+    MAX_QUESTIONS,
+    INITIAL_TIME,
   } = useMilhaoGame();
   
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
@@ -50,9 +55,14 @@ export default function MilhaoInterface() {
   };
   
   const handleUseFiftyFifty = () => {
-    if (isAnswerLocked) return;
-    const h = useFiftyFifty(); 
-    if(h) setHiddenOptions(h);
+    if (isAnswerLocked || !lifelines.fifty) return;
+    const optionsToRemove = useFiftyFifty(); 
+    if(optionsToRemove) setHiddenOptions(optionsToRemove);
+  };
+  
+  const handleUseSkip = () => {
+    if (isAnswerLocked || lifelines.skip <= 0) return;
+    useSkip();
   };
   
   const handleResumeGame = () => {
@@ -62,36 +72,40 @@ export default function MilhaoInterface() {
 
   if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
 
+  // --- TELA INICIAL (NOVO DESIGN) ---
   if (gameState === 'start') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
-        <h2 className="text-5xl md:text-7xl font-bebas text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
-          Você sabe tudo de NBA?
+        <h2 className="text-5xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-r from-[#ff00ff] to-[#00bfff] drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
+          O DESAFIO DO MILHÃO
         </h2>
         <p className="text-gray-300 text-lg max-w-md font-inter">
-          Responda corretamente, use as ajudas com sabedoria e conquiste o anel de campeão.
+          Responda corretamente 23 perguntas sobre a NBA e conquiste o prêmio máximo.
         </p>
-        <button onClick={startGame} className="bg-gradient-to-r from-yellow-500 to-orange-600 text-black font-black text-2xl py-4 px-12 rounded-full hover:scale-105 transition-transform shadow-xl font-oswald uppercase tracking-wide">
+        <button onClick={startGame} className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-black font-black text-2xl py-4 px-12 rounded-full hover:scale-105 transition-transform shadow-xl font-oswald uppercase tracking-wide">
           ENTRAR EM QUADRA
         </button>
       </div>
     );
   }
 
-  if (gameState === 'won' || gameState === 'lost') {
-    // O erro 'length' estava aqui, pois questions era undefined.
-    // Agora questions é garantido no retorno do hook.
-    const finalPrize = gameState === 'won' ? PRIZE_LADDER[questions.length] : prize; 
+  // --- TELA DE VITÓRIA/DERROTA (NOVO DESIGN) ---
+  if (gameState === 'won' || gameState === 'lost' || gameState === 'stopped') {
+    const finalPrize = gameState === 'won' ? PRIZE_LADDER[MAX_QUESTIONS] : prize; 
+    const isWon = gameState === 'won';
+    const isStopped = gameState === 'stopped';
     
     return (
       <div className="text-center p-10 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-md max-w-lg mx-auto animate-in fade-in zoom-in">
         <h2 className="text-6xl font-bebas mb-4 text-white">
-            {gameState === 'won' ? '🏆 MVP! MVP!' : '❌ TOCO!'}
+            {isWon ? '🏆 CAMPEÃO!' : isStopped ? '🛑 PAROU!' : '❌ ELIMINADO!'}
         </h2>
         <p className="text-xl text-gray-300 mb-2 font-inter">
-            {gameState === 'won' ? 'Você ganhou o prêmio máximo!' : 'Você foi eliminado!'}
+            {isWon ? 'Você acertou todas as 23 perguntas!' : isStopped ? 'Você decidiu parar o jogo.' : 'Resposta incorreta ou tempo esgotado.'}
         </p>
-        <p className="text-5xl font-black text-green-400 mb-8 font-oswald">R$ {finalPrize.toLocaleString('pt-BR')}</p>
+        <p className={cn("text-5xl font-black mb-8 font-oswald", isWon ? "text-green-400" : "text-[#ff00ff]")}>
+            R$ {finalPrize.toLocaleString('pt-BR')}
+        </p>
         <button onClick={startGame} className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
             <RefreshCw size={20} /> Jogar Novamente
         </button>
@@ -99,16 +113,17 @@ export default function MilhaoInterface() {
     );
   }
   
+  // --- TELA DE PAUSA (TRAPAÇA) ---
   if (gameState === 'paused') {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-lg">
-        <div className="text-center p-10 bg-zinc-900 rounded-3xl border-4 border-yellow-500 max-w-md mx-auto animate-in fade-in zoom-in">
-          <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+        <div className="text-center p-10 bg-zinc-900 rounded-3xl border-4 border-red-500 max-w-md mx-auto animate-in fade-in zoom-in">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-4xl font-bebas mb-4 text-white">JOGO PAUSADO</h2>
           <p className="text-lg text-gray-300 mb-6 font-inter">
-            Detectamos que você saiu da aba. Isso conta como tentativa de trapaça ({cheatAttempts}/3).
+            Detectamos que você saiu da aba. Tentativas: ({cheatAttempts}/3).
           </p>
-          <button onClick={handleResumeGame} className="bg-yellow-500 text-black font-bold py-3 px-8 rounded-full hover:bg-yellow-400 transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
+          <button onClick={handleResumeGame} className="bg-[#ff00ff] text-white font-bold py-3 px-8 rounded-full hover:bg-[#cc00cc] transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
               <Play size={20} /> Retomar Jogo
           </button>
         </div>
@@ -118,8 +133,6 @@ export default function MilhaoInterface() {
   
   if (!currentQuestion) return null;
 
-  const currentPrizeIndex = PRIZE_LADDER.indexOf(prize);
-  // Acesso seguro a questions.length
   const isLastQuestion = currentQIndex + 1 >= questions.length;
 
   return (
@@ -127,7 +140,11 @@ export default function MilhaoInterface() {
       
       {/* Coluna Esquerda: Pergunta e Opções */}
       <div className="lg:col-span-2">
-        {/* Ajudas */}
+        
+        {/* Timer */}
+        <MilhaoTimer time={timer} initialTime={INITIAL_TIME} />
+
+        {/* Ajudas (NOVO DESIGN E CONEXÃO) */}
         <div className="flex justify-center gap-4 mb-6 bg-black/60 backdrop-blur p-4 rounded-xl border border-white/10">
           <LifelineButton 
             icon={Zap} 
@@ -139,7 +156,7 @@ export default function MilhaoInterface() {
           <LifelineButton 
             icon={SkipForward} 
             label={`Pular (${lifelines.skip})`} 
-            onClick={useSkip} 
+            onClick={handleUseSkip} 
             disabled={lifelines.skip <= 0 || isAnswerLocked || isLastQuestion} 
             active={lifelines.skip > 0}
           />
@@ -164,12 +181,12 @@ export default function MilhaoInterface() {
           key={currentQuestion.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-b from-zinc-800 to-zinc-900 p-6 md:p-8 rounded-3xl border-2 border-yellow-500/20 shadow-2xl mb-8 text-center"
+          className="bg-gradient-to-b from-zinc-800 to-zinc-900 p-6 md:p-8 rounded-3xl border-2 border-[#ff00ff]/50 shadow-2xl mb-8 text-center"
         >
           <span className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 block font-inter">
               Nível {currentQuestion.level} • Pergunta {currentQIndex + 1}
           </span>
-          <h3 className="text-2xl md:text-3xl text-white font-bold leading-relaxed font-oswald tracking-wide">
+          <h3 className="text-2xl md:text-3xl text-white font-bold leading-relaxed font-oswald tracking-wide drop-shadow-[0_0_5px_rgba(255,0,255,0.3)]">
               {currentQuestion.question}
           </h3>
         </motion.div>
@@ -189,14 +206,14 @@ export default function MilhaoInterface() {
                     "border text-white p-5 rounded-xl text-lg font-medium transition-all text-left flex items-center gap-4 group",
                     isAnswerLocked && selectedOption === idx 
                         ? (idx === currentQuestion.correct_index ? "bg-green-600 border-green-700 shadow-lg shadow-green-900/50" : "bg-red-600 border-red-700 shadow-lg shadow-red-900/50")
-                        : "bg-white/10 border-white/10 hover:bg-white/20 disabled:opacity-50"
+                        : "bg-white/10 border-[#00bfff]/20 hover:bg-[#00bfff]/10 disabled:opacity-50"
                 )}
               >
                 <span className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-inter transition-colors shrink-0",
                     isAnswerLocked && selectedOption === idx 
                         ? "bg-white text-black" 
-                        : "bg-black/40 group-hover:bg-yellow-500 group-hover:text-black"
+                        : "bg-black/40 group-hover:bg-[#ff00ff] group-hover:text-white"
                 )}>
                     {['A','B','C','D'][idx]}
                 </span>
@@ -205,26 +222,38 @@ export default function MilhaoInterface() {
             ) : <div key={idx} className="invisible h-[84px]" /> // Mantém o espaço para o layout
           ))}
         </div>
+        
+        {/* Botão Parar */}
+        <div className="mt-8 text-center">
+            <button 
+                onClick={handleStop} 
+                disabled={isAnswerLocked}
+                className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full transition-colors font-oswald uppercase flex items-center gap-2 mx-auto disabled:opacity-50"
+            >
+                <X size={20} /> Parar e Levar
+            </button>
+        </div>
       </div>
       
       {/* Coluna Direita: Escada de Prêmios */}
       <div className="lg:col-span-1 bg-zinc-900 rounded-2xl p-6 border border-white/10 shadow-xl">
-        <h4 className="text-xl font-oswald text-yellow-400 mb-4 uppercase tracking-wider">Escada de Prêmios</h4>
+        <h4 className="text-xl font-oswald text-[#00bfff] mb-4 uppercase tracking-wider">Escada de Prêmios</h4>
         <div className="space-y-1">
           {PRIZE_LADDER.slice().reverse().map((p, index) => {
             const qNum = PRIZE_LADDER.length - index;
-            const isCurrent = p === prize && gameState === 'playing';
-            const isPassed = p < prize;
-            const isSafe = qNum % 5 === 1; // Perguntas 1, 6, 11, 16 são marcos de segurança
+            const isCurrent = qNum === currentQIndex + 1 && gameState === 'playing';
+            const isPassed = qNum <= currentQIndex;
+            const isSafe = qNum === 1 || qNum === 8 || qNum === 15 || qNum === 23; // Marcos de segurança
             
             return (
               <div 
                 key={qNum} 
                 className={cn(
                   "flex justify-between p-2 rounded-lg transition-all",
-                  isCurrent && "bg-yellow-500/20 border border-yellow-500/50",
+                  isCurrent && "bg-[#ff00ff]/20 border border-[#ff00ff]/50 text-white font-bold",
                   isPassed && "text-gray-500 line-through",
-                  isSafe && "font-bold text-green-400"
+                  isSafe && "font-bold text-[#00bfff]",
+                  !isCurrent && !isPassed && "text-gray-300"
                 )}
               >
                 <span className="text-sm font-inter">{qNum}.</span>
@@ -252,7 +281,7 @@ const LifelineButton: React.FC<LifelineProps> = ({ icon: Icon, label, onClick, d
         disabled={disabled}
         className={cn(
             "flex flex-col items-center justify-center p-3 rounded-xl text-xs font-bold font-inter transition-all w-1/4",
-            active && !disabled ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-gray-700 text-gray-400 opacity-50 cursor-not-allowed"
+            active && !disabled ? "bg-[#ff00ff] hover:bg-[#cc00cc] text-white shadow-md shadow-[#ff00ff]/20" : "bg-gray-700 text-gray-400 opacity-50 cursor-not-allowed"
         )}
     >
         <Icon size={20} className="mb-1" />

@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
 
 export default function QuizAdmin() {
@@ -112,16 +112,24 @@ export default function QuizAdmin() {
           Voltar para Admin
         </Link>
         
-        <h1 className="text-4xl font-bebas mb-8 text-white border-b pb-4 border-gray-700">
-          Gerenciar Perguntas - Milhão NBA
-        </h1>
+        <div className="flex justify-between items-center mb-8 border-b pb-4 border-gray-700">
+          <h1 className="text-4xl font-bebas text-white">
+            Gerenciar Perguntas - Milhão NBA
+          </h1>
+          <Link 
+            href="/admin/quiz/settings"
+            className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
+          >
+            <Settings className="w-4 h-4" /> Configurações Visuais
+          </Link>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* COLUNA 1: CADASTRO MANUAL */}
           <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-white">
-              <Plus className="w-5 h-5 text-green-400"/> Nova Pergunta Manual
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-green-400">
+              <Plus className="w-5 h-5"/> Nova Pergunta Manual
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -131,9 +139,9 @@ export default function QuizAdmin() {
                   value={form.level}
                   onChange={e => setForm({...form, level: Number(e.target.value)})}
                 >
-                  <option value={1}>1 - Fácil (R$ 1k - 5k)</option>
-                  <option value={2}>2 - Médio (R$ 10k - 50k)</option>
-                  <option value={3}>3 - Difícil (R$ 100k - 500k)</option>
+                  <option value={1}>1 - Fácil (R$ 1k - 7k)</option>
+                  <option value={2}>2 - Médio (R$ 10k - 60k)</option>
+                  <option value={3}>3 - Difícil (R$ 80k - 500k)</option>
                   <option value={4}>4 - Pergunta do Milhão</option>
                 </select>
               </div>
