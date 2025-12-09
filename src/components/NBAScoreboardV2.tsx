@@ -61,11 +61,14 @@ const formatBroadcast = (channel?: string) => {
 
 // Helper para obter a URL do logo com fallback
 const getLogoUrl = (initialUrl: string, triCode: string): string => {
-    if (initialUrl && !initialUrl.includes('undefined')) {
+    const abbr = triCode.toLowerCase();
+    
+    // 1. Tenta a URL inicial se for válida
+    if (initialUrl && !initialUrl.includes('undefined') && !initialUrl.includes('null')) {
         return initialUrl;
     }
-    // Fallback para a URL da ESPN usando o triCode (ex: SA, UTA)
-    const abbr = triCode.toLowerCase();
+    
+    // 2. Fallback para a URL da ESPN (mais confiável para triCodes)
     // Tratamento de exceções comuns na URL da ESPN
     const espnAbbr = abbr === 'uta' ? 'utah' : abbr === 'nop' ? 'no' : abbr;
     return `https://a.espncdn.com/i/teamlogos/nba/500/${espnAbbr}.png`;
