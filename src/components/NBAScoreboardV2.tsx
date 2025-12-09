@@ -59,19 +59,57 @@ const formatBroadcast = (channel?: string) => {
   return 'League Pass';
 };
 
+// Mapeamento de abreviações para o formato ESPN (que usa o nome completo ou slug)
+const ESPN_ABBR_MAP: Record<string, string> = {
+    'UTA': 'utah',
+    'NOP': 'no',
+    'NYK': 'knicks',
+    'SAS': 'spurs',
+    'GSW': 'warriors',
+    'LAL': 'lakers',
+    'LAC': 'clippers',
+    'BKN': 'nets',
+    'PHX': 'suns',
+    'OKC': 'thunder',
+    'WAS': 'wizards',
+    'CHA': 'hornets',
+    'CLE': 'cavaliers',
+    'IND': 'pacers',
+    'MIA': 'heat',
+    'MIL': 'bucks',
+    'ORL': 'magic',
+    'PHI': '76ers',
+    'TOR': 'raptors',
+    'ATL': 'hawks',
+    'BOS': 'celtics',
+    'CHI': 'bulls',
+    'DET': 'pistons',
+    'DAL': 'mavericks',
+    'DEN': 'nuggets',
+    'HOU': 'rockets',
+    'MEM': 'grizzlies',
+    'MIN': 'timberwolves',
+    'POR': 'trail-blazers',
+    'SAC': 'kings',
+};
+
 // Helper para obter a URL do logo com fallback
-const getLogoUrl = (initialUrl: string, triCode: string): string => {
-    const abbr = triCode.toLowerCase();
+const getLogoUrl = (initialUrl: string, triCode: string, teamId: string): string => {
+    const abbr = triCode.toUpperCase();
     
-    // 1. Tenta a URL inicial se for válida
+    // 1. Tenta a URL inicial (que geralmente usa teamId)
     if (initialUrl && !initialUrl.includes('undefined') && !initialUrl.includes('null')) {
         return initialUrl;
     }
     
-    // 2. Fallback para a URL da ESPN (mais confiável para triCodes)
-    // Tratamento de exceções comuns na URL da ESPN
-    const espnAbbr = abbr === 'uta' ? 'utah' : abbr === 'nop' ? 'no' : abbr;
-    return `https://a.espncdn.com/i/teamlogos/nba/500/${espnAbbr}.png`;
+    // 2. Fallback para a URL da NBA CDN usando teamId (mais confiável)
+    if (teamId) {
+        return `https://cdn.nba.com/logos/nba/${teamId}/primary/L/logo.svg`;
+    }
+    
+    // 3. Fallback para a URL da ESPN usando o mapeamento de abreviações
+    const espnSlug = ESPN_ABBR_MAP[abbr] || abbr.toLowerCase();
+    return `https://a.espncdn.com/i/teamlogos/nba/500/${espnSlug}.png`;
 };
 
 
@@ -109,7 +147,8 @@ export default function NBAScoreboardV2() {
               score: String(g.homeTeam.score),
               wins: g.homeTeam.wins || 0,
               losses: g.homeTeam.losses || 0,
-              logo: getLogoUrl(g.homeTeam.logo, g.homeTeam.teamTricode),
+              // Passando teamId para o helper
+              logo: getLogoUrl(g.homeTeam.logo, g.homeTeam.teamTricode, g.homeTeam.teamId),
               teamId: g.homeTeam.teamId,
             },
             awayTeam: { 
@@ -118,7 +157,8 @@ export default function NBAScoreboardV2() {
               score: String(g.awayTeam.score),
               wins: g.awayTeam.wins || 0,
               losses: g.awayTeam.losses || 0,
-              logo: getLogoUrl(g.awayTeam.logo, g.awayTeam.teamTricode),
+              // Passando teamId para o helper
+              logo: getLogoUrl(g.awayTeam.logo, g.awayTeam.teamTricode, g.awayTeam.teamId),
               teamId: g.awayTeam.teamId,
             },
           }));
