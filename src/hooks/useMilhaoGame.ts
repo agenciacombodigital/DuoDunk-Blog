@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Question, PRIZE_LADDER } from '@/lib/milhao-data';
 import confetti from 'canvas-confetti';
@@ -15,7 +15,32 @@ interface MilhaoQuestion {
   correct_index: number;
 }
 
-export function useMilhaoGame() {
+interface Lifelines {
+  skip: number;
+  fifty: boolean;
+  cards: boolean;
+  rookies: boolean;
+}
+
+interface MilhaoGameHook {
+  gameState: 'start' | 'playing' | 'won' | 'lost' | 'paused';
+  setGameState: Dispatch<SetStateAction<'start' | 'playing' | 'won' | 'lost' | 'paused'>>;
+  currentQuestion: MilhaoQuestion | undefined;
+  prize: number;
+  loading: boolean;
+  startGame: () => Promise<void>;
+  handleAnswer: (selectedIndex: number) => void;
+  useFiftyFifty: () => number[] | null;
+  useSkip: () => void;
+  useCards: () => void;
+  useRookies: () => void;
+  lifelines: Lifelines;
+  cheatAttempts: number;
+  currentQIndex: number; // Adicionado
+  questions: MilhaoQuestion[]; // Adicionado
+}
+
+export function useMilhaoGame(): MilhaoGameHook {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'won' | 'lost' | 'paused'>('start');
   const [questions, setQuestions] = useState<MilhaoQuestion[]>([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
@@ -23,7 +48,7 @@ export function useMilhaoGame() {
   const [loading, setLoading] = useState(false);
   
   // Ajudas
-  const [lifelines, setLifelines] = useState({ 
+  const [lifelines, setLifelines] = useState<Lifelines>({ 
     skip: 3,      // 3 Pulos
     fifty: true,  // 50/50
     cards: true,  // Cartas
@@ -163,7 +188,7 @@ export function useMilhaoGame() {
     useRookies,
     lifelines,
     cheatAttempts,
-    currentQIndex, // Adicionado
-    questions, // Adicionado
+    currentQIndex,
+    questions,
   };
 }
