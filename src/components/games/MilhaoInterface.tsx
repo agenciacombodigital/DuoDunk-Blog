@@ -4,9 +4,25 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
+import { Zap, RefreshCw, X, ArrowRight, AlertTriangle, SkipForward, Users, BookOpen } from 'lucide-react';
 
 export default function MilhaoInterface() {
-  const { gameState, currentQuestion, prize, loading, startGame, handleAnswer, useFiftyFifty, lifelines } = useMilhaoGame();
+  const { 
+    gameState, 
+    setGameState,
+    currentQuestion, 
+    prize, 
+    loading, 
+    startGame, 
+    handleAnswer, 
+    useFiftyFifty, 
+    useSkip,
+    useCards,
+    useRookies,
+    lifelines,
+    cheatAttempts
+  } = useMilhaoGame();
+  
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -35,6 +51,11 @@ export default function MilhaoInterface() {
     const h = useFiftyFifty(); 
     if(h) setHiddenOptions(h);
   };
+  
+  const handleResumeGame = () => {
+    setGameState('playing');
+    toast.info("Jogo retomado. Concentre-se! 🧠");
+  };
 
   if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
 
@@ -55,18 +76,37 @@ export default function MilhaoInterface() {
   }
 
   if (gameState === 'won' || gameState === 'lost') {
-    const finalPrize = gameState === 'won' ? prize : 0; // Se perdeu, o prêmio é 0
+    const finalPrize = gameState === 'won' ? PRIZE_LADDER[PRIZE_LADDER.length - 1] : prize; // Se perdeu, o prêmio é o último marco seguro (ou 0 se for a primeira)
     
     return (
       <div className="text-center p-10 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-md max-w-lg mx-auto animate-in fade-in zoom-in">
         <h2 className="text-6xl font-bebas mb-4 text-white">
             {gameState === 'won' ? '🏆 MVP! MVP!' : '❌ TOCO!'}
         </h2>
-        <p className="text-xl text-gray-300 mb-2 font-inter">Você parou com:</p>
+        <p className="text-xl text-gray-300 mb-2 font-inter">
+            {gameState === 'won' ? 'Você ganhou o prêmio máximo!' : 'Você foi eliminado!'}
+        </p>
         <p className="text-5xl font-black text-green-400 mb-8 font-oswald">R$ {finalPrize.toLocaleString('pt-BR')}</p>
-        <button onClick={startGame} className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors font-oswald uppercase">
-            Jogar Novamente
+        <button onClick={startGame} className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
+            <RefreshCw size={20} /> Jogar Novamente
         </button>
+      </div>
+    );
+  }
+  
+  if (gameState === 'paused') {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-lg">
+        <div className="text-center p-10 bg-zinc-900 rounded-3xl border-4 border-yellow-500 max-w-md mx-auto animate-in fade-in zoom-in">
+          <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-4xl font-bebas mb-4 text-white">JOGO PAUSADO</h2>
+          <p className="text-lg text-gray-300 mb-6 font-inter">
+            Detectamos que você saiu da aba. Isso conta como tentativa de trapaça ({cheatAttempts}/3).
+          </p>
+          <button onClick={handleResumeGame} className="bg-yellow-500 text-black font-bold py-3 px-8 rounded-full hover:bg-yellow-400 transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
+              <Play size={20} /> Retomar Jogo
+          </button>
+        </div>
       </div>
     );
   }
@@ -74,27 +114,43 @@ export default function MilhaoInterface() {
   if (!currentQuestion) return null;
 
   const currentPrizeIndex = PRIZE_LADDER.indexOf(prize);
-  const nextPrize = PRIZE_LADDER[currentPrizeIndex + 1] || 1000000;
+  const isLastQuestion = currentQIndex + 1 >= questions.length;
 
   return (
     <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       {/* Coluna Esquerda: Pergunta e Opções */}
       <div className="lg:col-span-2">
-        {/* Placar e Ajudas */}
-        <div className="flex justify-between items-center mb-6 bg-black/60 backdrop-blur p-4 rounded-xl border border-white/10">
-          <div className="text-yellow-400 font-bebas text-2xl md:text-3xl tracking-wide">
-              Prêmio Atual: <span className="text-white">R$ {prize.toLocaleString('pt-BR')}</span>
-          </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleUseFiftyFifty} 
-              disabled={!lifelines.fifty || isAnswerLocked}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white rounded-lg disabled:opacity-50 text-sm font-bold font-inter transition-colors flex items-center gap-1"
-            >
-              50/50 {lifelines.fifty ? '✅' : '❌'}
-            </button>
-          </div>
+        {/* Ajudas */}
+        <div className="flex justify-center gap-4 mb-6 bg-black/60 backdrop-blur p-4 rounded-xl border border-white/10">
+          <LifelineButton 
+            icon={Zap} 
+            label="50/50" 
+            onClick={handleUseFiftyFifty} 
+            disabled={!lifelines.fifty || isAnswerLocked} 
+            active={lifelines.fifty}
+          />
+          <LifelineButton 
+            icon={SkipForward} 
+            label={`Pular (${lifelines.skip})`} 
+            onClick={useSkip} 
+            disabled={lifelines.skip <= 0 || isAnswerLocked || isLastQuestion} 
+            active={lifelines.skip > 0}
+          />
+          <LifelineButton 
+            icon={BookOpen} 
+            label="Cartas" 
+            onClick={useCards} 
+            disabled={!lifelines.cards || isAnswerLocked} 
+            active={lifelines.cards}
+          />
+          <LifelineButton 
+            icon={Users} 
+            label="Rookies" 
+            onClick={useRookies} 
+            disabled={!lifelines.rookies || isAnswerLocked} 
+            active={lifelines.rookies}
+          />
         </div>
 
         {/* Pergunta */}
@@ -127,7 +183,7 @@ export default function MilhaoInterface() {
                     "border text-white p-5 rounded-xl text-lg font-medium transition-all text-left flex items-center gap-4 group",
                     isAnswerLocked && selectedOption === idx 
                         ? (idx === currentQuestion.correct_index ? "bg-green-600 border-green-700 shadow-lg shadow-green-900/50" : "bg-red-600 border-red-700 shadow-lg shadow-red-900/50")
-                        : "bg-white/10 border-white/10 hover:bg-white/20"
+                        : "bg-white/10 border-white/10 hover:bg-white/20 disabled:opacity-50"
                 )}
               >
                 <span className={cn(
@@ -175,3 +231,25 @@ export default function MilhaoInterface() {
     </div>
   );
 }
+
+interface LifelineProps {
+    icon: React.ElementType;
+    label: string;
+    onClick: () => void;
+    disabled: boolean;
+    active: boolean;
+}
+
+const LifelineButton: React.FC<LifelineProps> = ({ icon: Icon, label, onClick, disabled, active }) => (
+    <button 
+        onClick={onClick} 
+        disabled={disabled}
+        className={cn(
+            "flex flex-col items-center justify-center p-3 rounded-xl text-xs font-bold font-inter transition-all w-1/4",
+            active && !disabled ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-gray-700 text-gray-400 opacity-50 cursor-not-allowed"
+        )}
+    >
+        <Icon size={20} className="mb-1" />
+        {label}
+    </button>
+);
