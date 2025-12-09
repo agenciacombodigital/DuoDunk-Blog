@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 // ✅ PERFORMANCE: Cache de 60 segundos. 
 // O site fica instantâneo (vem do cache da Vercel/Edge) e atualiza a cada minuto.
-// export const dynamic = 'force-dynamic'; // Removido para evitar falhas agressivas
+export const dynamic = 'force-dynamic';
 export const revalidate = 60; 
 
 interface Article {
@@ -101,8 +101,8 @@ export default async function Home() {
                 src={featuredArticle.image_url}
                 alt={featuredArticle.title}
                 fill
-                priority={true} // ✅ Priority para LCP
-                sizes="100vw" // ✅ Sizes para LCP
+                priority={true} // ✅ TASK 1.1: Priority para LCP
+                sizes="100vw" // ✅ TASK 1.1: Sizes para LCP
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
               />
