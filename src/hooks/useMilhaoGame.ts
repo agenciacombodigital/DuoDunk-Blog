@@ -1,126 +1,97 @@
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Question, PRIZE_LADDER } from '@/lib/milhao-data';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
-// Tipagem para a tabela milhao_questions
-interface MilhaoQuestion {
-  id: string;
-  level: number;
-  sequence_num: number;
-  question: string;
-  options: string[];
-  correct_index: number;
-}
-
-interface Lifelines {
-  skip: number;
-  fifty: boolean;
-  cards: boolean;
-  rookies: boolean;
-}
-
-interface MilhaoGameHook {
-  gameState: 'start' | 'playing' | 'won' | 'lost' | 'paused';
-  setGameState: Dispatch<SetStateAction<'start' | 'playing' | 'won' | 'lost' | 'paused'>>;
-  currentQuestion: MilhaoQuestion | undefined;
-  prize: number;
-  loading: boolean;
-  startGame: () => Promise<void>;
-  handleAnswer: (selectedIndex: number) => void;
-  useFiftyFifty: () => number[] | null;
-  useSkip: () => void;
-  useCards: () => void;
-  useRookies: () => void;
-  lifelines: Lifelines;
-  cheatAttempts: number;
-  currentQIndex: number; // Adicionado
-  questions: MilhaoQuestion[]; // Adicionado
-}
-
-export function useMilhaoGame(): MilhaoGameHook {
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'won' | 'lost' | 'paused'>('start');
-  const [questions, setQuestions] = useState<MilhaoQuestion[]>([]);
+export function useMilhaoGame() {
+  const [gameState, setGameState] = useState<'start' | 'playing' | 'won' | 'lost' | 'paused' | 'stopped'>('start');
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [prize, setPrize] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(45);
   
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Ajudas
-  const [lifelines, setLifelines] = useState<Lifelines>({ 
-    skip: 3,      // 3 Pulos
-    fifty: true,  // 50/50
-    cards: true,  // Cartas
-    rookies: true // Universitários (Rookies)
+  const [lifelines, setLifelines] = useState({ 
+    skip: 3,      
+    fifty: true,  
+    cards: true,  
+    rookies: true 
   });
 
-  // Anti-Trapaça
-  const [cheatAttempts, setCheatAttempts] = useState(0);
-
-  // Carregar Perguntas
+  // Carregar Perguntas (Lógica de Sorteio)
   const startGame = useCallback(async () => {
     setLoading(true);
-    try {
-      // Busca perguntas ordenadas por level e sequence_num
-      const { data, error } = await supabase
-        .from('milhao_questions') // Nome da tabela no banco
-        .select('*')
-        .order('level', { ascending: true })
-        .order('sequence_num', { ascending: true })
-        .limit(24); // Limita para um jogo completo
-      
-      if (error) throw error;
+    setGameState('start');
+    
+    // Busca um pool grande de perguntas para sortear
+    // Nível 1
+    const { data: easy } = await supabase.from('milhao_questions').select('*').eq('level', 1).limit(50);
+    // Nível 2
+    const { data: medium } = await supabase.from('milhao_questions').select('*').eq('level', 2).limit(50);
+    // Nível 3
+    const { data: hard } = await supabase.from('milhao_questions').select('*').eq('level', 3).limit(50);
+    // Nível 4
+    const { data: million } = await supabase.from('milhao_questions').select('*').eq('level', 4).limit(10);
 
-      if (data && data.length > 0) {
-        setQuestions(data);
-        setGameState('playing');
-        setCurrentQIndex(0);
-        setPrize(PRIZE_LADDER[0]); // Começa com 0
-        setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
-        setCheatAttempts(0);
-      } else {
-        toast.error("Erro ao carregar perguntas. Verifique o banco de dados.");
-      }
-    } catch (e: any) {
-        console.error("Erro ao iniciar jogo:", e.message);
-        toast.error("Erro ao carregar perguntas: " + e.message);
-    } finally {
-        setLoading(false);
+    if (easy && medium && hard && million) {
+        // Embaralha e seleciona a quantidade certa
+        const shuffle = (arr: any[]) => arr.sort(() => Math.random() - 0.5);
+        
+        const selectedQuestions = [
+            ...shuffle(easy).slice(0, 7),   // 7 Fáceis
+            ...shuffle(medium).slice(0, 8), // 8 Médias
+            ...shuffle(hard).slice(0, 7),   // 7 Difíceis
+            ...shuffle(million).slice(0, 1) // 1 Milhão
+        ];
+
+        if (selectedQuestions.length === 23) {
+            setQuestions(selectedQuestions);
+            setGameState('playing');
+            setCurrentQIndex(0);
+            setPrize(0);
+            setTimer(45);
+            setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
+        } else {
+            toast.error(`Erro: Banco de perguntas incompleto. Encontradas: ${selectedQuestions.length}/23.`);
+        }
+    } else {
+      toast.error("Erro de conexão com o banco.");
     }
+    setLoading(false);
   }, []);
 
-  // Sistema Anti-Trapaça
+  // Timer
   useEffect(() => {
-    if (gameState !== 'playing') return;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setCheatAttempts(prev => {
-          const newCount = prev + 1;
-          if (newCount === 1) {
-            setGameState('paused');
-            toast.warning("⚠️ AVISO: Não saia da aba! Jogo pausado.");
-          } else if (newCount === 2) {
-            toast.error("🚨 ÚLTIMA CHANCE: Se sair de novo, será eliminado!");
-          } else {
-            setGameState('lost');
-            toast.error("❌ ELIMINADO por suspeita de trapaça!");
-          }
-          return newCount;
-        });
-      }
+    if (gameState === 'playing') {
+        timerRef.current = setInterval(() => {
+            setTimer((prev) => {
+                if (prev <= 1) {
+                    setGameState('lost'); // Tempo acabou
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }
+    return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
     };
+  }, [gameState, currentQIndex]);
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [gameState]);
+  // Resetar timer ao mudar de pergunta
+  useEffect(() => {
+      setTimer(45);
+  }, [currentQIndex]);
 
   const handleAnswer = (selectedIndex: number) => {
     const currentQ = questions[currentQIndex];
     if (selectedIndex === currentQ.correct_index) {
       if (currentQIndex + 1 >= questions.length) {
-        setPrize(PRIZE_LADDER[questions.length]);
+        setPrize(1000000);
         setGameState('won');
         confetti({ particleCount: 200, spread: 70, zIndex: 9999 });
       } else {
@@ -132,63 +103,21 @@ export function useMilhaoGame(): MilhaoGameHook {
     }
   };
 
-  const useFiftyFifty = () => {
-    if (!lifelines.fifty || !questions[currentQIndex]) return null;
-    setLifelines(prev => ({ ...prev, fifty: false }));
-    
-    const correctIndex = questions[currentQIndex].correct_index;
-    const wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIndex);
-    
-    // Embaralha e pega 2 erradas para esconder
-    return wrongIndices.sort(() => 0.5 - Math.random()).slice(0, 2);
+  const handleStop = () => {
+      setGameState('stopped');
   };
-  
-  const useSkip = () => {
-    if (lifelines.skip <= 0 || !questions[currentQIndex]) return;
-    setLifelines(prev => ({ ...prev, skip: prev.skip - 1 }));
-    
-    const nextIndex = currentQIndex + 1;
-    if (nextIndex >= questions.length) {
-        // Se for a última, não pode pular, mas o botão deve estar desabilitado
-        toast.warning("Não é possível pular a última pergunta!");
-        return;
-    }
-    
-    setPrize(PRIZE_LADDER[nextIndex]);
-    setCurrentQIndex(nextIndex);
-    toast.info("Pergunta pulada! 🏃‍♂️");
-  };
-  
-  // Placeholder para outras ajudas (apenas para a interface)
-  const useCards = () => {
-    if (!lifelines.cards) return;
-    setLifelines(prev => ({ ...prev, cards: false }));
-    toast.info("Ajuda 'Cartas' usada! (Implementação futura)");
-  };
-  
-  const useRookies = () => {
-    if (!lifelines.rookies) return;
-    setLifelines(prev => ({ ...prev, rookies: false }));
-    toast.info("Ajuda 'Rookies' usada! (Implementação futura)");
-  };
-
-  const currentQuestionData = questions[currentQIndex];
 
   return { 
-    gameState, 
-    setGameState, 
-    currentQuestion: currentQuestionData, 
-    prize, 
-    loading, 
-    startGame, 
-    handleAnswer, 
-    useFiftyFifty,
-    useSkip,
-    useCards,
-    useRookies,
-    lifelines,
-    cheatAttempts,
-    currentQIndex,
-    questions,
+      gameState, 
+      setGameState, 
+      currentQuestion: questions[currentQIndex], 
+      prize, 
+      loading, 
+      startGame, 
+      handleAnswer, 
+      handleStop,
+      lifelines, 
+      setLifelines,
+      timer 
   };
 }
