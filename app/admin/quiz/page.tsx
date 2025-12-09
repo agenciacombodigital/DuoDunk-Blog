@@ -1,11 +1,15 @@
 "use client";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function QuizAdmin() {
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Estado do formulário manual
   const [form, setForm] = useState({
     level: 1,
     question: '',
@@ -14,55 +18,92 @@ export default function QuizAdmin() {
     optionC: '',
     optionD: '',
     correctIndex: 0,
-    category: 'Geral',
-    sequence_num: 1,
+    category: 'Geral'
   });
-  const [loading, setLoading] = useState(false);
 
+  // --- FUNÇÃO 1: ENVIO MANUAL ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const toastId = toast.loading("Salvando pergunta...");
-
     try {
       if (!form.question || !form.optionA || !form.optionB || !form.optionC || !form.optionD) {
         throw new Error("Todos os campos de pergunta e opções são obrigatórios.");
       }
       
       const { error } = await supabase.from('milhao_questions').insert({
-        level: form.level,
-        sequence_num: form.sequence_num,
+        level: Number(form.level),
+        sequence_num: Date.now(), // Timestamp como ID único sequencial
         question: form.question,
         options: [form.optionA, form.optionB, form.optionC, form.optionD],
-        correct_index: form.correctIndex,
+        correct_index: Number(form.correctIndex),
         category: form.category
       });
 
       if (error) throw error;
-      
       toast.success("Pergunta salva com sucesso!", { id: toastId });
-      // Limpa apenas os campos de texto, mantendo nível e categoria
-      setForm(prev => ({ 
-        ...prev, 
-        question: '', 
-        optionA: '', 
-        optionB: '', 
-        optionC: '', 
-        optionD: '',
-        sequence_num: prev.sequence_num + 1 // Incrementa a sequência para facilitar
-      }));
-      
+      setForm({ ...form, question: '', optionA: '', optionB: '', optionC: '', optionD: '' });
     } catch (error: any) {
       toast.error("Erro ao salvar", { id: toastId, description: error.message });
-      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- FUNÇÃO 2: IMPORTAÇÃO EM MASSA (JSON) ---
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      setLoading(true);
+      const toastId = toast.loading("Processando arquivo JSON...");
+      try {
+        const json = JSON.parse(e.target?.result as string);
+
+        if (!Array.isArray(json)) throw new Error("O arquivo deve conter uma lista (array) de perguntas.");
+
+        // Preparar dados para o Supabase
+        const questionsToInsert = json.map((item: any, index) => ({
+          level: item.level || 1,
+          sequence_num: Date.now() + index, // Garante unicidade
+          question: item.question,
+          options: item.options, // Deve ser um array de 4 strings
+          correct_index: item.correct_index,
+          category: item.category || 'Geral'
+        }));
+
+        // Validação básica
+        if (questionsToInsert.some(q => !q.question || !q.options || q.options.length !== 4 || q.correct_index === undefined || q.correct_index < 0 || q.correct_index > 3)) {
+            throw new Error("Formato inválido. Verifique se todas as perguntas têm texto, 4 opções e um índice correto (0-3).");
+        }
+
+        toast.loading(`Inserindo ${questionsToInsert.length} perguntas em lote...`, { id: toastId });
+        
+        // Inserir em lote (Batch Insert)
+        const { error } = await supabase.from('milhao_questions').insert(questionsToInsert);
+
+        if (error) throw error;
+
+        toast.success(`${questionsToInsert.length} perguntas importadas com sucesso!`, { id: toastId });
+        if (fileInputRef.current) fileInputRef.current.value = ''; // Limpar input
+
+      } catch (error: any) {
+        console.error(error);
+        toast.error("Erro na importação: " + error.message, { id: toastId });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link
           href="/admin"
           className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition"
@@ -70,116 +111,114 @@ export default function QuizAdmin() {
           <ArrowLeft className="w-5 h-5" />
           Voltar para Admin
         </Link>
-
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-          <PlusCircle className="w-6 h-6 text-yellow-400" /> Gerenciar Perguntas - Milhão NBA
+        
+        <h1 className="text-4xl font-bebas mb-8 text-white border-b pb-4 border-gray-700">
+          Gerenciar Perguntas - Milhão NBA
         </h1>
-        <p className="text-gray-400 mb-8">
-          Cadastre novas perguntas para o quiz.
-        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-gray-800 p-6 rounded-xl border border-gray-700">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* Nível e Sequência */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Nível de Dificuldade (1-3)</label>
-              <select
-                value={form.level}
-                onChange={e => setForm({...form, level: parseInt(e.target.value)})}
-                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
-              >
-                <option value={1}>1 (Fácil)</option>
-                <option value={2}>2 (Médio)</option>
-                <option value={3}>3 (Difícil)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Categoria</label>
-              <input
-                type="text"
+          {/* COLUNA 1: CADASTRO MANUAL */}
+          <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+              <Plus className="w-5 h-5 text-green-400"/> Nova Pergunta Manual
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-1">Nível (1-4)</label>
+                <select 
+                  className="w-full p-3 border rounded bg-gray-900 border-gray-700 text-white font-inter"
+                  value={form.level}
+                  onChange={e => setForm({...form, level: Number(e.target.value)})}
+                >
+                  <option value={1}>1 - Fácil (R$ 1k - 5k)</option>
+                  <option value={2}>2 - Médio (R$ 10k - 50k)</option>
+                  <option value={3}>3 - Difícil (R$ 100k - 500k)</option>
+                  <option value={4}>4 - Pergunta do Milhão</option>
+                </select>
+              </div>
+
+              <input 
+                className="w-full p-3 border rounded bg-gray-900 border-gray-700 text-white font-inter" 
+                placeholder="Texto da Pergunta"
+                value={form.question}
+                onChange={e => setForm({...form, question: e.target.value})}
+                required
+              />
+              
+              <div className="grid grid-cols-2 gap-2">
+                <input className="p-3 border rounded bg-gray-900 border-gray-700 text-white" placeholder="Opção A" value={form.optionA} onChange={e => setForm({...form, optionA: e.target.value})} required />
+                <input className="p-3 border rounded bg-gray-900 border-gray-700 text-white" placeholder="Opção B" value={form.optionB} onChange={e => setForm({...form, optionB: e.target.value})} required />
+                <input className="p-3 border rounded bg-gray-900 border-gray-700 text-white" placeholder="Opção C" value={form.optionC} onChange={e => setForm({...form, optionC: e.target.value})} required />
+                <input className="p-3 border rounded bg-gray-900 border-gray-700 text-white" placeholder="Opção D" value={form.optionD} onChange={e => setForm({...form, optionD: e.target.value})} required />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-1">Resposta Correta</label>
+                <select 
+                  className="w-full p-3 border rounded bg-gray-900 border-gray-700 text-white"
+                  value={form.correctIndex}
+                  onChange={e => setForm({...form, correctIndex: Number(e.target.value)})}
+                >
+                  <option value={0}>Opção A</option>
+                  <option value={1}>Opção B</option>
+                  <option value={2}>Opção C</option>
+                  <option value={3}>Opção D</option>
+                </select>
+              </div>
+              
+              <input 
+                className="w-full p-3 border rounded bg-gray-900 border-gray-700 text-white font-inter" 
+                placeholder="Categoria (Ex: Finais, Jogadores)"
                 value={form.category}
                 onChange={e => setForm({...form, category: e.target.value})}
-                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
-                placeholder="Ex: Finais, Draft, Jogadores"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Sequência (Ordem)</label>
-              <input
-                type="number"
-                value={form.sequence_num}
-                onChange={e => setForm({...form, sequence_num: parseInt(e.target.value)})}
-                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white"
-                placeholder="1, 2, 3..."
-              />
-            </div>
+
+              <button disabled={loading} type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors flex justify-center disabled:opacity-50">
+                {loading ? 'Salvando...' : 'Salvar Pergunta'}
+              </button>
+            </form>
           </div>
 
-          {/* Pergunta */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Pergunta *</label>
-            <textarea
-              rows={3}
-              required
-              value={form.question}
-              onChange={e => setForm({...form, question: e.target.value})}
-              className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white resize-none"
-              placeholder="Qual jogador detém o recorde de mais pontos em um único jogo de playoffs?"
-            />
-          </div>
+          {/* COLUNA 2: IMPORTAÇÃO EM MASSA */}
+          <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700 h-fit">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-cyan-400">
+              <Upload className="w-5 h-5"/> Importar em Massa (JSON)
+            </h2>
+            
+            <div className="mb-6 text-sm text-gray-400 font-inter p-4 bg-gray-900 rounded-lg border border-gray-700">
+              <p className="mb-2 font-bold flex items-center gap-2 text-white"><AlertCircle className="w-4 h-4 text-yellow-400"/> Formato do Arquivo:</p>
+              <pre className="bg-black p-3 rounded border border-gray-700 overflow-x-auto text-xs text-green-400">
+{`[
+  {
+    "level": 1,
+    "question": "Pergunta...",
+    "options": ["A", "B", "C", "D"],
+    "correct_index": 0,
+    "category": "História"
+  }
+]`}
+              </pre>
+            </div>
 
-          {/* Opções */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['A', 'B', 'C', 'D'].map((label, index) => (
-              <div key={index} className="relative">
-                <label className="block text-sm font-medium mb-2">Opção {label} *</label>
-                <input
-                  type="text"
-                  required
-                  value={form[`option${label}` as keyof typeof form] as string}
-                  onChange={e => setForm({...form, [`option${label}`]: e.target.value})}
-                  className="w-full p-3 bg-gray-900 border rounded-lg text-white pr-12"
-                  placeholder={`Opção ${label}`}
-                />
-                <input
-                  type="radio"
-                  name="correct_option"
-                  checked={form.correctIndex === index}
-                  onChange={() => setForm({...form, correctIndex: index})}
-                  className="absolute right-3 top-1/2 mt-1 transform -translate-y-1/2 w-5 h-5 text-green-500 bg-gray-700 border-gray-600 focus:ring-green-500 cursor-pointer"
-                  title={`Marcar como Correta (${label})`}
-                />
+            <label className="block w-full cursor-pointer">
+              <input 
+                type="file" 
+                accept=".json" 
+                className="hidden" 
+                onChange={handleFileUpload}
+                ref={fileInputRef}
+                disabled={loading}
+              />
+              <div className="w-full bg-gray-900 border-2 border-dashed border-cyan-500/50 hover:border-cyan-500 rounded-xl p-8 flex flex-col items-center justify-center transition-colors disabled:opacity-50">
+                <FileJson className="w-10 h-10 text-cyan-400 mb-2" />
+                <span className="text-cyan-400 font-bold">Clique para selecionar arquivo JSON</span>
+                <span className="text-gray-400 text-xs mt-1">Carregar lista de perguntas</span>
               </div>
-            ))}
-          </div>
-          
-          {/* Correta */}
-          <div className="p-4 bg-green-900/30 border border-green-700/50 rounded-lg">
-            <p className="text-sm font-bold text-green-400">
-              Resposta Correta: Opção {['A', 'B', 'C', 'D'][form.correctIndex]}
-            </p>
+            </label>
           </div>
 
-          {/* Botão Submit */}
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                Salvar Pergunta
-              </>
-            )}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
