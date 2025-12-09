@@ -1,16 +1,40 @@
 "use client";
 
-import { ArrowLeft, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, Image as ImageIcon, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useQuizSettings } from '@/hooks/useQuizSettings';
 import { cn } from '@/lib/utils';
+import LogoSettings from '@/components/admin/quiz/LogoSettings'; // Importando o novo componente
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function QuizSettingsPage() {
-  const { settings, loading, uploading, handleImageUpload } = useQuizSettings();
+  const { settings, loading, uploading, handleImageUpload, loadSettings } = useQuizSettings();
+
+  // Função de callback para o LogoSettings
+  const handleLogoSave = async (newUrl: string) => {
+    const toastId = toast.loading("Atualizando URL do logo no DB...");
+    try {
+        const { error } = await supabase
+            .from('quiz_settings')
+            .update({ logo_url: newUrl, updated_at: new Date().toISOString() })
+            .eq('id', 1);
+        
+        if (error) throw error;
+        
+        toast.success("Logo atualizado com sucesso!", { id: toastId });
+        loadSettings(); // Recarrega as settings para atualizar o estado global
+    } catch (error: any) {
+        toast.error("Erro ao salvar logo:", { id: toastId, description: error.message });
+    }
+  };
 
   const ImageUploadCard = ({ fieldName, label, description }: { fieldName: keyof typeof settings, label: string, description: string }) => {
     const currentUrl = settings[fieldName];
     
+    // Excluímos o logo daqui, pois ele tem seu próprio componente
+    if (fieldName === 'logo_url') return null; 
+
     return (
       <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
         <h3 className="text-xl font-bold text-white mb-2">{label}</h3>
@@ -81,11 +105,13 @@ export default function QuizSettingsPage() {
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ImageUploadCard 
-            fieldName="logo_url" 
-            label="Logo do Jogo" 
-            description="Imagem principal exibida na tela inicial do Quiz."
+          
+          {/* NOVO COMPONENTE PARA O LOGO */}
+          <LogoSettings 
+            initialLogoUrl={settings.logo_url || null}
+            onSave={handleLogoSave}
           />
+          
           <ImageUploadCard 
             fieldName="victory_image_url" 
             label="Imagem da Vitória (R$ 1 Milhão)" 
