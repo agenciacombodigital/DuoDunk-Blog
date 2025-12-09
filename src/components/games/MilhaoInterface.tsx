@@ -22,8 +22,8 @@ export default function MilhaoInterface() {
     useRookies,
     lifelines,
     cheatAttempts,
-    currentQIndex, // Desestruturando currentQIndex
-    questions, // Desestruturando questions
+    currentQIndex,
+    questions,
   } = useMilhaoGame();
   
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);

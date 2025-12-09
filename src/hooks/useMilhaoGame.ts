@@ -162,6 +162,8 @@ export function useMilhaoGame() {
     useCards,
     useRookies,
     lifelines,
-    cheatAttempts
+    cheatAttempts,
+    currentQIndex, // Adicionado
+    questions, // Adicionado
   };
 }
