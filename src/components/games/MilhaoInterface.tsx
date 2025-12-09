@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
-import { Zap, RefreshCw, X, ArrowRight, AlertTriangle, SkipForward, Users, BookOpen } from 'lucide-react';
+import { toast } from 'sonner'; // Importando toast
+import { Zap, RefreshCw, X, ArrowRight, AlertTriangle, SkipForward, Users, BookOpen, Play } from 'lucide-react'; // Importando Play
 
 export default function MilhaoInterface() {
   const { 
@@ -20,7 +21,9 @@ export default function MilhaoInterface() {
     useCards,
     useRookies,
     lifelines,
-    cheatAttempts
+    cheatAttempts,
+    currentQIndex, // Desestruturando currentQIndex
+    questions, // Desestruturando questions
   } = useMilhaoGame();
   
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
