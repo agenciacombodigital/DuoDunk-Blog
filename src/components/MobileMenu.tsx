@@ -16,8 +16,8 @@ export default function MobileMenu() {
     { path: '/times', label: 'Times', icon: Users },
     { path: '/classificacao', label: 'Classificação', icon: Trophy },
     { path: '/calendario', label: 'Calendário', icon: Calendar },
-    // NOVO ITEM: QUIZ
-    { path: '/jogos/milhao', label: '🏆 Quiz', icon: Trophy }, 
+    // ATUALIZADO: Texto do Quiz
+    { path: '/jogos/milhao', label: '🏆 NBA Quiz', icon: Trophy }, 
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
