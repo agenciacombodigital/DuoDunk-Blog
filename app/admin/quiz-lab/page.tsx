@@ -6,7 +6,7 @@ import { Save, RefreshCw, CheckCircle, ArrowLeft, BrainCircuit } from 'lucide-re
 import Link from 'next/link';
 
 // ⚡ MODELO ATUALIZADO (Dezembro 2025)
-const GEMINI_MODEL = "gemini-2.5-flash"; 
+const GEMINI_MODEL = "gemini-2.0-flash-exp"; 
 
 export default function QuizLab() {
   const [apiKey, setApiKey] = useState('');
@@ -14,7 +14,7 @@ export default function QuizLab() {
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // --- 1. PROMPT ISOLADO POR NÍVEL (A IA só vê o que precisa) ---
+  // --- 1. LÓGICA DE PROMPT ISOLADA ---
   const getLevelPrompt = (level: number | 'mixed') => {
     // Cabeçalho Técnico
     const techSpecs = `
@@ -33,13 +33,11 @@ export default function QuizLab() {
       REGRA: NÃO coloque vírgula após o último objeto da lista.
     `;
 
-    // Instruções Específicas (Blindagem de Nível)
     if (level === 1) return `
       ${techSpecs}
       SUA MISSÃO: Gerar 50 perguntas EXCLUSIVAMENTE DO NÍVEL 1 (FÁCIL).
       - O campo "level" deve ser sempre 1.
       - Tópicos: Cores dos times, Cidades, Mascotes, Lendas (Jordan/LeBron), Regras básicas.
-      - PROIBIDO: Perguntas difíceis ou sobre jogadores desconhecidos.
     `;
 
     if (level === 2) return `
@@ -47,7 +45,6 @@ export default function QuizLab() {
       SUA MISSÃO: Gerar 50 perguntas EXCLUSIVAMENTE DO NÍVEL 2 (MÉDIO).
       - O campo "level" deve ser sempre 2.
       - Tópicos: Campeões recentes, Apelidos famosos, Recordes simples.
-      - Público: Fãs que acompanham a liga regularmente.
     `;
 
     if (level === 3) return `
@@ -55,7 +52,6 @@ export default function QuizLab() {
       SUA MISSÃO: Gerar 50 perguntas EXCLUSIVAMENTE DO NÍVEL 3 (DIFÍCIL).
       - O campo "level" deve ser sempre 3.
       - Tópicos: História anos 80/90, Detalhes de Draft, Estatísticas específicas.
-      - Público: Fãs Hardcore.
     `;
 
     if (level === 4) return `
@@ -63,7 +59,6 @@ export default function QuizLab() {
       SUA MISSÃO: Gerar 50 perguntas EXCLUSIVAMENTE DO NÍVEL 4 (MILHÃO/ESPECIALISTA).
       - O campo "level" deve ser sempre 4.
       - Tópicos: Recordes obscuros, Curiosidades extremas, História da ABA.
-      - Público: Enciclopédias humanas.
     `;
 
     return `
@@ -74,7 +69,7 @@ export default function QuizLab() {
   };
 
   const generateQuestions = async (level: number | 'mixed') => {
-    if (!apiKey) return toast.error("Insira sua API Key do Gemini 2.5!");
+    if (!apiKey) return toast.error("Insira sua API Key do Gemini!");
     
     setLoading(true);
     setGeneratedQuestions([]);
@@ -82,14 +77,13 @@ export default function QuizLab() {
     const finalPrompt = getLevelPrompt(level);
 
     try {
-      // --- CHAMADA API GEMINI 2.5 ---
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: finalPrompt }] }],
           generationConfig: {
-            temperature: 0.8, // Criatividade para não repetir
+            temperature: 0.9,
             maxOutputTokens: 8192,
           }
         })
@@ -97,37 +91,35 @@ export default function QuizLab() {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error?.message || `Erro ${response.status}: Verifique sua chave ou o modelo.`);
+        if (response.status === 503) throw new Error("O modelo da IA está sobrecarregado (Erro 503). Aguarde 30s.");
+        if (response.status === 404) throw new Error(`Modelo '${GEMINI_MODEL}' não encontrado.`);
+        throw new Error(errData.error?.message || "Erro na API");
       }
 
       const data = await response.json();
       let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
-      // Limpeza do JSON
       rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       
       let parsed;
       try {
         parsed = JSON.parse(rawText);
       } catch (e) {
-        console.error("Texto inválido da IA:", rawText);
-        // Tentativa de auto-correção simples (adicionar colchetes se faltar)
         if (!rawText.startsWith('[')) rawText = `[${rawText}`;
         if (!rawText.endsWith(']')) rawText = `${rawText}]`;
         try { parsed = JSON.parse(rawText); } catch (e2) { throw new Error("A IA gerou um formato inválido. Tente novamente."); }
       }
       
-      if (!Array.isArray(parsed)) throw new Error("A resposta não é uma lista de perguntas.");
+      if (!Array.isArray(parsed)) throw new Error("A resposta não é uma lista.");
 
-      // Processamento final
       const processed = parsed.map((q, i) => ({
         ...q,
-        level: level === 'mixed' ? q.level : level, // Garante o nível correto
+        level: level === 'mixed' ? q.level : level,
         sequence_num: Date.now() + i
       }));
 
       setGeneratedQuestions(processed);
-      toast.success(`Sucesso! ${processed.length} perguntas do Nível ${level === 'mixed' ? 'Misto' : level} geradas.`);
+      toast.success(`${processed.length} perguntas geradas!`);
 
     } catch (error: any) {
       toast.error(error.message);
@@ -157,7 +149,7 @@ export default function QuizLab() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bebas text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center gap-3">
-              <BrainCircuit /> NBA QuizLab <span className="text-sm text-gray-500 font-sans">v2.5 (Gemini Flash)</span>
+              <BrainCircuit /> NBA QuizLab <span className="text-sm text-gray-500 font-sans">v2.5</span>
             </h1>
             <Link href="/admin" className="text-gray-400 hover:text-white flex items-center gap-2">
                 <ArrowLeft size={20}/> Voltar
@@ -240,7 +232,7 @@ export default function QuizLab() {
                                 </tr>
                             ))}
                         </tbody>
-                    </div>
+                    </table>
                 </div>
             </div>
         )}
