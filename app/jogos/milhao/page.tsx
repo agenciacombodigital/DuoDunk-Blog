@@ -16,12 +16,7 @@ export default function MilhaoPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a2e]" />
 
       <div className="relative min-h-screen py-12 px-4 flex flex-col items-center">
-        <h1 className="font-bebas text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-[#ff00ff] to-[#00bfff] mb-2 drop-shadow-[0_0_10px_rgba(255,0,255,0.5)] select-none">
-          MILHÃO NBA
-        </h1>
-        <p className="text-gray-400 mb-12 font-inter font-medium tracking-wide">
-           O DESAFIO DEFINITIVO
-        </p>
+        {/* Título e Subtítulo removidos para usar apenas o logo do MilhaoInterface */}
         <MilhaoInterface />
       </div>
     </div>
