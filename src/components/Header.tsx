@@ -28,8 +28,8 @@ export default function Header() {
             <Link href="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
             <Link href="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
             <Link href="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
-            {/* ATUALIZADO: Texto e tamanho da fonte */}
-            <Link href="/jogos/milhao" className="text-yellow-400 hover:text-white transition-colors font-bebas tracking-wide text-lg">🏆 NBA Quiz</Link>
+            {/* Corrigido para manter o tom amarelo/ouro no hover */}
+            <Link href="/jogos/milhao" className="text-yellow-400 hover:text-yellow-300 transition-colors font-bebas tracking-wide text-lg">🏆 NBA Quiz</Link>
           </nav>
           
           {/* Sociais */}
