@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit } from 'lucide-react';
 import Link from 'next/link';
 
 export default function QuizAdmin() {
@@ -133,12 +133,20 @@ export default function QuizAdmin() {
           <h1 className="text-4xl font-bebas text-white">
             Gerenciar Perguntas - Milhão NBA
           </h1>
-          <Link 
-            href="/admin/quiz/settings"
-            className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
-          >
-            <Settings className="w-4 h-4" /> Configurações Visuais
-          </Link>
+          <div className="flex gap-3">
+            <Link 
+              href="/admin/quiz-lab"
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
+            >
+              <BrainCircuit className="w-4 h-4" /> Gerar Perguntas IA
+            </Link>
+            <Link 
+              href="/admin/quiz/settings"
+              className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
+            >
+              <Settings className="w-4 h-4" /> Configurações Visuais
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
