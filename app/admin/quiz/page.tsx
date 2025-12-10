@@ -61,7 +61,24 @@ export default function QuizAdmin() {
       setLoading(true);
       const toastId = toast.loading("Processando arquivo JSON...");
       try {
-        const json = JSON.parse(e.target?.result as string);
+        let rawText = e.target?.result as string;
+        
+        // 1. Sanitização: Corrige a concatenação de múltiplos arrays JSON (ex: `][` ou `] [`)
+        // Isso transforma `][` em `,` para que o JSON.parse funcione em um único array.
+        let sanitizedText = rawText.replace(/\]\s*\[/g, ',');
+
+        let json;
+        try {
+            json = JSON.parse(sanitizedText);
+        } catch (parseError) {
+            // Tenta envolver em colchetes se for uma lista de objetos separados por vírgula/quebra de linha
+            if (!sanitizedText.trim().startsWith('[')) {
+                sanitizedText = `[${sanitizedText.trim().replace(/,\s*$/, '')}]`;
+                json = JSON.parse(sanitizedText);
+            } else {
+                throw parseError;
+            }
+        }
 
         if (!Array.isArray(json)) throw new Error("O arquivo deve conter uma lista (array) de perguntas.");
 
