@@ -28,46 +28,105 @@ export function useMilhaoGame() {
     rookies: true 
   });
 
-  // --- LÓGICA DE SORTEIO ---
+  // --- LÓGICA ESTRONDOSA DE SORTEIO ---
+  const fetchUniqueQuestions = async (level: number, count: number, seenIds: string[]) => {
+    // Tenta buscar perguntas que o usuário NUNCA viu
+    const { data, error } = await supabase.rpc('get_random_questions', {
+      p_level: level,
+      p_limit: count,
+      p_exclude_ids: seenIds
+    });
+
+    if (error) {
+      console.error('Erro no RPC:', error);
+      return [];
+    }
+
+    // Se não encontrou o suficiente (ex: usuário já viu todas), busca sem filtro (reset parcial)
+    if (!data || data.length < count) {
+      console.warn(`Nível ${level}: Não há perguntas únicas suficientes. Resetando memória local para este nível.`);
+      
+      // Tenta buscar sem exclusão (resetando a memória local para este nível)
+      const { data: fallbackData } = await supabase.rpc('get_random_questions', {
+        p_level: level,
+        p_limit: count,
+        p_exclude_ids: [] // Busca sem exclusão
+      });
+      
+      // Se o fallback funcionar, retornamos e o startGame fará a limpeza do localStorage
+      return fallbackData || [];
+    }
+
+    return data;
+  };
+
   const startGame = useCallback(async () => {
     setLoading(true);
-    setGameState('start');
     
+    // 1. Recuperar memória do usuário
+    const storedSeen = localStorage.getItem('milhao_seen_ids');
+    let seenIds: string[] = storedSeen ? JSON.parse(storedSeen) : [];
+    let shouldClearAll = false;
+
     try {
-        // Busca um pool grande de perguntas para sortear
-        const { data: easy } = await supabase.from('milhao_questions').select('*').eq('level', 1).limit(50);
-        const { data: medium } = await supabase.from('milhao_questions').select('*').eq('level', 2).limit(50);
-        const { data: hard } = await supabase.from('milhao_questions').select('*').eq('level', 3).limit(50);
-        const { data: million } = await supabase.from('milhao_questions').select('*').eq('level', 4).limit(10);
+        // 2. Buscar perguntas inteligentes por nível
+        const easy = await fetchUniqueQuestions(1, 7, seenIds);
+        const medium = await fetchUniqueQuestions(2, 8, seenIds);
+        const hard = await fetchUniqueQuestions(3, 7, seenIds);
+        const million = await fetchUniqueQuestions(4, 1, seenIds);
 
-        if (easy && medium && hard && million) {
-            const shuffle = (arr: any[]) => arr.sort(() => Math.random() - 0.5);
+        const selectedQuestions = [...easy, ...medium, ...hard, ...million].filter(q => q.question && q.options && q.options.length === 4);
+
+        if (selectedQuestions.length === MAX_QUESTIONS) {
+            setQuestions(selectedQuestions);
             
-            const selectedQuestions = [
-                ...shuffle(easy).slice(0, 7),   // 7 Fáceis
-                ...shuffle(medium).slice(0, 8), // 8 Médias
-                ...shuffle(hard).slice(0, 7),   // 7 Difíceis
-                ...shuffle(million).slice(0, 1) // 1 Milhão
-            ].filter(q => q.question && q.options && q.options.length === 4); // Filtra inválidas
+            // 3. Atualizar memória (marcar as novas como vistas)
+            const newSeenIds = [...seenIds, ...selectedQuestions.map(q => q.id)];
+            localStorage.setItem('milhao_seen_ids', JSON.stringify(newSeenIds));
 
-            if (selectedQuestions.length === MAX_QUESTIONS) {
-                setQuestions(selectedQuestions);
+            setGameState('playing');
+            setCurrentQIndex(0);
+            setPrize(PRIZE_LADDER[0]);
+            setTimer(INITIAL_TIME);
+            setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
+            setCheatAttempts(0);
+        } else if (selectedQuestions.length > 0) {
+            // Se não encontrou 23, mas encontrou algumas (provavelmente porque o banco está pequeno)
+            toast.error(`Não há perguntas suficientes cadastradas! (Encontradas: ${selectedQuestions.length}/${MAX_QUESTIONS})`);
+        } else {
+            // Se não encontrou NENHUMA, o usuário viu todas as perguntas do banco.
+            shouldClearAll = true;
+            toast.warning("Parabéns! Você zerou o banco de perguntas. Reiniciando o ciclo.");
+            
+            // Tenta buscar novamente após a limpeza
+            const easyFallback = await fetchUniqueQuestions(1, 7, []);
+            const mediumFallback = await fetchUniqueQuestions(2, 8, []);
+            const hardFallback = await fetchUniqueQuestions(3, 7, []);
+            const millionFallback = await fetchUniqueQuestions(4, 1, []);
+            
+            const fallbackQuestions = [...easyFallback, ...mediumFallback, ...hardFallback, ...millionFallback].filter(q => q.question && q.options && q.options.length === 4);
+            
+            if (fallbackQuestions.length === MAX_QUESTIONS) {
+                setQuestions(fallbackQuestions);
+                const newSeenIds = fallbackQuestions.map(q => q.id);
+                localStorage.setItem('milhao_seen_ids', JSON.stringify(newSeenIds));
                 setGameState('playing');
                 setCurrentQIndex(0);
-                setPrize(PRIZE_LADDER[0]); // Começa com 0
+                setPrize(PRIZE_LADDER[0]);
                 setTimer(INITIAL_TIME);
                 setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
                 setCheatAttempts(0);
             } else {
-                toast.error(`Erro: Banco de perguntas incompleto. Encontradas: ${selectedQuestions.length}/${MAX_QUESTIONS}.`);
+                toast.error(`Falha crítica: Banco de perguntas vazio ou incompleto. Encontradas: ${fallbackQuestions.length}/${MAX_QUESTIONS}`);
             }
-        } else {
-          toast.error("Erro de conexão com o banco.");
         }
     } catch (e) {
-        console.error("Erro ao carregar perguntas:", e);
-        toast.error("Falha ao carregar perguntas do Quiz.");
+        console.error("Erro ao iniciar o jogo:", e);
+        toast.error("Falha ao iniciar o jogo.");
     } finally {
+        if (shouldClearAll) {
+            localStorage.removeItem('milhao_seen_ids');
+        }
         setLoading(false);
     }
   }, []);
@@ -149,12 +208,12 @@ export function useMilhaoGame() {
   
   // --- LÓGICA DAS AJUDAS ---
   const useFiftyFifty = () => {
-    if (!lifelines.fifty || !currentQuestion) return null;
+    if (!lifelines.fifty || !questions[currentQIndex]) return null;
     
     setLifelines(prev => ({ ...prev, fifty: false }));
     toast.info("Ajuda 50/50 usada!", { description: "Duas opções incorretas foram removidas." });
 
-    const correctIndex = currentQuestion.correct_index;
+    const correctIndex = questions[currentQIndex].correct_index;
     const incorrectOptions = [0, 1, 2, 3].filter(i => i !== correctIndex);
     
     // Remove duas opções incorretas aleatoriamente
@@ -164,7 +223,7 @@ export function useMilhaoGame() {
   };
   
   const useSkip = () => {
-    if (lifelines.skip <= 0 || !currentQuestion || currentQIndex + 1 >= questions.length) return;
+    if (lifelines.skip <= 0 || !questions[currentQIndex] || currentQIndex + 1 >= questions.length) return;
     
     setLifelines(prev => ({ ...prev, skip: prev.skip - 1 }));
     toast.info("Ajuda Pular usada!", { description: "Pulando para a próxima pergunta." });
@@ -175,14 +234,14 @@ export function useMilhaoGame() {
   };
   
   const useCards = () => {
-    if (!lifelines.cards || !currentQuestion) return;
+    if (!lifelines.cards || !questions[currentQIndex]) return;
     setLifelines(prev => ({ ...prev, cards: false }));
     toast.info("Ajuda Cartas usada!", { description: "Aguarde a resposta da comunidade." });
     // Lógica de delay simulado para a resposta da comunidade
   };
   
   const useRookies = () => {
-    if (!lifelines.rookies || !currentQuestion) return;
+    if (!lifelines.rookies || !questions[currentQIndex]) return;
     setLifelines(prev => ({ ...prev, rookies: false }));
     toast.info("Ajuda Rookies usada!", { description: "Aguarde a opinião dos novatos." });
     // Lógica de delay simulado para a resposta dos novatos
