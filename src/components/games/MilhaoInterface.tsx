@@ -7,10 +7,10 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Zap, RefreshCw, X, AlertTriangle, SkipForward, Users, BookOpen, Play } from 'lucide-react';
 import MilhaoTimer from './MilhaoTimer';
-import { supabase } from '@/lib/supabase'; // Importando supabase
+import { supabase } from '@/lib/supabase'; // Mantido para uso futuro, mas fetch removido
 
 // Interface para as configurações visuais
-interface QuizSettings {
+export interface QuizSettings {
   logo_url?: string;
   victory_image_url?: string;
   defeat_image_url?: string;
@@ -25,7 +25,7 @@ const DEFAULT_SETTINGS: QuizSettings = {
 };
 
 
-export default function MilhaoInterface() {
+export default function MilhaoInterface({ initialSettings }: { initialSettings: QuizSettings }) {
   const { 
     gameState, 
     setGameState,
@@ -51,22 +51,9 @@ export default function MilhaoInterface() {
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [settings, setSettings] = useState<QuizSettings>(DEFAULT_SETTINGS); // Estado para settings
-
-  // Buscar configurações ao carregar
-  useEffect(() => {
-    async function loadSettings() {
-      try {
-        const { data } = await supabase.from('quiz_settings').select('*').eq('id', 1).single();
-        if (data) {
-          setSettings(prev => ({ ...prev, ...data }));
-        }
-      } catch (e) {
-        console.error("Erro ao carregar settings:", e);
-      }
-    }
-    loadSettings();
-  }, []);
+  
+  // Inicia o estado com as configurações passadas via props
+  const [settings] = useState<QuizSettings>({ ...DEFAULT_SETTINGS, ...initialSettings }); 
 
   // Limpa as opções escondidas quando muda a pergunta
   useEffect(() => {
@@ -108,27 +95,34 @@ export default function MilhaoInterface() {
   // --- TELA INICIAL (NOVO DESIGN) ---
   if (gameState === 'start') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
         
-        {/* LOGO PERSONALIZADO OU TEXTO PADRÃO */}
+        {/* LOGO JÁ CARREGADO (SEM PISCAR) */}
         {settings.logo_url ? (
           <img 
             src={settings.logo_url} 
             alt="Milhão NBA" 
             className="w-full max-w-md md:max-w-lg object-contain drop-shadow-[0_0_25px_rgba(255,0,255,0.6)] mb-4"
+            // priority="true" // Removido, pois não é o componente Image do Next.js
           />
         ) : (
-          <h2 className="text-5xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-r from-[#ff00ff] to-[#00bfff] drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
-            O DESAFIO DO MILHÃO
-          </h2>
+          <h1 className="text-6xl md:text-8xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff] mb-4 drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
+            MILHÃO NBA
+          </h1>
         )}
 
-        <p className="text-gray-300 text-lg max-w-md font-inter">
-          Responda corretamente 23 perguntas sobre a NBA e conquiste o prêmio máximo.
-        </p>
-        <button onClick={startGame} className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-black font-black text-2xl py-4 px-12 rounded-full hover:scale-105 transition-transform shadow-xl font-oswald uppercase tracking-wide">
-          ENTRAR EM QUADRA
+        <h2 className="text-2xl md:text-4xl font-bebas text-white tracking-widest uppercase">
+          O Desafio Definitivo
+        </h2>
+        
+        <button 
+          onClick={startGame} 
+          disabled={loading}
+          className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-white font-black text-2xl py-4 px-16 rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,191,255,0.6)] font-oswald uppercase tracking-wide"
+        >
+          {loading ? 'Carregando...' : 'ENTRAR EM QUADRA'}
         </button>
+
       </div>
     );
   }
