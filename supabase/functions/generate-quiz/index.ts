@@ -5,8 +5,8 @@ const API_KEY = Deno.env.get('GEMINI_API_KEY_QUIZ')
 // Lista de modelos para tentar em ordem de preferência
 const MODELS = [
   "gemini-2.5-flash", 
-  "gemini-2.5-flash-lite-preview-09-2025", 
-  "gemini-2.0-flash-exp"
+  "gemini-2.0-flash-exp",
+  "gemini-1.5-flash"
 ];
 
 const corsHeaders = {
@@ -22,7 +22,7 @@ serve(async (req) => {
     
     if (!API_KEY) throw new Error('Chave GEMINI_API_KEY_QUIZ não configurada.')
 
-    // 1. Definição do Prompt (Mantida)
+    // 1. Definição do Prompt (Ajustado para o novo formato)
     let promptContext = ""
     if (level === 1) promptContext = "NÍVEL 1 (FÁCIL). Foco: Cores, Mascotes, Lendas, Regras."
     else if (level === 2) promptContext = "NÍVEL 2 (MÉDIO). Foco: Campeões recentes, Recordes simples."
@@ -34,15 +34,17 @@ serve(async (req) => {
       ATUE COMO ESPECIALISTA EM NBA.
       Gere um ARRAY JSON com 50 perguntas de quiz em Português do Brasil (PT-BR).
       ${promptContext}
-      FORMATO ESTRITO (JSON ONLY):
-      [{"level": ${level === 'mixed' ? '1-4' : level}, "question": "...", "options": ["A","B","C","D"], "correct_index": 0, "category": "..."}]
-      REGRA: Sem markdown. Sem vírgula final.
+      
+      Use este esquema JSON exato:
+      [
+        {"level": 1, "question": "...", "options": ["A","B","C","D"], "correct_index": 0, "category": "..."}
+      ]
     `
 
     let lastError = null;
     let successData = null;
 
-    // 2. Loop de Tentativa (Rotação de Modelos)
+    // 2. Rotação de Modelos
     for (const model of MODELS) {
       try {
         console.log(`[QuizGen] Tentando modelo: ${model}...`)
@@ -52,28 +54,29 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.9, maxOutputTokens: 8192 }
+            generationConfig: { 
+                temperature: 0.9, 
+                maxOutputTokens: 8192,
+                responseMimeType: "application/json" // FORÇA JSON VÁLIDO
+            }
           })
         })
 
         if (!response.ok) {
           const errorBody = await response.text();
-          // Se for erro de servidor (5xx) ou cota (429), lança para tentar o próximo
           if (response.status >= 500 || response.status === 429) {
-            throw new Error(`Erro ${response.status} no modelo ${model}: ${errorBody}`);
+            throw new Error(`Erro ${response.status}: ${errorBody}`);
           }
-          // Outros erros (400) são fatais (ex: prompt inválido), então paramos
           throw new Error(`Erro Fatal ${response.status}: ${errorBody}`);
         }
 
         successData = await response.json();
         console.log(`[QuizGen] Sucesso com o modelo: ${model}`);
-        break; // Sucesso! Sai do loop.
+        break; 
 
       } catch (error: any) {
         console.warn(`[QuizGen] Falha no modelo ${model}: ${error.message}`);
         lastError = error;
-        // Continua para o próximo modelo...
       }
     }
 
@@ -81,10 +84,9 @@ serve(async (req) => {
       throw new Error(`Todos os modelos falharam. Último erro: ${lastError?.message}`);
     }
 
-    // 3. Processamento
+    // 3. Processamento Seguro (Apenas trim, pois o modo JSON deve garantir a validade)
     let rawText = successData.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
-    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim()
-    rawText = rawText.replace(/,\s*\]/g, ']')
+    rawText = rawText.trim();
 
     return new Response(rawText, {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
