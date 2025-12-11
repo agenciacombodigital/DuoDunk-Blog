@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Zap, RefreshCw, X, AlertTriangle, SkipForward, Users, BookOpen, Play } from 'lucide-react';
+import { RefreshCw, X, AlertTriangle, Play } from 'lucide-react'; // Removendo Zap, SkipForward, Users, BookOpen
 import MilhaoTimer from './MilhaoTimer';
 import { supabase } from '@/lib/supabase'; // Mantido para uso futuro, mas fetch removido
 
@@ -35,11 +35,6 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     startGame, 
     handleAnswer, 
     handleStop,
-    useFiftyFifty, 
-    useSkip,
-    useCards,
-    useRookies,
-    lifelines,
     timer,
     cheatAttempts,
     currentQIndex,
@@ -74,16 +69,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     }, 1500);
   };
   
-  const handleUseFiftyFifty = () => {
-    if (isAnswerLocked || !lifelines.fifty) return;
-    const optionsToRemove = useFiftyFifty(); 
-    if(optionsToRemove) setHiddenOptions(optionsToRemove);
-  };
-  
-  const handleUseSkip = () => {
-    if (isAnswerLocked || lifelines.skip <= 0) return;
-    useSkip();
-  };
+  // As funções de ajuda foram removidas, assim como as chamadas no código.
   
   const handleResumeGame = () => {
     setGameState('playing');
@@ -183,8 +169,6 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   
   if (!currentQuestion) return null;
 
-  const isLastQuestion = currentQIndex + 1 >= questions.length;
-
   return (
     <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
       
@@ -194,37 +178,8 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         {/* Timer */}
         <MilhaoTimer time={timer} initialTime={INITIAL_TIME} />
 
-        {/* Ajudas (NOVO DESIGN E CONEXÃO) */}
-        <div className="flex justify-center gap-4 mb-6 bg-black/60 backdrop-blur p-4 rounded-xl border border-white/10">
-          <LifelineButton 
-            icon={Zap} 
-            label="50/50" 
-            onClick={handleUseFiftyFifty} 
-            disabled={!lifelines.fifty || isAnswerLocked} 
-            active={lifelines.fifty}
-          />
-          <LifelineButton 
-            icon={SkipForward} 
-            label={`Pular (${lifelines.skip})`} 
-            onClick={handleUseSkip} 
-            disabled={lifelines.skip <= 0 || isAnswerLocked || isLastQuestion} 
-            active={lifelines.skip > 0}
-          />
-          <LifelineButton 
-            icon={BookOpen} 
-            label="Cartas" 
-            onClick={useCards} 
-            disabled={!lifelines.cards || isAnswerLocked} 
-            active={lifelines.cards}
-          />
-          <LifelineButton 
-            icon={Users} 
-            label="Rookies" 
-            onClick={useRookies} 
-            disabled={!lifelines.rookies || isAnswerLocked} 
-            active={lifelines.rookies}
-          />
-        </div>
+        {/* Ajudas (REMOVIDO) */}
+        <div className="mb-6 h-10" /> 
 
         {/* Pergunta */}
         <motion.div 
@@ -317,24 +272,4 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   );
 }
 
-interface LifelineProps {
-    icon: React.ElementType;
-    label: string;
-    onClick: () => void;
-    disabled: boolean;
-    active: boolean;
-}
-
-const LifelineButton: React.FC<LifelineProps> = ({ icon: Icon, label, onClick, disabled, active }) => (
-    <button 
-        onClick={onClick} 
-        disabled={disabled}
-        className={cn(
-            "flex flex-col items-center justify-center p-3 rounded-xl text-xs font-bold font-inter transition-all w-1/4",
-            active && !disabled ? "bg-[#ff00ff] hover:bg-[#cc00cc] text-white shadow-md shadow-[#ff00ff]/20" : "bg-gray-700 text-gray-400 opacity-50 cursor-not-allowed"
-        )}
-    >
-        <Icon size={20} className="mb-1" />
-        {label}
-    </button>
-);
+// Removendo LifelineButton, pois não é mais usado.

@@ -20,14 +20,6 @@ export function useMilhaoGame() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const visibilityRef = useRef(true); // Para controle de trapaça
 
-  // Ajudas
-  const [lifelines, setLifelines] = useState({ 
-    skip: 3,      
-    fifty: true,  
-    cards: true,  
-    rookies: true 
-  });
-
   // --- LÓGICA ESTRONDOSA DE SORTEIO ---
   const fetchUniqueQuestions = async (level: number, count: number, seenIds: string[]) => {
     // Tenta buscar perguntas que o usuário NUNCA viu
@@ -88,7 +80,6 @@ export function useMilhaoGame() {
             setCurrentQIndex(0);
             setPrize(PRIZE_LADDER[0]);
             setTimer(INITIAL_TIME);
-            setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
             setCheatAttempts(0);
         } else if (selectedQuestions.length > 0) {
             // Se não encontrou 23, mas encontrou algumas (provavelmente porque o banco está pequeno)
@@ -114,7 +105,6 @@ export function useMilhaoGame() {
                 setCurrentQIndex(0);
                 setPrize(PRIZE_LADDER[0]);
                 setTimer(INITIAL_TIME);
-                setLifelines({ skip: 3, fifty: true, cards: true, rookies: true });
                 setCheatAttempts(0);
             } else {
                 toast.error(`Falha crítica: Banco de perguntas vazio ou incompleto. Encontradas: ${fallbackQuestions.length}/${MAX_QUESTIONS}`);
@@ -206,46 +196,7 @@ export function useMilhaoGame() {
       toast.info("Você parou o jogo.", { description: `Prêmio garantido: R$ ${prize.toLocaleString('pt-BR')}.` });
   };
   
-  // --- LÓGICA DAS AJUDAS ---
-  const useFiftyFifty = () => {
-    if (!lifelines.fifty || !questions[currentQIndex]) return null;
-    
-    setLifelines(prev => ({ ...prev, fifty: false }));
-    toast.info("Ajuda 50/50 usada!", { description: "Duas opções incorretas foram removidas." });
-
-    const correctIndex = questions[currentQIndex].correct_index;
-    const incorrectOptions = [0, 1, 2, 3].filter(i => i !== correctIndex);
-    
-    // Remove duas opções incorretas aleatoriamente
-    const optionsToRemove = incorrectOptions.sort(() => Math.random() - 0.5).slice(0, 2);
-    
-    return optionsToRemove;
-  };
-  
-  const useSkip = () => {
-    if (lifelines.skip <= 0 || !questions[currentQIndex] || currentQIndex + 1 >= questions.length) return;
-    
-    setLifelines(prev => ({ ...prev, skip: prev.skip - 1 }));
-    toast.info("Ajuda Pular usada!", { description: "Pulando para a próxima pergunta." });
-    
-    const nextIndex = currentQIndex + 1;
-    setPrize(PRIZE_LADDER[nextIndex]);
-    setCurrentQIndex(nextIndex);
-  };
-  
-  const useCards = () => {
-    if (!lifelines.cards || !questions[currentQIndex]) return;
-    setLifelines(prev => ({ ...prev, cards: false }));
-    toast.info("Ajuda Cartas usada!", { description: "Aguarde a resposta da comunidade." });
-    // Lógica de delay simulado para a resposta da comunidade
-  };
-  
-  const useRookies = () => {
-    if (!lifelines.rookies || !questions[currentQIndex]) return;
-    setLifelines(prev => ({ ...prev, rookies: false }));
-    toast.info("Ajuda Rookies usada!", { description: "Aguarde a opinião dos novatos." });
-    // Lógica de delay simulado para a resposta dos novatos
-  };
+  // As funções de ajuda foram removidas.
 
   return { 
       gameState, 
@@ -256,17 +207,18 @@ export function useMilhaoGame() {
       startGame, 
       handleAnswer, 
       handleStop,
-      lifelines, 
-      setLifelines,
       timer,
       cheatAttempts,
       currentQIndex,
       questions,
-      useFiftyFifty,
-      useSkip,
-      useCards,
-      useRookies,
       MAX_QUESTIONS,
       INITIAL_TIME,
+      // Retornamos funções dummy para manter a compatibilidade da interface, se necessário,
+      // mas o ideal é remover as chamadas no componente de interface.
+      useFiftyFifty: () => { toast.error("Ajuda desativada."); return null; },
+      useSkip: () => { toast.error("Ajuda desativada."); },
+      useCards: () => { toast.error("Ajuda desativada."); },
+      useRookies: () => { toast.error("Ajuda desativada."); },
+      lifelines: { skip: 0, fifty: false, cards: false, rookies: false },
   };
 }
