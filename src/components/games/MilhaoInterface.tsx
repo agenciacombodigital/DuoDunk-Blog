@@ -3,7 +3,7 @@ import { useMilhaoGame } from '@/hooks/useMilhaoGame';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Trophy, ShieldAlert, User, X, Crown, Loader2, Play, Home } from 'lucide-react';
+import { Trophy, ShieldAlert, User, X, Crown, Loader2, Play, Home, AlertCircle } from 'lucide-react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import MilhaoTimer from './MilhaoTimer';
@@ -17,7 +17,7 @@ interface QuizSettings {
 export default function MilhaoInterface({ initialSettings }: { initialSettings: QuizSettings }) {
   const { 
     gameState, setGameState, currentQuestion, prize, loading: gameLoading, startGame, handleAnswer, 
-    handleStop, timer, currentQIndex
+    handleStop, timer 
   } = useMilhaoGame();
   
   const [settings] = useState<QuizSettings>(initialSettings);
@@ -31,7 +31,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   // Estados do Jogador
   const [playerName, setPlayerName] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
-  const [checkingName, setCheckingName] = useState(false);
+  const [checkingName, setCheckingName] = useState(false); // Loading da verificação de nome
 
   // Estados Visuais (Feedback)
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -42,22 +42,32 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     const handleVisibilityChange = () => {
       if (document.hidden && gameState === 'playing') {
         setGameState('lost');
-        toast.error("FALTA TÉCNICA! Saiu da quadra, está eliminado.");
+        toast.error("FALTA TÉCNICA! Saiu da quadra, está eliminado.", { icon: '🚫' });
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [gameState, setGameState]);
 
-  // --- 2. SALVAR RESULTADO ---
+  // --- 2. SALVAR RESULTADO (COM TRATAMENTO DE ERRO) ---
   useEffect(() => {
     if ((gameState === 'won' || gameState === 'lost' || gameState === 'stopped') && !isAnonymous && playerName && prize > 0) {
         const saveScore = async () => {
-            await supabase.from('quiz_rankings').insert({
-                player_name: playerName.substring(0, 150),
+            const { error } = await supabase.from('quiz_rankings').insert({
+                player_name: playerName.trim(),
                 prize_won: prize,
             });
-            toast.success("Pontuação salva no Ranking!");
+
+            if (error) {
+                // Código 23505 = Violação de Unicidade (Nome duplicado que passou pelo filtro)
+                if (error.code === '23505') {
+                    toast.error(`O nome "${playerName}" já tem um recorde nesta semana!`);
+                } else {
+                    console.error("Erro ao salvar:", error);
+                }
+            } else {
+                toast.success("Pontuação salva no Ranking!");
+            }
         };
         saveScore();
     }
@@ -76,26 +86,34 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
       setLoadingRanking(false);
   };
 
-  // --- 4. START COM VERIFICAÇÃO ---
+  // --- 4. START COM VERIFICAÇÃO DE NOME ---
   const handleStartWithRegistration = async (anonymous: boolean) => {
     if (!anonymous) {
         const name = playerName.trim();
+        // Validação de tamanho
         if (!name || name.split(' ').length < 2) {
             return toast.error("Digite Nome e Sobrenome para validar.");
         }
+        
         setCheckingName(true);
-        // Verifica duplicidade exata no banco
+        
+        // Verifica no banco se o nome já existe (Case Insensitive)
         const { data } = await supabase
             .from('quiz_rankings')
             .select('id')
-            .ilike('player_name', name)
+            .ilike('player_name', name) 
             .limit(1);
+            
         setCheckingName(false);
 
         if (data && data.length > 0) {
-            return toast.error("Este nome já jogou esta semana! Use outro (ex: Nome Sobrenome 2).");
+            return toast.error("Este nome já jogou esta semana! Adicione um diferencial (ex: Jr, 2, ou apelido).", {
+                duration: 5000,
+                icon: <AlertCircle className="text-red-500" />
+            });
         }
     }
+    
     setIsAnonymous(anonymous);
     setShowRegistration(false);
     setSelectedOption(null);
@@ -103,15 +121,13 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     startGame();
   };
 
-  // --- 5. LÓGICA VISUAL DA RESPOSTA ---
+  // --- 5. VISUAL DA RESPOSTA (CORES DUODUNK) ---
   const onOptionClick = (idx: number) => {
       if (selectedOption !== null) return; 
-      if (!currentQuestion) return;
 
       setSelectedOption(idx);
       const isCorrect = idx === currentQuestion.correct_index;
       
-      // Feedback visual imediato
       setAnswerStatus(isCorrect ? 'correct' : 'wrong');
 
       setTimeout(() => {
@@ -122,16 +138,13 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
           }
       }, 1000);
   };
-  
-  // --- 6. VOLTAR AO MENU ---
-  const handleBackToMenu = () => {
-      setGameState('start'); // Volta para a tela inicial do componente
-  };
 
-  // --- TELA INICIAL (Mobile First) ---
+  const handleBackToMenu = () => setGameState('start');
+
+  // --- TELA INICIAL ---
   if (gameState === 'start') {
     return (
-      <div className="flex flex-col items-center justify-center text-center w-full min-h-screen py-12 px-6">
+      <div className="flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto px-4 relative min-h-[60vh]">
         
         {/* MODAL RANKING */}
         {showRanking && (
@@ -148,12 +161,12 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
                                 <div key={i} className="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:bg-gray-800 transition">
                                     <div className="flex items-center gap-3">
                                         <span className={`font-bold w-6 text-center ${i < 3 ? 'text-yellow-400 text-lg' : 'text-gray-500'}`}>{i+1}º</span>
-                                        <span className="text-white font-medium text-sm truncate max-w-[140px] md:max-w-[200px]">{p.player_name}</span>
+                                        <span className="text-white font-medium text-sm truncate max-w-[140px] uppercase">{p.player_name}</span>
                                     </div>
                                     <span className="text-cyan-400 font-bold font-oswald text-sm">R$ {Number(p.prize_won).toLocaleString('pt-BR', { notation: 'compact' })}</span>
                                 </div>
                             ))}
-                            {rankingData.length === 0 && <p className="text-center text-gray-500 py-6 text-sm">Ranking vazio. Seja o primeiro a entrar!</p>}
+                            {rankingData.length === 0 && <p className="text-center text-gray-500 py-6 text-sm">Seja o primeiro a entrar no ranking!</p>}
                         </div>
                     )}
                 </div>
@@ -165,7 +178,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                 <div className="w-full max-w-sm bg-[#121212] border border-[#333] rounded-2xl p-6 md:p-8 shadow-[0_0_60px_rgba(0,191,255,0.2)] animate-in zoom-in-95 duration-200">
                     <h2 className="text-2xl md:text-3xl font-bebas text-center mb-2 text-white">VENCEDORES DA SEMANA</h2>
-                    <p className="text-gray-400 text-xs text-center mb-6">Para concorrer aos prêmios DuoDunk!</p>
+                    <p className="text-gray-400 text-xs text-center mb-6">Ranking reseta toda segunda-feira!</p>
                     
                     <div className="space-y-4 mb-6">
                         <div className="space-y-1">
@@ -241,7 +254,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     );
   }
 
-  // --- TELA DE VITÓRIA / DERROTA ---
+  // --- TELA DE RESULTADO ---
   if (gameState === 'won' || gameState === 'lost' || gameState === 'stopped') {
     const finalPrize = gameState === 'won' ? PRIZE_LADDER[23] : prize; 
     const isWin = gameState === 'won';
@@ -276,7 +289,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   // --- TELA DO JOGO (GAMEPLAY) ---
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full justify-start md:justify-center px-4 py-8">
-        {/* HUD ATUALIZADO */}
+        {/* HUD */}
         <div className="w-full flex justify-between items-center mb-6 md:mb-8">
             {/* LADO ESQUERDO: Botão Home + Prêmio */}
             <div className="flex items-center gap-4">
@@ -302,8 +315,8 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
             </div>
         </div>
 
-        {/* PERGUNTA CARD */}
-        <div className="w-full bg-gradient-to-b from-[#1a1a1a] to-black border border-white/10 rounded-2xl p-6 md:p-10 mb-6 md:mb-8 text-center shadow-lg relative overflow-hidden group">
+        {/* PERGUNTA */}
+         <div className="w-full bg-gradient-to-b from-[#1a1a1a] to-black border border-white/10 rounded-2xl p-6 md:p-10 mb-6 md:mb-8 text-center shadow-lg relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#ff00ff] to-[#00bfff]" />
             <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-3 block">
                 Nível {currentQIndex + 1} • {currentQuestion?.category}
@@ -313,17 +326,16 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
             </h1>
         </div>
 
-        {/* OPÇÕES (MOBILE: 1 COLUNA, DESKTOP: 2) */}
+        {/* OPÇÕES (DESIGN DUODUNK) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full mb-8">
             {currentQuestion?.options.map((opt, idx) => {
-                // Lógica de Cores Visual
                 let btnStyle = "bg-white/5 border-white/10 text-gray-300 hover:border-[#ff00ff] hover:text-white"; 
                 
                 if (selectedOption === idx) {
                     if (answerStatus === 'correct') btnStyle = "bg-[#00bfff] border-[#00bfff] text-black shadow-[0_0_15px_rgba(0,191,255,0.6)] scale-[1.02]";
                     else if (answerStatus === 'wrong') btnStyle = "bg-red-600 border-red-600 text-white";
                 } else if (selectedOption !== null) {
-                    btnStyle = "bg-black/20 border-white/5 text-gray-600 opacity-50"; // Apaga as outras
+                    btnStyle = "bg-black/20 border-white/5 text-gray-600 opacity-50"; 
                 }
 
                 return (
