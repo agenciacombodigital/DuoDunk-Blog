@@ -17,7 +17,7 @@ interface QuizSettings {
 export default function MilhaoInterface({ initialSettings }: { initialSettings: QuizSettings }) {
   const { 
     gameState, setGameState, currentQuestion, prize, loading: gameLoading, startGame, handleAnswer, 
-    handleStop, timer 
+    handleStop, timer, currentQIndex, questions // <-- ADICIONADO currentQIndex e questions
   } = useMilhaoGame();
   
   const [settings] = useState<QuizSettings>(initialSettings);
