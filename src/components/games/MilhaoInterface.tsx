@@ -5,17 +5,14 @@ import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { RefreshCw, X, AlertTriangle, Play, Clock, Zap, Shield, Users, ShieldAlert, User, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, X, AlertTriangle, Play, Clock, Zap, Shield, Users, ShieldAlert, User, CheckCircle2, Trophy, Crown, Loader2 } from 'lucide-react';
 import MilhaoTimer from './MilhaoTimer';
 import { supabase } from '@/lib/supabase';
 
-// Interface para tipagem
 interface QuizSettings {
   logo_url?: string;
   victory_image_url?: string;
   defeat_image_url?: string;
-  cards_image_url?: string;
-  rookies_image_url?: string;
 }
 
 const DEFAULT_SETTINGS: QuizSettings = {
@@ -27,47 +24,41 @@ const DEFAULT_SETTINGS: QuizSettings = {
 
 export default function MilhaoInterface({ initialSettings }: { initialSettings: QuizSettings }) {
   const { 
-    gameState, 
-    setGameState,
-    currentQuestion, 
-    prize, 
-    loading, 
-    startGame, 
-    handleAnswer, 
-    handleStop,
-    timer,
-    currentQIndex,
-    questions,
-    MAX_QUESTIONS,
-    INITIAL_TIME,
+    gameState, setGameState, currentQuestion, prize, loading: gameLoading, startGame, handleAnswer, 
+    handleStop, timer 
   } = useMilhaoGame();
   
-  const [isAnswerLocked, setIsAnswerLocked] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [settings] = useState<QuizSettings>(initialSettings);
   
-  // Inicia o estado JÁ com os dados vindos do servidor (Zero Delay)
-  const settings = { ...DEFAULT_SETTINGS, ...initialSettings }; 
-
-  // Estados do Cadastro (Simplificado: Só Nome)
+  // Estados de Interface
   const [showRegistration, setShowRegistration] = useState(false);
+  const [showRanking, setShowRanking] = useState(false);
+  const [rankingData, setRankingData] = useState<any[]>([]);
+  const [loadingRanking, setLoadingRanking] = useState(false);
+  
+  // Estados do Jogador
   const [playerName, setPlayerName] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [checkingName, setCheckingName] = useState(false);
+
+  // Estados Visuais (Feedback de Resposta)
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [answerStatus, setAnswerStatus] = useState<'correct' | 'wrong' | null>(null);
 
   // --- 1. ANTI-CHEAT ---
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && gameState === 'playing') {
         setGameState('lost');
-        toast.error("FALTA TÉCNICA! Você saiu da aba do jogo.");
+        toast.error("FALTA TÉCNICA! Saiu da quadra, está eliminado.");
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [gameState, setGameState]);
 
-  // --- 2. SALVAR RESULTADO (RANKING) ---
+  // --- 2. SALVAR RESULTADO ---
   useEffect(() => {
-    // Salva apenas Nome e Prêmio
     if ((gameState === 'won' || gameState === 'lost' || gameState === 'stopped') && !isAnonymous && playerName && prize > 0) {
         const saveScore = async () => {
             await supabase.from('quiz_rankings').insert({
@@ -80,99 +71,172 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     }
   }, [gameState, isAnonymous, playerName, prize]);
 
-  const handleStartWithRegistration = (anonymous: boolean) => {
+  // --- 3. BUSCAR RANKING ---
+  const fetchRanking = async () => {
+      setLoadingRanking(true);
+      setShowRanking(true);
+      const { data } = await supabase
+        .from('quiz_rankings')
+        .select('player_name, prize_won')
+        .order('prize_won', { ascending: false })
+        .limit(10);
+      
+      setRankingData(data || []);
+      setLoadingRanking(false);
+  };
+
+  // --- 4. INICIAR JOGO (COM VERIFICAÇÃO DE NOME) ---
+  const handleStartWithRegistration = async (anonymous: boolean) => {
     if (!anonymous) {
-        if (!playerName.trim() || playerName.trim().split(' ').length < 2) {
-            return toast.error("Por favor, digite Nome e Sobrenome.");
+        const name = playerName.trim();
+        if (!name || name.split(' ').length < 2) {
+            return toast.error("Digite Nome e Sobrenome para validar.");
+        }
+
+        setCheckingName(true);
+        // Verifica duplicidade no banco
+        const { data } = await supabase
+            .from('quiz_rankings')
+            .select('id')
+            .ilike('player_name', name)
+            .limit(1);
+
+        setCheckingName(false);
+
+        if (data && data.length > 0) {
+            return toast.error("Este nome já está no Ranking desta semana! Use outro ou adicione um diferencial.");
         }
     }
+    
     setIsAnonymous(anonymous);
     setShowRegistration(false);
+    // Reseta estados visuais
+    setSelectedOption(null);
+    setAnswerStatus(null);
     startGame();
   };
 
-  // Limpa as opções escondidas quando muda a pergunta
-  useEffect(() => {
-    setSelectedOption(null);
-    setIsAnswerLocked(false);
-  }, [currentQuestion]);
+  // --- 5. LÓGICA DE RESPOSTA VISUAL ---
+  const onOptionClick = (idx: number) => {
+      if (selectedOption !== null) return; // Bloqueia múltiplos cliques
+      if (!currentQuestion) return;
 
-  const handleSelectAnswer = (selectedIndex: number) => {
-    if (isAnswerLocked) return;
-    
-    setIsAnswerLocked(true);
-    setSelectedOption(selectedIndex);
-    
-    // Dá um pequeno delay para a animação antes de processar
-    setTimeout(() => {
-      handleAnswer(selectedIndex);
-    }, 1500);
+      setSelectedOption(idx);
+      
+      const isCorrect = idx === currentQuestion.correct_index;
+      setAnswerStatus(isCorrect ? 'correct' : 'wrong');
+
+      // Delay para mostrar a cor antes de avançar
+      setTimeout(() => {
+          handleAnswer(idx);
+          // Reseta visual apenas se avançar (se perder, a tela muda)
+          if (isCorrect) {
+              setSelectedOption(null);
+              setAnswerStatus(null);
+          }
+      }, 1000); // 1 segundo de suspense
   };
   
   const isOptionEliminated = (index: number) => {
     return false;
   };
 
-  if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
+  if (gameLoading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
 
   // --- TELA INICIAL ---
   if (gameState === 'start') {
-    if (showRegistration) {
-        return (
-            <div className="w-full max-w-md bg-[#121212] border border-[#333] rounded-2xl p-8 shadow-[0_0_60px_rgba(0,191,255,0.2)] animate-in zoom-in duration-300">
-                <h2 className="text-3xl font-bebas text-center mb-2 text-white">VENCEDORES DA SEMANA 🏆</h2>
-                <p className="text-gray-400 text-xs text-center mb-6">O Ranking reseta toda segunda-feira!</p>
-                
-                <div className="space-y-6 mb-8">
-                    <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-3 text-sm text-gray-300">
-                        <p className="font-bold text-white mb-2 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> COMO CONCORRER:</p>
-                        <ul className="space-y-2 list-disc pl-4">
-                            <li>Jogue com <strong>Nome e Sobrenome</strong>.</li>
-                            <li>Siga a <strong>@duodunk</strong> no Instagram (botão no topo do site).</li>
-                        </ul>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Identificação</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-3.5 w-5 h-5 text-gray-500" />
-                            <input 
-                                className="w-full bg-black border border-gray-700 rounded-lg p-3 pl-10 text-white focus:border-cyan-500 outline-none transition placeholder:text-gray-600"
-                                placeholder="Nome e Sobrenome"
-                                value={playerName}
-                                onChange={e => setPlayerName(e.target.value)}
-                            />
+    return (
+      <div className="flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto w-full relative">
+        
+        {/* MODAL DE RANKING */}
+        {showRanking && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowRanking(false)}>
+                <div className="bg-[#121212] border border-gray-700 w-full max-w-md rounded-2xl p-6 relative shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setShowRanking(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X /></button>
+                    <h2 className="text-2xl font-bebas text-white mb-6 flex items-center justify-center gap-2"><Crown className="text-yellow-500"/> TOP 10 DA SEMANA</h2>
+                    
+                    {loadingRanking ? (
+                        <div className="py-10 text-center"><Loader2 className="animate-spin w-8 h-8 text-cyan-500 mx-auto"/></div>
+                    ) : (
+                        <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                            {rankingData.map((p, i) => (
+                                <div key={i} className="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <span className={`font-bold w-6 text-center ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`}>{i+1}º</span>
+                                        <span className="text-white font-medium truncate max-w-[150px]">{p.player_name}</span>
+                                    </div>
+                                    <span className="text-cyan-400 font-bold font-oswald">R$ {Number(p.prize_won).toLocaleString('pt-BR')}</span>
+                                </div>
+                            ))}
+                            {rankingData.length === 0 && <p className="text-center text-gray-500 py-4">Nenhum recorde ainda. Seja o primeiro!</p>}
                         </div>
-                    </div>
-                </div>
-
-                <div className="space-y-3">
-                    <button 
-                        onClick={() => handleStartWithRegistration(false)}
-                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl uppercase tracking-wide shadow-lg transform hover:scale-[1.02] transition-all"
-                    >
-                        Jogar Valendo Prêmios
-                    </button>
-                    <button 
-                        onClick={() => handleStartWithRegistration(true)}
-                        className="w-full text-gray-500 hover:text-white text-xs font-bold uppercase transition"
-                    >
-                        Pular e Jogar Modo Anônimo
-                    </button>
+                    )}
                 </div>
             </div>
-        );
-    }
+        )}
 
-    return (
-      <div className="flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto w-full">
-        
+        {/* MODAL DE CADASTRO */}
+        {showRegistration && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                <div className="w-full max-w-md bg-[#121212] border border-[#333] rounded-2xl p-8 shadow-[0_0_60px_rgba(0,191,255,0.2)] animate-in zoom-in duration-300">
+                    <h2 className="text-3xl font-bebas text-center mb-2 text-white">VENCEDORES DA SEMANA</h2>
+                    <p className="text-gray-400 text-xs text-center mb-6">Ranking reseta toda segunda-feira!</p>
+                    
+                    <div className="space-y-4 mb-8">
+                        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-3 text-sm text-gray-300">
+                            <p className="font-bold text-white mb-2 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> COMO CONCORRER:</p>
+                            <ul className="space-y-2 list-disc pl-4">
+                                <li>Jogue com <strong>Nome e Sobrenome</strong>.</li>
+                                <li>Siga a <strong>@duodunk</strong> no Instagram (botão no topo do site).</li>
+                            </ul>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Identificação</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-3.5 w-5 h-5 text-gray-500" />
+                                <input 
+                                    className="w-full bg-black border border-gray-700 rounded-lg p-3 pl-10 text-white focus:border-cyan-500 outline-none transition placeholder:text-gray-600"
+                                    placeholder="Nome e Sobrenome"
+                                    value={playerName}
+                                    onChange={e => setPlayerName(e.target.value)}
+                                    disabled={checkingName}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <button 
+                            onClick={() => handleStartWithRegistration(false)}
+                            disabled={checkingName}
+                            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl uppercase tracking-wide shadow-lg transform hover:scale-[1.02] transition-all flex justify-center items-center gap-2"
+                        >
+                            {checkingName ? <Loader2 className="animate-spin w-5 h-5"/> : "Jogar Valendo Prêmios"}
+                        </button>
+                        <button 
+                            onClick={() => handleStartWithRegistration(true)}
+                            className="w-full text-gray-500 hover:text-white text-xs font-bold uppercase transition"
+                        >
+                            Jogar Modo Anônimo
+                        </button>
+                        <button 
+                            onClick={() => setShowRegistration(false)}
+                            className="w-full text-red-500 hover:text-red-400 text-xs font-bold uppercase transition mt-2"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* CONTEÚDO PRINCIPAL DA HOME */}
         {settings.logo_url ? (
           <img 
             src={settings.logo_url} 
             alt="Milhão NBA" 
             className="w-full max-w-[280px] md:max-w-md object-contain drop-shadow-[0_0_35px_rgba(255,0,255,0.4)] mb-2"
-            // Não precisa de priority="true" aqui, pois o Next.js já otimiza
+            priority="true"
           />
         ) : (
           <h1 className="text-6xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff]">MILHÃO NBA</h1>
@@ -182,28 +246,37 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
           O Desafio Mais Difícil do Brasil
         </h2>
         
-        <button 
-          onClick={() => setShowRegistration(true)} 
-          disabled={loading}
-          className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-white font-black text-xl md:text-2xl py-4 px-12 md:px-16 rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,191,255,0.6)] font-oswald uppercase tracking-wide"
-        >
-          {loading ? 'Carregando...' : 'ENTRAR EM QUADRA'}
-        </button>
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+            <button 
+            onClick={() => setShowRegistration(true)} 
+            disabled={gameLoading}
+            className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-white font-black text-xl py-4 px-8 rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,191,255,0.6)] font-oswald uppercase tracking-wide w-full"
+            >
+            {gameLoading ? 'Carregando...' : 'ENTRAR EM QUADRA'}
+            </button>
+            
+            <button 
+            onClick={fetchRanking}
+            className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full transition font-oswald uppercase tracking-wide w-full flex items-center justify-center gap-2 border border-gray-600"
+            >
+             <Trophy className="w-4 h-4 text-yellow-500" /> Maiores Pontuadores
+            </button>
+        </div>
         
         <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-4 py-2 rounded-full border border-white/5">
-             <ShieldAlert className="w-4 h-4 text-red-500" /> Anti-Cheat Ativado: Proibido sair da aba
+             <ShieldAlert className="w-4 h-4 text-red-500" /> Anti-Cheat Ativado
         </div>
       </div>
     );
   }
 
-  // --- TELA DE VITÓRIA/DERROTA/PARADA ---
+  // --- TELA DE VITÓRIA / DERROTA ---
   if (gameState === 'won' || gameState === 'lost' || gameState === 'stopped') {
     const finalPrize = gameState === 'won' ? PRIZE_LADDER[MAX_QUESTIONS] : prize; 
-    const isWon = gameState === 'won';
+    const isWin = gameState === 'won';
     const isStopped = gameState === 'stopped';
     
-    const resultImage = isWon ? settings.victory_image_url : settings.defeat_image_url;
+    const resultImage = isWin ? settings.victory_image_url : settings.defeat_image_url;
 
     return (
       <div className="text-center p-8 md:p-12 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-xl max-w-lg mx-auto animate-in fade-in zoom-in shadow-2xl">
@@ -211,21 +284,21 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         {resultImage && (
           <img 
             src={resultImage} 
-            alt={isWon ? "Vitória" : "Derrota"} 
+            alt={isWin ? "Vitória" : "Derrota"} 
             className="w-40 h-40 mx-auto mb-6 object-cover rounded-full border-4 border-[#ff00ff]" 
           />
         )}
 
         <h2 className="text-6xl font-bebas mb-4 text-white">
-            {isWon ? '🏆 CAMPEÃO!' : isStopped ? '🛑 PAROU!' : '❌ ELIMINADO!'}
+            {isWin ? '🏆 CAMPEÃO!' : isStopped ? '🛑 PAROU!' : '❌ ELIMINADO!'}
         </h2>
         <p className="text-xl text-gray-300 mb-2 font-inter">
-            {isWon ? 'Você acertou todas as 23 perguntas!' : isStopped ? 'Você decidiu parar o jogo.' : 'Resposta incorreta ou tempo esgotado.'}
+            {isWin ? 'Você acertou todas as 23 perguntas!' : isStopped ? 'Você decidiu parar o jogo.' : 'Resposta incorreta ou tempo esgotado.'}
         </p>
-        <p className={cn("text-5xl font-black mb-8 font-oswald", isWon ? "text-green-400" : "text-[#ff00ff]")}>
+        <p className={cn("text-5xl font-black mb-8 font-oswald", isWin ? "text-green-400" : "text-[#ff00ff]")}>
             R$ {finalPrize.toLocaleString('pt-BR')}
         </p>
-        <button onClick={startGame} className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
+        <button onClick={() => window.location.reload()} className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
             <RefreshCw size={20} /> Jogar Novamente
         </button>
       </div>
@@ -234,6 +307,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   
   if (!currentQuestion) return null;
 
+  // --- TELA DO JOGO (COM NOVAS CORES) ---
   return (
     <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
       
@@ -258,43 +332,39 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
           </h3>
         </motion.div>
 
-        {/* Opções */}
+        {/* OPÇÕES (A MÁGICA DAS CORES) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {currentQuestion.options.map((opt, idx) => (
-            !isOptionEliminated(idx) ? (
-              <motion.button
-                key={idx}
-                initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + idx * 0.1 }}
-                onClick={() => handleSelectAnswer(idx)}
-                disabled={isAnswerLocked}
-                className={cn(
-                    "border text-white p-5 rounded-xl text-lg font-medium transition-all text-left flex items-center gap-4 group bg-white/5 backdrop-blur-sm",
-                    isAnswerLocked && selectedOption === idx 
-                        ? (idx === currentQuestion.correct_index ? "bg-green-600 border-green-700 shadow-lg shadow-green-900/50" : "bg-red-600 border-red-700 shadow-lg shadow-red-900/50")
-                        : "border-[#ff00ff]/20 hover:bg-[#00bfff]/10 disabled:opacity-50"
-                )}
-              >
-                <span className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-inter transition-colors shrink-0",
-                    isAnswerLocked && selectedOption === idx 
-                        ? "bg-white text-black" 
-                        : "bg-black/40 group-hover:bg-[#ff00ff] group-hover:text-white"
-                )}>
-                    {['A','B','C','D'][idx]}
-                </span>
-                <span className="font-inter">{opt}</span>
-              </motion.button>
-            ) : <div key={idx} className="invisible h-[84px] bg-white/5 rounded-xl backdrop-blur-sm" /> // Mantém o espaço para o layout
-          ))}
+            {currentQuestion.options.map((opt, idx) => {
+                // Lógica de Cores Dinâmica
+                let buttonClass = "bg-white/5 border-white/10 hover:border-[#ff00ff] hover:text-[#ff00ff]"; // Padrão + Hover Magenta
+                
+                if (selectedOption === idx) {
+                    if (answerStatus === 'correct') {
+                        buttonClass = "bg-[#00bfff] border-[#00bfff] text-black shadow-[0_0_20px_rgba(0,191,255,0.5)]"; // ACERTOU (Cyan Vibrante)
+                    } else if (answerStatus === 'wrong') {
+                        buttonClass = "bg-red-600 border-red-600 text-white"; // ERROU (Vermelho)
+                    }
+                }
+
+                return (
+                    <button
+                        key={idx}
+                        onClick={() => onOptionClick(idx)}
+                        disabled={selectedOption !== null} // Trava cliques após escolher
+                        className={`p-6 text-left border rounded-xl transition-all duration-200 group relative overflow-hidden ${buttonClass}`}
+                    >
+                        <span className="font-bold mr-3 text-xl">{String.fromCharCode(65 + idx)}</span>
+                        <span className="text-lg font-medium">{opt}</span>
+                    </button>
+                );
+            })}
         </div>
         
         {/* Botão Parar */}
         <div className="mt-8 text-center">
             <button 
                 onClick={handleStop} 
-                disabled={isAnswerLocked}
+                disabled={selectedOption !== null}
                 className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-full transition-colors font-oswald uppercase flex items-center gap-2 mx-auto disabled:opacity-50"
             >
                 <X size={20} /> Parar e Levar
