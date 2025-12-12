@@ -36,7 +36,7 @@ export default function QuizLab() {
       // Adiciona IDs locais para a tabela
       const processed = questions.map((q: any, i: number) => ({
         ...q,
-        level: level === 'mixed' ? q.level : level,
+        level: level === 'mixed' ? q.level : q.level,
         sequence_num: Date.now() + i
       }));
 
@@ -55,9 +55,14 @@ export default function QuizLab() {
     if (generatedQuestions.length === 0) return;
     setSaving(true);
     try {
-        const { error } = await supabase.from('milhao_questions').insert(generatedQuestions);
+        // Tenta inserir. Se a pergunta já existir (mesmo texto), ignora e segue.
+        const { error } = await supabase
+            .from('milhao_questions')
+            .upsert(generatedQuestions, { onConflict: 'question', ignoreDuplicates: true });
+
         if (error) throw error;
-        toast.success("Salvo no banco com sucesso!");
+        
+        toast.success("Processado! Perguntas novas foram salvas (duplicatas ignoradas).");
         setGeneratedQuestions([]); 
     } catch (error: any) {
         toast.error("Erro ao salvar: " + error.message);
