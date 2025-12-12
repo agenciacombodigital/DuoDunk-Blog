@@ -3,7 +3,7 @@ import { useMilhaoGame } from '@/hooks/useMilhaoGame';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Trophy, ShieldAlert, User, X, Crown, Loader2, Play } from 'lucide-react';
+import { Trophy, ShieldAlert, User, X, Crown, Loader2, Play, Home } from 'lucide-react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import MilhaoTimer from './MilhaoTimer';
@@ -121,6 +121,11 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
               setAnswerStatus(null);
           }
       }, 1000);
+  };
+  
+  // --- 6. VOLTAR AO MENU ---
+  const handleBackToMenu = () => {
+      setGameState('start'); // Volta para a tela inicial do componente
   };
 
   // --- TELA INICIAL (Mobile First) ---
@@ -271,13 +276,24 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   // --- TELA DO JOGO (GAMEPLAY) ---
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full justify-start md:justify-center px-4 py-8">
-        {/* HUD */}
-        <div className="w-full flex justify-between items-end mb-6 md:mb-8">
-            <div className="text-left">
-                <span className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">Prêmio</span>
-                <div className="text-2xl md:text-3xl font-black font-oswald text-[#00bfff]">R$ {prize.toLocaleString()}</div>
+        {/* HUD ATUALIZADO */}
+        <div className="w-full flex justify-between items-center mb-6 md:mb-8">
+            {/* LADO ESQUERDO: Botão Home + Prêmio */}
+            <div className="flex items-center gap-4">
+                <button 
+                    onClick={handleBackToMenu}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-gray-300 hover:text-white transition"
+                    title="Voltar ao Menu Inicial"
+                >
+                    <Home className="w-5 h-5" />
+                </button>
+                <div className="text-left">
+                    <span className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest block">Prêmio</span>
+                    <div className="text-2xl md:text-3xl font-black font-oswald text-[#00bfff]">R$ {prize.toLocaleString()}</div>
+                </div>
             </div>
             
+            {/* LADO DIREITO: Timer */}
             <div className="flex flex-col items-end">
                  <div className={`text-3xl md:text-4xl font-black font-oswald ${timer <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>{timer}s</div>
                  <div className="w-24 md:w-32 h-1.5 md:h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
