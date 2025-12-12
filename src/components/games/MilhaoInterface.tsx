@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { RefreshCw, X, AlertTriangle, Play, Clock, Zap, Shield, Users } from 'lucide-react';
+import { RefreshCw, X, AlertTriangle, Play, Clock, Zap, Shield, Users, ShieldAlert, User, CheckCircle2 } from 'lucide-react';
 import MilhaoTimer from './MilhaoTimer';
+import { supabase } from '@/lib/supabase';
 
 // Interface para tipagem
 interface QuizSettings {
@@ -47,6 +48,49 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   // Inicia o estado JÁ com os dados vindos do servidor (Zero Delay)
   const settings = { ...DEFAULT_SETTINGS, ...initialSettings }; 
 
+  // Estados do Cadastro (Simplificado: Só Nome)
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [playerName, setPlayerName] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(true);
+
+  // --- 1. ANTI-CHEAT ---
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && gameState === 'playing') {
+        setGameState('lost');
+        toast.error("FALTA TÉCNICA! Você saiu da aba do jogo.");
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [gameState, setGameState]);
+
+  // --- 2. SALVAR RESULTADO (RANKING) ---
+  useEffect(() => {
+    // Salva apenas Nome e Prêmio
+    if ((gameState === 'won' || gameState === 'lost' || gameState === 'stopped') && !isAnonymous && playerName && prize > 0) {
+        const saveScore = async () => {
+            await supabase.from('quiz_rankings').insert({
+                player_name: playerName.substring(0, 150),
+                prize_won: prize,
+            });
+            toast.success("Pontuação salva no Ranking!");
+        };
+        saveScore();
+    }
+  }, [gameState, isAnonymous, playerName, prize]);
+
+  const handleStartWithRegistration = (anonymous: boolean) => {
+    if (!anonymous) {
+        if (!playerName.trim() || playerName.trim().split(' ').length < 2) {
+            return toast.error("Por favor, digite Nome e Sobrenome.");
+        }
+    }
+    setIsAnonymous(anonymous);
+    setShowRegistration(false);
+    startGame();
+  };
+
   // Limpa as opções escondidas quando muda a pergunta
   useEffect(() => {
     setSelectedOption(null);
@@ -71,36 +115,84 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
 
   if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
 
-  // --- TELA INICIAL (COM LOGO IMEDIATO) ---
+  // --- TELA INICIAL ---
   if (gameState === 'start') {
+    if (showRegistration) {
+        return (
+            <div className="w-full max-w-md bg-[#121212] border border-[#333] rounded-2xl p-8 shadow-[0_0_60px_rgba(0,191,255,0.2)] animate-in zoom-in duration-300">
+                <h2 className="text-3xl font-bebas text-center mb-2 text-white">VENCEDORES DA SEMANA 🏆</h2>
+                <p className="text-gray-400 text-xs text-center mb-6">O Ranking reseta toda segunda-feira!</p>
+                
+                <div className="space-y-6 mb-8">
+                    <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 space-y-3 text-sm text-gray-300">
+                        <p className="font-bold text-white mb-2 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> COMO CONCORRER:</p>
+                        <ul className="space-y-2 list-disc pl-4">
+                            <li>Jogue com <strong>Nome e Sobrenome</strong>.</li>
+                            <li>Siga a <strong>@duodunk</strong> no Instagram (botão no topo do site).</li>
+                        </ul>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Identificação</label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-3.5 w-5 h-5 text-gray-500" />
+                            <input 
+                                className="w-full bg-black border border-gray-700 rounded-lg p-3 pl-10 text-white focus:border-cyan-500 outline-none transition placeholder:text-gray-600"
+                                placeholder="Nome e Sobrenome"
+                                value={playerName}
+                                onChange={e => setPlayerName(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <button 
+                        onClick={() => handleStartWithRegistration(false)}
+                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl uppercase tracking-wide shadow-lg transform hover:scale-[1.02] transition-all"
+                    >
+                        Jogar Valendo Prêmios
+                    </button>
+                    <button 
+                        onClick={() => handleStartWithRegistration(true)}
+                        className="w-full text-gray-500 hover:text-white text-xs font-bold uppercase transition"
+                    >
+                        Pular e Jogar Modo Anônimo
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto w-full">
         
-        {/* LOGO: Usa a prop initialSettings direto para não piscar */}
         {settings.logo_url ? (
           <img 
             src={settings.logo_url} 
             alt="Milhão NBA" 
-            className="w-full max-w-[300px] md:max-w-md object-contain drop-shadow-[0_0_35px_rgba(255,0,255,0.4)] mb-6"
-            // 'priority' ajuda o Next.js a carregar essa imagem primeiro
+            className="w-full max-w-[280px] md:max-w-md object-contain drop-shadow-[0_0_35px_rgba(255,0,255,0.4)] mb-2"
+            // Não precisa de priority="true" aqui, pois o Next.js já otimiza
           />
         ) : (
-          <h1 className="text-6xl md:text-8xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff] mb-4">
-            MILHÃO NBA
-          </h1>
+          <h1 className="text-6xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff]">MILHÃO NBA</h1>
         )}
-
+        
         <h2 className="text-xl md:text-2xl font-bebas text-white tracking-widest uppercase">
           O Desafio Mais Difícil do Brasil
         </h2>
         
         <button 
-          onClick={startGame} 
+          onClick={() => setShowRegistration(true)} 
           disabled={loading}
           className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-white font-black text-xl md:text-2xl py-4 px-12 md:px-16 rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,191,255,0.6)] font-oswald uppercase tracking-wide"
         >
           {loading ? 'Carregando...' : 'ENTRAR EM QUADRA'}
         </button>
+        
+        <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-widest bg-black/40 px-4 py-2 rounded-full border border-white/5">
+             <ShieldAlert className="w-4 h-4 text-red-500" /> Anti-Cheat Ativado: Proibido sair da aba
+        </div>
       </div>
     );
   }
@@ -114,13 +206,13 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     const resultImage = isWon ? settings.victory_image_url : settings.defeat_image_url;
 
     return (
-      <div className="text-center p-10 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-md max-w-lg mx-auto animate-in fade-in zoom-in">
+      <div className="text-center p-8 md:p-12 bg-black/60 rounded-3xl border border-white/10 backdrop-blur-xl max-w-lg mx-auto animate-in fade-in zoom-in shadow-2xl">
         
         {resultImage && (
           <img 
             src={resultImage} 
             alt={isWon ? "Vitória" : "Derrota"} 
-            className="w-48 h-48 mx-auto mb-6 object-cover rounded-full border-4 border-[#ff00ff]" 
+            className="w-40 h-40 mx-auto mb-6 object-cover rounded-full border-4 border-[#ff00ff]" 
           />
         )}
 
