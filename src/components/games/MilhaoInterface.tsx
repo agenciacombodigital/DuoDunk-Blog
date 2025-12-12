@@ -40,17 +40,13 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     questions,
     MAX_QUESTIONS,
     INITIAL_TIME,
-    lifelines,
-    scoutResult,
-    challengeActive,
-    activateTimeout,
-    activateChallenge,
-    activateScout,
+    // Removido: lifelines, scoutResult, challengeActive, activateTimeout, activateChallenge, activateScout,
   } = useMilhaoGame();
   
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
+  // Usa as configurações passadas via SSR
   const settings = { ...DEFAULT_SETTINGS, ...initialSettings }; 
 
   // Limpa as opções escondidas quando muda a pergunta
@@ -76,8 +72,9 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     toast.info("Jogo retomado. Concentre-se! 🧠");
   };
   
+  // Ajudas removidas, então esta função é simplificada
   const isOptionEliminated = (index: number) => {
-    return scoutResult?.eliminated.includes(index);
+    return false;
   };
 
   if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
@@ -150,24 +147,6 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     );
   }
   
-  // --- TELA DE PAUSA (REMOVIDA, POIS O CHEAT ESTÁ NO PAGE.TSX) ---
-  if (gameState === 'paused') {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-lg">
-        <div className="text-center p-10 bg-zinc-900 rounded-3xl border-4 border-red-500 max-w-md mx-auto animate-in fade-in zoom-in">
-          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-4xl font-bebas mb-4 text-white">JOGO PAUSADO</h2>
-          <p className="text-lg text-gray-300 mb-6 font-inter">
-            O jogo está pausado. Clique para retomar.
-          </p>
-          <button onClick={handleResumeGame} className="bg-[#ff00ff] text-white font-bold py-3 px-8 rounded-full hover:bg-[#cc00cc] transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
-              <Play size={20} /> Retomar Jogo
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
   if (!currentQuestion) return null;
 
   return (
@@ -179,47 +158,9 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         {/* Timer */}
         <MilhaoTimer time={timer} initialTime={INITIAL_TIME} />
 
-        {/* Ajudas */}
-        <div className="flex justify-center gap-4 mb-6">
-            <LifelineButton 
-                icon={Zap} 
-                label="O Scout" 
-                active={lifelines.scout} 
-                onClick={activateScout} 
-                disabled={isAnswerLocked || !!scoutResult}
-                color="cyan"
-            />
-            <LifelineButton 
-                icon={Clock} 
-                label="Timeout" 
-                active={lifelines.timeout} 
-                onClick={activateTimeout} 
-                disabled={isAnswerLocked || timerFrozen}
-                color="yellow"
-            />
-            <LifelineButton 
-                icon={Shield} 
-                label="Challenge" 
-                active={lifelines.challenge} 
-                onClick={activateChallenge} 
-                disabled={isAnswerLocked || challengeActive}
-                color="green"
-            />
-        </div>
+        {/* Ajudas (REMOVIDAS) */}
+        {/* <div className="flex justify-center gap-4 mb-6">...</div> */}
         
-        {/* Dica do Scout */}
-        {scoutResult && (
-            <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-cyan-900/50 border border-cyan-500/50 p-4 rounded-xl mb-6 text-center backdrop-blur-sm"
-            >
-                <p className="text-sm font-inter text-cyan-300 font-bold">
-                    O Scout sugere a resposta correta com {scoutResult.certeza}% de certeza.
-                </p>
-            </motion.div>
-        )}
-
         {/* Pergunta */}
         <motion.div 
           key={currentQuestion.id}
@@ -310,35 +251,3 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     </div>
   );
 }
-
-interface LifelineButtonProps {
-    icon: any;
-    label: string;
-    active: boolean;
-    onClick: () => void;
-    disabled: boolean;
-    color: 'cyan' | 'yellow' | 'green';
-}
-
-const LifelineButton = ({ icon: Icon, label, active, onClick, disabled, color }: LifelineButtonProps) => {
-    const baseClasses = "w-full md:w-auto flex-1 flex flex-col items-center justify-center p-3 rounded-xl transition-all text-sm font-bold uppercase tracking-wider";
-    
-    const colorMap = {
-        cyan: { active: "bg-cyan-600 hover:bg-cyan-700 text-white", inactive: "bg-white/10 text-cyan-400 border border-cyan-500/30 hover:bg-white/20" },
-        yellow: { active: "bg-yellow-600 hover:bg-yellow-700 text-black", inactive: "bg-white/10 text-yellow-400 border border-yellow-500/30 hover:bg-white/20" },
-        green: { active: "bg-green-600 hover:bg-green-700 text-white", inactive: "bg-white/10 text-green-400 border border-green-500/30 hover:bg-white/20" },
-    };
-
-    const classes = active ? colorMap[color].active : colorMap[color].inactive;
-
-    return (
-        <button
-            onClick={onClick}
-            disabled={!active || disabled}
-            className={cn(baseClasses, classes, (!active || disabled) && "opacity-50 cursor-not-allowed")}
-        >
-            <Icon size={20} className="mb-1" />
-            {label}
-        </button>
-    );
-};

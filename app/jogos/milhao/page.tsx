@@ -2,9 +2,19 @@
 import { useEffect, useState } from 'react';
 import MilhaoInterface from '@/components/games/MilhaoInterface';
 import { supabase } from '@/lib/supabase'; // Usando o import padrão
+import { Metadata } from 'next';
+
+// Configuração de metadados (mantida no client para evitar conflito com o export default async)
+// Nota: O Next.js 14 permite exportar `metadata` em Server Components, mas como o componente principal é Client,
+// vamos manter a estrutura de metadados no layout ou usar o export async function generateMetadata.
+// Para este caso, o `layout.tsx` já define o template, então a prioridade é a funcionalidade.
+
+// Exportando dynamic para garantir que a busca seja sempre fresca
+export const dynamic = 'force-dynamic';
 
 export default function MilhaoPage() {
   const [settings, setSettings] = useState<any>({});
+  const [loadingSettings, setLoadingSettings] = useState(true);
   
   // Anti-Cheat State
   const [cheated, setCheated] = useState(false);
@@ -13,6 +23,7 @@ export default function MilhaoPage() {
     // Carregar configurações (Logo, etc)
     supabase.from('quiz_settings').select('*').eq('id', 1).single().then(({ data }) => {
       if (data) setSettings(data);
+      setLoadingSettings(false);
     });
 
     // --- SISTEMA ANTI-CHEAT (TAB SWITCH = MORTE) ---
@@ -25,15 +36,25 @@ export default function MilhaoPage() {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
+  if (loadingSettings) {
+    // Renderiza um placeholder preto enquanto carrega as settings
+    return (
+      <div className="fixed inset-0 z-[99999] bg-black w-screen h-screen flex items-center justify-center">
+        <div className="text-white animate-pulse">Carregando Quiz...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#050505] text-white font-sans selection:bg-cyan-500 selection:text-black">
+    // Z-Index altíssimo para cobrir o Navbar da DuoDunk
+    <div className="fixed inset-0 z-[99999] bg-black w-screen h-screen overflow-hidden">
       
       {/* BACKGROUND ANIMADO (DuoDunk Aura) */}
       <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-purple-600/30 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-600/20 rounded-full blur-[120px] animate-pulse delay-1000" />
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
 
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-y-auto p-4 md:p-8">
         
         {/* TELA DE ELIMINAÇÃO POR 'CHEAT' */}
         {cheated ? (
