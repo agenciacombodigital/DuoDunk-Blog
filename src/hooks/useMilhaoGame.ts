@@ -5,8 +5,8 @@ import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
 const MAX_QUESTIONS = 23;
-const INITIAL_TIME = 45;
-const MAX_CHEAT_ATTEMPTS = 3;
+const INITIAL_TIME = 30; // REDUZIDO PARA 30 SEGUNDOS
+// O sistema anti-cheat foi movido para o page.tsx, então removemos o MAX_CHEAT_ATTEMPTS
 
 export function useMilhaoGame() {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'won' | 'lost' | 'paused' | 'stopped'>('start');
@@ -15,14 +15,22 @@ export function useMilhaoGame() {
   const [prize, setPrize] = useState(0);
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(INITIAL_TIME);
-  const [cheatAttempts, setCheatAttempts] = useState(0);
+  
+  // Novas Ajudas
+  const [lifelines, setLifelines] = useState({ 
+    scout: true,   // Remove 2 erradas + Dica
+    timeout: true, // Para o tempo
+    challenge: true // Segunda chance
+  });
+  const [challengeActive, setChallengeActive] = useState(false); // Estado para a ajuda 'Challenge'
+  const [timerFrozen, setTimerFrozen] = useState(false); // Estado para 'Timeout'
+  const [scoutResult, setScoutResult] = useState<{ eliminated: number[], certainty: number } | null>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const visibilityRef = useRef(true); // Para controle de trapaça
+  // A lógica de visibilidade foi removida daqui, pois está no page.tsx
 
-  // --- LÓGICA ESTRONDOSA DE SORTEIO ---
+  // --- LÓGICA ESTRONDOSA DE SORTEIO (Mantida a mesma) ---
   const fetchUniqueQuestions = async (level: number, count: number, seenIds: string[]) => {
-    // Tenta buscar perguntas que o usuário NUNCA viu
     const { data, error } = await supabase.rpc('get_random_questions', {
       p_level: level,
       p_limit: count,
@@ -34,18 +42,13 @@ export function useMilhaoGame() {
       return [];
     }
 
-    // Se não encontrou o suficiente (ex: usuário já viu todas), busca sem filtro (reset parcial)
     if (!data || data.length < count) {
       console.warn(`Nível ${level}: Não há perguntas únicas suficientes. Resetando memória local para este nível.`);
-      
-      // Tenta buscar sem exclusão (resetando a memória local para este nível)
       const { data: fallbackData } = await supabase.rpc('get_random_questions', {
         p_level: level,
         p_limit: count,
-        p_exclude_ids: [] // Busca sem exclusão
+        p_exclude_ids: []
       });
-      
-      // Se o fallback funcionar, retornamos e o startGame fará a limpeza do localStorage
       return fallbackData || [];
     }
 
@@ -55,13 +58,11 @@ export function useMilhaoGame() {
   const startGame = useCallback(async () => {
     setLoading(true);
     
-    // 1. Recuperar memória do usuário
     const storedSeen = localStorage.getItem('milhao_seen_ids');
     let seenIds: string[] = storedSeen ? JSON.parse(storedSeen) : [];
     let shouldClearAll = false;
 
     try {
-        // 2. Buscar perguntas inteligentes por nível
         const easy = await fetchUniqueQuestions(1, 7, seenIds);
         const medium = await fetchUniqueQuestions(2, 8, seenIds);
         const hard = await fetchUniqueQuestions(3, 7, seenIds);
@@ -72,7 +73,6 @@ export function useMilhaoGame() {
         if (selectedQuestions.length === MAX_QUESTIONS) {
             setQuestions(selectedQuestions);
             
-            // 3. Atualizar memória (marcar as novas como vistas)
             const newSeenIds = [...seenIds, ...selectedQuestions.map(q => q.id)];
             localStorage.setItem('milhao_seen_ids', JSON.stringify(newSeenIds));
 
@@ -80,16 +80,16 @@ export function useMilhaoGame() {
             setCurrentQIndex(0);
             setPrize(PRIZE_LADDER[0]);
             setTimer(INITIAL_TIME);
-            setCheatAttempts(0);
+            setLifelines({ scout: true, timeout: true, challenge: true });
+            setChallengeActive(false);
+            setTimerFrozen(false);
+            setScoutResult(null);
         } else if (selectedQuestions.length > 0) {
-            // Se não encontrou 23, mas encontrou algumas (provavelmente porque o banco está pequeno)
             toast.error(`Não há perguntas suficientes cadastradas! (Encontradas: ${selectedQuestions.length}/${MAX_QUESTIONS})`);
         } else {
-            // Se não encontrou NENHUMA, o usuário viu todas as perguntas do banco.
             shouldClearAll = true;
             toast.warning("Parabéns! Você zerou o banco de perguntas. Reiniciando o ciclo.");
             
-            // Tenta buscar novamente após a limpeza
             const easyFallback = await fetchUniqueQuestions(1, 7, []);
             const mediumFallback = await fetchUniqueQuestions(2, 8, []);
             const hardFallback = await fetchUniqueQuestions(3, 7, []);
@@ -105,7 +105,10 @@ export function useMilhaoGame() {
                 setCurrentQIndex(0);
                 setPrize(PRIZE_LADDER[0]);
                 setTimer(INITIAL_TIME);
-                setCheatAttempts(0);
+                setLifelines({ scout: true, timeout: true, challenge: true });
+                setChallengeActive(false);
+                setTimerFrozen(false);
+                setScoutResult(null);
             } else {
                 toast.error(`Falha crítica: Banco de perguntas vazio ou incompleto. Encontradas: ${fallbackQuestions.length}/${MAX_QUESTIONS}`);
             }
@@ -123,7 +126,7 @@ export function useMilhaoGame() {
 
   // --- LÓGICA DO TIMER ---
   useEffect(() => {
-    if (gameState === 'playing') {
+    if (gameState === 'playing' && !timerFrozen) {
         timerRef.current = setInterval(() => {
             setTimer((prev) => {
                 if (prev <= 1) {
@@ -138,56 +141,46 @@ export function useMilhaoGame() {
     return () => {
         if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameState, prize]);
+  }, [gameState, prize, timerFrozen]);
 
   // Resetar timer ao mudar de pergunta
   useEffect(() => {
       if (gameState === 'playing') {
         setTimer(INITIAL_TIME);
+        setTimerFrozen(false);
+        setScoutResult(null);
       }
   }, [currentQIndex, gameState]);
-
-  // --- LÓGICA DE TRAPAÇA (VISIBILIDADE DA ABA) ---
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && gameState === 'playing') {
-        visibilityRef.current = false;
-        setCheatAttempts(prev => prev + 1);
-        setGameState('paused');
-        toast.warning("Trapaça detectada!", { description: `Você saiu da aba. Tentativas: ${cheatAttempts + 1}/${MAX_CHEAT_ATTEMPTS}` });
-        
-        if (cheatAttempts + 1 >= MAX_CHEAT_ATTEMPTS) {
-            setGameState('lost');
-            toast.error("Trapaça máxima atingida!", { description: "Você foi desclassificado." });
-        }
-      } else if (!document.hidden && gameState === 'paused') {
-        visibilityRef.current = true;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [gameState, cheatAttempts]);
 
 
   // --- LÓGICA DE RESPOSTA ---
   const handleAnswer = (selectedIndex: number) => {
     const currentQ = questions[currentQIndex];
+    
     if (selectedIndex === currentQ.correct_index) {
-      const nextIndex = currentQIndex + 1;
-      if (nextIndex >= questions.length) {
+      // ACERTOU
+      setChallengeActive(false); // Reseta o challenge se usou
+      if (currentQIndex + 1 >= questions.length) {
         setPrize(PRIZE_LADDER[MAX_QUESTIONS]); // 1 Milhão
         setGameState('won');
-        confetti({ particleCount: 200, spread: 70, zIndex: 9999 });
+        confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 }, zIndex: 9999 });
         toast.success("CAMPEÃO!", { description: "Você ganhou R$ 1.000.000!" });
       } else {
-        setPrize(PRIZE_LADDER[nextIndex]);
-        setCurrentQIndex(nextIndex);
+        setPrize(PRIZE_LADDER[currentQIndex + 1]);
+        setCurrentQIndex(prev => prev + 1);
         toast.success("Resposta Correta!", { duration: 1000 });
       }
     } else {
-      setGameState('lost');
-      toast.error("Resposta Incorreta!", { description: `Você parou em R$ ${prize.toLocaleString('pt-BR')}.` });
+      // ERROU
+      if (challengeActive) {
+        // Se ativou o 'Desafio do Técnico', salva a vida
+        toast.warning("DESAFIO BEM SUCEDIDO! A resposta estava errada. Tente outra opção.");
+        setChallengeActive(false); // Consome a ajuda
+        // Não elimina, apenas avisa
+      } else {
+        setGameState('lost');
+        toast.error("Resposta Incorreta!", { description: `Você parou em R$ ${prize.toLocaleString('pt-BR')}.` });
+      }
     }
   };
 
@@ -196,7 +189,53 @@ export function useMilhaoGame() {
       toast.info("Você parou o jogo.", { description: `Prêmio garantido: R$ ${prize.toLocaleString('pt-BR')}.` });
   };
   
-  // As funções de ajuda foram removidas.
+  // --- FUNÇÕES DAS AJUDAS ---
+  const activateTimeout = () => {
+    if (!lifelines.timeout || timerFrozen) return;
+    setTimerFrozen(true);
+    setLifelines(prev => ({...prev, timeout: false}));
+    toast.info("TEMPO TÉCNICO! O relógio está congelado por 20 segundos.");
+    setTimeout(() => {
+        setTimerFrozen(false);
+        toast.info("O jogo recomeçou! O tempo está correndo.");
+    }, 20000); // 20s de pause
+  };
+
+  const activateChallenge = () => {
+    if (!lifelines.challenge || challengeActive) return;
+    setChallengeActive(true);
+    setLifelines(prev => ({...prev, challenge: false}));
+    toast.warning("DESAFIO ATIVADO! Você tem uma chance extra nesta pergunta.");
+  };
+  
+  const activateScout = () => {
+    if (!lifelines.scout || scoutResult) return;
+    
+    const currentQ = questions[currentQIndex];
+    const correctIndex = currentQ.correct_index;
+    const allOptions = [0, 1, 2, 3];
+    
+    // Encontra as opções erradas
+    const incorrectOptions = allOptions.filter(i => i !== correctIndex);
+    
+    // Sorteia 2 para eliminar
+    const eliminated = [];
+    while (eliminated.length < 2) {
+        const randomIndex = Math.floor(Math.random() * incorrectOptions.length);
+        const optionToEliminate = incorrectOptions[randomIndex];
+        if (!eliminated.includes(optionToEliminate)) {
+            eliminated.push(optionToEliminate);
+        }
+    }
+    
+    // Define a certeza (maior o nível, menor a certeza)
+    const certainty = 95 - (currentQ.level * 10) + Math.floor(Math.random() * 5); // Ex: Nível 4 = 55-60%
+    
+    setScoutResult({ eliminated, certainty });
+    setLifelines(prev => ({...prev, scout: false}));
+    toast.info("O SCOUT CHEGOU! Duas opções foram eliminadas. Analise a dica de certeza.");
+  };
+
 
   return { 
       gameState, 
@@ -208,17 +247,17 @@ export function useMilhaoGame() {
       handleAnswer, 
       handleStop,
       timer,
-      cheatAttempts,
+      timerFrozen,
+      cheatAttempts: 0, // Removido o contador de trapaça
       currentQIndex,
       questions,
       MAX_QUESTIONS,
       INITIAL_TIME,
-      // Retornamos funções dummy para manter a compatibilidade da interface, se necessário,
-      // mas o ideal é remover as chamadas no componente de interface.
-      useFiftyFifty: () => { toast.error("Ajuda desativada."); return null; },
-      useSkip: () => { toast.error("Ajuda desativada."); },
-      useCards: () => { toast.error("Ajuda desativada."); },
-      useRookies: () => { toast.error("Ajuda desativada."); },
-      lifelines: { skip: 0, fifty: false, cards: false, rookies: false },
+      lifelines,
+      scoutResult,
+      challengeActive,
+      activateTimeout,
+      activateChallenge,
+      activateScout,
   };
 }

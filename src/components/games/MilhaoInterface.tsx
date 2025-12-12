@@ -5,9 +5,8 @@ import { useState, useEffect } from 'react';
 import { PRIZE_LADDER } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { RefreshCw, X, AlertTriangle, Play } from 'lucide-react'; // Removendo Zap, SkipForward, Users, BookOpen
+import { RefreshCw, X, AlertTriangle, Play, Clock, Zap, Shield, Users } from 'lucide-react';
 import MilhaoTimer from './MilhaoTimer';
-import { supabase } from '@/lib/supabase'; // Mantido para uso futuro, mas fetch removido
 
 // Interface para as configurações visuais
 export interface QuizSettings {
@@ -36,23 +35,26 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     handleAnswer, 
     handleStop,
     timer,
-    cheatAttempts,
+    timerFrozen,
     currentQIndex,
     questions,
     MAX_QUESTIONS,
     INITIAL_TIME,
+    lifelines,
+    scoutResult,
+    challengeActive,
+    activateTimeout,
+    activateChallenge,
+    activateScout,
   } = useMilhaoGame();
   
-  const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
-  // Inicia o estado com as configurações passadas via props
-  const [settings] = useState<QuizSettings>({ ...DEFAULT_SETTINGS, ...initialSettings }); 
+  const settings = { ...DEFAULT_SETTINGS, ...initialSettings }; 
 
   // Limpa as opções escondidas quando muda a pergunta
   useEffect(() => {
-    setHiddenOptions([]);
     setSelectedOption(null);
     setIsAnswerLocked(false);
   }, [currentQuestion]);
@@ -69,27 +71,27 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     }, 1500);
   };
   
-  // As funções de ajuda foram removidas, assim como as chamadas no código.
-  
   const handleResumeGame = () => {
     setGameState('playing');
     toast.info("Jogo retomado. Concentre-se! 🧠");
   };
+  
+  const isOptionEliminated = (index: number) => {
+    return scoutResult?.eliminated.includes(index);
+  };
 
   if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
 
-  // --- TELA INICIAL (NOVO DESIGN) ---
+  // --- TELA INICIAL ---
   if (gameState === 'start') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
         
-        {/* LOGO JÁ CARREGADO (SEM PISCAR) */}
         {settings.logo_url ? (
           <img 
             src={settings.logo_url} 
             alt="Milhão NBA" 
             className="w-full max-w-md md:max-w-lg object-contain drop-shadow-[0_0_25px_rgba(255,0,255,0.6)] mb-4"
-            // priority="true" // Removido, pois não é o componente Image do Next.js
           />
         ) : (
           <h1 className="text-6xl md:text-8xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff] mb-4 drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
@@ -113,13 +115,12 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     );
   }
 
-  // --- TELA DE VITÓRIA/DERROTA (NOVO DESIGN) ---
+  // --- TELA DE VITÓRIA/DERROTA/PARADA ---
   if (gameState === 'won' || gameState === 'lost' || gameState === 'stopped') {
     const finalPrize = gameState === 'won' ? PRIZE_LADDER[MAX_QUESTIONS] : prize; 
     const isWon = gameState === 'won';
     const isStopped = gameState === 'stopped';
     
-    // Escolher imagem baseada no resultado
     const resultImage = isWon ? settings.victory_image_url : settings.defeat_image_url;
 
     return (
@@ -149,7 +150,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     );
   }
   
-  // --- TELA DE PAUSA (TRAPAÇA) ---
+  // --- TELA DE PAUSA (REMOVIDA, POIS O CHEAT ESTÁ NO PAGE.TSX) ---
   if (gameState === 'paused') {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-lg">
@@ -157,7 +158,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
           <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-4xl font-bebas mb-4 text-white">JOGO PAUSADO</h2>
           <p className="text-lg text-gray-300 mb-6 font-inter">
-            Detectamos que você saiu da aba. Tentativas: ({cheatAttempts}/3).
+            O jogo está pausado. Clique para retomar.
           </p>
           <button onClick={handleResumeGame} className="bg-[#ff00ff] text-white font-bold py-3 px-8 rounded-full hover:bg-[#cc00cc] transition-colors font-oswald uppercase flex items-center gap-2 mx-auto">
               <Play size={20} /> Retomar Jogo
@@ -178,18 +179,56 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         {/* Timer */}
         <MilhaoTimer time={timer} initialTime={INITIAL_TIME} />
 
-        {/* Ajudas (REMOVIDO) */}
-        <div className="mb-6 h-10" /> 
+        {/* Ajudas */}
+        <div className="flex justify-center gap-4 mb-6">
+            <LifelineButton 
+                icon={Zap} 
+                label="O Scout" 
+                active={lifelines.scout} 
+                onClick={activateScout} 
+                disabled={isAnswerLocked || !!scoutResult}
+                color="cyan"
+            />
+            <LifelineButton 
+                icon={Clock} 
+                label="Timeout" 
+                active={lifelines.timeout} 
+                onClick={activateTimeout} 
+                disabled={isAnswerLocked || timerFrozen}
+                color="yellow"
+            />
+            <LifelineButton 
+                icon={Shield} 
+                label="Challenge" 
+                active={lifelines.challenge} 
+                onClick={activateChallenge} 
+                disabled={isAnswerLocked || challengeActive}
+                color="green"
+            />
+        </div>
+        
+        {/* Dica do Scout */}
+        {scoutResult && (
+            <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-cyan-900/50 border border-cyan-500/50 p-4 rounded-xl mb-6 text-center backdrop-blur-sm"
+            >
+                <p className="text-sm font-inter text-cyan-300 font-bold">
+                    O Scout sugere a resposta correta com {scoutResult.certeza}% de certeza.
+                </p>
+            </motion.div>
+        )}
 
         {/* Pergunta */}
         <motion.div 
           key={currentQuestion.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-b from-zinc-800 to-zinc-900 p-6 md:p-8 rounded-3xl border-2 border-[#ff00ff]/50 shadow-2xl mb-8 text-center"
+          className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl mb-8 text-center backdrop-blur-md"
         >
           <span className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 block font-inter">
-              Nível {currentQIndex + 1} • Pergunta {currentQIndex + 1}
+              Nível {currentQIndex + 1} • R$ {PRIZE_LADDER[currentQIndex + 1].toLocaleString('pt-BR')}
           </span>
           <h3 className="text-2xl md:text-3xl text-white font-bold leading-relaxed font-oswald tracking-wide drop-shadow-[0_0_5px_rgba(255,0,255,0.3)]">
               {currentQuestion.question}
@@ -199,7 +238,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         {/* Opções */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {currentQuestion.options.map((opt, idx) => (
-            !hiddenOptions.includes(idx) ? (
+            !isOptionEliminated(idx) ? (
               <motion.button
                 key={idx}
                 initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
@@ -208,10 +247,10 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
                 onClick={() => handleSelectAnswer(idx)}
                 disabled={isAnswerLocked}
                 className={cn(
-                    "border text-white p-5 rounded-xl text-lg font-medium transition-all text-left flex items-center gap-4 group",
+                    "border text-white p-5 rounded-xl text-lg font-medium transition-all text-left flex items-center gap-4 group bg-white/5 backdrop-blur-sm",
                     isAnswerLocked && selectedOption === idx 
                         ? (idx === currentQuestion.correct_index ? "bg-green-600 border-green-700 shadow-lg shadow-green-900/50" : "bg-red-600 border-red-700 shadow-lg shadow-red-900/50")
-                        : "bg-white/10 border-[#00bfff]/20 hover:bg-[#00bfff]/10 disabled:opacity-50"
+                        : "border-[#ff00ff]/20 hover:bg-[#00bfff]/10 disabled:opacity-50"
                 )}
               >
                 <span className={cn(
@@ -224,7 +263,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
                 </span>
                 <span className="font-inter">{opt}</span>
               </motion.button>
-            ) : <div key={idx} className="invisible h-[84px]" /> // Mantém o espaço para o layout
+            ) : <div key={idx} className="invisible h-[84px] bg-white/5 rounded-xl backdrop-blur-sm" /> // Mantém o espaço para o layout
           ))}
         </div>
         
@@ -241,7 +280,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
       </div>
       
       {/* Coluna Direita: Escada de Prêmios */}
-      <div className="lg:col-span-1 bg-zinc-900 rounded-2xl p-6 border border-white/10 shadow-xl">
+      <div className="lg:col-span-1 bg-white/5 rounded-2xl p-6 border border-white/10 shadow-xl backdrop-blur-md">
         <h4 className="text-xl font-oswald text-[#00bfff] mb-4 uppercase tracking-wider">Escada de Prêmios</h4>
         <div className="space-y-1">
           {PRIZE_LADDER.slice().reverse().map((p, index) => {
@@ -272,4 +311,34 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   );
 }
 
-// Removendo LifelineButton, pois não é mais usado.
+interface LifelineButtonProps {
+    icon: any;
+    label: string;
+    active: boolean;
+    onClick: () => void;
+    disabled: boolean;
+    color: 'cyan' | 'yellow' | 'green';
+}
+
+const LifelineButton = ({ icon: Icon, label, active, onClick, disabled, color }: LifelineButtonProps) => {
+    const baseClasses = "w-full md:w-auto flex-1 flex flex-col items-center justify-center p-3 rounded-xl transition-all text-sm font-bold uppercase tracking-wider";
+    
+    const colorMap = {
+        cyan: { active: "bg-cyan-600 hover:bg-cyan-700 text-white", inactive: "bg-white/10 text-cyan-400 border border-cyan-500/30 hover:bg-white/20" },
+        yellow: { active: "bg-yellow-600 hover:bg-yellow-700 text-black", inactive: "bg-white/10 text-yellow-400 border border-yellow-500/30 hover:bg-white/20" },
+        green: { active: "bg-green-600 hover:bg-green-700 text-white", inactive: "bg-white/10 text-green-400 border border-green-500/30 hover:bg-white/20" },
+    };
+
+    const classes = active ? colorMap[color].active : colorMap[color].inactive;
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={!active || disabled}
+            className={cn(baseClasses, classes, (!active || disabled) && "opacity-50 cursor-not-allowed")}
+        >
+            <Icon size={20} className="mb-1" />
+            {label}
+        </button>
+    );
+};

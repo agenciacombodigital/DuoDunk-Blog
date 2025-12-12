@@ -104,11 +104,10 @@ serve(async (req) => {
       DIRETRIZES COMPLETAS DO NÍVEL:
       ${promptContext}
       
-      REGRAS CRÍTICAS:
-      1. Use Português do Brasil (Ex: "Time" e não "Equipa", "Toco", "Cesta").
-      2. NÃO repita perguntas óbvias (ex: logo da NBA) nesta sessão.
-      3. Varie os times e as eras (não foque apenas em um time).
-      4. Misture as categorias dentro do nível.
+      REGRAS DE OURO (ANTI-REPETIÇÃO):
+      1. DIVERSIDADE TOTAL: Em um lote de 20 perguntas, NUNCA repita o mesmo jogador ou time como foco principal mais de uma vez. (Ex: Se tiver uma pergunta sobre Curry, a próxima NÃO pode ser sobre ele ou o irmão dele).
+      2. VARIEDADE DE TEMAS: Intercale obrigatoriamente: 1 pergunta de Regra, 1 de História, 1 de Recorde, 1 de Curiosidade, etc. Não agrupe assuntos.
+      3. IDIOMA: Use termos brasileiros ("Cesta" e não "Ponto", "Garrafão" e não "Pintado").
       
       FORMATO DE SAÍDA (JSON PURO):
       [
