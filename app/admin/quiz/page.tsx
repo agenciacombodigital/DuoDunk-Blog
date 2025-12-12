@@ -64,7 +64,6 @@ export default function QuizAdmin() {
         let rawText = e.target?.result as string;
         
         // 1. Sanitização: Corrige a concatenação de múltiplos arrays JSON (ex: `][` ou `] [`)
-        // Isso transforma `][` em `,` para que o JSON.parse funcione em um único array.
         let sanitizedText = rawText.replace(/\]\s*\[/g, ',');
 
         let json;
@@ -99,12 +98,17 @@ export default function QuizAdmin() {
 
         toast.loading(`Inserindo ${questionsToInsert.length} perguntas em lote...`, { id: toastId });
         
-        // Inserir em lote (Batch Insert)
-        const { error } = await supabase.from('milhao_questions').insert(questionsToInsert);
+        // 2. CORREÇÃO: Usa upsert com ignoreDuplicates para não travar em perguntas repetidas
+        const { error } = await supabase
+            .from('milhao_questions')
+            .upsert(questionsToInsert, { 
+                onConflict: 'question', 
+                ignoreDuplicates: true 
+            });
 
         if (error) throw error;
 
-        toast.success(`${questionsToInsert.length} perguntas importadas com sucesso!`, { id: toastId });
+        toast.success("Importação concluída! Perguntas novas foram adicionadas (duplicatas ignoradas).", { id: toastId });
         if (fileInputRef.current) fileInputRef.current.value = ''; // Limpar input
 
       } catch (error: any) {
