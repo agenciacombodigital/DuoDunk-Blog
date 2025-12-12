@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 import { RefreshCw, X, AlertTriangle, Play, Clock, Zap, Shield, Users } from 'lucide-react';
 import MilhaoTimer from './MilhaoTimer';
 
-// Interface para as configurações visuais
-export interface QuizSettings {
+// Interface para tipagem
+interface QuizSettings {
   logo_url?: string;
   victory_image_url?: string;
   defeat_image_url?: string;
@@ -35,18 +35,16 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     handleAnswer, 
     handleStop,
     timer,
-    timerFrozen,
     currentQIndex,
     questions,
     MAX_QUESTIONS,
     INITIAL_TIME,
-    // Removido: lifelines, scoutResult, challengeActive, activateTimeout, activateChallenge, activateScout,
   } = useMilhaoGame();
   
   const [isAnswerLocked, setIsAnswerLocked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
-  // Usa as configurações passadas via SSR
+  // Inicia o estado JÁ com os dados vindos do servidor (Zero Delay)
   const settings = { ...DEFAULT_SETTINGS, ...initialSettings }; 
 
   // Limpa as opções escondidas quando muda a pergunta
@@ -67,47 +65,42 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
     }, 1500);
   };
   
-  const handleResumeGame = () => {
-    setGameState('playing');
-    toast.info("Jogo retomado. Concentre-se! 🧠");
-  };
-  
-  // Ajudas removidas, então esta função é simplificada
   const isOptionEliminated = (index: number) => {
     return false;
   };
 
   if (loading) return <div className="text-white text-center p-10 font-oswald text-2xl animate-pulse">Carregando a quadra...</div>;
 
-  // --- TELA INICIAL ---
+  // --- TELA INICIAL (COM LOGO IMEDIATO) ---
   if (gameState === 'start') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
+      <div className="flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto w-full">
         
+        {/* LOGO: Usa a prop initialSettings direto para não piscar */}
         {settings.logo_url ? (
           <img 
             src={settings.logo_url} 
             alt="Milhão NBA" 
-            className="w-full max-w-md md:max-w-lg object-contain drop-shadow-[0_0_25px_rgba(255,0,255,0.6)] mb-4"
+            className="w-full max-w-[300px] md:max-w-md object-contain drop-shadow-[0_0_35px_rgba(255,0,255,0.4)] mb-6"
+            // 'priority' ajuda o Next.js a carregar essa imagem primeiro
           />
         ) : (
-          <h1 className="text-6xl md:text-8xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff] mb-4 drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]">
+          <h1 className="text-6xl md:text-8xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff] mb-4">
             MILHÃO NBA
           </h1>
         )}
 
-        <h2 className="text-2xl md:text-4xl font-bebas text-white tracking-widest uppercase">
-          O Desafio Definitivo
+        <h2 className="text-xl md:text-2xl font-bebas text-white tracking-widest uppercase">
+          O Desafio Mais Difícil do Brasil
         </h2>
         
         <button 
           onClick={startGame} 
           disabled={loading}
-          className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-white font-black text-2xl py-4 px-16 rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,191,255,0.6)] font-oswald uppercase tracking-wide"
+          className="bg-gradient-to-r from-[#ff00ff] to-[#00bfff] text-white font-black text-xl md:text-2xl py-4 px-12 md:px-16 rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,191,255,0.6)] font-oswald uppercase tracking-wide"
         >
           {loading ? 'Carregando...' : 'ENTRAR EM QUADRA'}
         </button>
-
       </div>
     );
   }
@@ -157,9 +150,6 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         
         {/* Timer */}
         <MilhaoTimer time={timer} initialTime={INITIAL_TIME} />
-
-        {/* Ajudas (REMOVIDAS) */}
-        {/* <div className="flex justify-center gap-4 mb-6">...</div> */}
         
         {/* Pergunta */}
         <motion.div 

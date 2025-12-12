@@ -1,75 +1,38 @@
-"use client";
-import { useEffect, useState } from 'react';
 import MilhaoInterface from '@/components/games/MilhaoInterface';
-import { supabase } from '@/lib/supabase'; // Usando o import padrão
+import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
 
-// Configuração de metadados (mantida no client para evitar conflito com o export default async)
-// Nota: O Next.js 14 permite exportar `metadata` em Server Components, mas como o componente principal é Client,
-// vamos manter a estrutura de metadados no layout ou usar o export async function generateMetadata.
-// Para este caso, o `layout.tsx` já define o template, então a prioridade é a funcionalidade.
+export const metadata: Metadata = {
+  title: 'Milhão NBA - O Quiz | Duo Dunk',
+  description: 'Teste seu conhecimento sobre a NBA e concorra ao prêmio máximo.',
+};
 
-// Exportando dynamic para garantir que a busca seja sempre fresca
+// Garante que a página sempre busque os dados mais recentes
 export const dynamic = 'force-dynamic';
 
-export default function MilhaoPage() {
-  const [settings, setSettings] = useState<any>({});
-  const [loadingSettings, setLoadingSettings] = useState(true);
-  
-  // Anti-Cheat State
-  const [cheated, setCheated] = useState(false);
+export default async function MilhaoPage() {
+  // Busca as configurações (Logo, etc) no Servidor
+  const { data: settings } = await supabaseServer
+    .from('quiz_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
 
-  useEffect(() => {
-    // Carregar configurações (Logo, etc)
-    supabase.from('quiz_settings').select('*').eq('id', 1).single().then(({ data }) => {
-      if (data) setSettings(data);
-      setLoadingSettings(false);
-    });
-
-    // --- SISTEMA ANTI-CHEAT (TAB SWITCH = MORTE) ---
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setCheated(true);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  if (loadingSettings) {
-    // Renderiza um placeholder preto enquanto carrega as settings
-    return (
-      <div className="fixed inset-0 z-[99999] bg-black w-screen h-screen flex items-center justify-center">
-        <div className="text-white animate-pulse">Carregando Quiz...</div>
-      </div>
-    );
-  }
+  const safeSettings = settings || {};
 
   return (
-    // Z-Index altíssimo para cobrir o Navbar da DuoDunk
-    <div className="fixed inset-0 z-[99999] bg-black w-screen h-screen overflow-hidden">
+    // Removemos o 'fixed inset-0' para permitir que o Header do site apareça acima
+    <div className="min-h-screen bg-zinc-950 relative flex flex-col">
       
-      {/* BACKGROUND ANIMADO (DuoDunk Aura) */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-purple-600/30 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-600/20 rounded-full blur-[120px] animate-pulse delay-1000" />
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
+      {/* Background estilizado (Fica apenas no fundo desta seção) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a2e] z-0" />
 
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-y-auto p-4 md:p-8">
+      {/* Container do Jogo */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-12 px-4">
         
-        {/* TELA DE ELIMINAÇÃO POR 'CHEAT' */}
-        {cheated ? (
-          <div className="max-w-md w-full bg-red-950/90 border border-red-500/50 p-8 rounded-3xl backdrop-blur-xl text-center shadow-[0_0_50px_rgba(220,38,38,0.5)] animate-in zoom-in duration-300">
-            <h1 className="text-6xl mb-4">🚫</h1>
-            <h2 className="text-3xl font-bebas text-red-500 mb-2">FALTA TÉCNICA!</h2>
-            <p className="text-gray-300 mb-6">Você saiu da tela do jogo. Para garantir a integridade do Quiz mais difícil do Brasil, não é permitido trocar de abas.</p>
-            <button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full uppercase tracking-widest transition">
-              Tentar Novamente
-            </button>
-          </div>
-        ) : (
-          /* INTERFACE DO JOGO */
-          <MilhaoInterface initialSettings={settings} />
-        )}
+        {/* Passamos as configurações já carregadas para o componente */}
+        <MilhaoInterface initialSettings={safeSettings} />
+        
       </div>
     </div>
   );
