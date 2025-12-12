@@ -21,18 +21,15 @@ export default async function MilhaoPage() {
   const safeSettings = settings || {};
 
   return (
-    // Removemos o 'fixed inset-0' para permitir que o Header do site apareça acima
-    <div className="min-h-screen bg-zinc-950 relative flex flex-col">
+    // 'w-full' e 'min-h-screen' garantem que o fundo cubra tudo
+    <div className="min-h-screen w-full bg-zinc-950 relative flex flex-col">
       
-      {/* Background estilizado (Fica apenas no fundo desta seção) */}
+      {/* Background estilizado cobrindo 100% */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a2e] z-0" />
 
-      {/* Container do Jogo */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-12 px-4">
-        
-        {/* Passamos as configurações já carregadas para o componente */}
+      {/* Container de conteúdo com Z-Index para ficar acima do fundo */}
+      <div className="relative z-10 w-full flex-1 flex flex-col">
         <MilhaoInterface initialSettings={safeSettings} />
-        
       </div>
     </div>
   );

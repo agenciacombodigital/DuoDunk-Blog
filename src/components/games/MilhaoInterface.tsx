@@ -126,7 +126,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   // --- TELA INICIAL (Mobile First) ---
   if (gameState === 'start') {
     return (
-      <div className="flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto px-4 relative min-h-[60vh]">
+      <div className="flex flex-col items-center justify-center text-center w-full min-h-screen py-12 px-6">
         
         {/* MODAL RANKING */}
         {showRanking && (
@@ -270,18 +270,16 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
 
   // --- TELA DO JOGO (GAMEPLAY) ---
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full justify-start md:justify-center">
+    <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full justify-start md:justify-center px-4 py-8">
         {/* HUD */}
-        <div className="w-full flex justify-between items-end mb-6 md:mb-8 px-2 md:px-0">
+        <div className="w-full flex justify-between items-end mb-6 md:mb-8">
             <div className="text-left">
                 <span className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">Prêmio</span>
                 <div className="text-2xl md:text-3xl font-black font-oswald text-[#00bfff]">R$ {prize.toLocaleString()}</div>
             </div>
             
             <div className="flex flex-col items-end">
-                 <div className={`text-3xl md:text-4xl font-black font-oswald ${timer <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                    {timer}s
-                 </div>
+                 <div className={`text-3xl md:text-4xl font-black font-oswald ${timer <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>{timer}s</div>
                  <div className="w-24 md:w-32 h-1.5 md:h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
                     <div className={`h-full ${timer <= 10 ? 'bg-red-500' : 'bg-[#00ff00]'} transition-all duration-1000 linear`} style={{ width: `${(timer / 30) * 100}%` }} />
                  </div>
