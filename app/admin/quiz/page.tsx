@@ -1,15 +1,32 @@
 "use client";
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Question } from '@/lib/milhao-data';
+import QuestionTable from '@/components/admin/quiz/QuestionTable';
+import EditQuestionModal from '@/components/admin/quiz/EditQuestionModal';
+import { Input } from '@/components/ui/input';
+
+const QUESTIONS_PER_PAGE = 10;
 
 export default function QuizAdmin() {
   const [loading, setLoading] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Estado do formulário manual
+  // Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
+  // Form State (for manual entry)
   const [form, setForm] = useState({
     level: 1,
     question: '',
@@ -20,6 +37,87 @@ export default function QuizAdmin() {
     correctIndex: 0,
     category: 'Geral'
   });
+  
+  // --- Data Fetching ---
+  const fetchQuestions = useCallback(async (page: number, search: string) => {
+    setLoading(true);
+    try {
+      const from = (page - 1) * QUESTIONS_PER_PAGE;
+      const to = from + QUESTIONS_PER_PAGE - 1;
+      
+      let query = supabase
+        .from('milhao_questions')
+        .select('*', { count: 'exact' })
+        .order('level', { ascending: true })
+        .order('sequence_num', { ascending: false });
+        
+      if (search) {
+        query = query.ilike('question', `%${search}%`);
+      }
+      
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+      
+      setQuestions(data as Question[] || []);
+      setTotalCount(count || 0);
+      setCurrentPage(page);
+
+    } catch (error: any) {
+      toast.error("Erro ao carregar perguntas: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    // Pequeno delay para evitar spam de requisições ao digitar
+    const handler = setTimeout(() => {
+      fetchQuestions(currentPage, searchTerm);
+    }, 300);
+    
+    return () => clearTimeout(handler);
+  }, [fetchQuestions, searchTerm, currentPage]);
+  
+  const totalPages = Math.ceil(totalCount / QUESTIONS_PER_PAGE);
+  
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Resetar para a primeira página ao pesquisar
+  };
+  
+  // --- Ações da Tabela ---
+  const handleEdit = (question: Question) => {
+    setEditingQuestion(question);
+    setShowEditModal(true);
+  };
+  
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta pergunta?")) return;
+    
+    const toastId = toast.loading("Excluindo pergunta...");
+    try {
+      const { error } = await supabase
+        .from('milhao_questions')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast.success("Pergunta excluída com sucesso!", { id: toastId });
+      fetchQuestions(currentPage, searchTerm); // Recarrega a lista
+    } catch (error: any) {
+      toast.error("Erro ao excluir: " + error.message, { id: toastId });
+    }
+  };
 
   // --- FUNÇÃO 1: ENVIO MANUAL ---
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +141,7 @@ export default function QuizAdmin() {
       if (error) throw error;
       toast.success("Pergunta salva com sucesso!", { id: toastId });
       setForm({ ...form, question: '', optionA: '', optionB: '', optionC: '', optionD: '' });
+      fetchQuestions(1, searchTerm); // Recarrega a primeira página
     } catch (error: any) {
       toast.error("Erro ao salvar", { id: toastId, description: error.message });
     } finally {
@@ -63,14 +162,12 @@ export default function QuizAdmin() {
       try {
         let rawText = e.target?.result as string;
         
-        // 1. Sanitização: Corrige a concatenação de múltiplos arrays JSON (ex: `][` ou `] [`)
         let sanitizedText = rawText.replace(/\]\s*\[/g, ',');
 
         let json;
         try {
             json = JSON.parse(sanitizedText);
         } catch (parseError) {
-            // Tenta envolver em colchetes se for uma lista de objetos separados por vírgula/quebra de linha
             if (!sanitizedText.trim().startsWith('[')) {
                 sanitizedText = `[${sanitizedText.trim().replace(/,\s*$/, '')}]`;
                 json = JSON.parse(sanitizedText);
@@ -81,24 +178,21 @@ export default function QuizAdmin() {
 
         if (!Array.isArray(json)) throw new Error("O arquivo deve conter uma lista (array) de perguntas.");
 
-        // Preparar dados para o Supabase
         const questionsToInsert = json.map((item: any, index) => ({
           level: item.level || 1,
-          sequence_num: Date.now() + index, // Garante unicidade
+          sequence_num: Date.now() + index,
           question: item.question,
-          options: item.options, // Deve ser um array de 4 strings
+          options: item.options,
           correct_index: item.correct_index,
           category: item.category || 'Geral'
         }));
 
-        // Validação básica
         if (questionsToInsert.some(q => !q.question || !q.options || q.options.length !== 4 || q.correct_index === undefined || q.correct_index < 0 || q.correct_index > 3)) {
             throw new Error("Formato inválido. Verifique se todas as perguntas têm texto, 4 opções e um índice correto (0-3).");
         }
 
         toast.loading(`Inserindo ${questionsToInsert.length} perguntas em lote...`, { id: toastId });
         
-        // 2. CORREÇÃO: Usa upsert com ignoreDuplicates para não travar em perguntas repetidas
         const { error } = await supabase
             .from('milhao_questions')
             .upsert(questionsToInsert, { 
@@ -109,8 +203,8 @@ export default function QuizAdmin() {
         if (error) throw error;
 
         toast.success("Importação concluída! Perguntas novas foram adicionadas (duplicatas ignoradas).", { id: toastId });
-        if (fileInputRef.current) fileInputRef.current.value = ''; // Limpar input
-
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        fetchQuestions(1, searchTerm); // Recarrega a primeira página
       } catch (error: any) {
         console.error(error);
         toast.error("Erro na importação: " + error.message, { id: toastId });
@@ -121,6 +215,66 @@ export default function QuizAdmin() {
 
     reader.readAsText(file);
   };
+  
+  // --- FUNÇÃO 3: GERAR PERGUNTAS IA (Mantida) ---
+  const generateQuestions = async (level: number | 'mixed') => {
+    setLoading(true);
+    setGeneratedQuestions([]);
+    const toastId = toast.loading("O Servidor está pensando... (Isso evita erros de cota)");
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-quiz', {
+        body: { level }
+      });
+
+      if (error) throw new Error(error.message || "Erro na conexão com Edge Function.");
+      if (data.error) throw new Error(data.error);
+
+      let questions = data;
+      if (typeof data === 'string') {
+         try { questions = JSON.parse(data); } 
+         catch { throw new Error("Erro ao ler resposta do servidor."); }
+      }
+
+      if (!Array.isArray(questions)) throw new Error("Formato inválido recebido.");
+
+      const processed = questions.map((q: any, i: number) => ({
+        ...q,
+        level: level === 'mixed' ? q.level : q.level,
+        sequence_num: Date.now() + i
+      }));
+
+      setGeneratedQuestions(processed);
+      toast.success(`${processed.length} perguntas geradas!`, { id: toastId });
+
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message, { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveGeneratedToDatabase = async () => {
+    if (generatedQuestions.length === 0) return;
+    setSaving(true);
+    try {
+        const { error } = await supabase
+            .from('milhao_questions')
+            .upsert(generatedQuestions, { onConflict: 'question', ignoreDuplicates: true });
+
+        if (error) throw error;
+        
+        toast.success("Processado! Perguntas novas foram salvas (duplicatas ignoradas).");
+        setGeneratedQuestions([]); 
+        fetchQuestions(1, searchTerm); // Recarrega a primeira página
+    } catch (error: any) {
+        toast.error("Erro ao salvar: " + error.message);
+    } finally {
+        setSaving(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -153,10 +307,10 @@ export default function QuizAdmin() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* COLUNA 1: CADASTRO MANUAL */}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700">
+          <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700 lg:col-span-1">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-green-400">
               <Plus className="w-5 h-5"/> Nova Pergunta Manual
             </h2>
@@ -212,13 +366,13 @@ export default function QuizAdmin() {
               />
 
               <button disabled={loading} type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors flex justify-center disabled:opacity-50">
-                {loading ? 'Salvando...' : 'Salvar Pergunta'}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : 'Salvar Pergunta'}
               </button>
             </form>
           </div>
 
           {/* COLUNA 2: IMPORTAÇÃO EM MASSA */}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700 h-fit">
+          <div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700 h-fit lg:col-span-2">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-cyan-400">
               <Upload className="w-5 h-5"/> Importar em Massa (JSON)
             </h2>
@@ -254,8 +408,65 @@ export default function QuizAdmin() {
               </div>
             </label>
           </div>
-
         </div>
+        
+        {/* ÁREA DE PERGUNTAS GERADAS PELA IA */}
+        {generatedQuestions.length > 0 && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8 w-full">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-green-400"><CheckCircle /> {generatedQuestions.length} Perguntas Geradas (Aguardando Salvar)</h2>
+                    <button onClick={saveGeneratedToDatabase} disabled={saving} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2">
+                        {saving ? <Loader2 className="animate-spin w-5 h-5"/> : <Save className="w-5 h-5"/>} SALVAR TUDO
+                    </button>
+                </div>
+                {/* Reutilizando QuestionTable para exibir as perguntas geradas */}
+                <QuestionTable 
+                    questions={generatedQuestions as Question[]}
+                    loading={false}
+                    onEdit={() => toast.info("Edite após salvar no banco.")}
+                    onDelete={() => toast.info("Deletar após salvar no banco.")}
+                    currentPage={1}
+                    totalPages={1}
+                    onPageChange={() => {}}
+                />
+            </div>
+        )}
+
+        {/* TABELA DE GERENCIAMENTO */}
+        <div className="mt-12 w-full">
+          <h2 className="text-3xl font-bebas text-white mb-6">Gerenciamento de Perguntas ({totalCount})</h2>
+          
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input 
+              placeholder="Buscar pergunta por texto..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-9 bg-gray-800 border-gray-700 text-white focus:border-pink-500"
+            />
+            {loading && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500 animate-spin" />
+            )}
+          </div>
+          
+          <QuestionTable 
+            questions={questions}
+            loading={loading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+        
+        {/* Modal de Edição */}
+        <EditQuestionModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          question={editingQuestion}
+          onSaveSuccess={() => fetchQuestions(currentPage, searchTerm)}
+        />
       </div>
     </div>
   );
