@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Question } from '@/lib/milhao-data';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox'; // Importando Checkbox
 
 interface QuestionTableProps {
   questions: Question[];
@@ -14,6 +15,11 @@ interface QuestionTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  
+  // Novos Props para Seleção
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: () => void;
 }
 
 const levelMap: Record<number, string> = {
@@ -37,7 +43,10 @@ export default function QuestionTable({
   onDelete,
   currentPage,
   totalPages,
-  onPageChange
+  onPageChange,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll
 }: QuestionTableProps) {
   
   const renderContent = () => {
@@ -64,6 +73,13 @@ export default function QuestionTable({
 
     return questions.map((q) => (
       <TableRow key={q.id} className="hover:bg-gray-800/50 border-gray-700">
+        <TableCell className="w-10">
+          <Checkbox 
+            checked={selectedIds.includes(q.id)}
+            onCheckedChange={() => onToggleSelect(q.id)}
+            className="border-gray-500 data-[state=checked]:bg-pink-600 data-[state=checked]:text-white"
+          />
+        </TableCell>
         <TableCell className="font-medium text-white w-16">
           <span className={cn("px-2 py-1 rounded-full text-xs font-bold border", levelColor[q.level] || 'bg-gray-500/10 text-gray-400 border-gray-500/30')}>
             {levelMap[q.level] || 'N/D'}
@@ -98,6 +114,13 @@ export default function QuestionTable({
         <Table>
           <TableHeader className="bg-black border-gray-700">
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox 
+                  checked={questions.length > 0 && selectedIds.length === questions.length}
+                  onCheckedChange={onToggleSelectAll}
+                  className="border-gray-500 data-[state=checked]:bg-pink-600 data-[state=checked]:text-white"
+                />
+              </TableHead>
               <TableHead className="w-16 text-gray-400">NÍVEL</TableHead>
               <TableHead className="text-gray-400">PERGUNTA</TableHead>
               <TableHead className="w-40 text-gray-400">RESPOSTA CORRETA</TableHead>

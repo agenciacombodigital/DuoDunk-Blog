@@ -2,12 +2,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2 } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download } from 'lucide-react';
 import Link from 'next/link';
 import { Question } from '@/lib/milhao-data';
 import QuestionTable from '@/components/admin/quiz/QuestionTable';
 import EditQuestionModal from '@/components/admin/quiz/EditQuestionModal';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const QUESTIONS_PER_PAGE = 10;
 
@@ -21,6 +22,9 @@ export default function QuizAdmin() {
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // --- NOVO ESTADO DE SELEÇÃO ---
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
   // Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -64,6 +68,7 @@ export default function QuizAdmin() {
       setQuestions(data as Question[] || []);
       setTotalCount(count || 0);
       setCurrentPage(page);
+      setSelectedIds([]); // Limpa a seleção ao mudar de página/busca
 
     } catch (error: any) {
       toast.error("Erro ao carregar perguntas: " + error.message);
@@ -92,6 +97,51 @@ export default function QuizAdmin() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1); // Resetar para a primeira página ao pesquisar
+  };
+  
+  // --- Lógica de Seleção ---
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+        prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === questions.length && questions.length > 0) {
+        setSelectedIds([]); // Desmarca tudo
+    } else {
+        setSelectedIds(questions.map(q => q.id)); // Marca tudo
+    }
+  };
+  
+  // --- Lógica de Download ---
+  const handleDownload = () => {
+    if (selectedIds.length === 0) return toast.error("Selecione pelo menos uma pergunta para exportar.");
+
+    // Filtra e limpa os dados para o formato de importação
+    const dataToExport = questions
+        .filter(q => selectedIds.includes(q.id))
+        .map(({ level, question, options, correct_index, category }) => ({
+            level, 
+            question, 
+            options, 
+            correct_index, 
+            category
+        }));
+
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `perguntas-nba-exportadas-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`${dataToExport.length} perguntas baixadas!`);
+    setSelectedIds([]);
   };
   
   // --- Ações da Tabela ---
@@ -428,13 +478,25 @@ export default function QuizAdmin() {
                     currentPage={1}
                     totalPages={1}
                     onPageChange={() => {}}
+                    selectedIds={[]}
+                    onToggleSelect={() => {}}
+                    onToggleSelectAll={() => {}}
                 />
             </div>
         )}
 
         {/* TABELA DE GERENCIAMENTO */}
         <div className="mt-12 w-full">
-          <h2 className="text-3xl font-bebas text-white mb-6">Gerenciamento de Perguntas ({totalCount})</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bebas text-white">Gerenciamento de Perguntas ({totalCount})</h2>
+            <Button 
+              onClick={handleDownload}
+              disabled={selectedIds.length === 0 || loading}
+              className="bg-pink-600 hover:bg-pink-700 text-white font-bold flex items-center gap-2 disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" /> Baixar Selecionados ({selectedIds.length})
+            </Button>
+          </div>
           
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -457,6 +519,9 @@ export default function QuizAdmin() {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
           />
         </div>
         
