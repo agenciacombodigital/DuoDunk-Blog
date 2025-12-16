@@ -114,7 +114,7 @@ export default function QuizAdmin() {
     }
   };
   
-  // --- Lógica de Download ---
+  // --- Lógica de Download de Selecionados ---
   const handleDownload = () => {
     if (selectedIds.length === 0) return toast.error("Selecione pelo menos uma pergunta para exportar.");
 
@@ -142,6 +142,43 @@ export default function QuizAdmin() {
     
     toast.success(`${dataToExport.length} perguntas baixadas!`);
     setSelectedIds([]);
+  };
+  
+  // --- NOVO: Lógica de Download da Base Completa ---
+  const handleDownloadAll = async () => {
+    const confirm = window.confirm("Deseja baixar TODAS as perguntas do banco de dados? Isso pode levar alguns segundos.");
+    if (!confirm) return;
+
+    try {
+        toast.info("Gerando arquivo de backup...");
+        
+        // Busca TUDO sem limite de paginação, selecionando apenas os campos necessários
+        const { data, error } = await supabase
+            .from('milhao_questions')
+            .select('level, question, options, correct_index, category')
+            .order('id', { ascending: true }); 
+
+        if (error) throw error;
+        if (!data || data.length === 0) return toast.error("Nenhuma pergunta encontrada.");
+
+        // Gera o JSON limpo
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup-milhao-nba-completo-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success(`Arquivo gerado com sucesso! (${data.length} perguntas)`);
+
+    } catch (error: any) {
+        console.error(error);
+        toast.error("Erro ao baixar a base completa.", { description: error.message });
+    }
   };
   
   // --- Ações da Tabela ---
@@ -487,15 +524,24 @@ export default function QuizAdmin() {
 
         {/* TABELA DE GERENCIAMENTO */}
         <div className="mt-12 w-full">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
             <h2 className="text-3xl font-bebas text-white">Gerenciamento de Perguntas ({totalCount})</h2>
-            <Button 
-              onClick={handleDownload}
-              disabled={selectedIds.length === 0 || loading}
-              className="bg-pink-600 hover:bg-pink-700 text-white font-bold flex items-center gap-2 disabled:opacity-50"
-            >
-              <Download className="w-4 h-4" /> Baixar Selecionados ({selectedIds.length})
-            </Button>
+            <div className="flex gap-3">
+                <Button 
+                  onClick={handleDownload}
+                  disabled={selectedIds.length === 0 || loading}
+                  className="bg-pink-600 hover:bg-pink-700 text-white font-bold flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" /> Baixar Selecionados ({selectedIds.length})
+                </Button>
+                <Button 
+                  onClick={handleDownloadAll} 
+                  disabled={loading}
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" /> 📦 Baixar Base Completa
+                </Button>
+            </div>
           </div>
           
           <div className="relative mb-4">
