@@ -20,50 +20,37 @@ serve(async (req) => {
     if (!API_KEY) throw new Error('Chave GEMINI_API_KEY_QUIZ ausente.')
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error('Credenciais Supabase ausentes.')
 
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // 1. RECUPERAR "MEMÓRIA" COMPLETA (CORREÇÃO DE LIMITES)
-    // O Supabase limita a 1000 rows por padrão. Usamos .range(0, 9999) para forçar a leitura de até 10.000.
-    console.log('[QuizGen] Buscando memória completa do banco...');
-    
-    const { data: existingData, error: fetchError } = await supabaseAdmin
+    // 1. CORREÇÃO CRÍTICA: LER BANCO INTEIRO (Bypass limit 1000)
+    console.log('[QuizGen] Lendo TODAS as perguntas existentes...');
+    const { data: existingData } = await supabaseAdmin
       .from('milhao_questions')
       .select('question')
-      .range(0, 9999); // <--- FORÇA LEITURA DE ATÉ 10 MIL PERGUNTAS
+      .range(0, 9999); // Garante leitura de até 10k itens
 
-    if (fetchError) console.error('[QuizGen] Erro ao buscar histórico:', fetchError);
+    const forbiddenList = existingData?.map(q => q.question).join(" ### ") || "";
+    console.log(`[QuizGen] Lista de exclusão: ${existingData?.length || 0} perguntas.`);
 
-    // Cria a lista proibida, usando ' ### ' como separador para melhor parsing pela IA
-    const forbiddenList = existingData?.map(q => q.question).join(" ### ") || "Nenhuma pergunta existente.";
-    console.log(`[QuizGen] Memória carregada: ${existingData?.length || 0} perguntas proibidas.`);
-
-    // --- REFINAMENTO ESTRITO DE NÍVEIS ---
+    // 2. PROMPTS REFINADOS (Separando Nível 1 de Nível 2)
     let promptContext = ""
-    
     if (level === 1) {
         promptContext = `
-        NÍVEL 1: INICIANTE / FÃ CASUAL (O ÓBVIO ULULANTE)
-        Obrigatório: Perguntas que até quem não assiste NBA sabe responder.
-        - Foco em: LeBron, Curry, Jordan, Shaq, Kobe.
-        - Apelidos que são marcas mundiais (King James, CR7 do basquete).
-        - Cores de times muito famosos (Lakers = Roxo/Dourado).
-        - Regras primárias (bola na cesta vale quanto?).
-        PROIBIDO: Perguntar sobre técnicos, jogadores secundários ou anos específicos.
+        NÍVEL 1: INICIANTE / FÃ CASUAL (O ÓBVIO)
+        - Perguntas sobre: LeBron, Curry, Jordan, Shaq, Kobe.
+        - Apelidos mundiais (King James, Black Mamba).
+        - Times muito famosos (Lakers, Bulls, Celtics).
+        - Regras primárias (valor da cesta, tempo de jogo).
         `
     } 
     else if (level === 2) {
         promptContext = `
-        NÍVEL 2: FÃ DE BASQUETE (CONHECIMENTO GERAL)
-        Obrigatório: Sair do óbvio. Perguntas para quem assiste aos jogos.
+        NÍVEL 2: FÃ DE BASQUETE (CONHECIMENTO MÉDIO)
         - Recordes da temporada atual ou passada.
-        - Campeões dos últimos 10 anos (não apenas "quem ganhou", mas detalhes).
-        - Jogadores All-Star que não são "A Cara da Liga" (ex: Jimmy Butler, Donovan Mitchell).
-        - Rivalidades (Celtics x Lakers, mas com contexto).
-        - Filmes e Cultura Pop ligada à NBA.
-        ⛔ PROIBIDO NO NÍVEL 2:
-        - NÃO PERGUNTE apelidos óbvios como "The Greek Freak" ou "King James" (isso é nível 1).
-        - NÃO PERGUNTE qual time o Curry joga (isso é nível 1).
-        - O nível 2 deve exigir que a pessoa acompanhe a liga, não apenas conheça os logotipos.
+        - Campeões dos últimos 10 anos (detalhes).
+        - Jogadores All-Star secundários (Jimmy Butler, Tatum, Booker).
+        - Rivalidades com contexto.
+        ⛔ PROIBIDO: Não pergunte apelidos óbvios ("Quem é o Greek Freak?" -> ISSO É NÍVEL 1). Não pergunte onde o Curry joga.
         `
     }
     else if (level === 3) {
@@ -87,29 +74,26 @@ serve(async (req) => {
         `
     }
     else {
-        promptContext = "MISTO: Gere perguntas variadas respeitando estritamente a separação dos níveis acima."
+        promptContext = "MISTO: Distribua entre 1 e 4."
     }
 
     const finalCategory = category || 'Variados';
 
     const prompt = `
-      Você é o "NBA QuizMaster Pro". Sua tarefa é gerar um JSON com ${amount} perguntas INÉDITAS.
+      ATUE COMO UM ESPECIALISTA EM NBA.
+      Gere um ARRAY JSON com ${amount} perguntas INÉDITAS.
       
-      DIRETRIZES DO NÍVEL SELECIONADO:
+      DIRETRIZES:
       ${promptContext}
       
-      --- MEMÓRIA DE DUPLICIDADE (SISTEMA ANTI-REPETIÇÃO) ---
-      O banco de dados JÁ POSSUI as seguintes perguntas (separadas por ###):
-      ${forbiddenList.substring(0, 800000)} 
-      // (Limitamos a string para garantir que caiba no prompt, mas 2.5 Flash aguenta muito)
-
-      ⚡ REGRAS DE GERAÇÃO:
-      1. CHECK DE DUPLICIDADE: Antes de escrever uma pergunta, verifique a lista acima. Se o assunto (ex: "Apelido do Giannis") já estiver lá, VOCÊ NÃO PODE USAR. Invente outra.
-      2. SEMÂNTICA: Não mude apenas as palavras. "Quem é o Greek Freak?" e "Qual a alcunha de Giannis?" são a MESMA pergunta. Não gere.
-      3. CRIATIVIDADE: Se o Nível 2 pede apelidos, e "Greek Freak" já existe, pergunte sobre o "Spida" (Donovan Mitchell) ou "The Claw" (Kawhi).
-      4. IDIOMA: Português Brasileiro natural de narrador da ESPN/Amazon Prime.
-
-      SAÍDA ESPERADA (JSON PURO):
+      ⛔ ANTI-DUPLICIDADE (CRÍTICO):
+      O banco JÁ TEM estas perguntas (separadas por ###):
+      ${forbiddenList.substring(0, 900000)}
+      
+      REGRA 1: SE A PERGUNTA JÁ ESTÁ NA LISTA ACIMA, NÃO A GERE.
+      REGRA 2: NÃO GERE PERGUNTAS SEMANTICAMENTE IDÊNTICAS.
+      
+      SAÍDA JSON:
       [
         {
           "level": ${level === 'mixed' ? '1-4' : level},
@@ -123,6 +107,7 @@ serve(async (req) => {
 
     // --- LÓGICA DE GERAÇÃO (COM RETRY) ---
     let successJson = null;
+    let lastError = null;
 
     for (const currentModel of MODELS_TO_TRY) {
         try {
@@ -134,12 +119,16 @@ serve(async (req) => {
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { 
                         temperature: 0.9, // Alta criatividade para evitar repetições
+                        maxOutputTokens: 8192,
                         responseMimeType: "application/json"
                     }
                 })
             })
 
-            if (!response.ok) throw new Error(`Erro API: ${response.status}`);
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Erro API ${response.status}: ${errorBody}`);
+            }
 
             const rawData = await response.json();
             let rawText = rawData.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
@@ -151,12 +140,15 @@ serve(async (req) => {
                 break;
             }
         } catch (e) {
+            lastError = e;
             console.warn(`[QuizGen] Falha em ${currentModel}, tentando próximo...`);
             continue;
         }
     }
 
-    if (!successJson) throw new Error("Falha na geração em todos os modelos.");
+    if (!successJson) {
+      throw new Error(`Falha na geração em todos os modelos. Último erro: ${lastError?.message}`);
+    }
 
     return new Response(JSON.stringify(successJson), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

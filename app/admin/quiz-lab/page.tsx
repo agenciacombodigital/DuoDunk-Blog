@@ -2,17 +2,24 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Save, RefreshCw, CheckCircle, ArrowLeft, Zap, Server } from 'lucide-react';
+import { Save, RefreshCw, CheckCircle, ArrowLeft, Zap, Server, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { Question } from '@/lib/milhao-data';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 export default function QuizLab() {
   const [loading, setLoading] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  
+  // --- NOVO ESTADO DE SELEÇÃO ---
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
   const generateQuestions = async (level: number | 'mixed') => {
     setLoading(true);
     setGeneratedQuestions([]);
+    setSelectedIndices([]); // Limpa a seleção
     const toastId = toast.loading("O Servidor está pensando... (Isso evita erros de cota)");
     
     try {
@@ -54,22 +61,68 @@ export default function QuizLab() {
   const saveToDatabase = async () => {
     if (generatedQuestions.length === 0) return;
     setSaving(true);
+    
+    // Filtra as perguntas que NÃO foram excluídas
+    const questionsToSave = generatedQuestions.filter((_, i) => !selectedIndices.includes(i));
+    
+    if (questionsToSave.length === 0) {
+        toast.info("Nenhuma pergunta restante para salvar.");
+        setSaving(false);
+        setGeneratedQuestions([]);
+        setSelectedIndices([]);
+        return;
+    }
+    
     try {
         // Tenta inserir. Se a pergunta já existir (mesmo texto), ignora e segue.
         const { error } = await supabase
             .from('milhao_questions')
-            .upsert(generatedQuestions, { onConflict: 'question', ignoreDuplicates: true });
+            .upsert(questionsToSave, { onConflict: 'question', ignoreDuplicates: true });
 
         if (error) throw error;
         
-        toast.success("Processado! Perguntas novas foram salvas (duplicatas ignoradas).");
+        toast.success(`Processado! ${questionsToSave.length} perguntas enviadas (duplicatas ignoradas).`);
         setGeneratedQuestions([]); 
+        setSelectedIndices([]);
     } catch (error: any) {
         toast.error("Erro ao salvar: " + error.message);
     } finally {
         setSaving(false);
     }
   };
+  
+  // --- AÇÕES DE SELEÇÃO ---
+  const toggleSelect = (index: number) => {
+    setSelectedIndices(prev => 
+        prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIndices.length === generatedQuestions.length && generatedQuestions.length > 0) {
+        setSelectedIndices([]); // Desmarca tudo
+    } else {
+        setSelectedIndices(generatedQuestions.map((_, i) => i)); // Marca tudo
+    }
+  };
+  
+  const handleDeleteSelected = () => {
+    if (selectedIndices.length === 0) return;
+    
+    const remainingQuestions = generatedQuestions.filter((_, i) => !selectedIndices.includes(i));
+    setGeneratedQuestions(remainingQuestions);
+    setSelectedIndices([]); // Limpa seleção
+    toast.info(`${selectedIndices.length} perguntas excluídas da lista de revisão.`);
+  };
+  
+  const levelMap: Record<number, string> = { 1: 'Fácil', 2: 'Médio', 3: 'Difícil', 4: 'Milhão' };
+  const levelColor: Record<number, string> = {
+    1: 'bg-green-500/10 text-green-400 border-green-500/30',
+    2: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    3: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+    4: 'bg-red-600/10 text-red-400 border-red-600/30',
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -109,30 +162,63 @@ export default function QuizLab() {
             </button>
         </div>
 
-        {/* ÁREA DE RESULTADOS (Igual à anterior) */}
+        {/* ÁREA DE RESULTADOS */}
         {generatedQuestions.length > 0 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold flex items-center gap-2 text-green-400"><CheckCircle /> {generatedQuestions.length} Perguntas</h2>
-                    <button onClick={saveToDatabase} disabled={saving} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2">
-                        {saving ? <RefreshCw className="animate-spin"/> : <Save />} SALVAR TUDO
-                    </button>
+                    
+                    <div className="flex gap-3">
+                        {selectedIndices.length > 0 && (
+                            <button 
+                                onClick={handleDeleteSelected} 
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2 text-sm"
+                            >
+                                <Trash2 className="w-4 h-4"/> Excluir ({selectedIndices.length})
+                            </button>
+                        )}
+                        <button 
+                            onClick={saveToDatabase} 
+                            disabled={saving} 
+                            className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2"
+                        >
+                            {saving ? <Loader2 className="animate-spin w-5 h-5"/> : <Save className="w-5 h-5"/>} SALVAR RESTANTES
+                        </button>
+                    </div>
                 </div>
                 <div className="bg-gray-900 rounded-xl border border-gray-800 p-0 overflow-hidden max-h-[600px] overflow-y-auto">
                      <table className="w-full text-left text-sm text-gray-300">
                         <thead className="bg-black text-gray-400 uppercase font-bold sticky top-0">
                             <tr>
-                                <th className="p-4">Nível</th>
+                                <th className="p-4 w-10">
+                                    <Checkbox 
+                                        checked={selectedIndices.length === generatedQuestions.length && generatedQuestions.length > 0}
+                                        onCheckedChange={toggleSelectAll}
+                                        className="border-gray-500 data-[state=checked]:bg-pink-600 data-[state=checked]:text-white"
+                                    />
+                                </th>
+                                <th className="p-4 w-16">Nível</th>
                                 <th className="p-4">Pergunta</th>
                                 <th className="p-4">Resposta</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-800">
                             {generatedQuestions.map((q, idx) => (
-                                <tr key={idx} className="hover:bg-gray-800/50">
-                                    <td className="p-4 text-center font-bold text-white">{q.level}</td>
+                                <tr key={idx} className={cn("hover:bg-gray-800/50", selectedIndices.includes(idx) && "bg-gray-800/70")}>
+                                    <td className="p-4 w-10">
+                                        <Checkbox 
+                                            checked={selectedIndices.includes(idx)}
+                                            onCheckedChange={() => toggleSelect(idx)}
+                                            className="border-gray-500 data-[state=checked]:bg-pink-600 data-[state=checked]:text-white"
+                                        />
+                                    </td>
+                                    <td className="p-4 text-center font-bold text-white w-16">
+                                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold border", levelColor[q.level] || 'bg-gray-500/10 text-gray-400 border-gray-500/30')}>
+                                            {levelMap[q.level] || 'N/D'}
+                                        </span>
+                                    </td>
                                     <td className="p-4 font-medium text-white">{q.question}</td>
-                                    <td className="p-4 text-green-400">{q.options[q.correct_index]}</td>
+                                    <td className="p-4 text-cyan-400">{q.options[q.correct_index]}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -140,6 +226,8 @@ export default function QuizLab() {
                 </div>
             </div>
         )}
+        
+        {/* O restante da página (cadastro manual e tabela de gerenciamento) não foi alterado */}
       </div>
     </div>
   );
