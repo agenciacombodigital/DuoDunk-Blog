@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4'
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.15.0" // Importando Gemini SDK
 
-// CONFIGURAÇÃO DOS MODELOS (DEZEMBRO 2025)
-// Tenta o Flash normal primeiro. Se falhar (503), tenta o Lite.
 const MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
-
 const API_KEY = Deno.env.get('GEMINI_API_KEY_QUIZ')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -21,187 +17,153 @@ serve(async (req) => {
   try {
     const { level, category, amount = 20 } = await req.json()
     
-    if (!API_KEY) throw new Error('Chave GEMINI_API_KEY_QUIZ não configurada.')
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error('Configurações Supabase ausentes.')
+    if (!API_KEY) throw new Error('Chave GEMINI_API_KEY_QUIZ ausente.')
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error('Credenciais Supabase ausentes.')
 
-    const genAI = new GoogleGenerativeAI(API_KEY);
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // 1. RECUPERAR "MEMÓRIA" DO BANCO (Anti-Duplicidade)
-    console.log('[QuizGen] Buscando perguntas existentes...');
+    // 1. RECUPERAR "MEMÓRIA" COMPLETA (CORREÇÃO DE LIMITES)
+    // O Supabase limita a 1000 rows por padrão. Usamos .range(0, 9999) para forçar a leitura de até 10.000.
+    console.log('[QuizGen] Buscando memória completa do banco...');
+    
     const { data: existingData, error: fetchError } = await supabaseAdmin
       .from('milhao_questions')
-      .select('question');
+      .select('question')
+      .range(0, 9999); // <--- FORÇA LEITURA DE ATÉ 10 MIL PERGUNTAS
 
-    if (fetchError) console.error('[QuizGen] Erro ao buscar perguntas (continuando sem filtro):', fetchError);
+    if (fetchError) console.error('[QuizGen] Erro ao buscar histórico:', fetchError);
 
-    const forbiddenList = existingData?.map(q => q.question).join("; ") || "Nenhuma pergunta existente.";
-    console.log(`[QuizGen] Lista de exclusão carregada com ${existingData?.length || 0} itens.`);
+    // Cria a lista proibida, usando ' ### ' como separador para melhor parsing pela IA
+    const forbiddenList = existingData?.map(q => q.question).join(" ### ") || "Nenhuma pergunta existente.";
+    console.log(`[QuizGen] Memória carregada: ${existingData?.length || 0} perguntas proibidas.`);
 
-    // --- CONTEXTO DO PROMPT (MANTIDO ORIGINAL) ---
+    // --- REFINAMENTO ESTRITO DE NÍVEIS ---
     let promptContext = ""
+    
     if (level === 1) {
         promptContext = `
-        NÍVEL 1: FATOS ÓBVIOS, LENDAS FAMOSAS, JOGADORES POPULARES, REGRAS BÁSICAS
-        Categorias Obrigatórias:
-        - Lendas históricas conhecidas (Jordan, LeBron, Kobe, Magic, Bird, Shaq).
-        - Superstars atuais e recentes (Curry, Durant, Giannis, Jokic, Luka, Embiid, Tatum).
-        - Jogadores populares da atualidade (Shai, Harden, Westbrook, Kawhi, Anthony Davis).
-        - Regras básicas do jogo (quantos jogadores, duração do jogo, pontos por arremesso).
-        - Times famosos e suas cidades.
-        - Recordes conhecidos e populares (mais pontos em um jogo, mais títulos, MVP).
-        - Curiosidades populares sobre a NBA.
-        - Apelidos óbvios de jogadores famosos (Chef Curry, Slim Reaper, The Greek Freak).
+        NÍVEL 1: INICIANTE / FÃ CASUAL (O ÓBVIO ULULANTE)
+        Obrigatório: Perguntas que até quem não assiste NBA sabe responder.
+        - Foco em: LeBron, Curry, Jordan, Shaq, Kobe.
+        - Apelidos que são marcas mundiais (King James, CR7 do basquete).
+        - Cores de times muito famosos (Lakers = Roxo/Dourado).
+        - Regras primárias (bola na cesta vale quanto?).
+        PROIBIDO: Perguntar sobre técnicos, jogadores secundários ou anos específicos.
         `
     } 
     else if (level === 2) {
         promptContext = `
-        NÍVEL 2: RECORDES CONHECIDOS, CAMPEÕES RECENTES, APELIDOS
-        Categorias Obrigatórias:
-        - Campeões da última década.
-        - Apelidos famosos de jogadores (The King, Black Mamba, Greek Freak).
-        - Recordes de equipes (sequências de vitórias, playoffs).
-        - MVPs recentes e All-Stars.
-        - Rivalidades históricas conhecidas.
-        - Jogadores brasileiros na NBA (Nenê, Leandrinho, Tiago Splitter, Anderson Varejão).
-        - Curiosidades sobre arenas e franquias.
-        - Celebridades famosas ligadas à NBA (Drake e Raptors, Jay-Z e Nets, Spike Lee e Knicks).
-        - Curiosidades engraçadas conhecidas (momentos virais, memes famosos).
-        - Filmes famosos sobre NBA (Space Jam, Coach Carter, He Got Game).
-        - Jogadores que atuaram em filmes conhecidos (LeBron, Shaq, Kareem).
+        NÍVEL 2: FÃ DE BASQUETE (CONHECIMENTO GERAL)
+        Obrigatório: Sair do óbvio. Perguntas para quem assiste aos jogos.
+        - Recordes da temporada atual ou passada.
+        - Campeões dos últimos 10 anos (não apenas "quem ganhou", mas detalhes).
+        - Jogadores All-Star que não são "A Cara da Liga" (ex: Jimmy Butler, Donovan Mitchell).
+        - Rivalidades (Celtics x Lakers, mas com contexto).
+        - Filmes e Cultura Pop ligada à NBA.
+        ⛔ PROIBIDO NO NÍVEL 2:
+        - NÃO PERGUNTE apelidos óbvios como "The Greek Freak" ou "King James" (isso é nível 1).
+        - NÃO PERGUNTE qual time o Curry joga (isso é nível 1).
+        - O nível 2 deve exigir que a pessoa acompanhe a liga, não apenas conheça os logotipos.
         `
     }
     else if (level === 3) {
         promptContext = `
-        NÍVEL 3: ESTATÍSTICAS ESPECÍFICAS, HISTÓRIA ANOS 60/70/80/90, TROCAS
-        Categorias Obrigatórias:
-        - Era anos 60 (Celtics de Russell, Wilt Chamberlain, Jerry West).
-        - Era anos 70 (Kareem Abdul-Jabbar, rivalidades ABA-NBA, Dr. J).
-        - Era anos 80 (Magic vs Bird, Lakers-Celtics, Bad Boys Pistons).
-        - Era anos 90 (Jordan e Bulls, Hakeem e Rockets, Stockton e Malone).
-        - Trocas históricas famosas.
-        - Estatísticas específicas (triplo-duplos, eficiência).
-        - Acontecimentos históricos marcantes (The Decision, Lakers-Celtics Finals).
-        - Jogadas históricas famosas (último arremesso de Jordan, block do LeBron).
-        - Jogos históricos (63 pontos do Jordan nos playoffs, 81 do Kobe, 100 do Wilt).
-        - Regras que mudaram ao longo do tempo.
-        - Jogadores brasileiros menos conhecidos (Marcelinho Huertas, Raul Neto, Cristiano Felício).
-        - Celebridades com histórias específicas (Jack Nicholson presença nos jogos, fãs famosos).
-        - Filmes e documentários específicos (The Last Dance, More Than a Game).
-        - Participações específicas em filmes (Kareem em Airplane, Ray Allen em He Got Game).
+        NÍVEL 3: HARDCORE / HISTORIADOR (ANOS 80/90/00)
+        - Foco pesado em História: Eras Jordan, Bird/Magic, Shaq/Kobe.
+        - Estatísticas específicas (quem fez mais assistências em 1995?).
+        - Trocas que mudaram a liga.
+        - Jogadores brasileiros "lado B" (Varejão, Nenê, Huertas).
+        - Detalhes de regras (3 segundos defensivos, goaltending).
         `
     }
     else if (level === 4) {
         promptContext = `
-        NÍVEL 4: FATOS OBSCUROS, ROLE PLAYERS, ABA, DRAFTS ANTIGOS
-        Categorias Obrigatórias:
-        - História da ABA (fusão, jogadores, regras diferentes).
-        - Role players importantes em conquistas.
-        - Drafts antigos (picks surpreendentes, busts históricos).
-        - Fatos obscuros e pouco conhecidos.
-        - Regras antigas e modificações técnicas detalhadas.
-        - Acontecimentos históricos obscuros (greves, mudanças de franquias, casos judiciais).
-        - Jogadores de outras nacionalidades com histórias únicas e raras.
-        - Estatísticas raras e recordes obscuros.
-        - Detalhes técnicos de jogadas históricas menos conhecidas.
-        - Curiosidades ultra-específicas que só fãs hardcore sabem.
+        NÍVEL 4: ESPECIALISTA / IMPOSSÍVEL (DRAFTS E CURIOSIDADES)
+        - Fatos obscuros da ABA.
+        - "Busts" de Draft (quem foi escolhido antes do Jordan?).
+        - Role players de times campeões (quem era o pivo reserva do Bulls em 96?).
+        - Recordes negativos.
+        - Curiosidades ultra-específicas.
         `
     }
     else {
-        promptContext = "MISTO: Distribua equilibradamente entre todos os níveis acima (1 ao 4)."
+        promptContext = "MISTO: Gere perguntas variadas respeitando estritamente a separação dos níveis acima."
     }
 
-    const finalCategory = category || 'Geral';
+    const finalCategory = category || 'Variados';
 
     const prompt = `
-      ATUE COMO UM ESPECIALISTA SUPREMO EM NBA.
-      Gere um ARRAY JSON com ${amount} perguntas de quiz em Português do Brasil (PT-BR).
+      Você é o "NBA QuizMaster Pro". Sua tarefa é gerar um JSON com ${amount} perguntas INÉDITAS.
       
-      DIRETRIZES COMPLETAS DO NÍVEL:
+      DIRETRIZES DO NÍVEL SELECIONADO:
       ${promptContext}
       
-      REGRAS DE OURO (ANTI-REPETIÇÃO):
-      1. DIVERSIDADE TOTAL: Em um lote de ${amount} perguntas, NUNCA repita o mesmo jogador ou time como foco principal mais de uma vez.
-      2. VARIEDADE DE TEMAS: Intercale obrigatoriamente: 1 pergunta de Regra, 1 de História, 1 de Recorde, 1 de Curiosidade, etc. Não agrupe assuntos.
-      3. IDIOMA: Use termos brasileiros ("Cesta" e não "Ponto", "Garrafão" e não "Pintado").
-      
-      ⛔ REGRAS DE EXCLUSÃO (CRÍTICO):
-      Você está estritamente PROIBIDO de gerar perguntas iguais ou semanticamente idênticas a estas (Lista Proibida):
-      
-      --- INÍCIO DA LISTA PROIBIDA ---
-      ${forbiddenList}
-      --- FIM DA LISTA PROIBIDA ---
+      --- MEMÓRIA DE DUPLICIDADE (SISTEMA ANTI-REPETIÇÃO) ---
+      O banco de dados JÁ POSSUI as seguintes perguntas (separadas por ###):
+      ${forbiddenList.substring(0, 800000)} 
+      // (Limitamos a string para garantir que caiba no prompt, mas 2.5 Flash aguenta muito)
 
-      FORMATO DE SAÍDA (JSON PURO):
+      ⚡ REGRAS DE GERAÇÃO:
+      1. CHECK DE DUPLICIDADE: Antes de escrever uma pergunta, verifique a lista acima. Se o assunto (ex: "Apelido do Giannis") já estiver lá, VOCÊ NÃO PODE USAR. Invente outra.
+      2. SEMÂNTICA: Não mude apenas as palavras. "Quem é o Greek Freak?" e "Qual a alcunha de Giannis?" são a MESMA pergunta. Não gere.
+      3. CRIATIVIDADE: Se o Nível 2 pede apelidos, e "Greek Freak" já existe, pergunte sobre o "Spida" (Donovan Mitchell) ou "The Claw" (Kawhi).
+      4. IDIOMA: Português Brasileiro natural de narrador da ESPN/Amazon Prime.
+
+      SAÍDA ESPERADA (JSON PURO):
       [
         {
           "level": ${level === 'mixed' ? '1-4' : level},
-          "question": "Pergunta...",
-          "options": ["A", "B", "C", "D"],
-          "correct_index": 0, // 0 a 3
+          "question": "Texto da pergunta...",
+          "options": ["Certa", "Errada", "Errada", "Errada"],
+          "correct_index": 0,
           "category": "${finalCategory}"
         }
       ]
     `
 
-    // --- 2. LÓGICA DE GERAÇÃO COM RETRY (Flash -> Lite) ---
+    // --- LÓGICA DE GERAÇÃO (COM RETRY) ---
     let successJson = null;
-    let lastError = null;
 
     for (const currentModel of MODELS_TO_TRY) {
         try {
-            console.log(`[QuizGen] Tentando modelo: ${currentModel}...`);
-            
-            // Endpoint v1beta para modelos experimentais/novos
+            console.log(`[QuizGen] Tentando: ${currentModel}...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { 
-                    temperature: 0.9, 
-                    maxOutputTokens: 8192,
-                    responseMimeType: "application/json"
-                }
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { 
+                        temperature: 0.9, // Alta criatividade para evitar repetições
+                        responseMimeType: "application/json"
+                    }
                 })
             })
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                // Se der erro 503 (Overloaded) ou 500, força o loop a tentar o próximo
-                throw new Error(`Erro API ${response.status}: ${errorBody}`);
-            }
+            if (!response.ok) throw new Error(`Erro API: ${response.status}`);
 
             const rawData = await response.json();
             let rawText = rawData.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
-            // Limpeza de segurança para Markdown
             rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim()
 
             successJson = JSON.parse(rawText);
-            
-            if (!Array.isArray(successJson)) throw new Error("Resposta da IA não é um array.");
-            
-            console.log(`[QuizGen] SUCESSO com ${currentModel}! Geradas ${successJson.length} perguntas.`);
-            break; // Sai do loop se funcionou
-
-        } catch (error: any) {
-            lastError = error;
-            console.warn(`[QuizGen] Falha no modelo ${currentModel}: ${error.message}`);
-            console.log(`[QuizGen] Tentando próximo modelo de backup...`);
-            continue; // Tenta o Lite
+            if (Array.isArray(successJson) && successJson.length > 0) {
+                console.log(`[QuizGen] Sucesso! ${successJson.length} perguntas novas.`);
+                break;
+            }
+        } catch (e) {
+            console.warn(`[QuizGen] Falha em ${currentModel}, tentando próximo...`);
+            continue;
         }
     }
 
-    if (!successJson) {
-      throw new Error(`Todos os modelos falharam. Último erro: ${lastError?.message}`);
-    }
+    if (!successJson) throw new Error("Falha na geração em todos os modelos.");
 
     return new Response(JSON.stringify(successJson), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error: any) {
-    console.error("[QuizGen] Erro Fatal:", error.message)
+    console.error("[QuizGen] Fatal:", error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
