@@ -7,8 +7,10 @@ import Link from 'next/link';
 import { Question } from '@/lib/milhao-data';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation'; // Importando useRouter
 
 export default function QuizLab() {
+  const router = useRouter(); // Inicializando useRouter
   const [loading, setLoading] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
@@ -82,8 +84,12 @@ export default function QuizLab() {
         if (error) throw error;
         
         toast.success(`Processado! ${questionsToSave.length} perguntas enviadas (duplicatas ignoradas).`);
+        
+        // Limpa o estado e redireciona para a página principal do quiz admin
         setGeneratedQuestions([]); 
         setSelectedIndices([]);
+        router.push('/admin/quiz'); // <--- REDIRECIONAMENTO APLICADO AQUI
+        
     } catch (error: any) {
         toast.error("Erro ao salvar: " + error.message);
     } finally {
