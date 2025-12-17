@@ -2,30 +2,29 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Save, RefreshCw, CheckCircle, ArrowLeft, Zap, Server, Trash2 } from 'lucide-react';
+import { Save, RefreshCw, CheckCircle, ArrowLeft, Zap, Server, Trash2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Question } from '@/lib/milhao-data';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation'; // Importando useRouter
+import { useRouter } from 'next/navigation';
 
 export default function QuizLab() {
-  const router = useRouter(); // Inicializando useRouter
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   
-  // --- NOVO ESTADO DE SELEÇÃO ---
+  // --- ESTADO DE SELEÇÃO ---
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
   const generateQuestions = async (level: number | 'mixed') => {
     setLoading(true);
     setGeneratedQuestions([]);
-    setSelectedIndices([]); // Limpa a seleção
+    setSelectedIndices([]);
     const toastId = toast.loading("O Servidor está pensando... (Isso evita erros de cota)");
     
     try {
-      // Chama a Edge Function que usa a chave GEMINI_API_KEY_QUIZ do servidor
       const { data, error } = await supabase.functions.invoke('generate-quiz', {
         body: { level }
       });
@@ -33,7 +32,6 @@ export default function QuizLab() {
       if (error) throw new Error(error.message || "Erro na conexão com Edge Function.");
       if (data.error) throw new Error(data.error);
 
-      // O backend retorna o JSON puro ou string
       let questions = data;
       if (typeof data === 'string') {
          try { questions = JSON.parse(data); } 
@@ -42,7 +40,6 @@ export default function QuizLab() {
 
       if (!Array.isArray(questions)) throw new Error("Formato inválido recebido.");
 
-      // Adiciona IDs locais para a tabela
       const processed = questions.map((q: any, i: number) => ({
         ...q,
         level: level === 'mixed' ? q.level : q.level,
@@ -88,7 +85,7 @@ export default function QuizLab() {
         // Limpa o estado e redireciona para a página principal do quiz admin
         setGeneratedQuestions([]); 
         setSelectedIndices([]);
-        router.push('/admin/quiz'); // <--- REDIRECIONAMENTO APLICADO AQUI
+        router.push('/admin/quiz');
         
     } catch (error: any) {
         toast.error("Erro ao salvar: " + error.message);

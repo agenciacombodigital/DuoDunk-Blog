@@ -22,77 +22,71 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // 1. CORREÇÃO CRÍTICA: LER BANCO INTEIRO (Bypass limit 1000)
-    console.log('[QuizGen] Lendo TODAS as perguntas existentes...');
+    // 1. CORREÇÃO DE LEITURA (Range 0-9999)
+    console.log('[QuizGen] Lendo memória completa do banco...');
     const { data: existingData } = await supabaseAdmin
       .from('milhao_questions')
       .select('question')
-      .range(0, 9999); // Garante leitura de até 10k itens
+      .range(0, 9999); // <--- OBRIGATÓRIO PARA LER TUDO
 
+    // Prepara a lista negra
     const forbiddenList = existingData?.map(q => q.question).join(" ### ") || "";
-    console.log(`[QuizGen] Lista de exclusão: ${existingData?.length || 0} perguntas.`);
+    console.log(`[QuizGen] ${existingData?.length || 0} perguntas carregadas para exclusão.`);
 
     // 2. PROMPTS REFINADOS (Separando Nível 1 de Nível 2)
     let promptContext = ""
     if (level === 1) {
         promptContext = `
-        NÍVEL 1: INICIANTE / FÃ CASUAL (O ÓBVIO)
-        - Perguntas sobre: LeBron, Curry, Jordan, Shaq, Kobe.
-        - Apelidos mundiais (King James, Black Mamba).
-        - Times muito famosos (Lakers, Bulls, Celtics).
-        - Regras primárias (valor da cesta, tempo de jogo).
+        NÍVEL 1: INICIANTE (MAS SEJA CRIATIVO!)
+        - Não fique só em "Quem é o King James". Varie!
+        - Pergunte sobre: Mascotes (Benny the Bull), Cores (Quem usa Verde?), Cidades (Onde joga o Jazz?), Logotipos.
+        - Apelidos e Lendas (Jordan, Shaq, Kobe).
+        - Regras muito básicas (3 pontos, lance livre).
         `
-    } 
-    else if (level === 2) {
+    } else if (level === 2) {
         promptContext = `
-        NÍVEL 2: FÃ DE BASQUETE (CONHECIMENTO MÉDIO)
-        - Recordes da temporada atual ou passada.
-        - Campeões dos últimos 10 anos (detalhes).
-        - Jogadores All-Star secundários (Jimmy Butler, Tatum, Booker).
-        - Rivalidades com contexto.
-        ⛔ PROIBIDO: Não pergunte apelidos óbvios ("Quem é o Greek Freak?" -> ISSO É NÍVEL 1). Não pergunte onde o Curry joga.
+        NÍVEL 2: FÃ MÉDIO (SAIA DO ÓBVIO)
+        - NÃO PERGUNTE apelidos de nível 1 (Nada de "Quem é Black Mamba").
+        - Foco: Recordes recentes, Campeões dos anos 2010s, Técnicos famosos (Phil Jackson, Popovich).
+        - Jogadores All-Star (Tatum, Booker, Butler) - não apenas os GOATs.
+        - Filmes (Space Jam, Air).
         `
-    }
-    else if (level === 3) {
+    } else if (level === 3) {
         promptContext = `
-        NÍVEL 3: HARDCORE / HISTORIADOR (ANOS 80/90/00)
-        - Foco pesado em História: Eras Jordan, Bird/Magic, Shaq/Kobe.
-        - Estatísticas específicas (quem fez mais assistências em 1995?).
-        - Trocas que mudaram a liga.
-        - Jogadores brasileiros "lado B" (Varejão, Nenê, Huertas).
-        - Detalhes de regras (3 segundos defensivos, goaltending).
+        NÍVEL 3: HARDCORE (ANOS 90/00 E ESTATÍSTICAS)
+        - Eras clássicas (Bird vs Magic, Bad Boys).
+        - Estatísticas (quem tem mais assistências?).
+        - Jogadores brasileiros secundários.
+        - Trocas famosas.
         `
-    }
-    else if (level === 4) {
+    } else if (level === 4) {
         promptContext = `
-        NÍVEL 4: ESPECIALISTA / IMPOSSÍVEL (DRAFTS E CURIOSIDADES)
-        - Fatos obscuros da ABA.
-        - "Busts" de Draft (quem foi escolhido antes do Jordan?).
-        - Role players de times campeões (quem era o pivo reserva do Bulls em 96?).
-        - Recordes negativos.
-        - Curiosidades ultra-específicas.
+        NÍVEL 4: ESPECIALISTA (OBSCURO)
+        - ABA, Busts de Draft, Regras antigas.
+        - Curiosidades que ninguém sabe.
         `
-    }
-    else {
-        promptContext = "MISTO: Distribua entre 1 e 4."
+    } else {
+        promptContext = "MISTO: Distribua entre os níveis 1 a 4."
     }
 
     const finalCategory = category || 'Variados';
 
     const prompt = `
-      ATUE COMO UM ESPECIALISTA EM NBA.
-      Gere um ARRAY JSON com ${amount} perguntas INÉDITAS.
-      
+      ATUE COMO UM CRIADOR DE QUIZ NBA EXPERIENTE.
+      Gere ${amount} perguntas INÉDITAS.
+
       DIRETRIZES:
       ${promptContext}
-      
-      ⛔ ANTI-DUPLICIDADE (CRÍTICO):
-      O banco JÁ TEM estas perguntas (separadas por ###):
+
+      ⛔ LISTA NEGRA (PROIBIDO COPIAR OU REESCREVER):
+      O banco de dados JÁ POSSUI estas perguntas. NÃO GERE NADA PARECIDO:
       ${forbiddenList.substring(0, 900000)}
-      
-      REGRA 1: SE A PERGUNTA JÁ ESTÁ NA LISTA ACIMA, NÃO A GERE.
-      REGRA 2: NÃO GERE PERGUNTAS SEMANTICAMENTE IDÊNTICAS.
-      
+
+      ORDENS FINAIS:
+      1. Se a pergunta já existe na lista acima, DESCARTE e crie outra.
+      2. Se já tem "Quem é o King James?", NÃO crie "Qual o apelido de LeBron?". Isso é duplicata semântica.
+      3. Diversifique os temas. Não faça 5 perguntas seguidas sobre o Lakers.
+
       SAÍDA JSON:
       [
         {
@@ -105,21 +99,20 @@ serve(async (req) => {
       ]
     `
 
-    // --- LÓGICA DE GERAÇÃO (COM RETRY) ---
+    // --- LÓGICA DE RETRY (Flash -> Lite) ---
     let successJson = null;
     let lastError = null;
 
     for (const currentModel of MODELS_TO_TRY) {
         try {
-            console.log(`[QuizGen] Tentando: ${currentModel}...`);
+            console.log(`[QuizGen] Tentando ${currentModel}...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { 
-                        temperature: 0.9, // Alta criatividade para evitar repetições
-                        maxOutputTokens: 8192,
+                        temperature: 1.0, // Aumentei para 1.0 para forçar criatividade máxima
                         responseMimeType: "application/json"
                     }
                 })
@@ -131,17 +124,15 @@ serve(async (req) => {
             }
 
             const rawData = await response.json();
-            let rawText = rawData.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
-            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim()
-
+            let rawText = rawData.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            
             successJson = JSON.parse(rawText);
-            if (Array.isArray(successJson) && successJson.length > 0) {
-                console.log(`[QuizGen] Sucesso! ${successJson.length} perguntas novas.`);
-                break;
-            }
+            if (Array.isArray(successJson) && successJson.length > 0) break;
+
         } catch (e) {
             lastError = e;
-            console.warn(`[QuizGen] Falha em ${currentModel}, tentando próximo...`);
+            console.warn(`[QuizGen] Falha ${currentModel}, tentando próximo...`);
             continue;
         }
     }
@@ -155,10 +146,6 @@ serve(async (req) => {
     })
 
   } catch (error: any) {
-    console.error("[QuizGen] Fatal:", error.message)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders })
   }
 })
