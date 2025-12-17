@@ -1,12 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4' // Importando Supabase Client
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4'
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.15.0" // Importando Gemini SDK
+
+// CONFIGURAÇÃO DOS MODELOS (DEZEMBRO 2025)
+// Tenta o Flash normal primeiro. Se falhar (503), tenta o Lite.
+const MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 const API_KEY = Deno.env.get('GEMINI_API_KEY_QUIZ')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-const MODEL = "gemini-2.5-flash"; // Modelo Atualizado
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,31 +20,26 @@ serve(async (req) => {
 
   try {
     const { level, category, amount = 20 } = await req.json()
+    
     if (!API_KEY) throw new Error('Chave GEMINI_API_KEY_QUIZ não configurada.')
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error('Configurações Supabase ausentes.')
 
-    // 1. Inicializar clientes
     const genAI = new GoogleGenerativeAI(API_KEY);
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // 2. RECUPERAR "MEMÓRIA" DO BANCO (Anti-Duplicidade)
-    console.log('[QuizGen] Buscando perguntas existentes para anti-duplicidade...');
+    // 1. RECUPERAR "MEMÓRIA" DO BANCO (Anti-Duplicidade)
+    console.log('[QuizGen] Buscando perguntas existentes...');
     const { data: existingData, error: fetchError } = await supabaseAdmin
       .from('milhao_questions')
       .select('question');
 
-    if (fetchError) {
-        console.error('[QuizGen] Erro ao buscar perguntas existentes:', fetchError);
-        // Não lançamos erro fatal, apenas continuamos sem a lista proibida
-    }
+    if (fetchError) console.error('[QuizGen] Erro ao buscar perguntas (continuando sem filtro):', fetchError);
 
-    // Transforma em uma lista de texto único
     const forbiddenList = existingData?.map(q => q.question).join("; ") || "Nenhuma pergunta existente.";
-    console.log(`[QuizGen] ${existingData?.length || 0} perguntas existentes encontradas.`);
+    console.log(`[QuizGen] Lista de exclusão carregada com ${existingData?.length || 0} itens.`);
 
-    // --- MATRIZ DE CONTEÚDO COMPLETA (SEM RESUMOS) ---
+    // --- CONTEXTO DO PROMPT (MANTIDO ORIGINAL) ---
     let promptContext = ""
-    
     if (level === 1) {
         promptContext = `
         NÍVEL 1: FATOS ÓBVIOS, LENDAS FAMOSAS, JOGADORES POPULARES, REGRAS BÁSICAS
@@ -147,55 +144,56 @@ serve(async (req) => {
       ]
     `
 
-    let lastError = null;
+    // --- 2. LÓGICA DE GERAÇÃO COM RETRY (Flash -> Lite) ---
     let successJson = null;
+    let lastError = null;
 
-    // --- CHAMADA À API (MODELO ATUALIZADO: GEMINI 2.5 FLASH) ---
-    try {
-        console.log(`[QuizGen] Tentando modelo: ${MODEL}...`)
-        
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { 
-                temperature: 0.9, 
-                maxOutputTokens: 8192,
-                responseMimeType: "application/json" // OBRIGA JSON VÁLIDO
-            }
-          })
-        })
-
-        if (!response.ok) {
-          const errorBody = await response.text();
-          if (response.status >= 500 || response.status === 429) {
-            throw new Error(`Erro ${response.status} (${MODEL}): ${errorBody}`);
-          }
-          throw new Error(`Erro Fatal ${response.status}: ${errorBody}`);
-        }
-
-        const rawData = await response.json();
-        let rawText = rawData.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
-        
-        // Limpeza de segurança (embora o responseMimeType já ajude muito)
-        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim()
-        
+    for (const currentModel of MODELS_TO_TRY) {
         try {
-            successJson = JSON.parse(rawText);
-            if (!Array.isArray(successJson)) throw new Error("Não é um array.");
-            console.log(`[QuizGen] Sucesso! Geradas ${successJson.length} perguntas.`);
-        } catch (e) {
-            throw new Error(`JSON Inválido recebido: ${e.message}`);
-        }
+            console.log(`[QuizGen] Tentando modelo: ${currentModel}...`);
+            
+            // Endpoint v1beta para modelos experimentais/novos
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { 
+                    temperature: 0.9, 
+                    maxOutputTokens: 8192,
+                    responseMimeType: "application/json"
+                }
+                })
+            })
 
-    } catch (error: any) {
-        console.error(`[QuizGen] Falha no modelo ${MODEL}: ${error.message}`);
-        lastError = error;
+            if (!response.ok) {
+                const errorBody = await response.text();
+                // Se der erro 503 (Overloaded) ou 500, força o loop a tentar o próximo
+                throw new Error(`Erro API ${response.status}: ${errorBody}`);
+            }
+
+            const rawData = await response.json();
+            let rawText = rawData.candidates?.[0]?.content?.parts?.[0]?.text || "[]"
+            // Limpeza de segurança para Markdown
+            rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim()
+
+            successJson = JSON.parse(rawText);
+            
+            if (!Array.isArray(successJson)) throw new Error("Resposta da IA não é um array.");
+            
+            console.log(`[QuizGen] SUCESSO com ${currentModel}! Geradas ${successJson.length} perguntas.`);
+            break; // Sai do loop se funcionou
+
+        } catch (error: any) {
+            lastError = error;
+            console.warn(`[QuizGen] Falha no modelo ${currentModel}: ${error.message}`);
+            console.log(`[QuizGen] Tentando próximo modelo de backup...`);
+            continue; // Tenta o Lite
+        }
     }
 
     if (!successJson) {
-      throw new Error(`Falha na geração. Último erro: ${lastError?.message}`);
+      throw new Error(`Todos os modelos falharam. Último erro: ${lastError?.message}`);
     }
 
     return new Response(JSON.stringify(successJson), {
