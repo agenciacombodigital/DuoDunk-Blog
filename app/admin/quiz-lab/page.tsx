@@ -82,10 +82,10 @@ export default function QuizLab() {
         
         toast.success(`Processado! ${questionsToSave.length} perguntas enviadas (duplicatas ignoradas).`);
         
-        // Limpa o estado e redireciona para a página principal do quiz admin
+        // --- MUDANÇA AQUI: Limpa o estado e rola para o topo ---
         setGeneratedQuestions([]); 
         setSelectedIndices([]);
-        router.push('/admin/quiz');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         
     } catch (error: any) {
         toast.error("Erro ao salvar: " + error.message);
