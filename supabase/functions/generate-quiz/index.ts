@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4' // Importando Supabase Client
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.15.0" // Importando Gemini SDK
 
 const API_KEY = Deno.env.get('GEMINI_API_KEY_QUIZ')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-const MODELS = [
-  "gemini-2.5-flash", 
-  "gemini-2.5-flash-lite-preview-09-2025", 
-  "gemini-2.0-flash-exp"
-];
+const MODEL = "gemini-2.5-flash"; // Modelo Atualizado
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,8 +17,28 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { level } = await req.json()
+    const { level, category, amount = 20 } = await req.json()
     if (!API_KEY) throw new Error('Chave GEMINI_API_KEY_QUIZ não configurada.')
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error('Configurações Supabase ausentes.')
+
+    // 1. Inicializar clientes
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // 2. RECUPERAR "MEMÓRIA" DO BANCO (Anti-Duplicidade)
+    console.log('[QuizGen] Buscando perguntas existentes para anti-duplicidade...');
+    const { data: existingData, error: fetchError } = await supabaseAdmin
+      .from('milhao_questions')
+      .select('question');
+
+    if (fetchError) {
+        console.error('[QuizGen] Erro ao buscar perguntas existentes:', fetchError);
+        // Não lançamos erro fatal, apenas continuamos sem a lista proibida
+    }
+
+    // Transforma em uma lista de texto único
+    const forbiddenList = existingData?.map(q => q.question).join("; ") || "Nenhuma pergunta existente.";
+    console.log(`[QuizGen] ${existingData?.length || 0} perguntas existentes encontradas.`);
 
     // --- MATRIZ DE CONTEÚDO COMPLETA (SEM RESUMOS) ---
     let promptContext = ""
@@ -94,29 +114,35 @@ serve(async (req) => {
         promptContext = "MISTO: Distribua equilibradamente entre todos os níveis acima (1 ao 4)."
     }
 
-    // Lote seguro para evitar timeout
-    const QTD_PERGUNTAS = 20; 
+    const finalCategory = category || 'Geral';
 
     const prompt = `
       ATUE COMO UM ESPECIALISTA SUPREMO EM NBA.
-      Gere um ARRAY JSON com ${QTD_PERGUNTAS} perguntas de quiz em Português do Brasil (PT-BR).
+      Gere um ARRAY JSON com ${amount} perguntas de quiz em Português do Brasil (PT-BR).
       
       DIRETRIZES COMPLETAS DO NÍVEL:
       ${promptContext}
       
       REGRAS DE OURO (ANTI-REPETIÇÃO):
-      1. DIVERSIDADE TOTAL: Em um lote de 20 perguntas, NUNCA repita o mesmo jogador ou time como foco principal mais de uma vez. (Ex: Se tiver uma pergunta sobre Curry, a próxima NÃO pode ser sobre ele ou o irmão dele).
+      1. DIVERSIDADE TOTAL: Em um lote de ${amount} perguntas, NUNCA repita o mesmo jogador ou time como foco principal mais de uma vez.
       2. VARIEDADE DE TEMAS: Intercale obrigatoriamente: 1 pergunta de Regra, 1 de História, 1 de Recorde, 1 de Curiosidade, etc. Não agrupe assuntos.
       3. IDIOMA: Use termos brasileiros ("Cesta" e não "Ponto", "Garrafão" e não "Pintado").
       
+      ⛔ REGRAS DE EXCLUSÃO (CRÍTICO):
+      Você está estritamente PROIBIDO de gerar perguntas iguais ou semanticamente idênticas a estas (Lista Proibida):
+      
+      --- INÍCIO DA LISTA PROIBIDA ---
+      ${forbiddenList}
+      --- FIM DA LISTA PROIBIDA ---
+
       FORMATO DE SAÍDA (JSON PURO):
       [
         {
           "level": ${level === 'mixed' ? '1-4' : level},
           "question": "Pergunta...",
           "options": ["A", "B", "C", "D"],
-          "correct_index": 0,
-          "category": "Categoria (ex: Draft, Cultura Pop)"
+          "correct_index": 0, // 0 a 3
+          "category": "${finalCategory}"
         }
       ]
     `
@@ -124,12 +150,11 @@ serve(async (req) => {
     let lastError = null;
     let successJson = null;
 
-    // --- ROTAÇÃO DE MODELOS ---
-    for (const model of MODELS) {
-      try {
-        console.log(`[QuizGen] Tentando modelo: ${model}...`)
+    // --- CHAMADA À API (MODELO ATUALIZADO: GEMINI 2.5 FLASH) ---
+    try {
+        console.log(`[QuizGen] Tentando modelo: ${MODEL}...`)
         
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -145,7 +170,7 @@ serve(async (req) => {
         if (!response.ok) {
           const errorBody = await response.text();
           if (response.status >= 500 || response.status === 429) {
-            throw new Error(`Erro ${response.status} (${model}): ${errorBody}`);
+            throw new Error(`Erro ${response.status} (${MODEL}): ${errorBody}`);
           }
           throw new Error(`Erro Fatal ${response.status}: ${errorBody}`);
         }
@@ -160,19 +185,17 @@ serve(async (req) => {
             successJson = JSON.parse(rawText);
             if (!Array.isArray(successJson)) throw new Error("Não é um array.");
             console.log(`[QuizGen] Sucesso! Geradas ${successJson.length} perguntas.`);
-            break; 
         } catch (e) {
             throw new Error(`JSON Inválido recebido: ${e.message}`);
         }
 
-      } catch (error: any) {
-        console.warn(`[QuizGen] Falha no modelo ${model}: ${error.message}`);
+    } catch (error: any) {
+        console.error(`[QuizGen] Falha no modelo ${MODEL}: ${error.message}`);
         lastError = error;
-      }
     }
 
     if (!successJson) {
-      throw new Error(`Falha em todos os modelos. Último erro: ${lastError?.message}`);
+      throw new Error(`Falha na geração. Último erro: ${lastError?.message}`);
     }
 
     return new Response(JSON.stringify(successJson), {
