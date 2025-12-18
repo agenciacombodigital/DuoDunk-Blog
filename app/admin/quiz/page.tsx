@@ -2,15 +2,22 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download, Trash2, AlertTriangle, Server, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Question } from '@/lib/milhao-data';
 import QuestionTable from '@/components/admin/quiz/QuestionTable';
 import EditQuestionModal from '@/components/admin/quiz/EditQuestionModal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const QUESTIONS_PER_PAGE = 10;
+
+// Tipagem para o resultado da auditoria
+interface AuditQuestion {
+  id: string;
+  question: string;
+}
 
 export default function QuizAdmin() {
   const [loading, setLoading] = useState(false);
@@ -22,6 +29,11 @@ export default function QuizAdmin() {
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // --- ESTADOS DE AUDITORIA ---
+  const [auditResults, setAuditResults] = useState<AuditQuestion[][]>([]);
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [resolving, setResolving] = useState(false);
   
   // --- NOVO ESTADO DE SELEÇÃO ---
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -144,7 +156,7 @@ export default function QuizAdmin() {
     setSelectedIds([]);
   };
   
-  // --- NOVO: Lógica de Download da Base Completa ---
+  // --- Lógica de Download da Base Completa ---
   const handleDownloadAll = async () => {
     const confirm = window.confirm("Deseja baixar TODAS as perguntas do banco de dados? Isso pode levar alguns segundos.");
     if (!confirm) return;
@@ -361,6 +373,201 @@ export default function QuizAdmin() {
         setSaving(false);
     }
   };
+  
+  // --- FUNÇÕES DE AUDITORIA ---
+  const runAudit = async () => {
+    setIsAuditing(true);
+    setAuditResults([]);
+    const toastId = toast.loading("🕵️ A IA está analisando o banco de perguntas... (Pode levar até 30s)");
+    
+    try {
+        const { data, error } = await supabase.functions.invoke('analyze-duplicates');
+        
+        if (error) throw error;
+        if (data.error) throw new Error(data.error);
+        
+        setIsAuditing(false);
+        
+        if (data && data.length > 0) {
+            setAuditResults(data);
+            toast.warning(`${data.length} grupos de duplicatas semânticas encontrados!`, { id: toastId, duration: 8000 });
+        } else {
+            toast.success("Parabéns! Nenhuma duplicata semântica encontrada.", { id: toastId });
+        }
+    } catch (error: any) {
+        setIsAuditing(false);
+        toast.error("Erro na Auditoria", { id: toastId, description: error.message });
+    }
+  };
+  
+  const resolveConflictGroup = async (groupIdx: number, questionsToKeep: AuditQuestion[]) => {
+    if (questionsToKeep.length === 0) {
+        toast.error("Você deve manter pelo menos uma pergunta no grupo.");
+        return;
+    }
+    
+    setResolving(true);
+    const toastId = toast.loading(`Resolvendo conflito #${groupIdx + 1}...`);
+    
+    try {
+        const group = auditResults[groupIdx];
+        const idsToKeep = questionsToKeep.map(q => q.id);
+        const idsToDelete = group.filter(q => !idsToKeep.includes(q.id)).map(q => q.id);
+        
+        if (idsToDelete.length === 0) {
+            toast.info("Nenhuma pergunta para deletar neste grupo.", { id: toastId });
+        } else {
+            // Deleta as perguntas não selecionadas
+            const { error } = await supabase
+                .from('milhao_questions')
+                .delete()
+                .in('id', idsToDelete);
+                
+            if (error) throw error;
+            
+            toast.success(`${idsToDelete.length} perguntas deletadas!`, { id: toastId });
+        }
+        
+        // Remove o grupo resolvido
+        setAuditResults(prev => prev.filter((_, i) => i !== groupIdx));
+        fetchQuestions(currentPage, searchTerm); // Recarrega a lista
+        
+    } catch (error: any) {
+        toast.error("Erro ao resolver conflito", { id: toastId, description: error.message });
+    } finally {
+        setResolving(false);
+    }
+  };
+  
+  // --- COMPONENTE DO MODAL DE AUDITORIA ---
+  const AuditModal = () => {
+    const [selectedToKeep, setSelectedToKeep] = useState<Record<number, string[]>>({}); // { groupIndex: [id1, id2] }
+    
+    useEffect(() => {
+        // Inicializa o estado de seleção: mantém a primeira de cada grupo por padrão
+        const initialSelection: Record<number, string[]> = {};
+        auditResults.forEach((group, index) => {
+            if (group.length > 0) {
+                initialSelection[index] = [group[0].id];
+            }
+        });
+        setSelectedToKeep(initialSelection);
+    }, [auditResults]);
+    
+    const toggleKeep = (groupIdx: number, questionId: string) => {
+        setSelectedToKeep(prev => {
+            const current = prev[groupIdx] || [];
+            if (current.includes(questionId)) {
+                // Se for o último, não permite desmarcar
+                if (current.length > 1) {
+                    return { ...prev, [groupIdx]: current.filter(id => id !== questionId) };
+                }
+                return prev;
+            } else {
+                return { ...prev, [groupIdx]: [...current, questionId] };
+            }
+        });
+    };
+    
+    const handleResolveAll = async () => {
+        if (resolving) return;
+        
+        const groupsToResolve = auditResults.map((group, groupIdx) => ({
+            groupIdx,
+            questionsToKeep: group.filter(q => selectedToKeep[groupIdx]?.includes(q.id))
+        }));
+        
+        setResolving(true);
+        const totalGroups = groupsToResolve.length;
+        let resolvedCount = 0;
+        
+        for (const { groupIdx, questionsToKeep } of groupsToResolve) {
+            try {
+                const group = auditResults.find((_, i) => i === groupIdx);
+                if (!group) continue;
+                
+                const idsToKeep = questionsToKeep.map(q => q.id);
+                const idsToDelete = group.filter(q => !idsToKeep.includes(q.id)).map(q => q.id);
+                
+                if (idsToDelete.length > 0) {
+                    const { error } = await supabase
+                        .from('milhao_questions')
+                        .delete()
+                        .in('id', idsToDelete);
+                        
+                    if (error) throw error;
+                }
+                resolvedCount++;
+            } catch (error) {
+                console.error(`Falha ao resolver grupo ${groupIdx}:`, error);
+                toast.error(`Falha ao resolver grupo ${groupIdx + 1}.`);
+            }
+        }
+        
+        setAuditResults([]);
+        fetchQuestions(currentPage, searchTerm);
+        toast.success(`✅ ${resolvedCount} de ${totalGroups} grupos resolvidos!`);
+        setResolving(false);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setAuditResults([])}>
+        <div className="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto border border-gray-700 shadow-2xl animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+          <div className="sticky top-0 bg-gray-900 p-6 border-b border-gray-700 flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2 font-oswald uppercase"><AlertTriangle className="w-6 h-6 text-red-400" /> Auditoria de Duplicidade ({auditResults.length})</h2>
+            <button onClick={() => setAuditResults([])} className="p-2 hover:bg-gray-800 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400 hover:text-white" /></button>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-xl text-sm text-red-300 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p>A IA identificou perguntas que significam a mesma coisa. Selecione a(s) versão(ões) que você deseja MANTER. As não selecionadas serão DELETADAS permanentemente.</p>
+            </div>
+            
+            {auditResults.map((group, groupIdx) => (
+              <div key={groupIdx} className="bg-gray-800 border border-gray-700 p-4 rounded-xl">
+                 <p className="text-lg font-bold text-white mb-3">Conflito #{groupIdx + 1} ({group.length} perguntas)</p>
+                 
+                 <div className="space-y-2">
+                    {group.map(q => (
+                      <div key={q.id} className="flex items-center justify-between bg-gray-900 p-3 rounded-lg border border-gray-700">
+                         <div className="flex items-center gap-3 flex-1">
+                            <Checkbox 
+                                id={`q-${q.id}`}
+                                checked={selectedToKeep[groupIdx]?.includes(q.id) || false}
+                                onCheckedChange={() => toggleKeep(groupIdx, q.id)}
+                                className="w-5 h-5 border-gray-500 data-[state=checked]:bg-green-600 data-[state=checked]:text-white"
+                                disabled={resolving || (selectedToKeep[groupIdx]?.length === 1 && selectedToKeep[groupIdx]?.includes(q.id))}
+                            />
+                            <label htmlFor={`q-${q.id}`} className={cn("text-gray-300 text-sm flex-1 cursor-pointer", !selectedToKeep[groupIdx]?.includes(q.id) && "line-through text-gray-500")}>
+                                {q.question}
+                            </label>
+                         </div>
+                         <span className={cn("text-xs font-mono", selectedToKeep[groupIdx]?.includes(q.id) ? "text-green-400" : "text-red-400")}>
+                            {selectedToKeep[groupIdx]?.includes(q.id) ? 'MANTER' : 'DELETAR'}
+                         </span>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="p-6 border-t border-gray-700 flex justify-end">
+            <button 
+              onClick={handleResolveAll} 
+              disabled={resolving} 
+              className="btn-danger flex items-center justify-center gap-2 disabled:opacity-50 font-inter"
+            >
+              {resolving ? (<Loader2 className="w-5 h-5 animate-spin" />) : (<Trash2 className="w-5 h-5" />)}
+              Resolver Todos os {auditResults.length} Conflitos
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  // --- FIM DO COMPONENTE DO MODAL DE AUDITORIA ---
 
 
   return (
@@ -536,10 +743,19 @@ export default function QuizAdmin() {
                 </Button>
                 <Button 
                   onClick={handleDownloadAll} 
-                  disabled={loading}
+                  disabled={loading || isAuditing}
                   className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold flex items-center gap-2 disabled:opacity-50"
                 >
                   <Download className="w-4 h-4" /> 📦 Baixar Base Completa
+                </Button>
+                
+                {/* NOVO BOTÃO DE AUDITORIA */}
+                <Button 
+                  onClick={runAudit} 
+                  disabled={loading || isAuditing}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isAuditing ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />} 🕵️ Auditoria (IA)
                 </Button>
             </div>
           </div>
@@ -578,6 +794,9 @@ export default function QuizAdmin() {
           question={editingQuestion}
           onSaveSuccess={() => fetchQuestions(currentPage, searchTerm)}
         />
+        
+        {/* Modal de Auditoria */}
+        {auditResults.length > 0 && <AuditModal />}
       </div>
     </div>
   );
