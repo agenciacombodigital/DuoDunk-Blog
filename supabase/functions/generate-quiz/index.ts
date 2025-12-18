@@ -72,22 +72,33 @@ serve(async (req) => {
     const finalCategory = category || 'Variados';
 
     const prompt = `
-      ATUE COMO UM CRIADOR DE QUIZ NBA EXPERIENTE.
-      Gere ${amount} perguntas INÉDITAS.
-
-      DIRETRIZES:
+      ATUE COMO O "NBA QUIZMASTER PRO".
+      Sua missão é gerar um ARRAY JSON com ${amount} perguntas INÉDITAS E ORIGINAIS.
+      
+      DIRETRIZES DE NÍVEL:
       ${promptContext}
+      
+      🔴 SISTEMA DE DEFESA CONTRA DUPLICIDADE (LEITURA OBRIGATÓRIA) 🔴
+      
+      O banco de dados JÁ CONTÉM as seguintes perguntas (Lista de Exclusão):
+      --- INÍCIO DA MEMÓRIA ---
+      ${forbiddenList.substring(0, 950000)}
+      --- FIM DA MEMÓRIA ---
 
-      ⛔ LISTA NEGRA (PROIBIDO COPIAR OU REESCREVER):
-      O banco de dados JÁ POSSUI estas perguntas. NÃO GERE NADA PARECIDO:
-      ${forbiddenList.substring(0, 900000)}
+      ⚡ REGRAS DE OURO PARA NÃO REPETIR (SEMÂNTICA):
+      Você está PROIBIDO de testar o mesmo FATO ou CURIOSIDADE que já está na lista acima, mesmo que mude as palavras.
+      
+      Exemplos de PROIBIÇÃO (Entenda o conceito):
+      1. INVERSÃO: Se já existe "Quem ganhou em 2023?", NÃO crie "O Denver Nuggets ganhou em que ano?". É o mesmo fato.
+      2. SINÔNIMOS: Se já existe "Qual o apelido de LeBron?", NÃO crie "Como LeBron é conhecido?".
+      3. FOCO REPETIDO: Se já leu 5 perguntas sobre o Michael Jordan na lista acima, NÃO FAÇA MAIS NENHUMA sobre ele agora. Mude para outro jogador.
 
-      ORDENS FINAIS:
-      1. Se a pergunta já existe na lista acima, DESCARTE e crie outra.
-      2. Se já tem "Quem é o King James?", NÃO crie "Qual o apelido de LeBron?". Isso é duplicata semântica.
-      3. Diversifique os temas. Não faça 5 perguntas seguidas sobre o Lakers.
-
-      SAÍDA JSON:
+      ORDEM DE EXECUÇÃO:
+      1. Leia a 'Lista de Exclusão' acima.
+      2. Escolha um fato/curiosidade que NÃO esteja lá.
+      3. Escreva a pergunta em Português Brasileiro natural.
+      
+      SAÍDA JSON PURO:
       [
         {
           "level": ${level === 'mixed' ? '1-4' : level},
