@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, Edit, Loader2, Star, Trash2, Upload } from 'lucide-react';
+import { CheckCircle, Edit, Loader2, Star, Trash2, Upload, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint } from '@/lib/utils';
 
@@ -131,7 +131,12 @@ export default function PendingApprovalCard({ article, uploadingImage, onImageUp
           <button onClick={() => onToggleFeatured(article.id, article.is_featured)} className={`flex-1 ${article.is_featured ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter text-sm`} title={article.is_featured ? 'Remover destaque' : 'Marcar como destaque'}><Star className={`w-4 h-4 ${article.is_featured ? 'fill-white' : ''}`} />{article.is_featured ? 'Destaque' : 'Destacar'}</button>
           <button onClick={() => onEdit(article)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition font-inter text-sm" title="Editar antes de publicar"><Edit className="w-4 h-4" />Editar</button>
           <button onClick={() => onApprove(article)} className="btn-success flex-1 flex items-center justify-center gap-2 font-inter text-sm"><CheckCircle className="w-4 h-4" />Aprovar</button>
-          <button onClick={() => onReject(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2 font-inter text-sm"><Trash2 className="w-4 h-4" />Rejeitar</button>
+          
+          {/* Botão de Rejeitar (Mover para Lixeira) */}
+          <button onClick={() => onReject(article.id)} className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2 font-inter text-sm" title="Mover para Lixeira"><X className="w-4 h-4" />Rejeitar</button>
+          
+          {/* NOVO: Botão de Deletar (Exclusão Permanente) */}
+          <button onClick={() => onDelete(article.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all duration-300 flex-1 flex items-center justify-center gap-2 font-inter text-sm" title="Deletar permanentemente"><Trash2 className="w-4 h-4" />Deletar</button>
         </div>
       </div>
     </div>
