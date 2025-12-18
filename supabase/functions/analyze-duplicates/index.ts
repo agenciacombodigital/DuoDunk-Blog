@@ -11,84 +11,91 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    // 1. CONFIGURAÇÃO DE CHAVE DEDICADA (Evita Rate Limit na chave do Quiz)
-    // O sistema vai procurar primeiro por uma chave específica de auditoria
+    // Recebe os parâmetros de paginação do Frontend
+    const { offset = 0, limit = 500 } = await req.json();
+
     const AUDITOR_API_KEY = Deno.env.get('GEMINI_API_KEY_AUDITOR') || Deno.env.get('GEMINI_API_KEY_QUIZ');
-    
-    if (!AUDITOR_API_KEY) throw new Error("Nenhuma API Key encontrada (nem Auditor, nem Geral).");
+    if (!AUDITOR_API_KEY) throw new Error("API Key não encontrada.");
 
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!, 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
     const genAI = new GoogleGenerativeAI(AUDITOR_API_KEY);
 
-    // 2. BUSCAR TODAS AS PERGUNTAS (Range 0-9999)
-    // Trazemos apenas ID e Pergunta para economizar banda
+    // 1. BUSCAR APENAS O LOTE ATUAL (ex: 0 a 499)
     const { data: questions, error } = await supabase
         .from('milhao_questions')
         .select('id, question')
-        .range(0, 9999);
+        .order('id', { ascending: true }) // Ordena para garantir consistência na paginação
+        .range(offset, offset + limit - 1); // Lógica de paginação
 
     if (error) throw error;
-    if (!questions || questions.length === 0) throw new Error("Banco de dados vazio.");
+    
+    // Se não vier nada, avisa que acabou
+    if (!questions || questions.length === 0) {
+        return new Response(JSON.stringify({ duplicates: [], hasMore: false }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
 
-    console.log(`[Auditor] Analisando ${questions.length} perguntas...`);
+    console.log(`[Auditor] Processando lote: ${offset} até ${offset + questions.length} (${questions.length} itens)...`);
 
-    // 3. PREPARAR O PROMPT GIGANTE
-    // Formatamos como CSV simplificado: ID|PERGUNTA
+    // 2. PREPARAR PROMPT PARA ESTE LOTE
     const csvData = questions.map(q => `${q.id}|${q.question}`).join("\n");
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `
       ATUE COMO UM AUDITOR DE DADOS RIGOROSO.
-      Analise a lista abaixo contendo ${questions.length} perguntas de um Quiz sobre NBA.
+      Analise esta lista de ${questions.length} perguntas do Quiz NBA.
       
       OBJETIVO:
-      Encontre perguntas que são DUPLICATAS SEMÂNTICAS (perguntam a mesma coisa com palavras diferentes) ou DUPLICATAS EXATAS.
+      Encontre perguntas que são SEMANTICAMENTE IDÊNTICAS (perguntam a mesma coisa) dentro desta lista.
 
-      DADOS (Formato: ID|PERGUNTA):
-      --- INÍCIO DOS DADOS ---
+      DADOS (ID|PERGUNTA):
+      --- INÍCIO ---
       ${csvData}
-      --- FIM DOS DADOS ---
+      --- FIM ---
 
       REGRAS DE SAÍDA:
-      1. Retorne APENAS um JSON.
-      2. O JSON deve ser uma lista de grupos de conflito.
-      3. Ignore perguntas únicas. Liste apenas as que têm "irmãs gêmeas".
+      1. Retorne APENAS um Array JSON com os grupos de conflito.
+      2. Ignore perguntas únicas.
       
-      EXEMPLO DE FORMATO DE RESPOSTA:
+      EXEMPLO DE SAÍDA:
       [
-        [
-            {"id": "uuid-105", "question": "Quem é o King James?"},
-            {"id": "uuid-204", "question": "Qual é o apelido de LeBron James?"}
-        ],
-        [
-            {"id": "uuid-50", "question": "Quantos pontos vale lance livre?"},
-            {"id": "uuid-51", "question": "Lance livre vale quanto?"}
-        ]
+        [ {"id": "uuid-1", "question": "..."}, {"id": "uuid-2", "question": "..."} ]
       ]
     `;
 
-    // 4. CHAMADA À API (Pode demorar alguns segundos devido ao tamanho)
+    // 3. CHAMAR API (Agora é rápido porque o payload é menor)
     const result = await model.generateContent({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" }
     });
-
+    
     const responseText = result.response.text();
     
     // Limpeza de segurança
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const duplicates = JSON.parse(cleanJson);
+    let duplicates = [];
+    try {
+        duplicates = JSON.parse(cleanJson);
+    } catch (e) {
+        console.error("Erro ao parsear JSON da IA:", e);
+        // Retorna um array vazio se o parse falhar
+    }
 
-    return new Response(JSON.stringify(duplicates), {
+    return new Response(JSON.stringify({ 
+        duplicates, 
+        hasMore: questions.length === limit, // Avisa o frontend se tem mais páginas
+        nextOffset: offset + limit 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error: any) {
-    console.error("[Auditor Error]:", error.message);
+    console.error("[Erro Auditor]:", error.message);
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders })
   }
 })

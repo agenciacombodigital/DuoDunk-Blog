@@ -34,6 +34,7 @@ export default function QuizAdmin() {
   const [auditResults, setAuditResults] = useState<AuditQuestion[][]>([]);
   const [isAuditing, setIsAuditing] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [auditProgress, setAuditProgress] = useState(""); // Novo estado de progresso
   
   // --- NOVO ESTADO DE SELEÇÃO ---
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -374,29 +375,62 @@ export default function QuizAdmin() {
     }
   };
   
-  // --- FUNÇÕES DE AUDITORIA ---
-  const runAudit = async () => {
+  // --- FUNÇÕES DE AUDITORIA (SMART AUDIT) ---
+  const runSmartAudit = async () => {
     setIsAuditing(true);
-    setAuditResults([]);
-    const toastId = toast.loading("🕵️ A IA está analisando o banco de perguntas... (Pode levar até 30s)");
+    setAuditResults([]); // Limpa resultados anteriores
     
+    let offset = 0;
+    const limit = 500;
+    let hasMore = true;
+    let accumulatedConflicts: AuditQuestion[][] = [];
+    const totalQuestions = totalCount; // Usa o total count carregado
+
+    const toastId = toast.loading("Iniciando auditoria em lotes...");
+
     try {
-        const { data, error } = await supabase.functions.invoke('analyze-duplicates');
-        
-        if (error) throw error;
-        if (data.error) throw new Error(data.error);
-        
-        setIsAuditing(false);
-        
-        if (data && data.length > 0) {
-            setAuditResults(data);
-            toast.warning(`${data.length} grupos de duplicatas semânticas encontrados!`, { id: toastId, duration: 8000 });
-        } else {
-            toast.success("Parabéns! Nenhuma duplicata semântica encontrada.", { id: toastId });
+        // LOOP DE PAGINAÇÃO
+        while (hasMore) {
+            const start = offset;
+            const end = Math.min(offset + limit, totalQuestions);
+            setAuditProgress(`Analisando lote ${start} - ${end} (Total: ${totalQuestions})...`);
+            
+            // Chama a API pedindo o lote atual
+            const response = await supabase.functions.invoke('analyze-duplicates', {
+                body: { offset, limit }
+            });
+
+            if (response.error) throw new Error(response.error.message);
+
+            const { duplicates, hasMore: more, nextOffset } = response.data;
+            
+            // Junta os duplicados encontrados neste lote com o total
+            if (duplicates && duplicates.length > 0) {
+                accumulatedConflicts = [...accumulatedConflicts, ...duplicates];
+            }
+
+            // Prepara a próxima volta do loop
+            hasMore = more;
+            offset = nextOffset;
+            
+            // Pequeno delay para evitar sobrecarga de rede/API
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
-    } catch (error: any) {
+
+        setAuditResults(accumulatedConflicts);
+        
+        if (accumulatedConflicts.length > 0) {
+            toast.warning(`Varredura completa! Encontrados ${accumulatedConflicts.length} grupos de conflito.`, { id: toastId, duration: 8000 });
+        } else {
+            toast.success("Varredura completa. O banco está limpo!", { id: toastId });
+        }
+
+    } catch (err: any) {
+        toast.error("Erro durante a auditoria.", { id: toastId, description: err.message });
+        console.error(err);
+    } finally {
         setIsAuditing(false);
-        toast.error("Erro na Auditoria", { id: toastId, description: error.message });
+        setAuditProgress("");
     }
   };
   
@@ -751,7 +785,7 @@ export default function QuizAdmin() {
                 
                 {/* NOVO BOTÃO DE AUDITORIA */}
                 <Button 
-                  onClick={runAudit} 
+                  onClick={runSmartAudit} 
                   disabled={loading || isAuditing}
                   className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold flex items-center gap-2 disabled:opacity-50"
                 >
@@ -759,6 +793,14 @@ export default function QuizAdmin() {
                 </Button>
             </div>
           </div>
+          
+          {/* Barra de Progresso da Auditoria */}
+          {isAuditing && auditProgress && (
+            <div className="bg-yellow-900/20 border border-yellow-500/30 p-3 rounded-xl mb-4 flex items-center gap-3 text-yellow-300">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-sm font-medium">{auditProgress}</span>
+            </div>
+          )}
           
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
