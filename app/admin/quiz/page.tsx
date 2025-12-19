@@ -382,61 +382,55 @@ export default function QuizAdmin() {
     setAuditProgress("Iniciando auditoria inteligente...");
     
     let offset = 0;
-    const limit = 150; // Mantém 150 que é o sweet spot
+    const limit = 100; // <-- LIMITE AJUSTADO
     let hasMore = true;
     let accumulatedConflicts: AuditQuestion[][] = [];
-    let errorCount = 0;
+    const totalQuestions = totalCount; // Usa o total count carregado
+
+    const toastId = toast.loading("Iniciando auditoria em lotes...");
 
     try {
+        // LOOP DE PAGINAÇÃO
         while (hasMore) {
-            setAuditProgress(`Analisando lote: ${offset} até ${offset + limit}... (Encontrados: ${accumulatedConflicts.length})`);
+            const start = offset;
+            const end = Math.min(offset + limit, totalQuestions);
+            setAuditProgress(`Analisando lote ${start} - ${end} (Total: ${totalQuestions})...`);
             
             // Pequeno respiro para a UI não travar
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 100)); // Delay de Segurança
 
-            const { data, error } = await supabase.functions.invoke('analyze-duplicates', {
+            const response = await supabase.functions.invoke('analyze-duplicates', {
                 body: { offset, limit }
             });
 
-            if (error) {
-                console.error(`Erro no lote ${offset}:`, error);
-                errorCount++;
-                if (errorCount > 3) throw new Error("Muitas falhas consecutivas na API.");
-                // Se der erro num lote, tentamos pular para o próximo para não perder tudo
-                offset += limit;
-                continue; 
+            if (response.error) throw new Error(response.error.message);
+
+            const { duplicates, hasMore: more, nextOffset } = response.data;
+            
+            // Junta os duplicados encontrados neste lote com o total
+            if (duplicates && Array.isArray(duplicates) && duplicates.length > 0) {
+                accumulatedConflicts = [...accumulatedConflicts, ...duplicates];
             }
 
-            // --- CAMADA DE SEGURANÇA (ONDE O ERRO OCORRIA) ---
-            // Se vier nulo ou undefined, usa array vazio.
-            const batchDuplicates = (data && Array.isArray(data.duplicates)) ? data.duplicates : [];
-            const nextOffset = (data && typeof data.nextOffset === 'number') ? data.nextOffset : (offset + limit);
-            const serverHasMore = (data && typeof data.hasMore === 'boolean') ? data.hasMore : false;
-
-            if (batchDuplicates.length > 0) {
-                accumulatedConflicts = [...accumulatedConflicts, ...batchDuplicates];
-            }
-
-            hasMore = serverHasMore;
+            // Prepara a próxima volta do loop
+            hasMore = more;
             offset = nextOffset;
+            
+            // Pequeno delay para evitar sobrecarga de rede/API
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        // FIM DO PROCESSO
         setAuditResults(accumulatedConflicts);
         
         if (accumulatedConflicts.length > 0) {
-            toast.warning(`Auditoria Finalizada! Encontramos ${accumulatedConflicts.length} grupos suspeitos.`);
+            toast.warning(`Varredura completa! Encontrados ${accumulatedConflicts.length} grupos de conflito.`, { id: toastId, duration: 8000 });
         } else {
-            toast.success("Auditoria Finalizada! Nenhuma duplicata encontrada. Seu banco está limpo.");
+            toast.success("Varredura completa. O banco está limpo!", { id: toastId });
         }
 
-    } catch (err) {
-        console.error("Fatal Error na Auditoria:", err);
-        toast.error("Ocorreu um erro durante a auditoria, mas recuperamos o que foi possível.");
-        // Salva o que conseguiu encontrar até o erro acontecer
-        if (accumulatedConflicts.length > 0) {
-            setAuditResults(accumulatedConflicts);
-        }
+    } catch (err: any) {
+        toast.error("Erro durante a auditoria.", { id: toastId, description: err.message });
+        console.error(err);
     } finally {
         setIsAuditing(false);
         setAuditProgress("");
