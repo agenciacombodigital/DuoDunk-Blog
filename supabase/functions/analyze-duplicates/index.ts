@@ -82,6 +82,11 @@ serve(async (req) => {
         // Em caso de erro de parse, retornamos vazio para não quebrar o loop do frontend
         duplicates = [];
     }
+    
+    // SEGURANÇA: Garante que duplicates é sempre array, mesmo se a IA falhar
+    if (!Array.isArray(duplicates)) {
+        duplicates = [];
+    }
 
     return new Response(JSON.stringify({ 
         duplicates, 

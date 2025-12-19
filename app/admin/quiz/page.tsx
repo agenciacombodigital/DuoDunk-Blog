@@ -378,56 +378,65 @@ export default function QuizAdmin() {
   // --- FUNÇÕES DE AUDITORIA (SMART AUDIT) ---
   const runSmartAudit = async () => {
     setIsAuditing(true);
-    setAuditResults([]); // Limpa resultados anteriores
+    setAuditResults([]); // Limpa estado anterior
+    setAuditProgress("Iniciando auditoria inteligente...");
     
     let offset = 0;
-    const limit = 150; // <-- LIMITE AJUSTADO
+    const limit = 150; // Mantém 150 que é o sweet spot
     let hasMore = true;
     let accumulatedConflicts: AuditQuestion[][] = [];
-    const totalQuestions = totalCount; // Usa o total count carregado
-
-    const toastId = toast.loading("Iniciando auditoria em lotes...");
+    let errorCount = 0;
 
     try {
-        // LOOP DE PAGINAÇÃO
         while (hasMore) {
-            const start = offset;
-            const end = Math.min(offset + limit, totalQuestions);
-            setAuditProgress(`Analisando lote ${start} - ${end} (Total: ${totalQuestions})...`);
+            setAuditProgress(`Analisando lote: ${offset} até ${offset + limit}... (Encontrados: ${accumulatedConflicts.length})`);
             
-            // Chama a API pedindo o lote atual
-            const response = await supabase.functions.invoke('analyze-duplicates', {
+            // Pequeno respiro para a UI não travar
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const { data, error } = await supabase.functions.invoke('analyze-duplicates', {
                 body: { offset, limit }
             });
 
-            if (response.error) throw new Error(response.error.message);
-
-            const { duplicates, hasMore: more, nextOffset } = response.data;
-            
-            // Junta os duplicados encontrados neste lote com o total
-            if (duplicates && duplicates.length > 0) {
-                accumulatedConflicts = [...accumulatedConflicts, ...duplicates];
+            if (error) {
+                console.error(`Erro no lote ${offset}:`, error);
+                errorCount++;
+                if (errorCount > 3) throw new Error("Muitas falhas consecutivas na API.");
+                // Se der erro num lote, tentamos pular para o próximo para não perder tudo
+                offset += limit;
+                continue; 
             }
 
-            // Prepara a próxima volta do loop
-            hasMore = more;
+            // --- CAMADA DE SEGURANÇA (ONDE O ERRO OCORRIA) ---
+            // Se vier nulo ou undefined, usa array vazio.
+            const batchDuplicates = (data && Array.isArray(data.duplicates)) ? data.duplicates : [];
+            const nextOffset = (data && typeof data.nextOffset === 'number') ? data.nextOffset : (offset + limit);
+            const serverHasMore = (data && typeof data.hasMore === 'boolean') ? data.hasMore : false;
+
+            if (batchDuplicates.length > 0) {
+                accumulatedConflicts = [...accumulatedConflicts, ...batchDuplicates];
+            }
+
+            hasMore = serverHasMore;
             offset = nextOffset;
-            
-            // Pequeno delay para evitar sobrecarga de rede/API
-            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
+        // FIM DO PROCESSO
         setAuditResults(accumulatedConflicts);
         
         if (accumulatedConflicts.length > 0) {
-            toast.warning(`Varredura completa! Encontrados ${accumulatedConflicts.length} grupos de conflito.`, { id: toastId, duration: 8000 });
+            toast.warning(`Auditoria Finalizada! Encontramos ${accumulatedConflicts.length} grupos suspeitos.`);
         } else {
-            toast.success("Varredura completa. O banco está limpo!", { id: toastId });
+            toast.success("Auditoria Finalizada! Nenhuma duplicata encontrada. Seu banco está limpo.");
         }
 
-    } catch (err: any) {
-        toast.error("Erro durante a auditoria.", { id: toastId, description: err.message });
-        console.error(err);
+    } catch (err) {
+        console.error("Fatal Error na Auditoria:", err);
+        toast.error("Ocorreu um erro durante a auditoria, mas recuperamos o que foi possível.");
+        // Salva o que conseguiu encontrar até o erro acontecer
+        if (accumulatedConflicts.length > 0) {
+            setAuditResults(accumulatedConflicts);
+        }
     } finally {
         setIsAuditing(false);
         setAuditProgress("");
