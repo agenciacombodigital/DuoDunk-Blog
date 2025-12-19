@@ -8,11 +8,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { offset = 0, limit = 100 } = await req.json(); // REDUZIDO PARA 100
+    // Forçamos o limit para 100 para garantir performance rápida (< 10s)
+    const { offset = 0, limit = 100 } = await req.json();
 
     const AUDITOR_API_KEY = Deno.env.get('GEMINI_API_KEY_AUDITOR') || Deno.env.get('GEMINI_API_KEY_QUIZ');
     if (!AUDITOR_API_KEY) throw new Error("API Key ausente.");
@@ -22,7 +22,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
     
-    // 1. BUSCAR DADOS
+    // 1. Busca Lote Pequeno
     const { data: questions, error } = await supabase
         .from('milhao_questions')
         .select('id, question')
@@ -31,54 +31,46 @@ serve(async (req) => {
 
     if (error) throw error;
     
-    // Fim da lista ou lista vazia
+    // Se acabou, retorna sinal de fim
     if (!questions || questions.length === 0) {
         return new Response(JSON.stringify({ duplicates: [], hasMore: false, nextOffset: offset }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
 
-    console.log(`[Auditor] Analisando ${questions.length} itens (Offset: ${offset})...`);
+    console.log(`[Auditor] Processando ${questions.length} itens (Offset: ${offset})...`);
 
-    // 2. PROMPT ULTRA-SIMPLIFICADO (Para velocidade máxima)
+    // 2. Prompt Ultra-Curto para Economizar Tokens e Tempo
     const csvData = questions.map(q => `${q.id}|${q.question}`).join("\n");
     const genAI = new GoogleGenerativeAI(AUDITOR_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `
-    Analise esta lista de perguntas (ID|Texto).
-    Retorne um JSON Array agrupando IDs de perguntas que são IDÊNTICAS ou MUITO SIMILARES (mesmo sentido).
-    Ignore perguntas únicas.
-    
-    LISTA:
+    Tarefa: Agrupar perguntas DUPLICADAS (semântica idêntica) nesta lista.
+    Entrada: ID|Texto
     ${csvData}
-    
-    SAÍDA JSON:
-    [ [ {"id": "1", "question": "a"}, {"id": "2", "question": "b"} ] ]
+    Saída: JSON Array de arrays (apenas IDs duplicados). Ex: [[{"id":1, "question":"a"}, {"id":5, "question":"a"}]]
+    Se nenhuma duplicata, retorne [].
     `;
 
-    // 3. CHAMADA API
+    // 3. Chamada API
     const result = await model.generateContent({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" }
     });
 
-    const responseText = result.response.text();
     let duplicates = [];
-    
     try {
         // Limpeza agressiva para garantir JSON
-        const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const cleanJson = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
         duplicates = JSON.parse(cleanJson);
     } catch (e) {
         console.error("Erro Parse JSON IA:", e.message);
-        duplicates = []; // Falha segura: retorna vazio em vez de quebrar
+        duplicates = []; // Falha silenciosa segura
     }
 
-    if (!Array.isArray(duplicates)) duplicates = [];
-
     return new Response(JSON.stringify({ 
-        duplicates, 
+        duplicates: Array.isArray(duplicates) ? duplicates : [], 
         hasMore: questions.length === limit, 
         nextOffset: offset + limit 
     }), {
@@ -87,14 +79,9 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error("[Fatal Error]:", error.message);
-    // FALLBACK DE SEGURANÇA: Retorna JSON válido vazio em caso de erro fatal
-    // Isso impede o frontend de travar (Tela branca/React Error)
-    return new Response(JSON.stringify({ 
-        duplicates: [], 
-        hasMore: false, 
-        error: error.message 
-    }), { 
-        status: 200, // Retorna 200 para o frontend processar o erro graciosamente
+    // Retorna 200 com erro no corpo para não quebrar o frontend
+    return new Response(JSON.stringify({ error: error.message, duplicates: [], hasMore: false }), { 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     })
   }

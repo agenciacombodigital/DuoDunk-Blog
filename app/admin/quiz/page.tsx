@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download, Trash2, AlertTriangle, Server, CheckCircle } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download, Trash2, AlertTriangle, Server, CheckCircle, Play } from 'lucide-react';
 import Link from 'next/link';
 import { Question } from '@/lib/milhao-data';
 import QuestionTable from '@/components/admin/quiz/QuestionTable';
@@ -35,6 +35,10 @@ export default function QuizAdmin() {
   const [isAuditing, setIsAuditing] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [auditProgress, setAuditProgress] = useState(""); // Novo estado de progresso
+  
+  // Estados Novos para controle manual
+  const [auditOffset, setAuditOffset] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
   
   // --- NOVO ESTADO DE SELEÇÃO ---
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -375,62 +379,52 @@ export default function QuizAdmin() {
     }
   };
   
-  // --- FUNÇÕES DE AUDITORIA (SMART AUDIT) ---
-  const runSmartAudit = async () => {
+  // --- FUNÇÕES DE AUDITORIA (SMART AUDIT - PASSO A PASSO) ---
+  
+  const runAuditStep = async () => {
     setIsAuditing(true);
-    setAuditResults([]); // Limpa estado anterior
-    setAuditProgress("Iniciando auditoria inteligente...");
-    
-    let offset = 0;
-    const limit = 100; // <-- LIMITE AJUSTADO
-    let hasMore = true;
-    let accumulatedConflicts: AuditQuestion[][] = [];
-    const totalQuestions = totalCount; // Usa o total count carregado
-
-    const toastId = toast.loading("Iniciando auditoria em lotes...");
+    const limit = 100;
 
     try {
-        // LOOP DE PAGINAÇÃO
-        while (hasMore) {
-            const start = offset;
-            const end = Math.min(offset + limit, totalQuestions);
-            setAuditProgress(`Analisando lote ${start} - ${end} (Total: ${totalQuestions})...`);
-            
-            // Pequeno respiro para a UI não travar
-            await new Promise(resolve => setTimeout(resolve, 100)); // Delay de Segurança
-
-            const response = await supabase.functions.invoke('analyze-duplicates', {
-                body: { offset, limit }
-            });
-
-            if (response.error) throw new Error(response.error.message);
-
-            const { duplicates, hasMore: more, nextOffset } = response.data;
-            
-            // Junta os duplicados encontrados neste lote com o total
-            if (duplicates && Array.isArray(duplicates) && duplicates.length > 0) {
-                accumulatedConflicts = [...accumulatedConflicts, ...duplicates];
-            }
-
-            // Prepara a próxima volta do loop
-            hasMore = more;
-            offset = nextOffset;
-            
-            // Pequeno delay para evitar sobrecarga de rede/API
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        // Se for o início, limpa os resultados anteriores
+        if (auditOffset === 0) {
+            setAuditResults([]);
+            setIsFinished(false);
+            toast.info("Iniciando auditoria...");
         }
 
-        setAuditResults(accumulatedConflicts);
-        
-        if (accumulatedConflicts.length > 0) {
-            toast.warning(`Varredura completa! Encontrados ${accumulatedConflicts.length} grupos de conflito.`, { id: toastId, duration: 8000 });
+        setAuditProgress(`Analisando lote ${auditOffset} até ${auditOffset + limit}...`);
+
+        const { data, error } = await supabase.functions.invoke('analyze-duplicates', {
+            body: { offset: auditOffset, limit }
+        });
+
+        if (error || data?.error) {
+            throw new Error(error?.message || data?.error);
+        }
+
+        const { duplicates, hasMore, nextOffset } = data;
+
+        // Adiciona novos conflitos encontrados à lista existente
+        if (duplicates && duplicates.length > 0) {
+            setAuditResults(prev => [...prev, ...duplicates]);
+            toast.warning(`Encontradas ${duplicates.length} duplicatas neste lote!`);
         } else {
-            toast.success("Varredura completa. O banco está limpo!", { id: toastId });
+            toast.success(`Lote limpo. Nenhuma duplicata.`, { duration: 1500 });
+        }
+
+        // Prepara o próximo passo
+        if (hasMore) {
+            setAuditOffset(nextOffset);
+        } else {
+            setIsFinished(true);
+            setAuditOffset(0); // Reseta para a próxima vez
+            toast.success("🏁 Auditoria Completa em todo o banco de dados!");
         }
 
     } catch (err: any) {
-        toast.error("Erro durante a auditoria.", { id: toastId, description: err.message });
         console.error(err);
+        toast.error("Erro no lote. Tente clicar em 'Continuar' novamente.");
     } finally {
         setIsAuditing(false);
         setAuditProgress("");
@@ -786,14 +780,28 @@ export default function QuizAdmin() {
                   <Download className="w-4 h-4" /> 📦 Baixar Base Completa
                 </Button>
                 
-                {/* NOVO BOTÃO DE AUDITORIA */}
-                <Button 
-                  onClick={runSmartAudit} 
-                  disabled={loading || isAuditing}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold flex items-center gap-2 disabled:opacity-50"
+                {/* NOVO BOTÃO DE AUDITORIA PASSO-A-PASSO */}
+                <button 
+                    onClick={isFinished ? () => { setAuditResults([]); setIsFinished(false); setAuditOffset(0); } : runAuditStep}
+                    disabled={isAuditing}
+                    className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition text-white text-sm ${
+                        isFinished 
+                        ? "bg-green-600 hover:bg-green-700" 
+                        : auditOffset === 0 
+                            ? "bg-yellow-600 hover:bg-yellow-700" 
+                            : "bg-blue-600 hover:bg-blue-700 animate-pulse"
+                    }`}
                 >
-                  {isAuditing ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />} 🕵️ Auditoria (IA)
-                </Button>
+                    {isAuditing ? (
+                        <><Loader2 className="w-4 h-4 animate-spin"/> Analisando...</>
+                    ) : isFinished ? (
+                        <><CheckCircle className="w-4 h-4"/> Auditoria Finalizada (Reiniciar)</>
+                    ) : auditOffset === 0 ? (
+                        <><Search className="w-4 h-4"/> Iniciar Auditoria IA</>
+                    ) : (
+                        <><Play className="w-4 h-4"/> Continuar (Lote {auditOffset}-{auditOffset + 100})</>
+                    )}
+                </button>
             </div>
           </div>
           
