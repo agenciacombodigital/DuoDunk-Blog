@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Oswald, Bebas_Neue } from 'next/font/google';
 import "@/globals.css"; // Caminho corrigido
 import ClientLayout from "@/components/ClientLayout";
@@ -9,13 +9,22 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald', display: 'swap' });
 const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas', display: 'swap' });
 
+// 1. AÇÃO A: VIEWPORT
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Opcional: melhora a sensação de app nativo
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.duodunk.com.br'), // Define a base para todas as canônicas
   title: {
     default: 'DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje',
     template: '%s | Duo Dunk',
   },
-  description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. Cobertura completa do basquete em português.",
+  // 2. AÇÃO B: NOVA META DESCRIPTION (126 chars)
+  description: "Notícias NBA em tempo real, análises táticas, estatísticas ao vivo e Quiz NBA. Cobertura completa do basquete em português.",
   alternates: {
     canonical: './', // Gera a canônica automática para cada página filha
   },
@@ -41,7 +50,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json', // Arquivo para Android/Chrome
   openGraph: {
     title: "DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje",
-    description: "Acompanhe notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e saiba onde assistir todos os jogos. Cobertura completa do basquete em português.",
+    description: "Notícias NBA em tempo real, análises táticas, estatísticas ao vivo e Quiz NBA. Cobertura completa do basquete em português.",
     url: 'https://www.duodunk.com.br',
     siteName: "Duo Dunk",
     images: [

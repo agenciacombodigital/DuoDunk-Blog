@@ -7,6 +7,7 @@ import { Metadata, ResolvingMetadata } from 'next';
 import ArticleBody from '@/components/ArticleBody';
 import nextDynamic from 'next/dynamic'; // Importação dinâmica renomeada
 import { cn } from '@/lib/utils'; // Importando cn
+import { notFound } from 'next/navigation'; // <-- IMPORTADO
 
 // Imports Dinâmicos (Lazy)
 const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
@@ -102,14 +103,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   const article = await getArticle(params.slug);
 
   if (!article) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 font-oswald">Artigo não encontrado (404)</h1>
-          <Link href="/" className="text-pink-600 hover:text-black transition-colors font-bold">Voltar para Home</Link>
-        </div>
-      </div>
-    );
+    notFound(); // <-- AÇÃO 3: Invoca notFound() para retornar 404 HTTP status
   }
 
   const date = new Date(article.published_at);

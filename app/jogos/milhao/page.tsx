@@ -22,7 +22,8 @@ export default async function MilhaoPage() {
   return (
     // TRUQUE CSS: 'w-screen' e 'margin-left/right: -50vw' forçam o elemento a esticar 
     // até a borda da janela, mesmo se o pai tiver padding.
-    <div className="relative w-screen left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] min-h-[calc(100vh-80px)] bg-zinc-950 flex flex-col overflow-hidden">
+    // Estilos inline removidos e substituídos por classes Tailwind:
+    <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-[calc(100vh-80px)] bg-zinc-950 flex flex-col overflow-hidden">
       
       {/* Background Full Screen */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a2e] z-0" />

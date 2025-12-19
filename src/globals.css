@@ -22,8 +22,8 @@
   }
 
   body {
-    /* Removendo bg-white para que o LayoutContent defina o fundo */
-    @apply text-gray-900 antialiased;
+    /* AÇÃO B: Overflow para Usabilidade F */
+    @apply text-gray-900 antialiased overflow-x-hidden;
   }
 
   /* Estilos de Tipografia Aprimados */
@@ -303,11 +303,21 @@ html {
 
 /* ==== OTIMIZAÇÃO MOBILE ==== */
 
-/* Texto mais legível em mobile */
+/* AÇÃO C: Tamanho de Fonte e Toque */
 @media (max-width: 768px) {
   body {
     font-size: 16px !important; /* Evita zoom automático no iOS */
     -webkit-text-size-adjust: 100%;
+  }
+  
+  /* Inputs e Botões com tamanho mínimo de toque */
+  input:not([type="checkbox"]):not([type="radio"]), 
+  textarea, 
+  select, 
+  button:not(.p-2):not(.p-1):not(.w-6):not(.h-6), 
+  label[htmlFor] {
+    min-height: 44px;
+    font-size: 16px;
   }
   
   /* Parágrafos do post */
