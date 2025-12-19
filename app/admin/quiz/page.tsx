@@ -381,7 +381,7 @@ export default function QuizAdmin() {
     setAuditResults([]); // Limpa resultados anteriores
     
     let offset = 0;
-    const limit = 500;
+    const limit = 150; // <-- LIMITE AJUSTADO
     let hasMore = true;
     let accumulatedConflicts: AuditQuestion[][] = [];
     const totalQuestions = totalCount; // Usa o total count carregado
