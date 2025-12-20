@@ -9,6 +9,7 @@ import QuestionTable from '@/components/admin/quiz/QuestionTable';
 import EditQuestionModal from '@/components/admin/quiz/EditQuestionModal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox'; // <-- ADICIONADO
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
