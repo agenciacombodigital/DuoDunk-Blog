@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download, Trash2, AlertTriangle, Server, CheckCircle, Play } from 'lucide-react';
+import { Upload, Plus, FileJson, AlertCircle, ArrowLeft, Settings, BrainCircuit, Search, Loader2, Download, Trash2, AlertTriangle, Server, CheckCircle, Play, X } from 'lucide-react';
 import Link from 'next/link';
 import { Question } from '@/lib/milhao-data';
 import QuestionTable from '@/components/admin/quiz/QuestionTable';
