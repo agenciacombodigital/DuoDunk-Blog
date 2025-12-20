@@ -10,6 +10,7 @@ import EditQuestionModal from '@/components/admin/quiz/EditQuestionModal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 const QUESTIONS_PER_PAGE = 10;
 
@@ -20,6 +21,7 @@ interface AuditQuestion {
 }
 
 export default function QuizAdmin() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -38,7 +40,7 @@ export default function QuizAdmin() {
   
   // Estados Novos para controle manual
   const [auditOffset, setAuditOffset] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
+  const [isAuditFinished, setIsAuditFinished] = useState(false); // <-- ESTADO CORRIGIDO
   
   // --- NOVO ESTADO DE SELEÇÃO ---
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -383,51 +385,52 @@ export default function QuizAdmin() {
   
   const runAuditStep = async () => {
     setIsAuditing(true);
-    const limit = 100;
+    setAuditProgress("Iniciando análise do lote...");
+    
+    // Se for o início (offset 0), limpamos a lista anterior
+    if (auditOffset === 0) {
+      setAuditResults([]); // Mapeado de setAllConflicts
+      setIsAuditFinished(false);
+    }
 
     try {
-        // Se for o início, limpa os resultados anteriores
-        if (auditOffset === 0) {
-            setAuditResults([]);
-            setIsFinished(false);
-            toast.info("Iniciando auditoria...");
+      // Chama a API para processar APENAS o lote atual (100 itens)
+      const { data, error } = await supabase.functions.invoke('analyze-duplicates', {
+        body: { 
+          offset: auditOffset, 
+          limit: 100 
         }
+      });
 
-        setAuditProgress(`Analisando lote ${auditOffset} até ${auditOffset + limit}...`);
+      if (error) throw new Error(error.message);
+      if (data.error) throw new Error(data.error);
 
-        const { data, error } = await supabase.functions.invoke('analyze-duplicates', {
-            body: { offset: auditOffset, limit }
-        });
+      const { duplicates, hasMore, nextOffset } = data;
 
-        if (error || data?.error) {
-            throw new Error(error?.message || data?.error);
-        }
+      // Adiciona novos conflitos encontrados
+      if (duplicates && duplicates.length > 0) {
+        setAuditResults(prev => [...prev, ...duplicates]); // Mapeado de setAllConflicts
+        toast.warning(`⚠️ Encontrados ${duplicates.length} grupos neste lote!`);
+      } else {
+        toast.success(`✅ Lote ${auditOffset} a ${auditOffset + 100} limpo!`, { duration: 1500 });
+      }
 
-        const { duplicates, hasMore, nextOffset } = data;
+      // Prepara o próximo passo
+      if (hasMore) {
+        setAuditOffset(nextOffset); // Atualiza para o próximo lote
+      } else {
+        setIsAuditFinished(true); // Marca como finalizado
+        setAuditOffset(0); // Reseta para reiniciar se quiser
+        toast.success("🏁 Auditoria completa em todas as perguntas!");
+        // Não precisamos de setShowResults, o modal abre se auditResults.length > 0
+      }
 
-        // Adiciona novos conflitos encontrados à lista existente
-        if (duplicates && duplicates.length > 0) {
-            setAuditResults(prev => [...prev, ...duplicates]);
-            toast.warning(`Encontradas ${duplicates.length} duplicatas neste lote!`);
-        } else {
-            toast.success(`Lote limpo. Nenhuma duplicata.`, { duration: 1500 });
-        }
-
-        // Prepara o próximo passo
-        if (hasMore) {
-            setAuditOffset(nextOffset);
-        } else {
-            setIsFinished(true);
-            setAuditOffset(0); // Reseta para a próxima vez
-            toast.success("🏁 Auditoria Completa em todo o banco de dados!");
-        }
-
-    } catch (err: any) {
-        console.error(err);
-        toast.error("Erro no lote. Tente clicar em 'Continuar' novamente.");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Erro no lote: ${error.message}`);
     } finally {
-        setIsAuditing(false);
-        setAuditProgress("");
+      setIsAuditing(false);
+      setAuditProgress("");
     }
   };
   
@@ -781,26 +784,38 @@ export default function QuizAdmin() {
                 </Button>
                 
                 {/* NOVO BOTÃO DE AUDITORIA PASSO-A-PASSO */}
-                <button 
-                    onClick={isFinished ? () => { setAuditResults([]); setIsFinished(false); setAuditOffset(0); } : runAuditStep}
-                    disabled={isAuditing}
-                    className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition text-white text-sm ${
-                        isFinished 
-                        ? "bg-green-600 hover:bg-green-700" 
-                        : auditOffset === 0 
-                            ? "bg-yellow-600 hover:bg-yellow-700" 
-                            : "bg-blue-600 hover:bg-blue-700 animate-pulse"
-                    }`}
+                <button
+                  onClick={runAuditStep}
+                  disabled={isAuditing}
+                  className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg text-white text-sm ${
+                    isAuditFinished
+                      ? "bg-green-600 hover:bg-green-700" // Acabou
+                      : auditOffset === 0
+                      ? "bg-yellow-600 hover:bg-yellow-700" // Início
+                      : "bg-blue-600 hover:bg-blue-700 animate-pulse" // Continuar
+                  }`}
                 >
-                    {isAuditing ? (
-                        <><Loader2 className="w-4 h-4 animate-spin"/> Analisando...</>
-                    ) : isFinished ? (
-                        <><CheckCircle className="w-4 h-4"/> Auditoria Finalizada (Reiniciar)</>
-                    ) : auditOffset === 0 ? (
-                        <><Search className="w-4 h-4"/> Iniciar Auditoria IA</>
-                    ) : (
-                        <><Play className="w-4 h-4"/> Continuar (Lote {auditOffset}-{auditOffset + 100})</>
-                    )}
+                  {isAuditing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Analisando...
+                    </>
+                  ) : isAuditFinished ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Auditoria Finalizada (Reiniciar)
+                    </>
+                  ) : auditOffset === 0 ? (
+                    <>
+                      <Search className="w-4 h-4" />
+                      🕵️ Iniciar Auditoria IA
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      ⏯️ Continuar (Lote {auditOffset})
+                    </>
+                  )}
                 </button>
             </div>
           </div>
