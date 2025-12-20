@@ -43,7 +43,9 @@ serve(async (req) => {
     // 2. Prompt Ultra-Curto para Economizar Tokens e Tempo
     const csvData = questions.map(q => `${q.id}|${q.question}`).join("\n");
     const genAI = new GoogleGenerativeAI(AUDITOR_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    
+    // MUDANÇA: Usando o modelo 'lite' que tem limites de cota muito maiores (1500+ RPD)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     
     const prompt = `
     Tarefa: Agrupar perguntas DUPLICADAS (semântica idêntica) nesta lista.
