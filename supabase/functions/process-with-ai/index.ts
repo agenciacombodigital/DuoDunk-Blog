@@ -21,7 +21,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    console.log('🚀 [AI] Iniciando processamento (Modo Texto Completo)...');
+    console.log('🚀 [AI] Iniciando processamento (Modo Texto Completo + Estatísticas)...');
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY não encontrada.');
@@ -44,34 +44,34 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // --- PROMPT AJUSTADO PARA MANTER O TAMANHO ---
-    const prompt = `🏀 ATUE COMO JORNALISTA SÊNIOR DA NBA (PORTAL DUODUNK)
+    // --- PROMPT APERFEIÇOADO PARA DADOS ESTATÍSTICOS ---
+    const prompt = `🏀 ATUE COMO JORNALISTA ESPECIALIZADO EM NBA (PORTAL DUODUNK)
 
 FONTE: ${article.source}
 TITULO ORIGINAL: ${article.original_title}
 CONTEÚDO ORIGINAL: "${article.summary}"
 
-🎯 TAREFA: Reescrever a notícia em PT-BR mantendo a PROFUNDIDADE e o TAMANHO do original.
+🎯 TAREFA: Traduzir e reescrever a notícia para PT-BR, fundindo NARRATIVA com DADOS ESTATÍSTICOS EXATOS.
 
-🚫 PROIBIDO RESUMIR:
-- Se o texto original é longo, sua resposta DEVE ser longa.
-- Não corte detalhes técnicos, citações ou estatísticas.
-- Não simplifique a linguagem, mantenha o nível técnico.
+⚠️ REGRA DE OURO (ESTATÍSTICAS OBRIGATÓRIAS):
+1. ESCANEIE O TEXTO ORIGINAL por números: Pontos, Rebotes, Assistências, Tocos, Placar do Jogo, Sequências (ex: "100th game").
+2. VOCÊ É OBRIGADO a incluir esses números no texto reescrito.
+3. NÃO generalize. 
+   - ERRADO: "Ele teve uma grande atuação com um duplo-duplo."
+   - CERTO: "Ele liderou a equipe com 26 pontos e 12 rebotes."
+   - ERRADO: "O Spurs venceu o jogo."
+   - CERTO: "O Spurs venceu por 126 a 98."
 
-✅ ESTRUTURA OBRIGATÓRIA:
-1. LEAD (P1): O que aconteceu, quem, quando e onde (4-5 linhas).
-2. DESENVOLVIMENTO (P2-P4): Detalhes do jogo/fato, estatísticas, aspas dos jogadores.
-3. CONTEXTO (P5): Impacto na classificação ou histórico recente.
-4. CONCLUSÃO (P6): O que vem a seguir.
-
-⚠️ IMPORTANTE: 
-- Use termos da NBA (turnover, triple-double, garrafão).
-- NÃO invente fatos que não estão no texto original. Apenas expanda a escrita para torná-la fluida.
+✅ ESTRUTURA DO ARTIGO:
+1. LEAD (P1): O fato principal (Quem, O quê, Onde). Se for um recorde, mencione o número exato imediatamente.
+2. DETALHES DO JOGO (P2-P3): Como foi a performance. AQUI ENTRAM OS NÚMEROS (Pontos/Rebotes/Assistências) citados no original. Cite jogadas específicas se houver (ex: toco no jogador X).
+3. CONTEXTO HISTÓRICO/ASPAS (P4-P5): O que esse número significa para a história da liga? O que foi dito nas entrevistas?
+4. CONCLUSÃO (P6): Próximo jogo ou impacto na tabela.
 
 JSON RESPOSTA:
 {
-  "title": "Título Impactante em PT-BR (Max 80 chars)",
-  "subtitle": "Subtítulo complementar",
+  "title": "Título Jornalístico Impactante em PT-BR (Max 80 chars)",
+  "subtitle": "Subtítulo que complementa com um dado estatístico relevante",
   "summary": "Resumo curto para o card (Max 140 chars)",
   "paragraphs": [
     "Parágrafo 1...", 
@@ -81,7 +81,7 @@ JSON RESPOSTA:
     "Parágrafo 5..."
   ],
   "tags": ["nba", "time", "jogador"],
-  "meta_description": "SEO Description (150 chars)",
+  "meta_description": "SEO Description contendo palavras-chave e números principais (150 chars)",
   "slug": "titulo-url-amigavel"
 }
 `;
@@ -97,7 +97,7 @@ JSON RESPOSTA:
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.4, // Um pouco mais fluido para permitir reescrita longa
+                  temperature: 0.3, // Reduzi a temperatura para ser mais fiel aos dados
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
@@ -148,4 +148,4 @@ JSON RESPOSTA:
   } catch (error: any) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
-});
+})
