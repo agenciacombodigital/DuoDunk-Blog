@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,7 @@ const corsHeaders = {
 };
 
 const AMAZON_AFFILIATE_LINK = "https://amzn.to/3KaOGB9";
-const GEMINI_MODEL = "gemini-2.5-flash"; 
+const GEMINI_MODEL = "gemini-2.5-flash-lite"; // Usando Lite para economizar cota se necessário
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -21,30 +22,29 @@ serve(async (req) => {
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY não encontrada.");
 
-    // 1. Data BRASIL
+    // 1. Data BRASIL (Correção de Fuso e Formato)
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Sao_Paulo',
       year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long'
     });
-    const parts = formatter.formatToParts(now);
     
-    // Acessando as partes de forma segura
+    // Formata para partes para ter controle total
+    const parts = formatter.formatToParts(now);
     const day = parts.find(p => p.type === 'day')?.value;
     const month = parts.find(p => p.type === 'month')?.value;
     const year = parts.find(p => p.type === 'year')?.value;
-    // O weekday não é usado na lógica de slug/data, mas mantemos a extração segura
-    // const weekday = parts.find(p => p.type === 'weekday')?.value; 
+    const weekday = parts.find(p => p.type === 'weekday')?.value; // Ex: "terça-feira"
     
-    if (!day || !month || !year) {
-        throw new Error("Falha ao extrair partes da data.");
-    }
+    if (!day || !month || !year) throw new Error("Falha na data.");
     
     const dataHojePT = `${day}/${month}/${year}`; 
-    const dateParam = `${year}${month}${day}`;
-    const dataISO = `${year}-${month}-${day}`;
+    const dateParam = `${year}${month}${day}`; // Formato API ESPN (YYYYMMDD)
+    
+    // CORREÇÃO SOLICITADA: Slug no formato brasileiro (DD-MM-YYYY)
+    const slugDate = `${day}-${month}-${year}`; 
 
-    console.log(`[AutoAgenda] Iniciando para: ${dataHojePT}`);
+    console.log(`[AutoAgenda] Iniciando para: ${dataHojePT} (${weekday})`);
 
     // 2. ESPN
     const espnUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=pt&region=br&dates=${dateParam}`;
@@ -57,7 +57,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: "Nenhum jogo hoje." }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // 3. Prompt Gemini
+    // 3. Prompt Gemini (Injetando o dia da semana correto)
     const listaJogosTexto = jogos.map((jogo: any) => {
       const comp = jogo.competitions[0];
       const timeCasa = comp.competitors.find((c: any) => c.homeAway === 'home').team.displayName;
@@ -70,10 +70,13 @@ serve(async (req) => {
     }).join("\n");
 
     const prompt = `
-      Atue como jornalista do DuoDunk. Data: ${dataHojePT}.
-      Jogos:
+      Hoje é ${weekday}, ${dataHojePT}.
+      Atue como jornalista do DuoDunk. 
+      Jogos de hoje na NBA:
       ${listaJogosTexto}
-      Escreva lead curto (2 parágrafos) sobre a rodada. Destaque transmissões. Tom empolgante.
+      
+      Escreva um lead curto e hypado (2 parágrafos) convidando para assistir. 
+      Destaque jogos na TV aberta/fechada (ESPN, Amazon, Vivo) se houver.
     `;
 
     const genAiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`;
@@ -84,13 +87,13 @@ serve(async (req) => {
     });
 
     const genAiData = await genAiRes.json();
-    const introTexto = genAiData.candidates?.[0]?.content?.parts?.[0]?.text || `Confira os jogos de hoje.`;
+    const introTexto = genAiData.candidates?.[0]?.content?.parts?.[0]?.text || `Confira a programação da NBA para hoje.`;
 
-    // 4. Montar HTML (SEM LINKS NA LISTA)
+    // 4. Montar HTML
     let htmlBody = `<p>${introTexto.replace(/\n/g, '</p><p>')}</p>`;
     htmlBody += `<h3>Agenda de Hoje (${dataHojePT}):</h3><ul class="wp-block-list">`;
 
-    const tags = ["NBA Hoje", "Agenda NBA"];
+    const tags = ["NBA Hoje", "Agenda NBA", "Onde Assistir NBA"];
 
     jogos.forEach((jogo: any) => {
       const comp = jogo.competitions[0];
@@ -109,7 +112,7 @@ serve(async (req) => {
 
       if (temTransmissaoBR) {
           const canaisFiltrados = canais.filter((c: string) => !c.includes("NBA")); 
-          // ✅ Apenas junta o texto, SEM criar tags <a>
+          // CORREÇÃO: Apenas texto aqui, removemos o link duplicado.
           canalFormatado = canaisFiltrados.length > 0 ? canaisFiltrados.join(" / ") : canais.join(" / ");
           icon = "📺"; 
       }
@@ -121,18 +124,18 @@ serve(async (req) => {
 
     htmlBody += `</ul><p><em>* Horários de Brasília.</em></p>`;
     
-    // Banner Amazon (Link Único)
+    // Banner Amazon Único (Mantido no final)
     htmlBody += `<p style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-left: 5px solid #00A8E1;"><strong>Dica DuoDunk:</strong> <a href="${AMAZON_AFFILIATE_LINK}" target="_blank">Teste Amazon Prime Grátis</a>!</p>`;
 
     // 5. Salvar/Atualizar
-    const linkUnico = `https://www.espn.com.br/nba/calendario?date=${dateParam}`;
-    const slug = `onde-assistir-nba-hoje-${dataISO}`;
+    // URL Corrigida: onde-assistir-nba-hoje-23-12-2025
+    const slug = `onde-assistir-nba-hoje-${slugDate}`;
     
     const articleData = {
-        title: `Onde assistir NBA hoje (${dataHojePT})`,
-        original_title: `Onde assistir NBA hoje (${dataHojePT})`,
-        original_link: linkUnico,
-        summary: `Programação da NBA para ${dataHojePT}.`,
+        title: `Onde assistir NBA hoje - ${weekday} (${dataHojePT})`,
+        original_title: `Agenda NBA ${dataHojePT}`,
+        original_link: `https://www.espn.com.br/nba/calendario?date=${dateParam}`,
+        summary: `Confira a programação completa da NBA para ${dataHojePT} com horários e onde assistir.`,
         body: htmlBody,
         tags: [...new Set(tags)],
         slug: slug,
@@ -144,14 +147,11 @@ serve(async (req) => {
         author: 'Fernando Balley'
     };
 
-    // Upsert inteligente
-    // O erro anterior (ON CONFLICT) deve ser resolvido pelo fato de a restrição UNIQUE existir.
-    // Se o erro persistir, o problema é no Deno/Supabase-js, mas a sintaxe é a correta.
     const { data, error } = await supabase.from('articles_queue').upsert(articleData, { onConflict: 'slug' }).select();
 
     if (error) throw error;
 
-    return new Response(JSON.stringify({ success: true, data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ success: true, data, slug }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
     console.error('❌ Erro Fatal na AutoAgenda:', error.message);
