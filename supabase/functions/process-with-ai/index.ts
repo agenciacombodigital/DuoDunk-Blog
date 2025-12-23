@@ -43,9 +43,9 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // --- PROMPT DE ALTA FIDELIDADE ---
+    // --- PROMPT FINAL: FIDELIDADE DE TAMANHO + CONTEXTO HÍBRIDO ---
     const prompt = `
-    ATUE COMO: Tradutor Técnico Esportivo da NBA (Foco em Precisão de Dados).
+    ATUE COMO: Jornalista Esportivo Sênior da NBA (Portal DuoDunk).
     
     FONTE: ${article.source}
     TITULO ORIGINAL: ${article.original_title}
@@ -54,33 +54,43 @@ serve(async (req) => {
     ${article.summary}
     """
 
-    OBJETIVO: Traduzir e adaptar a notícia para PT-BR, mantendo TODOS os dados estatísticos e fatos históricos do original.
+    OBJETIVO: Produzir uma matéria completa em PT-BR, mantendo a PROFUNDIDADE, o TOM e, principalmente, a EXTENSÃO do texto original.
 
-    DIRETRIZES DE FIDELIDADE (CRÍTICO):
-    1.  **NÃO RESUMA OS NÚMEROS.** Se o texto diz "100th game in 29 games", você DEVE escrever "100º jogo em apenas 29 partidas".
-    2.  **CONTEXTO HISTÓRICO:** Se o texto cita recordes anteriores (ex: "beat Stephen Curry's record"), ISSO É OBRIGATÓRIO no texto final.
-    3.  **BOX SCORE:** Se houver estatísticas do jogo (pontos, rebotes, placar final), elas DEVEM aparecer no parágrafo de desenvolvimento.
-    4.  **QUEM DISSE O QUÊ:** Mantenha as citações (aspas) dos jogadores/treinadores traduzidas fielmente.
+    🚫 PROIBIÇÃO ABSOLUTA DE RESUMIR:
+    1.  **FIDELIDADE DE TAMANHO:** O seu texto final deve ter um tamanho comparável ao original. Não condense 5 parágrafos em 2. Se o original detalha uma jogada ou uma acusação judicial, você deve detalhar também.
+    2.  **NÃO CORTE CONTEÚDO:** Mantenha todas as citações (aspas), nomes citados, dados financeiros, datas e contextos históricos presentes no original.
+    3.  **NÃO INVENTE:** Não adicione fatos que não existem. Apenas expanda a narrativa com base no que foi fornecido.
 
-    ESTRUTURA DO TEXTO:
-    - **P1 (O Feito):** O que aconteceu de histórico ou relevante? (Use os números aqui).
-    - **P2 (O Jogo/Estatísticas):** Como foi a partida? Placar, atuação individual, números específicos.
-    - **P3 (O Contexto):** Comparação com recordes anteriores, falas de técnicos ou curiosidades citadas.
-    - **P4 (O Futuro):** Próximos jogos ou impacto na temporada.
+    🧠 LÓGICA ADAPTATIVA (IDENTIFIQUE O TIPO DE NOTÍCIA):
+    
+    [CENÁRIO A] SE FOR UM JOGO ("Game Recap", Recordes, Atuações):
+       - OBRIGATÓRIO: Cite todos os números: Placar, Pontos, Rebotes, Assistências, Tocos.
+       - "Fulano fez 30 pontos" é melhor que "Fulano jogou muito bem".
+    
+    [CENÁRIO B] SE FOR NOTÍCIA GERAL (Jurídico, Trocas, Lesões, Polêmicas):
+       - OBRIGATÓRIO: Narre os fatos cronologicamente.
+       - Explique os termos (ex: valores de multas, detalhes de contratos, acusações).
+       - ⚠️ CRÍTICO: NÃO procure por "pontos ou rebotes" se a notícia for sobre tribunal ou negócios. NÃO escreva frases dizendo "esta notícia não tem estatísticas". Apenas narre a história.
+
+    ESTRUTURA OBRIGATÓRIA:
+    - P1 (Lead): O fato principal completo.
+    - P2 a P5 (Desenvolvimento Detalhado): Aqui você deve gastar tempo. Descreva o desenrolar dos fatos, traduza as aspas completas dos envolvidos, traga os dados específicos.
+    - P6 (Conclusão): O que acontece agora? (Próximo jogo, data de julgamento, tempo de recuperação, etc).
 
     SAÍDA JSON (MANTENHA ESTE FORMATO):
     {
-      "title": "Título Jornalístico com Gatilho e Nome do Jogador (PT-BR)",
-      "subtitle": "Subtítulo com o dado estatístico principal",
-      "summary": "Resumo para card (Max 140 chars)",
+      "title": "Título Jornalístico em PT-BR (Max 80 chars)",
+      "subtitle": "Subtítulo complementar informativo",
+      "summary": "Resumo curto para o card (Max 140 chars)",
       "paragraphs": [
-        "Texto do parágrafo 1...",
-        "Texto do parágrafo 2...",
-        "Texto do parágrafo 3...",
-        "Texto do parágrafo 4..."
+        "Parágrafo denso e informativo 1...",
+        "Parágrafo denso e informativo 2...",
+        "Parágrafo denso e informativo 3...",
+        "Parágrafo denso e informativo 4...",
+        "Parágrafo denso e informativo 5..."
       ],
-      "tags": ["nba", "time", "jogador", "recorde"],
-      "meta_description": "Resumo SEO com palavras-chave e números (150 chars)",
+      "tags": ["nba", "time", "jogador", "tema"],
+      "meta_description": "SEO Description (150 chars)",
       "slug": "titulo-url-amigavel"
     }
     `;
