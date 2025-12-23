@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// MODELOS 2.5 (Rápidos)
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -21,7 +20,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    console.log('🚀 [AI] Iniciando processamento (Modo Texto Completo + Estatísticas)...');
+    console.log('🚀 [AI] Iniciando processamento (Modo Fidelidade de Dados)...');
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) throw new Error('GEMINI_API_KEY não encontrada.');
@@ -44,47 +43,47 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // --- PROMPT APERFEIÇOADO PARA DADOS ESTATÍSTICOS ---
-    const prompt = `🏀 ATUE COMO JORNALISTA ESPECIALIZADO EM NBA (PORTAL DUODUNK)
+    // --- PROMPT DE ALTA FIDELIDADE ---
+    const prompt = `
+    ATUE COMO: Tradutor Técnico Esportivo da NBA (Foco em Precisão de Dados).
+    
+    FONTE: ${article.source}
+    TITULO ORIGINAL: ${article.original_title}
+    CONTEÚDO ORIGINAL: 
+    """
+    ${article.summary}
+    """
 
-FONTE: ${article.source}
-TITULO ORIGINAL: ${article.original_title}
-CONTEÚDO ORIGINAL: "${article.summary}"
+    OBJETIVO: Traduzir e adaptar a notícia para PT-BR, mantendo TODOS os dados estatísticos e fatos históricos do original.
 
-🎯 TAREFA: Traduzir e reescrever a notícia para PT-BR, fundindo NARRATIVA com DADOS ESTATÍSTICOS EXATOS.
+    DIRETRIZES DE FIDELIDADE (CRÍTICO):
+    1.  **NÃO RESUMA OS NÚMEROS.** Se o texto diz "100th game in 29 games", você DEVE escrever "100º jogo em apenas 29 partidas".
+    2.  **CONTEXTO HISTÓRICO:** Se o texto cita recordes anteriores (ex: "beat Stephen Curry's record"), ISSO É OBRIGATÓRIO no texto final.
+    3.  **BOX SCORE:** Se houver estatísticas do jogo (pontos, rebotes, placar final), elas DEVEM aparecer no parágrafo de desenvolvimento.
+    4.  **QUEM DISSE O QUÊ:** Mantenha as citações (aspas) dos jogadores/treinadores traduzidas fielmente.
 
-⚠️ REGRA DE OURO (ESTATÍSTICAS OBRIGATÓRIAS):
-1. ESCANEIE O TEXTO ORIGINAL por números: Pontos, Rebotes, Assistências, Tocos, Placar do Jogo, Sequências (ex: "100th game").
-2. VOCÊ É OBRIGADO a incluir esses números no texto reescrito.
-3. NÃO generalize. 
-   - ERRADO: "Ele teve uma grande atuação com um duplo-duplo."
-   - CERTO: "Ele liderou a equipe com 26 pontos e 12 rebotes."
-   - ERRADO: "O Spurs venceu o jogo."
-   - CERTO: "O Spurs venceu por 126 a 98."
+    ESTRUTURA DO TEXTO:
+    - **P1 (O Feito):** O que aconteceu de histórico ou relevante? (Use os números aqui).
+    - **P2 (O Jogo/Estatísticas):** Como foi a partida? Placar, atuação individual, números específicos.
+    - **P3 (O Contexto):** Comparação com recordes anteriores, falas de técnicos ou curiosidades citadas.
+    - **P4 (O Futuro):** Próximos jogos ou impacto na temporada.
 
-✅ ESTRUTURA DO ARTIGO:
-1. LEAD (P1): O fato principal (Quem, O quê, Onde). Se for um recorde, mencione o número exato imediatamente.
-2. DETALHES DO JOGO (P2-P3): Como foi a performance. AQUI ENTRAM OS NÚMEROS (Pontos/Rebotes/Assistências) citados no original. Cite jogadas específicas se houver (ex: toco no jogador X).
-3. CONTEXTO HISTÓRICO/ASPAS (P4-P5): O que esse número significa para a história da liga? O que foi dito nas entrevistas?
-4. CONCLUSÃO (P6): Próximo jogo ou impacto na tabela.
-
-JSON RESPOSTA:
-{
-  "title": "Título Jornalístico Impactante em PT-BR (Max 80 chars)",
-  "subtitle": "Subtítulo que complementa com um dado estatístico relevante",
-  "summary": "Resumo curto para o card (Max 140 chars)",
-  "paragraphs": [
-    "Parágrafo 1...", 
-    "Parágrafo 2...", 
-    "Parágrafo 3...",
-    "Parágrafo 4...",
-    "Parágrafo 5..."
-  ],
-  "tags": ["nba", "time", "jogador"],
-  "meta_description": "SEO Description contendo palavras-chave e números principais (150 chars)",
-  "slug": "titulo-url-amigavel"
-}
-`;
+    SAÍDA JSON (MANTENHA ESTE FORMATO):
+    {
+      "title": "Título Jornalístico com Gatilho e Nome do Jogador (PT-BR)",
+      "subtitle": "Subtítulo com o dado estatístico principal",
+      "summary": "Resumo para card (Max 140 chars)",
+      "paragraphs": [
+        "Texto do parágrafo 1...",
+        "Texto do parágrafo 2...",
+        "Texto do parágrafo 3...",
+        "Texto do parágrafo 4..."
+      ],
+      "tags": ["nba", "time", "jogador", "recorde"],
+      "meta_description": "Resumo SEO com palavras-chave e números (150 chars)",
+      "slug": "titulo-url-amigavel"
+    }
+    `;
 
     let aiResponse = null;
     let modelUsed = '';
@@ -97,7 +96,7 @@ JSON RESPOSTA:
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.3, // Reduzi a temperatura para ser mais fiel aos dados
+                  temperature: 0.2, // Temperatura baixa para máxima fidelidade aos dados
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
@@ -117,9 +116,7 @@ JSON RESPOSTA:
 
     if (!aiResponse) throw new Error("Falha na IA.");
 
-    // Tratamento de HTML para parágrafos
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
-    
     const finalSlug = aiResponse.slug.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
     const finalImage = article.image_url || DEFAULT_IMAGE;
     const authorName = getAuthorBySource(article.source);
