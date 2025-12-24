@@ -104,6 +104,7 @@ export default async function Home() {
                         className="object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={article.title}
                         sizes="160px"
+                        style={getObjectPositionStyle(article.image_focal_point, false)}
                      />
                   </div>
                   <div className="flex-1 flex flex-col justify-center border-b border-gray-100 group-last:border-0 pb-2">
@@ -127,6 +128,7 @@ export default async function Home() {
                         className="object-cover group-hover:scale-110 transition-transform duration-500" 
                         alt={article.title}
                         sizes="(max-width: 768px) 100vw, 25vw"
+                        style={getObjectPositionStyle(article.image_focal_point, false)}
                       />
                    </div>
                    <div className="p-3">
@@ -156,6 +158,7 @@ export default async function Home() {
                         className="object-cover group-hover:scale-105 transition-transform duration-500" 
                         alt={article.title}
                         sizes="(max-width: 768px) 100vw, 33vw"
+                        style={getObjectPositionStyle(article.image_focal_point, false)}
                       />
                   </div>
                   <div className="p-6">
@@ -183,7 +186,13 @@ export default async function Home() {
              {deepDive.map(article => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex flex-col">
                   <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-gray-100">
-                    <ImageWithFallback src={article.image_url} fill alt={article.title} className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <ImageWithFallback 
+                      src={article.image_url} 
+                      fill 
+                      alt={article.title} 
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      style={getObjectPositionStyle(article.image_focal_point, false)}
+                    />
                   </div>
                   <h3 className="font-oswald text-xl font-bold text-gray-900 group-hover:text-[#FA007D] uppercase">{article.title}</h3>
                   <p className="text-gray-600 text-sm line-clamp-2 mt-2">{article.summary}</p>
@@ -201,7 +210,13 @@ export default async function Home() {
               {moreNews.map(article => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex flex-col md:flex-row gap-6 items-center">
                   <div className="w-full md:w-64 aspect-video shrink-0 rounded-xl overflow-hidden bg-gray-100 relative">
-                    <ImageWithFallback src={article.image_url} fill alt={article.title} className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <ImageWithFallback 
+                      src={article.image_url} 
+                      fill 
+                      alt={article.title} 
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      style={getObjectPositionStyle(article.image_focal_point, false)}
+                    />
                   </div>
                   <div className="flex-1">
                     <span className="text-[#FA007D] text-[10px] font-bold uppercase tracking-widest">{article.tags?.[0]}</span>

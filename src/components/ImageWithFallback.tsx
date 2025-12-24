@@ -44,18 +44,25 @@ export default function ImageWithFallback({
     (src.includes('espn') || src.includes('yahoo') || src.includes('cbs') || src.includes('nba.com'));
 
   if (isExternalPortal || hasError) {
+    // Garante que width e height tenham unidade 'px' se forem números
+    const getDimension = (dim: any) => {
+        if (typeof dim === 'number') return `${dim}px`;
+        return dim;
+    };
+
     return (
       <img
         src={imgSrc}
         alt={alt || "DuoDunk Notícias"}
         className={className}
+        loading={rest.priority ? 'eager' : (rest.loading as any) || 'lazy'}
         style={{
             top: 0,
             left: 0,
             ...style,
             objectFit: 'cover',
-            width: fill ? '100%' : rest.width,
-            height: fill ? '100%' : rest.height,
+            width: fill ? '100%' : getDimension(rest.width),
+            height: fill ? '100%' : getDimension(rest.height),
             position: fill ? 'absolute' : 'relative',
         }}
         onError={handleError}
