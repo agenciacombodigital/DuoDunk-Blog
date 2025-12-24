@@ -41,7 +41,7 @@ async function loadArticles(): Promise<Article[]> {
     .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, image_focal_point, is_featured, author')
     .eq('published', true)
     .order('published_at', { ascending: false })
-    .limit(200); // Aumentado para suportar toda a base
+    .limit(200); 
   return data || [];
 }
 
@@ -52,7 +52,6 @@ export default async function Home() {
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
-  // Distribuição original das seções
   const sidebarArticles = otherArticles.slice(0, 3);
   const bottomHeroArticles = otherArticles.slice(3, 7);
   const mustRead = otherArticles.slice(7, 10);
@@ -77,10 +76,10 @@ export default async function Home() {
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featuredArticle.image_focal_point, false)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
               <div className="absolute bottom-0 p-6 md:p-10 w-full z-10">
-                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-3 inline-block">Destaque</span>
-                <h1 className="text-2xl md:text-4xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors uppercase">
+                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-full text-xs font-bold uppercase mb-3 inline-block shadow-lg">Destaque</span>
+                <h1 className="text-2xl md:text-4xl lg:text-5xl font-oswald font-bold text-white leading-tight mb-2 group-hover:text-[#00DBFB] transition-colors uppercase drop-shadow-md">
                   {featuredArticle.title}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-300 text-xs font-inter tracking-widest mt-2 uppercase">
@@ -93,7 +92,7 @@ export default async function Home() {
           <div className="lg:col-span-4 flex flex-col">
             <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
               <TrendingUp className="text-[#FA007D]" size={20} />
-              <h2 className="font-bebas text-2xl text-gray-900">Últimas Notícias da NBA</h2>
+              <h2 className="font-bebas text-2xl text-gray-900 uppercase">Últimas Notícias da NBA</h2>
             </div>
             <div className="flex flex-col justify-between gap-3 flex-1">
               {sidebarArticles.map((article) => (
@@ -118,7 +117,6 @@ export default async function Home() {
             </div>
           </div>
           
-          {/* Grid de 4 Cards logo abaixo do Hero */}
           <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
              {bottomHeroArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all">
@@ -140,10 +138,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CTA AMAZON */}
       <div className="container mx-auto px-4 mb-12"><AmazonCTA /></div>
 
-      {/* 2. MUST READ (Zap Section) */}
       {mustRead.length > 0 && (
         <section className="container mx-auto px-4 py-12 border-t border-gray-100">
           <div className="flex items-center gap-3 mb-8">
@@ -177,7 +173,6 @@ export default async function Home() {
         </section>
       )}
 
-      {/* 3. DEEP DIVE (Seção que estava faltando) */}
       {deepDive.length > 0 && (
         <section className="container mx-auto px-4 py-12 bg-gray-50 rounded-3xl my-12">
           <div className="flex items-center gap-3 mb-8">
@@ -187,7 +182,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              {deepDive.map(article => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex flex-col">
-                  <div className="relative aspect-video rounded-xl overflow-hidden mb-4">
+                  <div className="relative aspect-video rounded-xl overflow-hidden mb-4 bg-gray-100">
                     <ImageWithFallback src={article.image_url} fill alt={article.title} className="object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <h3 className="font-oswald text-xl font-bold text-gray-900 group-hover:text-[#FA007D] uppercase">{article.title}</h3>
@@ -198,7 +193,6 @@ export default async function Home() {
         </section>
       )}
 
-      {/* 4. TRENDING & MORE NEWS (Restaurando layout anterior) */}
       <section className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
@@ -206,7 +200,7 @@ export default async function Home() {
             <div className="space-y-8">
               {moreNews.map(article => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex flex-col md:flex-row gap-6 items-center">
-                  <div className="w-full md:w-64 aspect-video shrink-0 rounded-xl overflow-hidden">
+                  <div className="w-full md:w-64 aspect-video shrink-0 rounded-xl overflow-hidden bg-gray-100 relative">
                     <ImageWithFallback src={article.image_url} fill alt={article.title} className="object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="flex-1">
@@ -236,7 +230,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 5. ARCHIVE (Mostrando todas as notícias restantes) */}
       {archive.length > 0 && (
         <section className="container mx-auto px-4 py-16">
            <div className="flex items-center gap-4 mb-10">
@@ -267,7 +260,7 @@ export default async function Home() {
                         sizes={isWide ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
                         style={getObjectPositionStyle(article.image_focal_point, false)}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90 pointer-events-none" />
                       <div className="absolute bottom-0 left-0 p-6 w-full">
                          <span className="text-[#00DBFB] text-[10px] font-bold uppercase tracking-widest mb-1 block">{article.tags?.[0]}</span>
                          <h3 className={cn("font-oswald font-bold text-white leading-tight group-hover:underline decoration-[#FA007D]", isWide ? "text-2xl md:text-3xl" : "text-lg", "uppercase")}>

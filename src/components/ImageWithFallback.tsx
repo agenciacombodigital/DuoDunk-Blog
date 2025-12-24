@@ -50,6 +50,8 @@ export default function ImageWithFallback({
         alt={alt || "DuoDunk Notícias"}
         className={className}
         style={{
+            top: 0,
+            left: 0,
             ...style,
             objectFit: 'cover',
             width: fill ? '100%' : rest.width,
