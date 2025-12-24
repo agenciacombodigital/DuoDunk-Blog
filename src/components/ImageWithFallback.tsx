@@ -16,8 +16,8 @@ export default function ImageWithFallback({
   fill,
   ...rest 
 }: ImageWithFallbackProps) {
-  // Fallback imediato para o link quebrado conhecido ou valores nulos
-  const isInvalid = !src || (typeof src === 'string' && (src.includes('agenda-nba-padrao.jpg') || src.includes('undefined')));
+  // 1. Identifica links inválidos ou nulos
+  const isInvalid = !src || (typeof src === 'string' && (src.includes('agenda-nba-padrao.jpg') || src.includes('undefined') || src.length < 5));
   
   const [imgSrc, setImgSrc] = useState<any>(isInvalid ? fallbackSrc : src);
   const [hasError, setHasError] = useState(false);
@@ -38,12 +38,11 @@ export default function ImageWithFallback({
     }
   };
 
-  // Se for uma imagem externa de portal (ESPN, Yahoo, CBS), usamos img nativa com No-Referrer
-  // Isso evita o bloqueio de 'hotlinking' (403 Forbidden) em produção.
-  const isExternalPortal = typeof src === 'string' && 
-    (src.includes('espn') || src.includes('yahoo') || src.includes('cbs') || src.includes('nba.com') || src.includes('wp.com'));
+  // 2. Se for uma URL absoluta (começa com http), usamos <img> nativa.
+  // Isso resolve o problema das fotos manuais (Supabase) e externas (ESPN/Yahoo) não aparecerem em produção.
+  const isAbsoluteUrl = typeof src === 'string' && src.startsWith('http');
 
-  if (isExternalPortal || hasError) {
+  if (isAbsoluteUrl || hasError) {
     const getDimension = (dim: any) => {
         if (typeof dim === 'number') return `${dim}px`;
         if (typeof dim === 'string' && !dim.includes('%') && !dim.includes('px')) return `${dim}px`;
@@ -55,22 +54,28 @@ export default function ImageWithFallback({
         src={imgSrc}
         alt={alt || "DuoDunk Notícias"}
         className={className}
-        referrerPolicy="no-referrer" // ✅ ESSENCIAL: Ignora bloqueio de hotlinking
+        referrerPolicy="no-referrer"
         loading={rest.priority ? 'eager' : (rest.loading as any) || 'lazy'}
         style={{
-            top: 0,
-            left: 0,
-            ...style,
+            ...style, // Mantém o objectPosition (focal point)
             objectFit: 'cover',
-            width: fill ? '100%' : getDimension(rest.width),
-            height: fill ? '100%' : getDimension(rest.height),
-            position: fill ? 'absolute' : 'relative',
+            ...(fill ? {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%'
+            } : {
+                width: getDimension(rest.width),
+                height: getDimension(rest.height),
+            })
         }}
         onError={handleError}
       />
     );
   }
 
+  // 3. Para caminhos locais (/images/...), continua usando Next Image
   return (
     <Image
       {...rest}
