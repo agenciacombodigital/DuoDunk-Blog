@@ -66,13 +66,13 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque + Sidebar Premium) --- */}
-      <section className="container mx-auto px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
+      {/* --- SEÇÃO 1: HERO (Destaque Principal 3x1 Sidebar Alinhada) --- */}
+      <section className="container mx-auto px-4 pt-6 md:pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6"> {/* REDUZIDO mb-12 para mb-6 */}
           
-          {/* DESTAQUE PRINCIPAL (Ocupa 2 colunas) */}
-          <div className="lg:col-span-2 relative group rounded-2xl overflow-hidden h-[450px] shadow-2xl bg-gray-100">
-            <Link href={`/artigos/${featured.slug}`} className="block h-full">
+          {/* DESTAQUE PRINCIPAL (Ocupa 3 colunas) */}
+          <div className="lg:col-span-3">
+            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl bg-gray-100 min-h-[500px]">
               <ImageWithFallback
                 src={featured.image_url}
                 alt={featured.title}
@@ -81,54 +81,48 @@ export default async function Home() {
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
                 style={getObjectPositionStyle(featured.image_focal_point, false)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent p-8 flex flex-col justify-end">
-                <span className="bg-[#FA007D] text-white text-[10px] font-bold px-3 py-1 rounded-full w-fit mb-4 uppercase tracking-widest">
-                  DESTAQUE
-                </span>
-                <h1 className="text-3xl md:text-5xl font-oswald font-bold text-white leading-tight mb-4 uppercase group-hover:text-[#00DBFB] transition-colors">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 p-6 md:p-12 w-full z-10">
+                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block">Destaque</span>
+                <h1 className="text-2xl md:text-5xl font-oswald font-bold text-white leading-tight uppercase group-hover:text-[#00DBFB] transition-colors">
                   {featured.title}
                 </h1>
-                <p className="text-gray-300 line-clamp-2 text-sm md:text-base max-w-2xl font-inter leading-relaxed">
-                  {featured.summary}
-                </p>
-                <div className="flex items-center gap-3 text-gray-400 text-[11px] font-bold uppercase mt-6 tracking-widest border-t border-white/10 pt-4">
+                <div className="flex items-center gap-3 text-gray-400 text-[11px] font-bold uppercase mt-4 tracking-widest">
                   <span className="flex items-center gap-1"><Clock size={12}/> {getTimeAgo(featured.published_at)}</span>
-                  <span>•</span>
-                  <span>NBA</span>
                 </div>
               </div>
             </Link>
           </div>
 
-          {/* SIDEBAR (Ocupa 1 coluna) */}
-          <div className="lg:col-span-1 flex flex-col justify-between h-[450px] gap-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-              <div className="h-2 w-2 bg-[#FA007D] rounded-full animate-pulse" />
-              <h3 className="text-lg font-bebas text-gray-900 tracking-wide uppercase">Últimas Notícias</h3>
+          {/* SIDEBAR (Ocupa 1 coluna) - Flex para preencher altura */}
+          <div className="lg:col-span-1 flex flex-col gap-3 h-full justify-between">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-1">
+              <TrendingUp className="text-[#FA007D]" size={16} />
+              <h3 className="font-bebas text-xl text-gray-900 uppercase tracking-wide">Últimas Notícias</h3>
             </div>
-
-            {heroSidebar.map((item) => (
+            
+            {heroSidebar.map((article) => (
               <Link 
-                key={item.id}
-                href={`/artigos/${item.slug}`} 
-                className="flex gap-4 group h-full bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:bg-gray-100 hover:border-[#FA007D]/20 transition-all flex-1 shadow-sm"
+                key={article.id} 
+                href={`/artigos/${article.slug}`} 
+                className="group flex gap-3 items-center bg-gray-50 p-2.5 rounded-2xl hover:bg-gray-100 transition flex-1 border border-gray-100 shadow-sm"
               >
-                <div className="relative aspect-square h-full shrink-0 rounded-xl overflow-hidden bg-gray-200">
+                {/* IMAGEM AUMENTADA: w-32 h-32 no desktop para preencher melhor a lateral */}
+                <div className="relative w-28 h-28 md:w-32 md:h-32 shrink-0 rounded-xl overflow-hidden bg-gray-200">
                   <ImageWithFallback 
-                    src={item.image_url} 
+                    src={article.image_url} 
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500" 
-                    alt={item.title}
-                    style={getObjectPositionStyle(item.image_focal_point, false)}
+                    alt={article.title}
+                    style={getObjectPositionStyle(article.image_focal_point, false)}
                   />
                 </div>
-                
-                <div className="flex flex-col justify-center py-1 flex-1">
-                  <span className="text-[10px] text-[#FA007D] font-bold uppercase mb-1 tracking-wider">
-                    {getTimeAgo(item.published_at)} • NBA
+                <div className="flex flex-col justify-center flex-1">
+                  <span className="text-[10px] text-[#FA007D] font-bold uppercase mb-1">
+                    {getTimeAgo(article.published_at)}
                   </span>
-                  <h4 className="font-oswald text-sm font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] transition-colors line-clamp-3 uppercase">
-                    {item.title}
+                  <h4 className="font-oswald text-xs md:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
+                    {article.title}
                   </h4>
                 </div>
               </Link>
@@ -136,8 +130,8 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* 4 Cards menores abaixo do Hero */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 4 Cards menores abaixo do Hero - ESPAÇAMENTO REDUZIDO */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
            {heroBottom.map((article) => (
               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
                  <div className="aspect-[16/10] overflow-hidden relative rounded-2xl bg-gray-100 shadow-sm mb-3 border border-gray-100">
@@ -156,10 +150,10 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 my-8"><AmazonCTA /></div>
+      <div className="container mx-auto px-4 my-4"><AmazonCTA /></div> {/* Reduzido my-8 para my-4 */}
 
       {/* --- SEÇÃO 2: DESTAQUES E JOGOS DE HOJE --- */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-8"> {/* Reduzido py-12 para py-8 */}
         <div className="flex items-center gap-3 mb-8">
            <Zap className="text-yellow-500 w-7 h-7 fill-yellow-500" />
            <h2 className="font-bebas text-4xl text-gray-900 uppercase tracking-wide">Destaques e Jogos de Hoje</h2>
@@ -190,7 +184,7 @@ export default async function Home() {
 
       {/* --- SEÇÃO 3: ANÁLISES --- */}
       {analysesBig && (
-        <section className="container mx-auto px-4 py-12">
+        <section className="container mx-auto px-4 py-10"> {/* Reduzido py-12 para py-10 */}
           <div className="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
              <div className="flex items-center gap-3">
                 <BarChart2 className="text-purple-600 w-6 h-6" />
@@ -242,74 +236,115 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 4: ARQUIVO E NOTÍCIAS (MOSAICO PREMIUM) --- */}
-      <section className="bg-[#09090b] py-20 mt-12 border-t border-white/5">
+      {/* --- SEÇÃO 4: MAIS LIDAS --- */}
+      <section className="bg-gray-50 py-16 my-8 border-y border-gray-100"> {/* Reduzido my-12 para my-8 */}
         <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-12 border-b border-white/10 pb-6">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-bebas text-white mb-2 tracking-wide">ARQUIVO E NOTÍCIAS</h2>
-              <p className="text-gray-500 text-sm font-inter">Tudo o que acontece na maior liga do mundo</p>
-            </div>
-            <Link href="/ultimas" className="text-[#FA007D] text-sm font-bold hover:text-white transition-colors flex items-center gap-2 group uppercase tracking-widest">
-              VER TODOS <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Onde Assistir e Mais Lidas</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+             {mostRead.map((article, idx) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-200">
+                   <div className="absolute top-4 left-4 z-20 bg-[#FA007D] text-white font-bebas text-xl w-8 h-8 flex items-center justify-center rounded-lg shadow-lg">
+                      {String(idx + 1).padStart(2, '0')}
+                   </div>
+                   <div className="aspect-[4/3] overflow-hidden relative bg-gray-100">
+                      <ImageWithFallback 
+                         src={article.image_url} 
+                         fill 
+                         alt={article.title} 
+                         className="object-cover group-hover:scale-110 transition-transform duration-500"
+                         style={getObjectPositionStyle(article.image_focal_point, false)}
+                      />
+                   </div>
+                   <div className="p-5">
+                      <h3 className="font-oswald text-base font-bold text-gray-900 group-hover:text-[#FA007D] transition-colors uppercase leading-tight">{article.title}</h3>
+                   </div>
+                </Link>
+             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- SEÇÃO 5: MAIS NOTÍCIAS (Feed de Miniaturas) --- */}
+      <section className="container mx-auto px-4 py-8"> {/* Reduzido py-12 para py-8 */}
+        <div className="flex items-center gap-3 mb-10 border-b-2 border-black pb-3">
+           <Eye className="text-blue-500 w-6 h-6" />
+           <h2 className="font-bebas text-4xl text-gray-900 uppercase tracking-wide">Mais Notícias</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8">
+          {moreNews.map(article => (
+            <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
+              <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden relative shadow-sm border border-gray-100 bg-gray-100">
+                <ImageWithFallback 
+                  src={article.image_url} 
+                  fill 
+                  alt={article.title} 
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  style={getObjectPositionStyle(article.image_focal_point, false)}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-oswald text-sm font-bold text-gray-900 group-hover:text-[#FA007D] transition-colors uppercase leading-tight line-clamp-3">{article.title}</h3>
+                <span className="text-[10px] text-gray-400 font-bold uppercase mt-2 block tracking-tight">{getTimeAgo(article.published_at)} atrás</span>
+              </div>
             </Link>
-          </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {archive.map((article) => (
-              <Link 
-                key={article.id} 
-                href={`/artigos/${article.slug}`}
-                className="group bg-zinc-900/50 rounded-3xl overflow-hidden border border-white/5 hover:border-[#FA007D]/40 transition-all duration-500 hover:shadow-2xl hover:shadow-pink-900/10 flex flex-col h-full"
-              >
-                <div className="relative aspect-video overflow-hidden bg-zinc-800">
-                  <ImageWithFallback 
-                    src={article.image_url} 
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700" 
-                    alt={article.title}
-                    style={getObjectPositionStyle(article.image_focal_point, false)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-80" />
-                  
-                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-white border border-white/10 tracking-tighter">
-                    {new Date(article.published_at).toLocaleDateString('pt-BR')}
-                  </div>
+      {/* --- SEÇÃO 6: ARQUIVO E NOTÍCIAS (GRID MODERNO) --- */}
+      <section className="container mx-auto px-4 mt-12 pt-12 border-t border-gray-100"> {/* Reduzido mt-16 pt-16 para mt-12 pt-12 */}
+        <div className="flex items-center gap-2 mb-8">
+          <div className="h-8 w-1 bg-gradient-to-b from-pink-500 to-purple-600 rounded-full" />
+          <h2 className="text-3xl font-bebas text-gray-900 tracking-wide uppercase">
+            Arquivo e Notícias
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {archive.map((article) => (
+            <Link 
+              key={article.id} 
+              href={`/artigos/${article.slug}`}
+              className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col h-full"
+            >
+              {/* Imagem do Card */}
+              <div className="relative aspect-video w-full overflow-hidden">
+                <ImageWithFallback 
+                  src={article.image_url} 
+                  alt={article.title}
+                  fill
+                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                  style={getObjectPositionStyle(article.image_focal_point, false)}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 to-transparent opacity-60" />
+                <span className="absolute bottom-3 left-3 bg-pink-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                  NBA
+                </span>
+              </div>
+
+              {/* Conteúdo do Card */}
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="font-oswald text-lg font-bold text-white leading-tight mb-3 group-hover:text-[#00DBFB] transition-colors line-clamp-2 uppercase">
+                  {article.title}
+                </h3>
+                <p className="font-inter text-gray-400 text-sm line-clamp-3 mb-4 flex-1 leading-relaxed">
+                  {article.summary}
+                </p>
+                <div className="flex justify-between items-center text-[10px] text-gray-500 mt-auto pt-4 border-t border-gray-800 uppercase font-bold tracking-widest">
+                   <span className="flex items-center gap-1">
+                     🕒 {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                   </span>
+                   <span className="font-medium text-gray-400 group-hover:text-white transition-colors">Ler mais →</span>
                 </div>
-
-                <div className="p-6 flex flex-col flex-1 relative">
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FA007D]" />
-                    <span className="text-[10px] font-bold text-[#FA007D] uppercase tracking-[0.2em]">{article.tags?.[0] || 'NBA'}</span>
-                  </div>
-                  
-                  <h3 className="font-oswald text-xl font-bold text-white leading-tight mb-4 group-hover:text-[#00DBFB] transition-colors line-clamp-2 uppercase">
-                    {article.title}
-                  </h3>
-                  
-                  <p className="font-inter text-gray-400 text-xs leading-relaxed line-clamp-3 mb-6 flex-1">
-                    {article.summary}
-                  </p>
-
-                  <div className="pt-5 border-t border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#FA007D]">
-                        {article.author ? article.author.charAt(0) : 'D'}
-                      </div>
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Por {article.author || 'Redação'}</span>
-                    </div>
-                    <span className="text-[10px] font-black text-gray-600 group-hover:text-white transition-colors">LER AGORA</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-20 text-center">
-            <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-3 px-12 uppercase tracking-widest text-sm">
-              Carregar Histórico Completo <ArrowRight size={18}/>
+              </div>
             </Link>
-          </div>
+          ))}
+        </div>
+
+        <div className="mt-16 text-center border-t border-gray-50 pt-10">
+          <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-3 px-12 uppercase tracking-widest text-sm">
+            Ver Todas as Matérias <ArrowRight size={18}/>
+          </Link>
         </div>
       </section>
     </div>
