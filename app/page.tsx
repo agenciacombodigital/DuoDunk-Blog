@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/ImageWithFallback'; 
-import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-center';
+import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import AmazonCTA from '@/components/AmazonCTA';
 import { cn } from '@/lib/utils';
