@@ -20,7 +20,7 @@ interface Article {
   tags: string[];
   published_at: string;
   image_focal_point?: string;
-  image_focal_point_mobile?: string; // Adicionado campo mobile
+  image_focal_point_mobile?: string;
   is_featured?: boolean;
   author?: string;
 }
@@ -66,19 +66,17 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque Principal Vertical no Mobile) --- */}
+      {/* --- SEÇÃO 1: HERO (Destaque Principal + Lateral Alinhada) --- */}
       <section className="container mx-auto px-4 py-6 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8">
-            {/* CORREÇÃO: aspect-[3/4] no mobile e aspect-[16/10] no desktop */}
-            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl bg-gray-100">
+            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl bg-gray-100">
               <ImageWithFallback
                 src={featured.image_url}
                 alt={featured.title}
                 fill
                 priority={true}
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
-                // Aplica o ponto de foco. Nota: No mobile usará o focal_point_mobile se disponível via lógica do componente
                 style={getObjectPositionStyle(featured.image_focal_point, false)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
@@ -94,15 +92,16 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="lg:col-span-4">
+          {/* Lateral com cards maiores para preencher a altura */}
+          <div className="lg:col-span-4 flex flex-col">
             <div className="flex items-center gap-2 border-b-2 border-[#FA007D] pb-2 mb-6">
               <TrendingUp className="text-[#FA007D]" size={18} />
               <h2 className="font-bebas text-2xl text-gray-900 uppercase tracking-wide">Últimas Notícias</h2>
             </div>
-            <div className="space-y-6">
+            <div className="flex-1 flex flex-col justify-between gap-6">
               {heroSidebar.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
-                  <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden aspect-square bg-gray-100 shadow-md">
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center flex-1 min-h-[100px]">
+                  <div className="relative w-32 h-24 md:w-36 md:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-100 shadow-md">
                      <ImageWithFallback 
                         src={article.image_url} 
                         fill
@@ -112,7 +111,7 @@ export default async function Home() {
                      />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-oswald text-base font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
+                    <h3 className="font-oswald text-sm md:text-base font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
                       {article.title}
                     </h3>
                     <span className="text-[10px] font-bold text-gray-400 mt-2 block uppercase">{getTimeAgo(article.published_at)}</span>
@@ -127,7 +126,7 @@ export default async function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
            {heroBottom.map((article) => (
               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                 <div className="aspect-[16/10] overflow-hidden relative rounded-xl bg-gray-100 shadow-sm mb-3">
+                 <div className="aspect-[16/10] overflow-hidden relative rounded-2xl bg-gray-100 shadow-sm mb-3">
                     <ImageWithFallback 
                       src={article.image_url} 
                       fill
@@ -209,7 +208,7 @@ export default async function Home() {
              <div className="lg:col-span-5 space-y-6 flex flex-col justify-center">
                 {analysesSmall.map(article => (
                    <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
-                      <div className="w-32 h-20 shrink-0 rounded-xl overflow-hidden relative shadow-md bg-gray-100">
+                      <div className="w-32 h-20 shrink-0 rounded-2xl overflow-hidden relative shadow-md bg-gray-100">
                         <ImageWithFallback 
                           src={article.image_url} 
                           fill 
@@ -232,7 +231,7 @@ export default async function Home() {
       {/* --- SEÇÃO 4: MAIS LIDAS (CARDS NUMERADOS) --- */}
       <section className="bg-gray-50 py-16 my-12 border-y border-gray-100">
         <div className="container mx-auto px-4">
-          <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Mais Lidas da Semana</h2>
+          <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Onde Assistir e Mais Lidas</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
              {mostRead.map((article, idx) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-200">
@@ -266,7 +265,7 @@ export default async function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8">
           {moreNews.map(article => (
             <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
-              <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden relative shadow-sm border border-gray-100 bg-gray-100">
+              <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden relative shadow-sm border border-gray-100 bg-gray-100">
                 <ImageWithFallback 
                   src={article.image_url} 
                   fill 
@@ -282,41 +281,41 @@ export default async function Home() {
             </Link>
           ))}
         </div>
-        
-        {/* Botão de Rodapé para carregar todas */}
-        <div className="mt-16 text-center">
+      </section>
+
+      {/* --- SEÇÃO 6: ARQUIVO COMPLETO (6 COLUNAS + CORES) --- */}
+      <section className="container mx-auto px-4 py-20 border-t border-gray-100 mt-10">
+         <div className="flex items-center gap-4 mb-12">
+            <h2 className="font-bebas text-4xl text-gray-400 uppercase tracking-widest">Arquivo Completo</h2>
+            <div className="flex-1 h-px bg-gray-100"></div>
+         </div>
+         
+         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {archive.map((article) => (
+               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
+                  <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 border border-gray-100 shadow-sm">
+                     <ImageWithFallback 
+                       src={article.image_url} 
+                       fill
+                       className="object-cover group-hover:scale-110 transition-all duration-500" 
+                       alt={article.title}
+                       style={getObjectPositionStyle(article.image_focal_point, false)}
+                     />
+                  </div>
+                  <h4 className="font-oswald text-[11px] font-bold text-gray-900 group-hover:text-[#FA007D] uppercase leading-tight line-clamp-2 transition-colors">
+                    {article.title}
+                  </h4>
+               </Link>
+            ))}
+         </div>
+         
+         {/* Botão de Rodapé para carregar todas na página de notícias completa */}
+         <div className="mt-16 text-center border-t border-gray-50 pt-10">
           <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-3 px-12 uppercase tracking-widest text-sm">
             Ver Todas as Matérias <ArrowRight size={18}/>
           </Link>
         </div>
       </section>
-
-      {/* --- SEÇÃO 6: ARQUIVO COMPLETO (FINAL) --- */}
-      {archive.length > 0 && (
-        <section className="container mx-auto px-4 py-20 border-t border-gray-100 mt-10">
-           <div className="flex items-center gap-4 mb-12">
-              <h2 className="font-bebas text-4xl text-gray-400 uppercase tracking-widest">Arquivo Completo</h2>
-              <div className="flex-1 h-px bg-gray-100"></div>
-           </div>
-           
-           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {archive.slice(0, 12).map((article) => (
-                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                    <div className="aspect-square relative rounded-xl overflow-hidden mb-2 bg-gray-100 border border-gray-100">
-                       <ImageWithFallback 
-                         src={article.image_url} 
-                         fill
-                         className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
-                         alt={article.title}
-                         style={getObjectPositionStyle(article.image_focal_point, false)}
-                       />
-                    </div>
-                    <h4 className="font-oswald text-[11px] font-bold text-gray-500 group-hover:text-[#FA007D] uppercase leading-tight line-clamp-2">{article.title}</h4>
-                 </Link>
-              ))}
-           </div>
-        </section>
-      )}
     </div>
   );
 }
