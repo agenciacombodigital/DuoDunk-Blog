@@ -20,6 +20,7 @@ interface Article {
   tags: string[];
   published_at: string;
   image_focal_point?: string;
+  image_focal_point_mobile?: string; // Adicionado campo mobile
   is_featured?: boolean;
   author?: string;
 }
@@ -38,7 +39,7 @@ function getTimeAgo(dateString: string): string {
 async function loadArticles(): Promise<Article[]> {
   const { data } = await supabaseServer
     .from('articles')
-    .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, image_focal_point, is_featured, author')
+    .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, image_focal_point, image_focal_point_mobile, is_featured, author')
     .eq('published', true)
     .order('published_at', { ascending: false })
     .limit(100); 
@@ -49,33 +50,35 @@ export default async function Home() {
   const articles = await loadArticles();
   if (articles.length === 0) return null;
 
-  // Distribuição dos Artigos conforme o design solicitado
+  // Distribuição dos Artigos
   const featured = articles.find(a => a.is_featured) || articles[0];
   const remaining = articles.filter(a => a.id !== featured.id);
   
   const heroSidebar = remaining.slice(0, 3);
   const heroBottom = remaining.slice(3, 7);
-  const mustRead = remaining.slice(7, 10); // Destaques e Jogos
+  const mustRead = remaining.slice(7, 10); 
   const analysesBig = remaining[10];
   const analysesSmall = remaining.slice(11, 13);
-  const mostRead = remaining.slice(13, 17); // Numeradas 01-04
-  const moreNews = remaining.slice(17, 29); // Grid de miniaturas
+  const mostRead = remaining.slice(13, 17); 
+  const moreNews = remaining.slice(17, 29); 
   const archive = remaining.slice(29);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque Principal + Sidebar) --- */}
+      {/* --- SEÇÃO 1: HERO (Destaque Principal Vertical no Mobile) --- */}
       <section className="container mx-auto px-4 py-6 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8">
-            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl bg-gray-100">
+            {/* CORREÇÃO: aspect-[3/4] no mobile e aspect-[16/10] no desktop */}
+            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-2xl overflow-hidden shadow-2xl bg-gray-100">
               <ImageWithFallback
                 src={featured.image_url}
                 alt={featured.title}
                 fill
                 priority={true}
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
+                // Aplica o ponto de foco. Nota: No mobile usará o focal_point_mobile se disponível via lógica do componente
                 style={getObjectPositionStyle(featured.image_focal_point, false)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
@@ -85,7 +88,7 @@ export default async function Home() {
                   {featured.title}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-400 text-[11px] font-bold uppercase mt-4 tracking-widest">
-                  <span className="flex items-center gap-1"><Clock size={12}/> Menos de 1h</span>
+                  <span className="flex items-center gap-1"><Clock size={12}/> {getTimeAgo(featured.published_at)}</span>
                 </div>
               </div>
             </Link>
@@ -94,7 +97,7 @@ export default async function Home() {
           <div className="lg:col-span-4">
             <div className="flex items-center gap-2 border-b-2 border-[#FA007D] pb-2 mb-6">
               <TrendingUp className="text-[#FA007D]" size={18} />
-              <h2 className="font-bebas text-2xl text-gray-900 uppercase tracking-wide">Últimas Notícias da NBA</h2>
+              <h2 className="font-bebas text-2xl text-gray-900 uppercase tracking-wide">Últimas Notícias</h2>
             </div>
             <div className="space-y-6">
               {heroSidebar.map((article) => (
@@ -226,10 +229,10 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 4: ONDE ASSISTIR E MAIS LIDAS (CARDS NUMERADOS) --- */}
+      {/* --- SEÇÃO 4: MAIS LIDAS (CARDS NUMERADOS) --- */}
       <section className="bg-gray-50 py-16 my-12 border-y border-gray-100">
         <div className="container mx-auto px-4">
-          <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Onde Assistir e Mais Lidas</h2>
+          <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Mais Lidas da Semana</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
              {mostRead.map((article, idx) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-200">
