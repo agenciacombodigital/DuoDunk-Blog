@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
-import ImageWithFallback from '@/components/ImageWithFallback'; // Novo import
-import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-react';
+import ImageWithFallback from '@/components/ImageWithFallback'; 
+import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye } from 'lucide-center';
 import { getObjectPositionStyle } from '@/lib/utils';
 import AmazonCTA from '@/components/AmazonCTA';
 import { cn } from '@/lib/utils';
@@ -55,10 +55,7 @@ export default async function Home() {
   const sidebarArticles = otherArticles.slice(0, 3);
   const bottomHeroArticles = otherArticles.slice(3, 7);
   const mustRead = otherArticles.slice(7, 10);
-  const deepDive = otherArticles.slice(10, 13);
-  const trending = otherArticles.slice(13, 17);
-  const moreNews = otherArticles.slice(17, 32);
-  const archive = otherArticles.slice(32);
+  const archive = otherArticles.slice(10);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">

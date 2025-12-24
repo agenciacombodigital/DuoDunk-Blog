@@ -72,9 +72,15 @@ serve(async (req) => {
     if (!aiResponse) throw new Error("Falha na IA.");
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
-    // Se a imagem no banco estiver corrompida ou for o antigo padrão, forçar o novo fallback
-    const isOldPattern = article.image_url && article.image_url.includes('agenda-nba-padrao.jpg');
-    const finalImage = (article.image_url && !isOldPattern) ? article.image_url : DEFAULT_IMAGE;
+    
+    // ✅ CORREÇÃO DE IMAGEM: Verifica se o link é o antigo quebrado ou se está vazio
+    const isOldBrokenPattern = article.image_url && (
+        article.image_url.includes('agenda-nba-padrao.jpg') || 
+        article.image_url.includes('undefined') ||
+        article.image_url.length < 5
+    );
+    
+    const finalImage = isOldBrokenPattern ? DEFAULT_IMAGE : (article.image_url || DEFAULT_IMAGE);
 
     const { error: updateError } = await supabaseAdmin
         .from('articles_queue')
