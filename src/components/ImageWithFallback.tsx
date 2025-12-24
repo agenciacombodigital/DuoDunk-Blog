@@ -9,15 +9,15 @@ interface ImageWithFallbackProps extends ImageProps {
 
 export default function ImageWithFallback({ 
   src, 
-  fallbackSrc = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop", 
+  fallbackSrc = "https://duodunk.com.br/images/agenda-nba-padrao.jpg", 
   alt, 
   className,
   style,
   fill,
   ...rest 
 }: ImageWithFallbackProps) {
-  // 1. Identifica links inválidos ou nulos
-  const isInvalid = !src || (typeof src === 'string' && (src.includes('agenda-nba-padrao.jpg') || src.includes('undefined') || src.length < 5));
+  // Identifica links inválidos ou nulos
+  const isInvalid = !src || (typeof src === 'string' && (src.includes('undefined') || src.length < 5));
   
   const [imgSrc, setImgSrc] = useState<any>(isInvalid ? fallbackSrc : src);
   const [hasError, setHasError] = useState(false);
@@ -38,8 +38,7 @@ export default function ImageWithFallback({
     }
   };
 
-  // 2. Se for uma URL absoluta (começa com http), usamos <img> nativa.
-  // Isso resolve o problema das fotos manuais (Supabase) e externas (ESPN/Yahoo) não aparecerem em produção.
+  // Para URLs absolutas externas, usamos <img> nativa com o handler de erro solicitado
   const isAbsoluteUrl = typeof src === 'string' && src.startsWith('http');
 
   if (isAbsoluteUrl || hasError) {
@@ -57,7 +56,7 @@ export default function ImageWithFallback({
         referrerPolicy="no-referrer"
         loading={rest.priority ? 'eager' : (rest.loading as any) || 'lazy'}
         style={{
-            ...style, // Mantém o objectPosition (focal point)
+            ...style,
             objectFit: 'cover',
             ...(fill ? {
                 position: 'absolute',
@@ -75,7 +74,6 @@ export default function ImageWithFallback({
     );
   }
 
-  // 3. Para caminhos locais (/images/...), continua usando Next Image
   return (
     <Image
       {...rest}

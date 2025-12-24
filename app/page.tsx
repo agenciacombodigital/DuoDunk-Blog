@@ -4,7 +4,6 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye, ChevronRight } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import AmazonCTA from '@/components/AmazonCTA';
-import ArchiveSection from '@/components/home/ArchiveSection';
 import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -67,11 +66,13 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque Principal + Lateral Alinhada) --- */}
+      {/* --- SEÇÃO 1: HERO (Destaque Principal 3x1 Sidebar Alinhada) --- */}
       <section className="container mx-auto px-4 py-6 md:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-8">
-            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl bg-gray-100">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
+          
+          {/* DESTAQUE PRINCIPAL (Ocupa 3 colunas) */}
+          <div className="lg:col-span-3">
+            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl bg-gray-100 min-h-[500px]">
               <ImageWithFallback
                 src={featured.image_url}
                 alt={featured.title}
@@ -93,39 +94,46 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="lg:col-span-4 flex flex-col">
-            <div className="flex items-center gap-2 border-b-2 border-[#FA007D] pb-2 mb-6">
-              <TrendingUp className="text-[#FA007D]" size={18} />
-              <h2 className="font-bebas text-2xl text-gray-900 uppercase tracking-wide">Últimas Notícias</h2>
+          {/* SIDEBAR (Ocupa 1 coluna) - Flex para preencher altura */}
+          <div className="lg:col-span-1 flex flex-col gap-4 h-full justify-between">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <TrendingUp className="text-[#FA007D]" size={16} />
+              <h3 className="font-bebas text-xl text-gray-900 uppercase tracking-wide">Últimas Notícias</h3>
             </div>
-            <div className="flex-1 flex flex-col justify-between gap-6">
-              {heroSidebar.map((article) => (
-                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center flex-1 min-h-[100px]">
-                  <div className="relative w-32 h-24 md:w-36 md:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-100 shadow-md">
-                     <ImageWithFallback 
-                        src={article.image_url} 
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500" 
-                        alt={article.title}
-                        style={getObjectPositionStyle(article.image_focal_point, false)}
-                     />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-oswald text-sm md:text-base font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
-                      {article.title}
-                    </h3>
-                    <span className="text-[10px] font-bold text-gray-400 mt-2 block uppercase">{getTimeAgo(article.published_at)}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            
+            {heroSidebar.map((article) => (
+              <Link 
+                key={article.id} 
+                href={`/artigos/${article.slug}`} 
+                className="group flex gap-3 items-center bg-gray-50 p-3 rounded-2xl hover:bg-gray-100 transition flex-1 border border-gray-100 shadow-sm"
+              >
+                <div className="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-gray-200">
+                  <ImageWithFallback 
+                    src={article.image_url} 
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                    alt={article.title}
+                    style={getObjectPositionStyle(article.image_focal_point, false)}
+                  />
+                </div>
+                <div className="flex flex-col justify-center flex-1">
+                  <span className="text-[10px] text-[#FA007D] font-bold uppercase mb-1">
+                    {getTimeAgo(article.published_at)}
+                  </span>
+                  <h4 className="font-oswald text-xs md:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
+                    {article.title}
+                  </h4>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+        {/* 4 Cards menores abaixo do Hero */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
            {heroBottom.map((article) => (
               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                 <div className="aspect-[16/10] overflow-hidden relative rounded-2xl bg-gray-100 shadow-sm mb-3">
+                 <div className="aspect-[16/10] overflow-hidden relative rounded-2xl bg-gray-100 shadow-sm mb-3 border border-gray-100">
                     <ImageWithFallback 
                       src={article.image_url} 
                       fill
@@ -133,7 +141,7 @@ export default async function Home() {
                       alt={article.title}
                       style={getObjectPositionStyle(article.image_focal_point, false)}
                     />
-                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">{article.tags?.[0] || 'NBA'}</div>
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">NBA</div>
                  </div>
                  <h3 className="font-oswald text-sm font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] line-clamp-2 uppercase transition-colors">{article.title}</h3>
               </Link>             
@@ -163,7 +171,7 @@ export default async function Home() {
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                     <span className="w-6 h-0.5 bg-[#FA007D]"></span>
-                    <span className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">{article.tags?.[0] || 'NBA'}</span>
+                    <span className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">NBA</span>
                 </div>
                 <h3 className="font-oswald text-2xl font-bold text-gray-900 leading-tight group-hover:text-[#FA007D] transition-colors uppercase">
                   {article.title}
@@ -207,7 +215,7 @@ export default async function Home() {
              <div className="lg:col-span-5 space-y-6 flex flex-col justify-center">
                 {analysesSmall.map(article => (
                    <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
-                      <div className="w-32 h-20 shrink-0 rounded-2xl overflow-hidden relative shadow-md bg-gray-100">
+                      <div className="w-32 h-20 shrink-0 rounded-2xl overflow-hidden relative shadow-md bg-gray-100 border border-gray-100">
                         <ImageWithFallback 
                           src={article.image_url} 
                           fill 
@@ -261,7 +269,7 @@ export default async function Home() {
            <Eye className="text-blue-500 w-6 h-6" />
            <h2 className="font-bebas text-4xl text-gray-900 uppercase tracking-wide">Mais Notícias</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8">
           {moreNews.map(article => (
             <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
               <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden relative shadow-sm border border-gray-100 bg-gray-100">
@@ -280,13 +288,59 @@ export default async function Home() {
             </Link>
           ))}
         </div>
-        
-        {/* --- SEÇÃO 6: ARQUIVO COMPLETO (INTERCALADO) --- */}
-        <div className="mt-20">
-           <ArchiveSection articles={archive} />
+      </section>
+
+      {/* --- SEÇÃO 6: ARQUIVO E NOTÍCIAS (GRID MODERNO) --- */}
+      <section className="container mx-auto px-4 mt-16 pt-16 border-t border-gray-100">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="h-8 w-1 bg-gradient-to-b from-pink-500 to-purple-600 rounded-full" />
+          <h2 className="text-3xl font-bebas text-gray-900 tracking-wide uppercase">
+            Arquivo e Notícias
+          </h2>
         </div>
 
-        <div className="mt-16 text-center border-t border-gray-100 pt-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {archive.map((article) => (
+            <Link 
+              key={article.id} 
+              href={`/artigos/${article.slug}`}
+              className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col h-full"
+            >
+              {/* Imagem do Card */}
+              <div className="relative aspect-video w-full overflow-hidden">
+                <ImageWithFallback 
+                  src={article.image_url} 
+                  alt={article.title}
+                  fill
+                  className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                  style={getObjectPositionStyle(article.image_focal_point, false)}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 to-transparent opacity-60" />
+                <span className="absolute bottom-3 left-3 bg-pink-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                  NBA
+                </span>
+              </div>
+
+              {/* Conteúdo do Card */}
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="font-oswald text-lg font-bold text-white leading-tight mb-3 group-hover:text-[#00DBFB] transition-colors line-clamp-2 uppercase">
+                  {article.title}
+                </h3>
+                <p className="font-inter text-gray-400 text-sm line-clamp-3 mb-4 flex-1 leading-relaxed">
+                  {article.summary}
+                </p>
+                <div className="flex justify-between items-center text-[10px] text-gray-500 mt-auto pt-4 border-t border-gray-800 uppercase font-bold tracking-widest">
+                   <span className="flex items-center gap-1">
+                     🕒 {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                   </span>
+                   <span className="font-medium text-gray-400 group-hover:text-white transition-colors">Ler mais →</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-16 text-center border-t border-gray-50 pt-10">
           <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-3 px-12 uppercase tracking-widest text-sm">
             Ver Todas as Matérias <ArrowRight size={18}/>
           </Link>
