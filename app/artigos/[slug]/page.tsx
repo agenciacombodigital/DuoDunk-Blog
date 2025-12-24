@@ -1,25 +1,23 @@
 import { supabaseServer } from '@/integrations/supabase/server';
-import { ArrowLeft, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image'; // Importando Image
+import ImageWithFallback from '@/components/ImageWithFallback'; 
 import { getObjectPositionStyle } from '@/lib/utils';
 import { Metadata, ResolvingMetadata } from 'next';
 import ArticleBody from '@/components/ArticleBody';
-import nextDynamic from 'next/dynamic'; // Importação dinâmica renomeada
-import { cn } from '@/lib/utils'; // Importando cn
-import { notFound } from 'next/navigation'; // <-- IMPORTADO
+import nextDynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
+import { notFound } from 'next/navigation';
 
-// Imports Dinâmicos (Lazy)
+// Imports Dinâmicos
 const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
 const DisqusComments = nextDynamic(() => import('@/components/DisqusComments'), { ssr: false });
 const LatestNews = nextDynamic(() => import('@/components/LatestNews'), { ssr: true });
-const AmazonCTA = nextDynamic(() => import('@/components/AmazonCTA'), { ssr: true }); // SSR true para SEO do link
+const AmazonCTA = nextDynamic(() => import('@/components/AmazonCTA'), { ssr: true });
 
-// ⚠️ Configurações de Servidor
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Função para buscar dados (Reutilizável para o componente e para o Metadata)
 async function getArticle(slug: string) {
   const { data } = await supabaseServer
     .from('articles')
@@ -30,178 +28,111 @@ async function getArticle(slug: string) {
     return data;
 }
 
-// ✅ GERAÇÃO DE METADATA (Isso controla o WhatsApp/Google)
 export async function generateMetadata(
   { params }: { params: { slug: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  // Busca os dados da notícia
   const article = await getArticle(params.slug);
-
-  // Se não achar, retorna padrão
-  if (!article) {
-    return {
-      title: 'Artigo não encontrado | Duo Dunk',
-    };
-  }
+  if (!article) return { title: 'Artigo não encontrado | Duo Dunk' };
 
   const siteUrl = 'https://www.duodunk.com.br';
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
-  
-  // Define a imagem (prioriza a da notícia, senão usa logo)
-  // Não usamos getOptimizedImageUrl aqui, pois o Next.js fará isso
-  const ogImage = article.image_url 
-    ? article.image_url 
-    : `${siteUrl}/images/duodunk-logoV2.svg`;
-
-  // Define a descrição (prioriza meta_description, senão summary)
+  const ogImage = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
   const description = article.meta_description || article.summary || 'Notícias da NBA no Duo Dunk.';
-  
-  // Lógica aprimorada para Keywords
-  const articleKeywords = article.tags && Array.isArray(article.tags) && article.tags.length > 0
-    ? [...new Set(article.tags)].join(', ')
-    : 'NBA, Basquete, Notícias, NBA Brasil';
 
   return {
-    title: article.title, // O template do layout adiciona "| Duo Dunk"
+    title: article.title,
     description: description,
-    keywords: articleKeywords, // Adicionado keywords
-    authors: [{ name: article.author || 'Duo Dunk' }],
-    alternates: {
-      canonical: currentUrl,
-    },
+    alternates: { canonical: currentUrl },
     openGraph: {
       title: article.title,
-      description: description, // <--- Isso aparece no WhatsApp
+      description: description,
       url: currentUrl,
       siteName: 'Duo Dunk',
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: article.title,
-        },
-      ],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: article.title }],
       locale: 'pt_BR',
       type: 'article',
-      publishedTime: article.published_at,
-      modifiedTime: article.updated_at || article.published_at,
-      tags: article.tags, // Adicionado tags ao OG
     },
     twitter: {
       card: 'summary_large_image',
-      title: article.title,
-      description: description,
       images: [ogImage],
     },
   };
 }
 
-// --- COMPONENTE DA PÁGINA ---
 export default async function Artigo({ params }: { params: { slug: string } }) {
   const article = await getArticle(params.slug);
-
-  if (!article) {
-    notFound(); // <-- AÇÃO 3: Invoca notFound() para retornar 404 HTTP status
-  }
+  if (!article) notFound();
 
   const date = new Date(article.published_at);
-  
-  // ✅ CORREÇÃO: Forçar o fuso horário de Brasília (America/Sao_Paulo)
   const timeZone = 'America/Sao_Paulo';
   
   const publishedDate = date.toLocaleDateString('pt-BR', { 
-    day: '2-digit', 
-    month: 'short', 
-    year: 'numeric',
-    timeZone: timeZone, // Adicionado
+    day: '2-digit', month: 'short', year: 'numeric', timeZone 
   });
-  
   const publishedTime = date.toLocaleTimeString('pt-BR', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    timeZone: timeZone, // Adicionado
+    hour: '2-digit', minute: '2-digit', timeZone 
   });
   
-  const safeTags = Array.isArray(article.tags) ? article.tags : [];
-  
-  // Determina o lead/subtítulo: prioriza subtitle, usa summary como fallback
   const leadText = article.subtitle || article.summary;
 
   return (
     <div className="bg-white text-gray-900">
       <div className="container mx-auto px-4 py-12">
-        {/* Ajustando a largura máxima do container para ser menor no desktop (max-w-3xl) */}
         <div className="max-w-3xl mx-auto">
           <article>
-            {/* Navegação */}
             <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 transition-colors mb-8 font-bold font-inter text-sm uppercase tracking-wide">
               <ArrowLeft className="w-4 h-4" /> Voltar para Home
             </Link>
 
-            {/* Cabeçalho */}
-            {/* Título: Mantido uppercase (via globals.css) */}
             <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight">
               {article.title}
             </h1>
             
-            {/* Subtítulo/Resumo */}
             {leadText && (
               <h2 className="text-lg md:text-xl text-gray-600 mb-6 font-inter leading-relaxed normal-case">
                 {leadText}
               </h2>
             )}
             
-            {/* Bloco de Meta (Autor e Data) */}
             <div className="flex flex-col items-start gap-1 mb-8 text-sm text-gray-500 font-inter">
-               {/* Autor no formato 'Por [Nome]' */}
-               <span className="font-bold text-[#FA007D] flex items-center gap-2">
+               <span className="font-bold text-[#FA007D]">
                  Por {article.author || 'Redação Duo Dunk'}
                </span>
-               {/* Data e Hora na linha de baixo, formatado como no exemplo */}
-               <span className="flex items-center gap-1 text-gray-500">
+               <span>
                  Postado em {publishedDate} às {publishedTime}
                </span>
             </div>
 
-            {/* Imagem Principal */}
             {article.image_url && (
               <div className={cn(
-                "relative w-full rounded-2xl overflow-hidden mb-10 shadow-lg",
-                // Ajuste para mobile: usa aspect-[4/3] no mobile e aspect-video no desktop
+                "relative w-full rounded-2xl overflow-hidden mb-10 shadow-lg bg-gray-100",
                 "aspect-[4/3] md:aspect-video"
               )}>
-                 <Image
+                 <ImageWithFallback
                     src={article.image_url}
                     alt={article.title}
                     fill
-                    priority={true} // ✅ Priority para LCP
+                    priority={true}
                     className="object-cover"
                     style={getObjectPositionStyle(article.image_focal_point, false)}
-                    sizes="100vw"
+                    sizes="(max-width: 768px) 100vw, 800px"
                  />
               </div>
             )}
 
-            {/* Vídeo (Lazy Loaded) */}
             {article.video_url && <div className="mb-10"><VideoEmbed url={article.video_url} /></div>}
 
-            {/* Corpo da Notícia */}
-            <div className="max-w-none">
-               <ArticleBody content={article.body} />
-            </div>
+            <ArticleBody content={article.body} />
             
-            {/* Banner Amazon (Lazy Loaded) */}
             <div className="my-12">
                 <AmazonCTA />
             </div>
 
-            {/* Tags */}
-            {safeTags.length > 0 && (
+            {article.tags && article.tags.length > 0 && (
               <div className="pt-8 border-t border-gray-100">
                 <div className="flex flex-wrap gap-2">
-                  {safeTags.map((tag: string) => (
+                  {article.tags.map((tag: string) => (
                     <Link key={tag} href={`/ultimas?tag=${tag}`} className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors">#{tag}</Link>
                   ))}
                 </div>
@@ -211,12 +142,10 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
         </div>
       </div>
 
-      {/* Rodapé de Artigos Relacionados */}
       <div className="bg-gray-50 py-12 mt-12">
         <div className="container mx-auto px-4 max-w-5xl">
            <h2 className="font-bebas text-3xl text-gray-900 mb-8 border-l-4 border-pink-600 pl-3">Continue Lendo</h2>
            <LatestNews currentPostId={article.id} limit={3} />
-           {/* Comentários (Lazy Loaded) */}
            <div className="mt-12">
               <DisqusComments identifier={article.slug} title={article.title} url={`https://www.duodunk.com.br/artigos/${article.slug}`} />
            </div>

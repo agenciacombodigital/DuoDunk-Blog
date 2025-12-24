@@ -16,20 +16,20 @@ export default function ImageWithFallback({
   fill,
   ...rest 
 }: ImageWithFallbackProps) {
-  // Fallback imediato para o link quebrado conhecido
-  const isLegacyBrokenLink = typeof src === 'string' && src.includes('agenda-nba-padrao.jpg');
+  // Fallback imediato para o link quebrado conhecido ou valores nulos
+  const isInvalid = !src || (typeof src === 'string' && (src.includes('agenda-nba-padrao.jpg') || src.includes('undefined')));
   
-  const [imgSrc, setImgSrc] = useState<any>(isLegacyBrokenLink ? fallbackSrc : src);
+  const [imgSrc, setImgSrc] = useState<any>(isInvalid ? fallbackSrc : src);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (isLegacyBrokenLink) {
+    if (isInvalid) {
         setImgSrc(fallbackSrc);
     } else {
         setImgSrc(src);
         setHasError(false);
     }
-  }, [src, isLegacyBrokenLink, fallbackSrc]);
+  }, [src, isInvalid, fallbackSrc]);
 
   const handleError = () => {
     if (!hasError) {
@@ -38,15 +38,15 @@ export default function ImageWithFallback({
     }
   };
 
-  // Se for uma imagem externa de portal (ESPN, Yahoo, CBS), usamos img nativa
-  // para evitar bloqueios do otimizador do Next.js (403 Forbidden)
+  // Se for uma imagem externa de portal (ESPN, Yahoo, CBS), usamos img nativa com No-Referrer
+  // Isso evita o bloqueio de 'hotlinking' (403 Forbidden) em produção.
   const isExternalPortal = typeof src === 'string' && 
-    (src.includes('espn') || src.includes('yahoo') || src.includes('cbs') || src.includes('nba.com'));
+    (src.includes('espn') || src.includes('yahoo') || src.includes('cbs') || src.includes('nba.com') || src.includes('wp.com'));
 
   if (isExternalPortal || hasError) {
-    // Garante que width e height tenham unidade 'px' se forem números
     const getDimension = (dim: any) => {
         if (typeof dim === 'number') return `${dim}px`;
+        if (typeof dim === 'string' && !dim.includes('%') && !dim.includes('px')) return `${dim}px`;
         return dim;
     };
 
@@ -55,6 +55,7 @@ export default function ImageWithFallback({
         src={imgSrc}
         alt={alt || "DuoDunk Notícias"}
         className={className}
+        referrerPolicy="no-referrer" // ✅ ESSENCIAL: Ignora bloqueio de hotlinking
         loading={rest.priority ? 'eager' : (rest.loading as any) || 'lazy'}
         style={{
             top: 0,
