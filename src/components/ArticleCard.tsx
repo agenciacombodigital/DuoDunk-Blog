@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image'; // Importando Image
+import ImageWithFallback from '@/components/ImageWithFallback'; 
 import { getObjectPositionStyle } from '@/lib/utils';
 
 interface Article {
@@ -21,20 +21,17 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
       className="article-card group fade-in flex flex-col"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
-      {/* Imagem */}
-      <div className="relative overflow-hidden h-48">
-        <Image
+      <div className="relative overflow-hidden h-48 bg-gray-100">
+        <ImageWithFallback
           src={article.image_url}
           alt={article.title}
           fill
-          sizes="(max-width: 767px) 100vw, 33vw" // ✅ TASK 1.1: Sizes para miniatura
+          sizes="(max-width: 767px) 100vw, 33vw"
           className="object-cover transition-transform duration-300 group-hover:scale-110"
           style={getObjectPositionStyle(article.image_focal_point)}
-          loading="lazy"
         />
       </div>
       
-      {/* Conteúdo */}
       <div className="p-6 flex flex-col flex-grow">
         <h3 className="font-oswald text-xl font-bold uppercase text-gray-900 mb-3 line-clamp-2 group-hover:text-[#FA007D] transition-colors">
           {article.title}
@@ -44,7 +41,6 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
           {article.summary}
         </p>
         
-        {/* Tags */}
         {article.tags && article.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {article.tags.slice(0, 3).map((tag) => (
@@ -58,7 +54,6 @@ export default function ArticleCard({ article, index = 0 }: { article: Article, 
           </div>
         )}
         
-        {/* Footer */}
         <div className="font-inter flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-gray-100 mt-auto">
           <span>
             {new Date(article.published_at).toLocaleDateString('pt-BR', {

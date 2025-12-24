@@ -17,7 +17,8 @@ const FAKE_HEADERS = {
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
 };
 
-const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
+// Imagem de fallback real (Basketball Court na Unsplash)
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop";
 
 const cleanText = (str: string) => str ? str.trim().replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/\s+/g, ' ') : '';
 
@@ -33,7 +34,11 @@ function extractImage(itemXml: string) {
   const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]*url=["']([^"']+)["'][^>]*>/i);
   if (mediaMatch) return mediaMatch[1];
   const imgMatch = itemXml.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))["']/i);
-  if (imgMatch) return imgMatch[1];
+  if (imgMatch) {
+      let url = imgMatch[1];
+      if (url.startsWith('//')) url = 'https:' + url;
+      return url;
+  }
   return null;
 }
 
@@ -48,22 +53,14 @@ serve(async (req) => {
 
     let allArticles: any[] = [];
 
-    // 1. Coleta
     for (const feed of RSS_FEEDS) {
       try {
-        console.log(`--- Buscando em: ${feed.name} ---`);
         const response = await fetch(feed.url, { headers: FAKE_HEADERS, signal: AbortSignal.timeout(10000) });
-        
-        if (!response.ok) {
-          console.error(`Erro HTTP ${feed.name}: ${response.status}`);
-          continue;
-        }
+        if (!response.ok) continue;
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        const recentItems = items.slice(0, 8); 
-
-        console.log(`${feed.name}: Encontrou ${recentItems.length} itens.`);
+        const recentItems = items.slice(0, 10); 
 
         for (const itemXml of recentItems) {
           const title = extractTag(itemXml, 'title');
@@ -73,7 +70,9 @@ serve(async (req) => {
 
           if (title && link) {
             const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
-            const finalImage = image_url || DEFAULT_IMAGE;
+            // Se a imagem for muito pequena ou pixel de rastreio (comum no Yahoo), usa a padrão
+            const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
+            const finalImage = (image_url && !isInvalidImage) ? image_url : DEFAULT_IMAGE;
 
             allArticles.push({
               title: title.slice(0, 200),
@@ -92,25 +91,13 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Tentando salvar ${allArticles.length} artigos...`);
-
-    // 2. Salvamento Inteligente (Upsert)
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('articles_queue')
-        .upsert(allArticles, { 
-            onConflict: 'original_link', 
-            ignoreDuplicates: true 
-        })
-        .select();
+        .upsert(allArticles, { onConflict: 'original_link', ignoreDuplicates: true });
 
     if (error) throw error;
 
-    // Como ignoreDuplicates não retorna count preciso de inserções, retornamos o total processado
-    return new Response(JSON.stringify({ 
-      success: true, 
-      found: allArticles.length,
-      message: `Processamento finalizado. O banco filtrou as duplicatas automaticamente.`
-    }), {
+    return new Response(JSON.stringify({ success: true, found: allArticles.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
