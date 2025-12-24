@@ -41,7 +41,7 @@ async function loadArticles(): Promise<Article[]> {
     .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, image_focal_point, is_featured, author')
     .eq('published', true)
     .order('published_at', { ascending: false })
-    .limit(50);
+    .limit(200); // Aumentado para suportar toda a base
   return data || [];
 }
 
@@ -52,13 +52,18 @@ export default async function Home() {
   const featuredArticle = articles.find((a) => a.is_featured) || articles[0];
   const otherArticles = articles.filter((a) => a.id !== featuredArticle?.id);
   
+  // Distribuição original das seções
   const sidebarArticles = otherArticles.slice(0, 3);
   const bottomHeroArticles = otherArticles.slice(3, 7);
   const mustRead = otherArticles.slice(7, 10);
-  const archive = otherArticles.slice(10);
+  const deepDive = otherArticles.slice(10, 13);
+  const trending = otherArticles.slice(13, 17);
+  const moreNews = otherArticles.slice(17, 32);
+  const archive = otherArticles.slice(32);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
+      {/* 1. HERO SECTION (Destaque + Sidebar) */}
       <section className="container mx-auto px-4 py-6 md:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8">
@@ -113,6 +118,7 @@ export default async function Home() {
             </div>
           </div>
           
+          {/* Grid de 4 Cards logo abaixo do Hero */}
           <div className="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
              {bottomHeroArticles.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group block bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-all">
@@ -134,13 +140,15 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* CTA AMAZON */}
       <div className="container mx-auto px-4 mb-12"><AmazonCTA /></div>
 
+      {/* 2. MUST READ (Zap Section) */}
       {mustRead.length > 0 && (
         <section className="container mx-auto px-4 py-12 border-t border-gray-100">
           <div className="flex items-center gap-3 mb-8">
              <Zap className="text-yellow-500 w-6 h-6" />
-             <h2 className="font-bebas text-4xl text-gray-900">Destaques e Jogos de Hoje</h2>
+             <h2 className="font-bebas text-4xl text-gray-900 uppercase">Destaques e Jogos de Hoje</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
              {mustRead.map(article => (
@@ -169,11 +177,71 @@ export default async function Home() {
         </section>
       )}
 
+      {/* 3. DEEP DIVE (Seção que estava faltando) */}
+      {deepDive.length > 0 && (
+        <section className="container mx-auto px-4 py-12 bg-gray-50 rounded-3xl my-12">
+          <div className="flex items-center gap-3 mb-8">
+             <BarChart2 className="text-[#00DBFB] w-6 h-6" />
+             <h2 className="font-bebas text-4xl text-gray-900 uppercase">Análises e Estatísticas</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             {deepDive.map(article => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex flex-col">
+                  <div className="relative aspect-video rounded-xl overflow-hidden mb-4">
+                    <ImageWithFallback src={article.image_url} fill alt={article.title} className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                  </div>
+                  <h3 className="font-oswald text-xl font-bold text-gray-900 group-hover:text-[#FA007D] uppercase">{article.title}</h3>
+                  <p className="text-gray-600 text-sm line-clamp-2 mt-2">{article.summary}</p>
+                </Link>
+             ))}
+          </div>
+        </section>
+      )}
+
+      {/* 4. TRENDING & MORE NEWS (Restaurando layout anterior) */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="lg:col-span-2">
+            <h2 className="font-bebas text-4xl mb-8 flex items-center gap-2 uppercase"><Eye className="text-pink-500"/> Mais Notícias</h2>
+            <div className="space-y-8">
+              {moreNews.map(article => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex flex-col md:flex-row gap-6 items-center">
+                  <div className="w-full md:w-64 aspect-video shrink-0 rounded-xl overflow-hidden">
+                    <ImageWithFallback src={article.image_url} fill alt={article.title} className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[#FA007D] text-[10px] font-bold uppercase tracking-widest">{article.tags?.[0]}</span>
+                    <h3 className="font-oswald text-2xl font-bold text-gray-900 group-hover:text-[#FA007D] transition-colors uppercase leading-tight mt-1">{article.title}</h3>
+                    <p className="text-gray-500 text-sm line-clamp-2 mt-2">{article.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+          
+          <div className="bg-black text-white p-8 rounded-3xl h-fit sticky top-24">
+            <h2 className="font-bebas text-3xl mb-6 flex items-center gap-2 uppercase"><TrendingUp className="text-[#00DBFB]"/> Em Alta</h2>
+            <div className="space-y-6">
+              {trending.map((article, idx) => (
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-start">
+                  <span className="text-4xl font-bebas text-gray-800 group-hover:text-[#FA007D] transition-colors">{idx + 1}</span>
+                  <div>
+                    <h3 className="font-oswald text-lg font-bold leading-tight group-hover:text-[#00DBFB] transition-colors uppercase">{article.title}</h3>
+                    <span className="text-[10px] text-gray-500 uppercase mt-1 block">{getTimeAgo(article.published_at)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. ARCHIVE (Mostrando todas as notícias restantes) */}
       {archive.length > 0 && (
         <section className="container mx-auto px-4 py-16">
            <div className="flex items-center gap-4 mb-10">
-              <h2 className="font-bebas text-4xl text-black flex items-center gap-2">
-                 <BookOpen className="text-gray-400"/> Arquivo
+              <h2 className="font-bebas text-4xl text-black flex items-center gap-2 uppercase">
+                 <BookOpen className="text-gray-400"/> Arquivo Completo
               </h2>
               <div className="flex-1 h-px bg-gray-200"></div>
            </div>
@@ -197,6 +265,7 @@ export default async function Home() {
                         className="object-cover group-hover:scale-105 transition-transform duration-700" 
                         alt={article.title}
                         sizes={isWide ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
+                        style={getObjectPositionStyle(article.image_focal_point, false)}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90" />
                       <div className="absolute bottom-0 left-0 p-6 w-full">
@@ -208,6 +277,12 @@ export default async function Home() {
                    </Link>
                  )
               })}
+           </div>
+           
+           <div className="mt-12 text-center">
+              <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-2">
+                Ver Mais Notícias <ArrowRight size={18}/>
+              </Link>
            </div>
         </section>
       )}
