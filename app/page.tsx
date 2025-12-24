@@ -66,13 +66,13 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque Principal 3x1 Sidebar Alinhada) --- */}
+      {/* --- SEÇÃO 1: HERO (Destaque Principal e Sidebar Ajustados conforme Print) --- */}
       <section className="container mx-auto px-4 pt-6 md:pt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6"> {/* REDUZIDO mb-12 para mb-6 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6"> {/* MUDADO: grid-cols-3 para dar mais espaço à lateral */}
           
-          {/* DESTAQUE PRINCIPAL (Ocupa 3 colunas) */}
-          <div className="lg:col-span-3">
-            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl bg-gray-100 min-h-[500px]">
+          {/* DESTAQUE PRINCIPAL (Ocupa 2 colunas no desktop) */}
+          <div className="lg:col-span-2">
+            <Link href={`/artigos/${featured.slug}`} className="group block relative w-full aspect-[3/4] md:aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl bg-gray-100">
               <ImageWithFallback
                 src={featured.image_url}
                 alt={featured.title}
@@ -83,7 +83,7 @@ export default async function Home() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
               <div className="absolute bottom-0 p-6 md:p-12 w-full z-10">
-                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block">Destaque</span>
+                <span className="bg-[#FA007D] text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase mb-4 inline-block tracking-widest">Destaque</span>
                 <h1 className="text-2xl md:text-5xl font-oswald font-bold text-white leading-tight uppercase group-hover:text-[#00DBFB] transition-colors">
                   {featured.title}
                 </h1>
@@ -94,43 +94,46 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* SIDEBAR (Ocupa 1 coluna) - Flex para preencher altura */}
-          <div className="lg:col-span-1 flex flex-col gap-3 h-full justify-between">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-1">
+          {/* SIDEBAR (Ocupa 1 coluna - Alinhamento e Espaços Corrigidos) */}
+          <div className="lg:col-span-1 flex flex-col h-full">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-1 mb-3">
               <TrendingUp className="text-[#FA007D]" size={16} />
               <h3 className="font-bebas text-xl text-gray-900 uppercase tracking-wide">Últimas Notícias</h3>
             </div>
             
-            {heroSidebar.map((article) => (
-              <Link 
-                key={article.id} 
-                href={`/artigos/${article.slug}`} 
-                className="group flex gap-3 items-center bg-gray-50 p-2.5 rounded-2xl hover:bg-gray-100 transition flex-1 border border-gray-100 shadow-sm"
-              >
-                {/* IMAGEM AUMENTADA: w-32 h-32 no desktop para preencher melhor a lateral */}
-                <div className="relative w-28 h-28 md:w-32 md:h-32 shrink-0 rounded-xl overflow-hidden bg-gray-200">
-                  <ImageWithFallback 
-                    src={article.image_url} 
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500" 
-                    alt={article.title}
-                    style={getObjectPositionStyle(article.image_focal_point, false)}
-                  />
-                </div>
-                <div className="flex flex-col justify-center flex-1">
-                  <span className="text-[10px] text-[#FA007D] font-bold uppercase mb-1">
-                    {getTimeAgo(article.published_at)}
-                  </span>
-                  <h4 className="font-oswald text-xs md:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
-                    {article.title}
-                  </h4>
-                </div>
-              </Link>
-            ))}
+            {/* Grid vertical compacto sem espaços mortos */}
+            <div className="flex flex-col gap-3 flex-1">
+              {heroSidebar.map((article) => (
+                <Link 
+                  key={article.id} 
+                  href={`/artigos/${article.slug}`} 
+                  className="group flex gap-4 items-center bg-gray-50 p-2 rounded-2xl hover:bg-gray-100 transition border border-gray-100 shadow-sm flex-1"
+                >
+                  {/* IMAGENS AMPLIADAS: w-36 h-36 no desktop para preencher a lateral */}
+                  <div className="relative w-24 h-24 md:w-36 md:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-200 shadow-inner">
+                    <ImageWithFallback 
+                      src={article.image_url} 
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                      alt={article.title}
+                      style={getObjectPositionStyle(article.image_focal_point, false)}
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center flex-1 pr-2">
+                    <span className="text-[10px] text-[#FA007D] font-bold uppercase mb-1">
+                      {new Date(article.published_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • NBA
+                    </span>
+                    <h4 className="font-oswald text-xs md:text-sm lg:text-base font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
+                      {article.title}
+                    </h4>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* 4 Cards menores abaixo do Hero - ESPAÇAMENTO REDUZIDO */}
+        {/* 4 Cards menores abaixo do Hero */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
            {heroBottom.map((article) => (
               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
@@ -150,10 +153,10 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 my-4"><AmazonCTA /></div> {/* Reduzido my-8 para my-4 */}
+      <div className="container mx-auto px-4 my-4"><AmazonCTA /></div>
 
       {/* --- SEÇÃO 2: DESTAQUES E JOGOS DE HOJE --- */}
-      <section className="container mx-auto px-4 py-8"> {/* Reduzido py-12 para py-8 */}
+      <section className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
            <Zap className="text-yellow-500 w-7 h-7 fill-yellow-500" />
            <h2 className="font-bebas text-4xl text-gray-900 uppercase tracking-wide">Destaques e Jogos de Hoje</h2>
@@ -184,7 +187,7 @@ export default async function Home() {
 
       {/* --- SEÇÃO 3: ANÁLISES --- */}
       {analysesBig && (
-        <section className="container mx-auto px-4 py-10"> {/* Reduzido py-12 para py-10 */}
+        <section className="container mx-auto px-4 py-10">
           <div className="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
              <div className="flex items-center gap-3">
                 <BarChart2 className="text-purple-600 w-6 h-6" />
@@ -237,7 +240,7 @@ export default async function Home() {
       )}
 
       {/* --- SEÇÃO 4: MAIS LIDAS --- */}
-      <section className="bg-gray-50 py-16 my-8 border-y border-gray-100"> {/* Reduzido my-12 para my-8 */}
+      <section className="bg-gray-50 py-16 my-8 border-y border-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Onde Assistir e Mais Lidas</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -265,7 +268,7 @@ export default async function Home() {
       </section>
 
       {/* --- SEÇÃO 5: MAIS NOTÍCIAS (Feed de Miniaturas) --- */}
-      <section className="container mx-auto px-4 py-8"> {/* Reduzido py-12 para py-8 */}
+      <section className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-10 border-b-2 border-black pb-3">
            <Eye className="text-blue-500 w-6 h-6" />
            <h2 className="font-bebas text-4xl text-gray-900 uppercase tracking-wide">Mais Notícias</h2>
@@ -292,7 +295,7 @@ export default async function Home() {
       </section>
 
       {/* --- SEÇÃO 6: ARQUIVO E NOTÍCIAS (GRID MODERNO) --- */}
-      <section className="container mx-auto px-4 mt-12 pt-12 border-t border-gray-100"> {/* Reduzido mt-16 pt-16 para mt-12 pt-12 */}
+      <section className="container mx-auto px-4 mt-12 pt-12 border-t border-gray-100">
         <div className="flex items-center gap-2 mb-8">
           <div className="h-8 w-1 bg-gradient-to-b from-pink-500 to-purple-600 rounded-full" />
           <h2 className="text-3xl font-bebas text-gray-900 tracking-wide uppercase">
