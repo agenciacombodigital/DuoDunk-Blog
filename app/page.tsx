@@ -4,6 +4,7 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye, ChevronRight } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import AmazonCTA from '@/components/AmazonCTA';
+import ArchiveSection from '@/components/home/ArchiveSection';
 import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -92,7 +93,6 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* Lateral com cards maiores para preencher a altura */}
           <div className="lg:col-span-4 flex flex-col">
             <div className="flex items-center gap-2 border-b-2 border-[#FA007D] pb-2 mb-6">
               <TrendingUp className="text-[#FA007D]" size={18} />
@@ -122,7 +122,6 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* 4 Cards menores logo abaixo do Hero */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
            {heroBottom.map((article) => (
               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
@@ -228,7 +227,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* --- SEÇÃO 4: MAIS LIDAS (CARDS NUMERADOS) --- */}
+      {/* --- SEÇÃO 4: MAIS LIDAS --- */}
       <section className="bg-gray-50 py-16 my-12 border-y border-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="font-bebas text-4xl text-gray-900 uppercase text-center mb-12 tracking-wide">Onde Assistir e Mais Lidas</h2>
@@ -256,13 +255,13 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* --- SEÇÃO 5: MAIS NOTÍCIAS (GRID DE MINIATURAS) --- */}
+      {/* --- SEÇÃO 5: MAIS NOTÍCIAS (Feed de Miniaturas) --- */}
       <section className="container mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-10 border-b-2 border-black pb-3">
            <Eye className="text-blue-500 w-6 h-6" />
            <h2 className="font-bebas text-4xl text-gray-900 uppercase tracking-wide">Mais Notícias</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 mb-20">
           {moreNews.map(article => (
             <Link key={article.id} href={`/artigos/${article.slug}`} className="group flex gap-4 items-center">
               <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden relative shadow-sm border border-gray-100 bg-gray-100">
@@ -281,36 +280,13 @@ export default async function Home() {
             </Link>
           ))}
         </div>
-      </section>
+        
+        {/* --- SEÇÃO 6: ARQUIVO COMPLETO (INTERCALADO) --- */}
+        <div className="mt-20">
+           <ArchiveSection articles={archive} />
+        </div>
 
-      {/* --- SEÇÃO 6: ARQUIVO COMPLETO (6 COLUNAS + CORES) --- */}
-      <section className="container mx-auto px-4 py-20 border-t border-gray-100 mt-10">
-         <div className="flex items-center gap-4 mb-12">
-            <h2 className="font-bebas text-4xl text-gray-400 uppercase tracking-widest">Arquivo Completo</h2>
-            <div className="flex-1 h-px bg-gray-100"></div>
-         </div>
-         
-         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {archive.map((article) => (
-               <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
-                  <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 border border-gray-100 shadow-sm">
-                     <ImageWithFallback 
-                       src={article.image_url} 
-                       fill
-                       className="object-cover group-hover:scale-110 transition-all duration-500" 
-                       alt={article.title}
-                       style={getObjectPositionStyle(article.image_focal_point, false)}
-                     />
-                  </div>
-                  <h4 className="font-oswald text-[11px] font-bold text-gray-900 group-hover:text-[#FA007D] uppercase leading-tight line-clamp-2 transition-colors">
-                    {article.title}
-                  </h4>
-               </Link>
-            ))}
-         </div>
-         
-         {/* Botão de Rodapé para carregar todas na página de notícias completa */}
-         <div className="mt-16 text-center border-t border-gray-50 pt-10">
+        <div className="mt-16 text-center border-t border-gray-100 pt-10">
           <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-3 px-12 uppercase tracking-widest text-sm">
             Ver Todas as Matérias <ArrowRight size={18}/>
           </Link>
