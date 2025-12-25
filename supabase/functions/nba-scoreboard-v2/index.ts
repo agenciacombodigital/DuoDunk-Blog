@@ -6,49 +6,15 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-// Helper to fetch individual boxscore for real-time data
-const fetchBoxscore = async (gameId: string) => {
-  try {
-    const cacheBuster = new Date().getTime();
-    const boxscoreUrl = `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json?_=${cacheBuster}`;
-    
-    const response = await fetch(boxscoreUrl, {
-      cache: "no-store",
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      }
-    });
-
-    if (!response.ok) {
-      console.warn(`[Boxscore Fetch] Failed for game ${gameId}, status: ${response.status}`);
-      return null;
-    }
-    
-    const data = await response.json();
-    return data.game;
-  } catch (error) {
-    console.error(`[Boxscore Fetch] Error for game ${gameId}:`, error.message);
-    return null;
-  }
-};
-
-// Função para buscar a classificação e mapear por Tricode
+// Helper para buscar a classificação e mapear por Tricode
 const fetchStandingsMap = async () => {
     try {
         const standingsUrl = 'https://cdn.nba.com/static/json/liveData/standings/leagueStandings.json';
         const response = await fetch(standingsUrl);
-        if (!response.ok) {
-            console.warn('[Standings Fetch] Failed to fetch standings. Status:', response.status);
-            return new Map();
-        }
+        if (!response.ok) return new Map();
         const data = await response.json();
         const standingsMap = new Map();
 
-        // Verifica se a estrutura esperada existe
         if (data?.league?.standard?.conference) {
             data.league.standard.conference.forEach((conf: any) => {
                 conf.team.forEach((team: any) => {
@@ -58,154 +24,145 @@ const fetchStandingsMap = async () => {
                     });
                 });
             });
-        } else {
-            console.warn('[Standings Fetch] Unexpected data structure in standings API.');
         }
         return standingsMap;
     } catch (error) {
-        // Captura qualquer erro de parsing ou rede e retorna um mapa vazio
-        console.error('[Standings Fetch] Critical Error:', error.message);
+        console.error('[Standings Fetch] Error:', error.message);
         return new Map();
     }
 };
 
+// FALLBACK: Função para buscar da ESPN se a NBA falhar
+const fetchESPNFallback = async (dateStr: string) => {
+  try {
+    console.log(`[Scoreboard] Tentando Fallback ESPN para a data: ${dateStr}`);
+    const espnUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
+    const response = await fetch(espnUrl);
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    if (!data.events || data.events.length === 0) return null;
+
+    const standingsMap = await fetchStandingsMap();
+
+    // Mapear ESPN para o formato esperado pelo componente NBA
+    const games = data.events.map((event: any) => {
+      const competition = event.competitions[0];
+      const home = competition.competitors.find((c: any) => c.homeAway === 'home');
+      const away = competition.competitors.find((c: any) => c.homeAway === 'away');
+      
+      const status = competition.status.type.name;
+      let gameStatus = 1; // agendado
+      if (competition.status.type.state === 'in') gameStatus = 2; // ao vivo
+      if (competition.status.type.completed) gameStatus = 3; // finalizado
+
+      // Injetar recordes
+      const hRecord = standingsMap.get(home.team.abbreviation) || { wins: 0, losses: 0 };
+      const aRecord = standingsMap.get(away.team.abbreviation) || { wins: 0, losses: 0 };
+
+      return {
+        gameId: event.id,
+        gameStatus: gameStatus,
+        gameStatusText: competition.status.type.shortDetail,
+        gameTimeUTC: event.date,
+        gameClock: competition.status.displayClock || "",
+        period: competition.status.period,
+        broadcastChannel: competition.broadcasts?.[0]?.names?.[0] || "League Pass",
+        homeTeam: {
+          teamName: home.team.displayName,
+          teamTricode: home.team.abbreviation,
+          score: home.score || "0",
+          wins: hRecord.wins,
+          losses: hRecord.losses,
+          logo: home.team.logo,
+          teamId: home.id
+        },
+        awayTeam: {
+          teamName: away.team.displayName,
+          teamTricode: away.team.abbreviation,
+          score: away.score || "0",
+          wins: aRecord.wins,
+          losses: aRecord.losses,
+          logo: away.team.logo,
+          teamId: away.id
+        }
+      };
+    });
+
+    return { games };
+  } catch (e) {
+    console.error('[ESPN Fallback] Error:', e.message);
+    return null;
+  }
+};
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
     const cacheBuster = new Date().getTime();
-    // 1. Buscar o placar principal (Scoreboard)
+    const now = new Date();
+    // Data para o fallback (YYYYMMDD)
+    const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }).replace(/-/g, '');
+
+    // 1. Tentar API da NBA
     const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
-    
     const response = await fetch(nbaApiUrl, {
       cache: "no-store",
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
       }
     });
 
-    if (!response.ok) {
-      console.error(`[nba-scoreboard-v2] NBA API request failed with status ${response.status}`);
-      // Se o placar principal falhar, retornamos um erro 500
-      throw new Error(`NBA API request failed with status ${response.status}`);
+    let scoreboardData = null;
+    if (response.ok) {
+        const data = await response.json();
+        // Se a API da NBA retornar vazio, consideramos "atrasada"
+        if (data.scoreboard && data.scoreboard.games && data.scoreboard.games.length > 0) {
+            scoreboardData = data.scoreboard;
+            console.log(`[Scoreboard] Dados obtidos via NBA API (${scoreboardData.games.length} jogos)`);
+        }
     }
 
-    const data = await response.json();
-    const scoreboard = data.scoreboard;
-    
-    if (!scoreboard || !scoreboard.games) {
+    // 2. Fallback para ESPN se NBA falhar ou estiver vazia
+    if (!scoreboardData) {
+        const fallback = await fetchESPNFallback(dateStr);
+        if (fallback) {
+            scoreboardData = fallback;
+            console.log(`[Scoreboard] Dados obtidos via ESPN Fallback (${scoreboardData.games.length} jogos)`);
+        }
+    }
+
+    if (!scoreboardData || !scoreboardData.games) {
       return new Response(JSON.stringify({ success: true, scoreboard: { games: [] } }), {
-        headers: { ...corsHeaders },
-        status: 200,
+        headers: { ...corsHeaders }, status: 200,
       });
     }
-    
-    // 2. Buscar a classificação (deve ser tolerante a falhas)
-    const standingsMap = await fetchStandingsMap();
-    
-    // 3. Processar jogos (incluindo busca de boxscores para jogos ao vivo)
-    const now = new Date();
-    const potentiallyLiveGameIds = scoreboard.games
-      .filter((game: any) => {
-        const gameTime = new Date(game.gameTimeUTC);
-        const isOfficiallyLive = game.gameStatus === 2;
-        const mightBeLive = game.gameStatus === 1 && gameTime <= now;
-        return isOfficiallyLive || mightBeLive;
-      })
-      .map((game: any) => game.gameId);
 
-    if (potentiallyLiveGameIds.length > 0) {
-      console.log(`[nba-scoreboard-v2] Found ${potentiallyLiveGameIds.length} potentially live games. Fetching real-time boxscores...`);
-      
-      const boxscorePromises = potentiallyLiveGameIds.map(fetchBoxscore);
-      const boxscoreResults = await Promise.all(boxscorePromises);
-
-      const liveGameDataMap = new Map();
-      boxscoreResults.forEach(gameData => {
-        if (gameData) {
-          liveGameDataMap.set(gameData.gameId, gameData);
-        }
-      });
-
-      // 4. Atualizar placar com dados em tempo real e classificação
-      scoreboard.games.forEach((game: any) => {
-        const liveData = liveGameDataMap.get(game.gameId);
-        
-        if (liveData) {
-          // Update scores and status from the more reliable boxscore source
-          game.homeTeam.score = liveData.homeTeam.score;
-          game.awayTeam.score = liveData.awayTeam.score;
-          game.gameStatus = liveData.gameStatus;
-          game.gameClock = liveData.gameClock;
-          game.period = liveData.period;
-          game.gameStatusText = liveData.gameStatusText;
-        }
-        
-        // Injetar Wins/Losses da classificação
-        const homeRecord = standingsMap.get(game.homeTeam.teamTricode);
-        const awayRecord = standingsMap.get(game.awayTeam.teamTricode);
-        
-        if (homeRecord) {
-            game.homeTeam.wins = homeRecord.wins;
-            game.homeTeam.losses = homeRecord.losses;
-        }
-        if (awayRecord) {
-            game.awayTeam.wins = awayRecord.wins;
-            game.awayTeam.losses = awayRecord.losses;
-        }
-        
-        // Adicionar informações de transmissão (broadcasts)
-        if (game.broadcasters && game.broadcasters.video) {
-            const nationalBroadcasts = game.broadcasters.video.national;
-            if (nationalBroadcasts && nationalBroadcasts.length > 0) {
-                game.broadcastChannel = nationalBroadcasts[0].longName;
-            }
-        }
-      });
-    } else {
-        // Se não estiver ao vivo, apenas adiciona o canal de transmissão e o recorde
-        scoreboard.games.forEach((game: any) => {
-            // Injetar Wins/Losses da classificação
-            const homeRecord = standingsMap.get(game.homeTeam.teamTricode);
-            const awayRecord = standingsMap.get(game.awayTeam.teamTricode);
-            
-            if (homeRecord) {
-                game.homeTeam.wins = homeRecord.wins;
-                game.homeTeam.losses = homeRecord.losses;
-            }
-            if (awayRecord) {
-                game.awayTeam.wins = awayRecord.wins;
-                game.awayTeam.losses = awayRecord.losses;
-            }
-            
-            if (game.broadcasters && game.broadcasters.video) {
-                const nationalBroadcasts = game.broadcasters.video.national;
-                if (nationalBroadcasts && nationalBroadcasts.length > 0) {
-                    game.broadcastChannel = nationalBroadcasts[0].longName;
-                }
+    // Se vier da NBA (original), precisamos injetar os recordes (o Fallback ESPN já faz isso)
+    if (!scoreboardData.games[0].gameTimeUTC) { // Heurística simples para saber se é formato NBA original
+        const standingsMap = await fetchStandingsMap();
+        scoreboardData.games.forEach((game: any) => {
+            const h = standingsMap.get(game.homeTeam.teamTricode);
+            const a = standingsMap.get(game.awayTeam.teamTricode);
+            if (h) { game.homeTeam.wins = h.wins; game.homeTeam.losses = h.losses; }
+            if (a) { game.awayTeam.wins = a.wins; game.awayTeam.losses = a.losses; }
+            if (game.broadcasters?.video?.national?.length > 0) {
+                game.broadcastChannel = game.broadcasters.video.national[0].longName;
             }
         });
     }
-    
-    const gameCount = scoreboard.games.length || 0;
-    console.log(`[nba-scoreboard-v2] Fetched and processed data successfully. Found ${gameCount} games.`);
 
-    return new Response(JSON.stringify({ success: true, scoreboard }), {
-      headers: { ...corsHeaders },
-      status: 200,
+    return new Response(JSON.stringify({ success: true, scoreboard: scoreboardData }), {
+      headers: { ...corsHeaders }, status: 200,
     });
+
   } catch (error) {
-    console.error('Error in nba-scoreboard-v2 function:', error.message);
+    console.error('Error in nba-scoreboard-v2:', error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
-      headers: { ...corsHeaders },
-      status: 500,
+      headers: { ...corsHeaders }, status: 500,
     });
   }
 });
