@@ -51,19 +51,19 @@ export default async function Home() {
   const articles = await loadArticles();
   if (articles.length === 0) return null;
 
-  // Distribuição fixa para o Hero (Não mexer)
+  // Distribuição fixa para o Hero
   const featured = articles.find(a => a.is_featured) || articles[0];
   const remaining = articles.filter(a => a.id !== featured.id);
   const heroSidebar = remaining.slice(0, 3);
   const heroBottom = remaining.slice(3, 7);
   
-  // Artigos para as seções inferiores (White Mode)
+  // Distribuição para as seções White Mode
   const otherArticles = remaining.slice(7);
 
   return (
-    <div className="min-h-screen bg-black text-white font-inter">
+    <div className="min-h-screen bg-black text-white pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque Principal e Sidebar 2:1) --- */}
+      {/* --- SEÇÃO 1: HERO --- */}
       <section className="bg-white text-gray-900 pb-10">
         <div className="container mx-auto px-4 pt-6 md:pt-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -150,134 +150,73 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* =======================================================================
-          DIVISOR DE TEMA: O Hero é acima, daqui para baixo tudo é CLARO (White)
-          =======================================================================
-      */}
-      
+      {/* --- WHITE MODE WRAPPER --- */}
       <div className="bg-white text-gray-900 pt-16 pb-20 rounded-t-3xl shadow-[0_-20px_40px_rgba(0,0,0,0.2)] relative z-10 mt-[-20px]">
         <div className="container mx-auto px-4">
           
-          {/* --- SEÇÃO 2: GIRO DA RODADA (3 Colunas - Clean) --- */}
+          {/* --- SEÇÃO 2: GIRO DA RODADA (0-3) --- */}
           <section className="mb-24">
             <div className="flex items-center justify-between mb-8 border-b-2 border-black pb-2">
-               <h2 className="text-3xl font-oswald font-bold text-black uppercase tracking-tighter">
-                 ⚡ Giro da Rodada
-               </h2>
+               <h2 className="text-3xl font-oswald font-bold text-black uppercase tracking-tighter">⚡ Giro da Rodada</h2>
                <span className="text-xs font-bold font-mono text-gray-500">ATUALIZAÇÕES RÁPIDAS</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {otherArticles.slice(0, 3).map((article) => (
-                <Link 
-                  key={article.id} 
-                  href={`/artigos/${article.slug}`}
-                  className="group block"
-                >
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
                   <div className="aspect-video w-full overflow-hidden relative rounded-lg mb-4 shadow-md group-hover:shadow-xl transition-all duration-300 bg-gray-100">
-                    <ImageWithFallback 
-                      src={article.image_url} 
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700"
-                      alt={article.title}
-                    />
+                    <ImageWithFallback src={article.image_url} fill className="object-cover group-hover:scale-105 transition-transform duration-700" alt={article.title} />
                   </div>
                   <div className="pr-4">
-                    <span className="text-xs font-bold text-pink-600 uppercase mb-2 block tracking-wider">
-                      {new Date(article.published_at).toLocaleDateString('pt-BR')}
-                    </span>
-                    <h3 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors font-inter">
-                      {article.title}
-                    </h3>
+                    <span className="text-xs font-bold text-pink-600 uppercase mb-2 block tracking-wider">{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                    <h3 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors font-inter">{article.title}</h3>
                   </div>
                 </Link>
               ))}
             </div>
           </section>
 
-          {/* --- SEÇÃO 3: EM ALTA (4 Colunas Pequenas - Estilo Stories) --- */}
+          {/* --- SEÇÃO 3: EM ALTA (3-7) --- */}
           <section className="mb-24">
-            <h2 className="text-2xl font-oswald font-bold text-gray-400 uppercase tracking-widest mb-6 text-center">
-              — Em Alta na NBA —
-            </h2>
-
+            <h2 className="text-2xl font-oswald font-bold text-gray-400 uppercase tracking-widest mb-6 text-center">— Em Alta na NBA —</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {otherArticles.slice(3, 7).map((article) => (
-                <Link 
-                  key={article.id} 
-                  href={`/artigos/${article.slug}`}
-                  className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg hover:-translate-y-2 transition-transform duration-300 bg-gray-100"
-                >
-                  <ImageWithFallback 
-                    src={article.image_url} 
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    alt={article.title}
-                  />
+                <Link key={article.id} href={`/artigos/${article.slug}`} className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg hover:-translate-y-2 transition-transform duration-300 bg-gray-100">
+                  <ImageWithFallback src={article.image_url} fill className="object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-4 flex flex-col justify-end">
-                    <h3 className="text-sm font-bold text-white leading-snug line-clamp-3">
-                      {article.title}
-                    </h3>
+                    <h3 className="text-sm font-bold text-white leading-snug line-clamp-3">{article.title}</h3>
                   </div>
                 </Link>
               ))}
             </div>
           </section>
 
-          {/* --- SEÇÃO 4: DEEP DIVE & ANÁLISES (Layout Assimétrico / Bento) --- */}
+          {/* --- SEÇÃO 4: ANÁLISES (7-10) --- */}
           <section className="mb-24 bg-gray-50 p-8 rounded-3xl border border-gray-100">
             <div className="flex items-center gap-3 mb-8">
                <div className="w-1 h-8 bg-purple-600"></div>
-               <h2 className="text-4xl font-bebas text-gray-900 uppercase tracking-tight">
-                 Análises & Opinião
-               </h2>
+               <h2 className="text-4xl font-bebas text-gray-900 uppercase tracking-tight">Análises & Opinião</h2>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-auto lg:h-[400px]">
-              {/* Card Principal Grande (Esquerda) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-auto lg:min-h-[400px]">
               {otherArticles[7] && (
-                <Link 
-                  href={`/artigos/${otherArticles[7].slug}`}
-                  className="lg:col-span-2 group relative h-full rounded-2xl overflow-hidden shadow-xl bg-gray-100"
-                >
-                  <ImageWithFallback 
-                    src={otherArticles[7].image_url} 
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    alt={otherArticles[7].title}
-                  />
+                <Link href={`/artigos/${otherArticles[7].slug}`} className="lg:col-span-2 group relative rounded-2xl overflow-hidden shadow-xl bg-gray-100 h-[300px] lg:h-auto">
+                  <ImageWithFallback src={otherArticles[7].image_url} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt={otherArticles[7].title} />
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors p-8 flex flex-col justify-end">
                     <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full w-fit mb-3">DESTAQUE</span>
-                    <h3 className="text-3xl md:text-4xl font-black text-white uppercase leading-none mb-2">
-                      {otherArticles[7].title}
-                    </h3>
-                    <p className="text-gray-200 line-clamp-2 hidden md:block">
-                      {otherArticles[7].summary}
-                    </p>
+                    <h3 className="text-2xl md:text-4xl font-black text-white uppercase leading-none mb-2">{otherArticles[7].title}</h3>
+                    <p className="text-gray-200 line-clamp-2 hidden md:block">{otherArticles[7].summary}</p>
                   </div>
                 </Link>
               )}
-
-              {/* Coluna Direita (2 Cards Menores Empilhados) */}
               <div className="flex flex-col gap-6 h-full">
                 {otherArticles.slice(8, 10).map((article) => (
-                  <Link 
-                    key={article.id} 
-                    href={`/artigos/${article.slug}`}
-                    className="flex-1 group relative rounded-xl overflow-hidden shadow-md flex items-center bg-white border border-gray-100"
-                  >
+                  <Link key={article.id} href={`/artigos/${article.slug}`} className="flex-1 group relative rounded-xl overflow-hidden shadow-md flex items-center bg-white border border-gray-100 min-h-[120px]">
                     <div className="w-1/3 h-full relative bg-gray-100">
-                       <ImageWithFallback 
-                        src={article.image_url} 
-                        fill
-                        className="object-cover"
-                        alt={article.title}
-                      />
+                       <ImageWithFallback src={article.image_url} fill className="object-cover" alt={article.title} />
                     </div>
                     <div className="w-2/3 p-4">
-                      <h4 className="text-sm font-bold text-gray-900 leading-snug group-hover:text-purple-600 transition-colors line-clamp-3">
-                        {article.title}
-                      </h4>
+                      <h4 className="text-sm font-bold text-gray-900 leading-snug group-hover:text-purple-600 transition-colors line-clamp-3">{article.title}</h4>
                       <span className="text-xs text-gray-400 mt-2 block">Ler Análise →</span>
                     </div>
                   </Link>
@@ -286,59 +225,76 @@ export default async function Home() {
             </div>
           </section>
 
-          {/* --- SEÇÃO 5: ARQUIVO GERAL (Listagem Limpa) --- */}
-          <section className="pt-10 border-t border-gray-200">
-            <div className="mb-10 text-center">
-              <h2 className="text-3xl font-bebas text-gray-900 tracking-tight">
-                MAIS NOTÍCIAS
-              </h2>
-              <div className="w-16 h-1 bg-pink-600 mx-auto mt-2"></div>
+          {/* --- SEÇÃO 5: ARQUIVO GERAL (Layout Revista / Ritmo Alternado) (10+) --- */}
+          <section className="pt-16 border-t border-gray-200">
+            <div className="mb-12 text-center max-w-3xl mx-auto">
+              <h2 className="text-5xl font-bebas text-gray-900 tracking-tight mb-4">TODAS AS NOTÍCIAS</h2>
+              <div className="w-24 h-1.5 bg-black mx-auto mb-6"></div>
+              <p className="text-gray-500 font-inter">Navegue pelo nosso arquivo completo de coberturas da NBA.</p>
             </div>
 
-            {/* Grid de Cards Clássico (Clean) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-              {otherArticles.slice(10).map((article) => (
-                <Link 
-                  key={article.id} 
-                  href={`/artigos/${article.slug}`}
-                  className="group flex flex-col h-full bg-white rounded-lg hover:shadow-xl transition-shadow duration-300"
-                >
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-lg mb-4 bg-gray-100">
-                    <ImageWithFallback 
-                      src={article.image_url} 
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      alt={article.title}
-                    />
-                  </div>
-
-                  <div className="flex flex-col flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase border border-gray-200 px-1.5 rounded">
-                        NBA
-                      </span>
-                      <span className="text-[10px] text-gray-400">
-                        {new Date(article.published_at).toLocaleDateString('pt-BR')}
-                      </span>
+            {/* GRID INTELIGENTE */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr grid-flow-row-dense">
+              {otherArticles.slice(10).map((article, index) => {
+                const i = index % 10;
+                const isLarge = i === 0 || i === 6;
+                
+                return (
+                  <Link 
+                    key={article.id} 
+                    href={`/artigos/${article.slug}`}
+                    className={cn(
+                      "group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:-translate-y-1",
+                      isLarge ? 'md:col-span-2' : 'col-span-1'
+                    )}
+                  >
+                    <div className={cn("relative overflow-hidden w-full bg-gray-100", isLarge ? 'aspect-[21/9]' : 'aspect-[4/3]')}>
+                      <ImageWithFallback 
+                        src={article.image_url} 
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        alt={article.title}
+                        style={getObjectPositionStyle(article.image_focal_point, false)}
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className={cn("px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest", isLarge ? 'bg-black text-white' : 'bg-white text-black shadow-md')}>
+                          {isLarge ? 'Destaque' : 'NBA'}
+                        </span>
+                      </div>
                     </div>
 
-                    <h3 className="text-base font-bold text-gray-900 leading-snug mb-3 group-hover:text-pink-600 transition-colors line-clamp-3">
-                      {article.title}
-                    </h3>
-                    
-                    <div className="mt-auto pt-3 border-t border-dashed border-gray-200 flex justify-end">
-                       <span className="text-xs font-bold text-gray-400 group-hover:text-black transition-colors">
-                         Ler completo →
-                       </span>
+                    <div className="p-6 flex flex-col flex-1">
+                      <div className="flex items-center gap-3 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wide">
+                        <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span>Leitura Rápida</span>
+                      </div>
+
+                      <h3 className={cn("font-bold text-gray-900 leading-tight mb-3 group-hover:text-pink-600 transition-colors font-oswald uppercase", isLarge ? 'text-2xl md:text-3xl' : 'text-xl')}>
+                        {article.title}
+                      </h3>
+                      
+                      <p className={cn("text-gray-500 font-inter leading-relaxed mb-6 line-clamp-2", isLarge ? 'text-base' : 'text-sm')}>
+                        {article.summary}
+                      </p>
+                      
+                      <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-200">
+                         <span className="text-sm font-bold text-gray-900">Ler Matéria</span>
+                         <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all duration-300">↗</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
             
-            <div className="mt-16 text-center">
-              <Link href="/ultimas" className="inline-block px-10 py-3 bg-white text-gray-900 border-2 border-black font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all duration-300 rounded-none transform hover:-translate-y-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none">
-                Ver Histórico Completo
+            {/* Botão Carregar Mais */}
+            <div className="mt-20 flex justify-center">
+              <Link href="/ultimas" className="group relative px-8 py-4 bg-transparent overflow-hidden rounded-full border-2 border-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200">
+                <span className="relative z-10 font-black uppercase tracking-widest text-sm group-hover:text-white transition-colors duration-200">
+                  Ver Histórico Completo
+                </span>
+                <div className="absolute inset-0 h-full w-full scale-0 rounded-full transition-all duration-300 group-hover:scale-100 group-hover:bg-black/100"></div>
               </Link>
             </div>
           </section>
