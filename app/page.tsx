@@ -19,7 +19,7 @@ interface Article {
   source: string;
   tags: string[];
   published_at: string;
-  created_at: string; // Adicionado para compatibilidade com o snippet do usuário
+  created_at: string;
   image_focal_point?: string;
   image_focal_point_mobile?: string;
   is_featured?: boolean;
@@ -51,20 +51,17 @@ export default async function Home() {
   const articles = await loadArticles();
   if (articles.length === 0) return null;
 
-  // Distribuição dos Artigos para o Hero
   const featured = articles.find(a => a.is_featured) || articles[0];
   const remaining = articles.filter(a => a.id !== featured.id);
   
   const heroSidebar = remaining.slice(0, 3);
   const heroBottom = remaining.slice(3, 7);
-  
-  // Artigos para as seções inferiores (começam após o Hero)
   const otherArticles = remaining.slice(7);
 
   return (
     <div className="min-h-screen bg-black text-white pb-20 font-inter">
       
-      {/* --- SEÇÃO 1: HERO (Destaque Principal e Sidebar Alinhada) - Fundo Branco Mantido para Contraste Superior --- */}
+      {/* --- SEÇÃO 1: HERO --- */}
       <section className="bg-white text-gray-900 pb-10">
         <div className="container mx-auto px-4 pt-6 md:pt-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -93,7 +90,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* SIDEBAR (3 Notícias) */}
+            {/* SIDEBAR */}
             <div className="lg:col-span-1 flex flex-col h-full">
               <div className="flex items-center gap-2 border-b border-gray-100 pb-1 mb-3">
                 <TrendingUp className="text-[#FA007D]" size={16} />
@@ -130,7 +127,6 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* 4 Cards menores abaixo do Hero */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
              {heroBottom.map((article) => (
                 <Link key={article.id} href={`/artigos/${article.slug}`} className="group block">
@@ -153,16 +149,11 @@ export default async function Home() {
       </section>
 
       <div className="container mx-auto px-4">
-        {/* =====================================================================================
-            SEÇÃO 2: DESTAQUES RÁPIDOS (3 Colunas com Imagens)
-            Usa os artigos do índice 0 ao 2 de 'otherArticles'
-           ===================================================================================== */}
+        {/* SEÇÃO 2: GIRO DA RODADA */}
         <section className="mb-20 mt-12">
           <div className="flex items-center gap-3 mb-6 border-b border-gray-800 pb-2">
              <span className="text-yellow-400 text-xl">⚡</span>
-             <h2 className="text-2xl font-oswald text-white uppercase tracking-wide">
-               Giro da Rodada
-             </h2>
+             <h2 className="text-2xl font-oswald text-white uppercase tracking-wide">Giro da Rodada</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -172,37 +163,28 @@ export default async function Home() {
                 href={`/artigos/${article.slug}`}
                 className="group block bg-gray-900 rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all duration-300"
               >
-                {/* IMAGEM OBRIGATÓRIA */}
-                <div className="aspect-video w-full overflow-hidden relative">
-                  <img 
+                <div className="aspect-video w-full overflow-hidden relative bg-gray-800">
+                  <ImageWithFallback 
                     src={article.image_url} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-700"
                     alt={article.title}
-                    onError={(e) => e.currentTarget.src = 'https://duodunk.com.br/images/agenda-nba-padrao.jpg'}
                   />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                 </div>
-                
                 <div className="p-4">
-                  <h3 className="text-lg font-bold text-white leading-tight group-hover:text-yellow-400 transition-colors font-oswald uppercase">
-                    {article.title}
-                  </h3>
+                  <h3 className="text-lg font-bold text-white leading-tight group-hover:text-yellow-400 transition-colors font-oswald uppercase">{article.title}</h3>
                 </div>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* =====================================================================================
-            SEÇÃO 3: ANÁLISES TÁTICAS (2 Colunas Grandes com Imagens de Fundo)
-            Usa os artigos do índice 3 ao 4 de 'otherArticles'
-           ===================================================================================== */}
+        {/* SEÇÃO 3: ANÁLISES */}
         <section className="mb-20">
           <div className="flex items-center gap-2 mb-6">
              <div className="w-1 h-6 bg-purple-600 rounded-full"></div>
-             <h2 className="text-2xl font-oswald text-white uppercase tracking-wide">
-               Análises & Opinião
-             </h2>
+             <h2 className="text-2xl font-oswald text-white uppercase tracking-wide">Análises & Opinião</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -210,39 +192,28 @@ export default async function Home() {
               <Link 
                 key={article.id} 
                 href={`/artigos/${article.slug}`}
-                className="group relative h-[320px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+                className="group relative h-[320px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-gray-800"
               >
-                {/* IMAGEM FUNDO TOTAL */}
-                <img 
+                <ImageWithFallback 
                   src={article.image_url} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-50 group-hover:brightness-75"
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-50 group-hover:brightness-75"
                   alt={article.title}
-                  onError={(e) => e.currentTarget.src = 'https://duodunk.com.br/images/agenda-nba-padrao.jpg'}
                 />
-                
                 <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  <span className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full w-fit mb-3 uppercase tracking-wider shadow-lg">
-                    Deep Dive
-                  </span>
-                  <h3 className="text-2xl md:text-3xl font-black text-white uppercase leading-none drop-shadow-lg">
-                    {article.title}
-                  </h3>
+                  <span className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full w-fit mb-3 uppercase tracking-wider shadow-lg">Deep Dive</span>
+                  <h3 className="text-2xl md:text-3xl font-black text-white uppercase leading-none drop-shadow-lg">{article.title}</h3>
                 </div>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* =====================================================================================
-            SEÇÃO 4: ARQUIVO GERAL (Grid Mosaico com Imagens)
-            Usa o restante dos artigos (índice 5 em diante)
-           ===================================================================================== */}
+        {/* SEÇÃO 4: ARQUIVO */}
         <section className="py-10 border-t border-gray-800">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <h2 className="text-4xl font-bebas text-white tracking-tight">
-                ARQUIVO <span className="text-pink-600">&</span> NOTÍCIAS
-              </h2>
+              <h2 className="text-4xl font-bebas text-white tracking-tight">ARQUIVO <span className="text-pink-600">&</span> NOTÍCIAS</h2>
               <p className="text-gray-400 text-sm mt-1 font-inter">Cobertura completa da temporada.</p>
             </div>
             <Link href="/ultimas" className="text-pink-600 text-sm font-bold hover:text-white transition-colors flex items-center gap-1 group">
@@ -250,44 +221,37 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* GRID MOSAICO PREMIUM */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {otherArticles.slice(5).map((article) => (
               <Link 
                 key={article.id} 
                 href={`/artigos/${article.slug}`}
-                className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-pink-500/30 transition-all duration-300 flex flex-col h-full hover:-translate-y-1 hover:shadow-xl hover:shadow-pink-500/10"
+                className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-pink-500/30 transition-all duration-300 flex flex-col h-full hover:-translate-y-1 hover:shadow-2xl flex flex-col h-full"
               >
-                {/* IMAGEM OBRIGATÓRIA */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-gray-800">
-                  <img 
+                  <ImageWithFallback 
                     src={article.image_url} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    onError={(e) => e.currentTarget.src = 'https://duodunk.com.br/images/agenda-nba-padrao.jpg'}
                     alt={article.title}
+                    fill
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                    style={getObjectPositionStyle(article.image_focal_point, false)}
                   />
-                  {/* Badge de Data sobre a imagem */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 to-transparent opacity-60" />
                   <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10">
                     {new Date(article.published_at).toLocaleDateString('pt-BR')}
                   </div>
                 </div>
 
-                {/* CONTEÚDO */}
                 <div className="p-5 flex flex-col flex-1">
-                  <h3 className="text-base font-bold text-white leading-snug mb-3 group-hover:text-pink-500 transition-colors line-clamp-3 font-inter">
-                    {article.title}
-                  </h3>
-                  
+                  <h3 className="text-base font-bold text-white leading-snug mb-3 group-hover:text-pink-500 transition-colors line-clamp-3 font-inter">{article.title}</h3>
                   <div className="mt-auto pt-4 border-t border-gray-800 flex items-center justify-between text-xs">
                      <div className="flex items-center gap-2">
-                       <div className="w-5 h-5 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center text-[10px] font-bold text-pink-500">
+                       <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px] font-bold text-pink-500">
                          {article.author ? article.author.charAt(0) : 'D'}
                        </div>
                        <span className="text-gray-500 font-medium">DuoDunk</span>
                      </div>
-                     <span className="text-pink-500 font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0 duration-300">
-                       Ler Matéria →
-                     </span>
+                     <span className="text-pink-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0 duration-300">Ler Matéria →</span>
                   </div>
                 </div>
               </Link>
