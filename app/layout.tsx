@@ -26,14 +26,14 @@ export const metadata: Metadata = {
     canonical: './',
   },
   keywords: ['NBA hoje', 'Onde assistir NBA', 'Notícias Basquete', 'Duo Dunk', 'Estatísticas NBA'],
-  // ✅ CONFIGURAÇÃO DE ÍCONES MULTI-NAVEGADOR
+  // ✅ CONFIGURAÇÃO DE ÍCONES MULTI-NAVEGADOR (ATUALIZADO)
   icons: {
     icon: [
-      { url: '/images/logo-icon.svg', type: 'image/svg+xml' },
-      { url: '/images/icone-duodunk.png', sizes: '32x32', type: 'image/png' },
+      { url: '/images/favicon-duodunk.svg', type: 'image/svg+xml' },
+      { url: '/images/favicon-duodunk.svg', sizes: '32x32', type: 'image/svg+xml' },
     ],
-    shortcut: '/images/logo-icon.svg',
-    apple: '/images/icone-duodunk.png',
+    shortcut: '/images/favicon-duodunk.svg',
+    apple: '/images/favicon-duodunk.svg',
   },
   manifest: '/manifest.json',
   openGraph: {
