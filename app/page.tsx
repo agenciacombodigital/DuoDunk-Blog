@@ -51,17 +51,19 @@ export default async function Home() {
   const articles = await loadArticles();
   if (articles.length === 0) return null;
 
+  // Distribuição fixa para o Hero (Não mexer)
   const featured = articles.find(a => a.is_featured) || articles[0];
   const remaining = articles.filter(a => a.id !== featured.id);
-  
   const heroSidebar = remaining.slice(0, 3);
   const heroBottom = remaining.slice(3, 7);
+  
+  // Artigos para as seções inferiores (White Mode)
   const otherArticles = remaining.slice(7);
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20 font-inter">
+    <div className="min-h-screen bg-black text-white font-inter">
       
-      {/* --- SEÇÃO 1: HERO --- */}
+      {/* --- SEÇÃO 1: HERO (Destaque Principal e Sidebar 2:1) --- */}
       <section className="bg-white text-gray-900 pb-10">
         <div className="container mx-auto px-4 pt-6 md:pt-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -148,122 +150,199 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4">
-        {/* SEÇÃO 2: GIRO DA RODADA */}
-        <section className="mb-20 mt-12">
-          <div className="flex items-center gap-3 mb-6 border-b border-gray-800 pb-2">
-             <span className="text-yellow-400 text-xl">⚡</span>
-             <h2 className="text-2xl font-oswald text-white uppercase tracking-wide">Giro da Rodada</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {otherArticles.slice(0, 3).map((article) => (
-              <Link 
-                key={article.id} 
-                href={`/artigos/${article.slug}`}
-                className="group block bg-gray-900 rounded-xl overflow-hidden border border-white/5 hover:border-yellow-500/50 transition-all duration-300"
-              >
-                <div className="aspect-video w-full overflow-hidden relative bg-gray-800">
-                  <ImageWithFallback 
-                    src={article.image_url} 
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    alt={article.title}
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-bold text-white leading-tight group-hover:text-yellow-400 transition-colors font-oswald uppercase">{article.title}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* SEÇÃO 3: ANÁLISES */}
-        <section className="mb-20">
-          <div className="flex items-center gap-2 mb-6">
-             <div className="w-1 h-6 bg-purple-600 rounded-full"></div>
-             <h2 className="text-2xl font-oswald text-white uppercase tracking-wide">Análises & Opinião</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {otherArticles.slice(3, 5).map((article) => (
-              <Link 
-                key={article.id} 
-                href={`/artigos/${article.slug}`}
-                className="group relative h-[320px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-gray-800"
-              >
-                <ImageWithFallback 
-                  src={article.image_url} 
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-50 group-hover:brightness-75"
-                  alt={article.title}
-                />
-                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  <span className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full w-fit mb-3 uppercase tracking-wider shadow-lg">Deep Dive</span>
-                  <h3 className="text-2xl md:text-3xl font-black text-white uppercase leading-none drop-shadow-lg">{article.title}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* SEÇÃO 4: ARQUIVO */}
-        <section className="py-10 border-t border-gray-800">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="text-4xl font-bebas text-white tracking-tight">ARQUIVO <span className="text-pink-600">&</span> NOTÍCIAS</h2>
-              <p className="text-gray-400 text-sm mt-1 font-inter">Cobertura completa da temporada.</p>
+      {/* =======================================================================
+          DIVISOR DE TEMA: O Hero é acima, daqui para baixo tudo é CLARO (White)
+          =======================================================================
+      */}
+      
+      <div className="bg-white text-gray-900 pt-16 pb-20 rounded-t-3xl shadow-[0_-20px_40px_rgba(0,0,0,0.2)] relative z-10 mt-[-20px]">
+        <div className="container mx-auto px-4">
+          
+          {/* --- SEÇÃO 2: GIRO DA RODADA (3 Colunas - Clean) --- */}
+          <section className="mb-24">
+            <div className="flex items-center justify-between mb-8 border-b-2 border-black pb-2">
+               <h2 className="text-3xl font-oswald font-bold text-black uppercase tracking-tighter">
+                 ⚡ Giro da Rodada
+               </h2>
+               <span className="text-xs font-bold font-mono text-gray-500">ATUALIZAÇÕES RÁPIDAS</span>
             </div>
-            <Link href="/ultimas" className="text-pink-600 text-sm font-bold hover:text-white transition-colors flex items-center gap-1 group">
-              VER TODAS <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {otherArticles.slice(5).map((article) => (
-              <Link 
-                key={article.id} 
-                href={`/artigos/${article.slug}`}
-                className="group bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-pink-500/30 transition-all duration-300 flex flex-col h-full hover:-translate-y-1 hover:shadow-2xl flex flex-col h-full"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-gray-800">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {otherArticles.slice(0, 3).map((article) => (
+                <Link 
+                  key={article.id} 
+                  href={`/artigos/${article.slug}`}
+                  className="group block"
+                >
+                  <div className="aspect-video w-full overflow-hidden relative rounded-lg mb-4 shadow-md group-hover:shadow-xl transition-all duration-300 bg-gray-100">
+                    <ImageWithFallback 
+                      src={article.image_url} 
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      alt={article.title}
+                    />
+                  </div>
+                  <div className="pr-4">
+                    <span className="text-xs font-bold text-pink-600 uppercase mb-2 block tracking-wider">
+                      {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                    </span>
+                    <h3 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors font-inter">
+                      {article.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* --- SEÇÃO 3: EM ALTA (4 Colunas Pequenas - Estilo Stories) --- */}
+          <section className="mb-24">
+            <h2 className="text-2xl font-oswald font-bold text-gray-400 uppercase tracking-widest mb-6 text-center">
+              — Em Alta na NBA —
+            </h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {otherArticles.slice(3, 7).map((article) => (
+                <Link 
+                  key={article.id} 
+                  href={`/artigos/${article.slug}`}
+                  className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-lg hover:-translate-y-2 transition-transform duration-300 bg-gray-100"
+                >
                   <ImageWithFallback 
                     src={article.image_url} 
-                    alt={article.title}
                     fill
-                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
-                    style={getObjectPositionStyle(article.image_focal_point, false)}
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    alt={article.title}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 to-transparent opacity-60" />
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10">
-                    {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-4 flex flex-col justify-end">
+                    <h3 className="text-sm font-bold text-white leading-snug line-clamp-3">
+                      {article.title}
+                    </h3>
                   </div>
-                </div>
+                </Link>
+              ))}
+            </div>
+          </section>
 
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="text-base font-bold text-white leading-snug mb-3 group-hover:text-pink-500 transition-colors line-clamp-3 font-inter">{article.title}</h3>
-                  <div className="mt-auto pt-4 border-t border-gray-800 flex items-center justify-between text-xs">
-                     <div className="flex items-center gap-2">
-                       <div className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px] font-bold text-pink-500">
-                         {article.author ? article.author.charAt(0) : 'D'}
-                       </div>
-                       <span className="text-gray-500 font-medium">DuoDunk</span>
-                     </div>
-                     <span className="text-pink-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0 duration-300">Ler Matéria →</span>
+          {/* --- SEÇÃO 4: DEEP DIVE & ANÁLISES (Layout Assimétrico / Bento) --- */}
+          <section className="mb-24 bg-gray-50 p-8 rounded-3xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-8">
+               <div className="w-1 h-8 bg-purple-600"></div>
+               <h2 className="text-4xl font-bebas text-gray-900 uppercase tracking-tight">
+                 Análises & Opinião
+               </h2>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-auto lg:h-[400px]">
+              {/* Card Principal Grande (Esquerda) */}
+              {otherArticles[7] && (
+                <Link 
+                  href={`/artigos/${otherArticles[7].slug}`}
+                  className="lg:col-span-2 group relative h-full rounded-2xl overflow-hidden shadow-xl bg-gray-100"
+                >
+                  <ImageWithFallback 
+                    src={otherArticles[7].image_url} 
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    alt={otherArticles[7].title}
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors p-8 flex flex-col justify-end">
+                    <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full w-fit mb-3">DESTAQUE</span>
+                    <h3 className="text-3xl md:text-4xl font-black text-white uppercase leading-none mb-2">
+                      {otherArticles[7].title}
+                    </h3>
+                    <p className="text-gray-200 line-clamp-2 hidden md:block">
+                      {otherArticles[7].summary}
+                    </p>
                   </div>
-                </div>
+                </Link>
+              )}
+
+              {/* Coluna Direita (2 Cards Menores Empilhados) */}
+              <div className="flex flex-col gap-6 h-full">
+                {otherArticles.slice(8, 10).map((article) => (
+                  <Link 
+                    key={article.id} 
+                    href={`/artigos/${article.slug}`}
+                    className="flex-1 group relative rounded-xl overflow-hidden shadow-md flex items-center bg-white border border-gray-100"
+                  >
+                    <div className="w-1/3 h-full relative bg-gray-100">
+                       <ImageWithFallback 
+                        src={article.image_url} 
+                        fill
+                        className="object-cover"
+                        alt={article.title}
+                      />
+                    </div>
+                    <div className="w-2/3 p-4">
+                      <h4 className="text-sm font-bold text-gray-900 leading-snug group-hover:text-purple-600 transition-colors line-clamp-3">
+                        {article.title}
+                      </h4>
+                      <span className="text-xs text-gray-400 mt-2 block">Ler Análise →</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* --- SEÇÃO 5: ARQUIVO GERAL (Listagem Limpa) --- */}
+          <section className="pt-10 border-t border-gray-200">
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-bebas text-gray-900 tracking-tight">
+                MAIS NOTÍCIAS
+              </h2>
+              <div className="w-16 h-1 bg-pink-600 mx-auto mt-2"></div>
+            </div>
+
+            {/* Grid de Cards Clássico (Clean) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+              {otherArticles.slice(10).map((article) => (
+                <Link 
+                  key={article.id} 
+                  href={`/artigos/${article.slug}`}
+                  className="group flex flex-col h-full bg-white rounded-lg hover:shadow-xl transition-shadow duration-300"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-lg mb-4 bg-gray-100">
+                    <ImageWithFallback 
+                      src={article.image_url} 
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      alt={article.title}
+                    />
+                  </div>
+
+                  <div className="flex flex-col flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase border border-gray-200 px-1.5 rounded">
+                        NBA
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(article.published_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-gray-900 leading-snug mb-3 group-hover:text-pink-600 transition-colors line-clamp-3">
+                      {article.title}
+                    </h3>
+                    
+                    <div className="mt-auto pt-3 border-t border-dashed border-gray-200 flex justify-end">
+                       <span className="text-xs font-bold text-gray-400 group-hover:text-black transition-colors">
+                         Ler completo →
+                       </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            
+            <div className="mt-16 text-center">
+              <Link href="/ultimas" className="inline-block px-10 py-3 bg-white text-gray-900 border-2 border-black font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all duration-300 rounded-none transform hover:-translate-y-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none">
+                Ver Histórico Completo
               </Link>
-            ))}
-          </div>
-
-          <div className="mt-16 text-center">
-            <Link href="/ultimas" className="btn-magenta inline-flex items-center gap-3 px-12 uppercase tracking-widest text-sm">
-              Ver Histórico Completo <ArrowRight size={18}/>
-            </Link>
-          </div>
-        </section>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
