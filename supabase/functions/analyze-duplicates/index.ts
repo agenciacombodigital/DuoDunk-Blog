@@ -11,7 +11,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { offset = 0, limit = 100 } = await req.json();
+    // REDUÇÃO DE LOTE: 50 itens para garantir precisão máxima da IA
+    const { offset = 0, limit = 50 } = await req.json();
 
     const AUDITOR_API_KEY = Deno.env.get('GEMINI_API_KEY_AUDITOR') || Deno.env.get('GEMINI_API_KEY_QUIZ');
     if (!AUDITOR_API_KEY) throw new Error("API Key ausente.");
@@ -41,42 +42,32 @@ serve(async (req) => {
     // 2. Preparação dos dados
     const csvData = questions.map(q => `ID: ${q.id} | TXT: ${q.question}`).join("\n");
     
-    // Usando 2.5-flash-lite (Rápido e barato, mas precisa de prompt forte)
     const genAI = new GoogleGenerativeAI(AUDITOR_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     
-    // --- PROMPT DE ALTA PRECISÃO (FEW-SHOT) ---
+    // --- PROMPT BLINDADO (CHAIN-OF-THOUGHT) ---
     const prompt = `
-    ATUE COMO: Auditor Rigoroso de Banco de Dados de Trivia.
-    
-    OBJETIVO: Identificar perguntas DUPLICADAS (mesmo significado exato e mesma resposta esperada).
+    ATUE COMO: Auditor Lógico de Banco de Dados.
+    TAREFA: Encontrar perguntas DUPLICADAS (Semântica IDÊNTICA).
 
-    🚨 REGRAS DE EXCLUSÃO (LEIA COM ATENÇÃO):
-    1. Perguntas sobre o MESMO TEMA mas focos diferentes NÃO SÃO duplicatas.
-    2. Perguntas com palavras parecidas mas sentidos diferentes NÃO SÃO duplicatas.
+    🚨 REGRAS DE OURO (Critério de Exclusão):
+    1. Se o SUJEITO for diferente (ex: "Mascote do Jazz" vs "Mascote do Celtics"), NÃO É DUPLICATA.
+    2. Se o ANO/TEMPORADA for diferente (ex: "MVP de 2016" vs "MVP de 2017"), NÃO É DUPLICATA.
+    3. Se o FOCO for diferente (ex: "Quem jogou" vs "Quantos títulos"), NÃO É DUPLICATA.
 
-    EXEMPLOS PARA APRENDER:
-    [CASO 1 - NÃO É DUPLICATA]
-    P1: "Qual time Kobe Bryant jogou?"
-    P2: "Quantos títulos Kobe Bryant ganhou?"
-    DECISÃO: Diferentes (Mesmo sujeito, perguntas diferentes).
+    RACIOCÍNIO ESPERADO (Passo a Passo):
+    - Passo 1: Leia a Pergunta A e a Pergunta B.
+    - Passo 2: O sujeito é o mesmo? Se não, descarte.
+    - Passo 3: O predicado (ação) é o mesmo? Se não, descarte.
+    - Passo 4: A resposta esperada seria a mesma? Se sim -> DUPLICATA.
 
-    [CASO 2 - NÃO É DUPLICATA]
-    P1: "Quem é o maior rival do Lakers?"
-    P2: "Quem era o astro do Lakers contra o Celtics nos anos 80?"
-    DECISÃO: Diferentes (Tópico Lakers, mas focos distintos).
-
-    [CASO 3 - É DUPLICATA REAL]
-    P1: "Quem ganhou o MVP de 2016?"
-    P2: "Qual jogador foi eleito o Most Valuable Player na temporada 2015-16?"
-    DECISÃO: Duplicata (Perguntam exatamente a mesma coisa).
-
-    AGORA ANALISE ESTA LISTA:
+    LISTA PARA ANÁLISE:
     ${csvData}
 
-    SAÍDA OBRIGATÓRIA (JSON ARRAY DE ARRAYS):
-    Retorne apenas os grupos que são IDÊNTICOS em significado. Se não houver certeza absoluta, ignore.
-    Exemplo: [[{"id": "1", "question": "a"}, {"id": "5", "question": "a"}]]
+    SAÍDA (JSON ESTRITO):
+    Retorne APENAS arrays de perguntas que passaram em todos os testes lógicos.
+    Formato: [[{"id":1, "question":"..."}, {"id":5, "question":"..."}]]
+    Se nenhuma passar, retorne [].
     `;
 
     // 3. Chamada API
@@ -84,7 +75,7 @@ serve(async (req) => {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { 
             responseMimeType: "application/json",
-            temperature: 0.0 // Temperatura ZERO para máxima lógica e zero criatividade
+            temperature: 0.0 // Zero criatividade, apenas lógica
         }
     });
 
