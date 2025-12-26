@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    // REDUÇÃO DE LOTE: 50 itens para garantir precisão máxima da IA
+    // Mantendo 50 para garantir que a IA leia tudo com atenção
     const { offset = 0, limit = 50 } = await req.json();
 
     const AUDITOR_API_KEY = Deno.env.get('GEMINI_API_KEY_AUDITOR') || Deno.env.get('GEMINI_API_KEY_QUIZ');
@@ -39,43 +39,47 @@ serve(async (req) => {
 
     console.log(`[Auditor] Processando ${questions.length} itens (Offset: ${offset})...`);
 
-    // 2. Preparação dos dados
-    const csvData = questions.map(q => `ID: ${q.id} | TXT: ${q.question}`).join("\n");
+    const csvData = questions.map(q => `ID: ${q.id} | PERGUNTA: ${q.question}`).join("\n");
     
     const genAI = new GoogleGenerativeAI(AUDITOR_API_KEY);
+    // Usando Flash-Lite mas com temperatura ZERO absoluto
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     
-    // --- PROMPT BLINDADO (CHAIN-OF-THOUGHT) ---
+    // --- PROMPT DE VALIDAÇÃO POR RESPOSTA (Anti-Alucinação) ---
     const prompt = `
-    ATUE COMO: Auditor Lógico de Banco de Dados.
-    TAREFA: Encontrar perguntas DUPLICADAS (Semântica IDÊNTICA).
+    VOCÊ É UM ROBÔ DE LÓGICA BOOLEANA. SUA MISSÃO É ENCONTRAR REDUNDÂNCIAS EXATAS.
+    
+    PARA CADA PAR DE PERGUNTAS, FAÇA O TESTE DA RESPOSTA:
+    1. Imagine a resposta correta para a Pergunta A.
+    2. Imagine a resposta correta para a Pergunta B.
+    3. Se Resposta A != Resposta B, ENTÃO ELAS SÃO DIFERENTES. DESCARTE IMEDIATAMENTE.
 
-    🚨 REGRAS DE OURO (Critério de Exclusão):
-    1. Se o SUJEITO for diferente (ex: "Mascote do Jazz" vs "Mascote do Celtics"), NÃO É DUPLICATA.
-    2. Se o ANO/TEMPORADA for diferente (ex: "MVP de 2016" vs "MVP de 2017"), NÃO É DUPLICATA.
-    3. Se o FOCO for diferente (ex: "Quem jogou" vs "Quantos títulos"), NÃO É DUPLICATA.
+    ❌ EXEMPLOS DE FALSOS POSITIVOS (NÃO AGRUPAR):
+    - "Qual time draftou Kevin Love?" (Grizzlies) vs "Qual time draftou Kevin Garnett?" (Timberwolves) -> DIFERENTES.
+    - "Mascote do Jazz" (Bear) vs "Mascote do Celtics" (Lucky) -> DIFERENTES.
+    - "Recorde de tocos anos 90" (Hakeem) vs "Recorde de tocos carreira" (Hakeem) -> PARECIDAS, MAS DIFERENTES (Contexto de tempo).
+    - "Quem é o Greek Freak?" (Giannis) vs "Posição do draft do Giannis?" (15th) -> DIFERENTES (Uma pede nome, outra pede número).
 
-    RACIOCÍNIO ESPERADO (Passo a Passo):
-    - Passo 1: Leia a Pergunta A e a Pergunta B.
-    - Passo 2: O sujeito é o mesmo? Se não, descarte.
-    - Passo 3: O predicado (ação) é o mesmo? Se não, descarte.
-    - Passo 4: A resposta esperada seria a mesma? Se sim -> DUPLICATA.
+    ✅ ÚNICO CASO DE DUPLICATA ACEITO:
+    - P1: "Quem ganhou o MVP de 2016?" (Curry)
+    - P2: "Qual jogador foi eleito o Most Valuable Player da temporada 15-16?" (Curry)
+    -> IGUAIS (Mesma resposta, mesmo fato gerador).
 
-    LISTA PARA ANÁLISE:
+    LISTA DE ENTRADA:
     ${csvData}
 
-    SAÍDA (JSON ESTRITO):
-    Retorne APENAS arrays de perguntas que passaram em todos os testes lógicos.
-    Formato: [[{"id":1, "question":"..."}, {"id":5, "question":"..."}]]
-    Se nenhuma passar, retorne [].
+    SAÍDA JSON APENAS:
+    Retorne um Array de Arrays contendo APENAS os objetos completos das perguntas que são IDÊNTICAS em significado.
+    Exemplo: [[{"id":1, "question":"..."}, {"id":5, "question":"..."}]]
+    Se não houver certeza absoluta de 100%, retorne [].
     `;
 
-    // 3. Chamada API
     const result = await model.generateContent({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { 
+            // @ts-ignore
             responseMimeType: "application/json",
-            temperature: 0.0 // Zero criatividade, apenas lógica
+            temperature: 0.0 // Criatividade ZERO é essencial aqui
         }
     });
 
