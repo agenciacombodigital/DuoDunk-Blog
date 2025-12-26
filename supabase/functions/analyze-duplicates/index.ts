@@ -11,8 +11,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    // Mantendo 50 para garantir que a IA leia tudo com atenção
-    const { offset = 0, limit = 50 } = await req.json();
+    // Lote reduzido para garantir que a IA preste atenção em cada item
+    const { offset = 0, limit = 30 } = await req.json();
 
     const AUDITOR_API_KEY = Deno.env.get('GEMINI_API_KEY_AUDITOR') || Deno.env.get('GEMINI_API_KEY_QUIZ');
     if (!AUDITOR_API_KEY) throw new Error("API Key ausente.");
@@ -39,39 +39,44 @@ serve(async (req) => {
 
     console.log(`[Auditor] Processando ${questions.length} itens (Offset: ${offset})...`);
 
-    const csvData = questions.map(q => `ID: ${q.id} | PERGUNTA: ${q.question}`).join("\n");
+    const csvData = questions.map(q => `ID: ${q.id} | TXT: ${q.question}`).join("\n");
     
     const genAI = new GoogleGenerativeAI(AUDITOR_API_KEY);
-    // Usando Flash-Lite mas com temperatura ZERO absoluto
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     
-    // --- PROMPT DE VALIDAÇÃO POR RESPOSTA (Anti-Alucinação) ---
+    // ATUALIZAÇÃO: Usando 'gemini-2.5-flash' (Standard) para maior inteligência lógica
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    
+    // --- PROMPT "LÓGICA ESTRITA" ---
     const prompt = `
-    VOCÊ É UM ROBÔ DE LÓGICA BOOLEANA. SUA MISSÃO É ENCONTRAR REDUNDÂNCIAS EXATAS.
+    ATUE COMO: Auditor Sênior de Banco de Dados (Nível Perito).
+    TAREFA: Identificar DUPLICATAS EXATAS (Redundância Semântica Total).
     
-    PARA CADA PAR DE PERGUNTAS, FAÇA O TESTE DA RESPOSTA:
-    1. Imagine a resposta correta para a Pergunta A.
-    2. Imagine a resposta correta para a Pergunta B.
-    3. Se Resposta A != Resposta B, ENTÃO ELAS SÃO DIFERENTES. DESCARTE IMEDIATAMENTE.
+    REGRA DE OURO (O "TESTE DA DIFERENÇA"):
+    Para cada par suspeito, tente encontrar UMA única diferença:
+    1. O SUJEITO é diferente? (Ex: "LeBron" vs "Jordan") -> DIFERENTE.
+    2. O OBJETO é diferente? (Ex: "Pontos" vs "Rebotes") -> DIFERENTE.
+    3. O TEMPO é diferente? (Ex: "2016" vs "2017") -> DIFERENTE.
+    4. A RESPOSTA CORRETA seria diferente? -> DIFERENTE.
 
-    ❌ EXEMPLOS DE FALSOS POSITIVOS (NÃO AGRUPAR):
-    - "Qual time draftou Kevin Love?" (Grizzlies) vs "Qual time draftou Kevin Garnett?" (Timberwolves) -> DIFERENTES.
-    - "Mascote do Jazz" (Bear) vs "Mascote do Celtics" (Lucky) -> DIFERENTES.
-    - "Recorde de tocos anos 90" (Hakeem) vs "Recorde de tocos carreira" (Hakeem) -> PARECIDAS, MAS DIFERENTES (Contexto de tempo).
-    - "Quem é o Greek Freak?" (Giannis) vs "Posição do draft do Giannis?" (15th) -> DIFERENTES (Uma pede nome, outra pede número).
+    SÓ É DUPLICATA SE A RESPOSTA FOR EXATAMENTE A MESMA PARA AMBAS.
 
-    ✅ ÚNICO CASO DE DUPLICATA ACEITO:
-    - P1: "Quem ganhou o MVP de 2016?" (Curry)
-    - P2: "Qual jogador foi eleito o Most Valuable Player da temporada 15-16?" (Curry)
-    -> IGUAIS (Mesma resposta, mesmo fato gerador).
+    EXEMPLOS DE "PARECE MAS NÃO É" (NÃO AGRUPAR):
+    - "Qual o mascote do Bulls?" vs "Qual o mascote do Hornets?" (Sujeitos diferentes).
+    - "Recorde de pontos" vs "Recorde de assistências" (Objetos diferentes).
+    - "Quem é o Greek Freak?" vs "Posição do draft do Giannis?" (Perguntas diferentes sobre a mesma pessoa).
 
-    LISTA DE ENTRADA:
+    EXEMPLO DE DUPLICATA REAL (AGRUPAR):
+    - "Quem foi o MVP de 2016?"
+    - "Qual jogador ganhou o prêmio de Jogador Mais Valioso na temporada 2015-2016?"
+    (Ambas perguntam sobre o prêmio de Curry em 2016).
+
+    LISTA PARA AUDITAR:
     ${csvData}
 
-    SAÍDA JSON APENAS:
-    Retorne um Array de Arrays contendo APENAS os objetos completos das perguntas que são IDÊNTICAS em significado.
+    SAÍDA JSON:
+    Retorne APENAS um Array de Arrays com os objetos completos das duplicatas confirmadas.
     Exemplo: [[{"id":1, "question":"..."}, {"id":5, "question":"..."}]]
-    Se não houver certeza absoluta de 100%, retorne [].
+    Se não houver certeza absoluta, retorne [].
     `;
 
     const result = await model.generateContent({
@@ -79,7 +84,7 @@ serve(async (req) => {
         generationConfig: { 
             // @ts-ignore
             responseMimeType: "application/json",
-            temperature: 0.0 // Criatividade ZERO é essencial aqui
+            temperature: 0.0 // Criatividade zero
         }
     });
 
@@ -102,7 +107,14 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error("[Fatal Error]:", error.message);
-    return new Response(JSON.stringify({ error: error.message, duplicates: [], hasMore: false }), { 
+    
+    // Tratamento de erro 429 (Rate Limit)
+    let msg = error.message;
+    if (msg.includes("429") || msg.includes("quota")) {
+        msg = "Limite de IA atingido (429). O sistema tentará novamente em breve.";
+    }
+    
+    return new Response(JSON.stringify({ error: msg, duplicates: [], hasMore: false }), { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     })
