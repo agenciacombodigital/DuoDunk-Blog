@@ -31,6 +31,7 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
       // Garantir que o foco horizontal tenha X e Y para o preview 16:9
       const initialArticle = {
         ...article,
+        subtitle: article?.subtitle || '', // Adicionado
         image_focal_point: article?.image_focal_point || '50% 50%',
         image_focal_point_mobile: article?.image_focal_point_mobile || '50%',
       };
@@ -69,7 +70,11 @@ export default function EditArticleModal({ article, isOpen, isLoading, uploading
             <input type="text" value={editedArticle.title} onChange={(e) => setEditedArticle({ ...editedArticle, title: e.target.value })} className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-oswald uppercase font-bold" />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Resumo</label>
+            <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Subtítulo (Exibido no Artigo)</label>
+            <textarea value={editedArticle.subtitle} onChange={(e) => setEditedArticle({ ...editedArticle, subtitle: e.target.value })} rows={2} className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-inter" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Resumo (Exibido nos Cards)</label>
             <textarea value={editedArticle.summary} onChange={(e) => setEditedArticle({ ...editedArticle, summary: e.target.value })} rows={3} className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-inter" />
           </div>
           <div>

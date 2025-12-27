@@ -22,6 +22,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
   
   const [formData, setFormData] = useState({
     title: '',
+    subtitle: '', // Adicionado
     slug: '',
     summary: '',
     body: '',
@@ -55,6 +56,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
       setArticle(data);
       setFormData({
         title: data.title || '',
+        subtitle: data.subtitle || '', // Adicionado
         slug: data.slug || '',
         summary: data.summary || '',
         body: data.body || '',
@@ -125,6 +127,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
         .from('articles')
         .update({
           title: formData.title,
+          subtitle: formData.subtitle, // Adicionado
           slug: finalSlug,
           summary: formData.summary,
           body: formData.body,
@@ -261,6 +264,19 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
             
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
+                Subtítulo (Aparece abaixo do título no artigo)
+              </label>
+              <textarea
+                value={formData.subtitle}
+                onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                rows={2}
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-inter"
+                placeholder="Ex: A estrela dos Lakers enfrenta sua 13ª contusão..."
+              />
+            </div>
+            
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
                 Slug (URL)
               </label>
               <input
@@ -278,7 +294,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Resumo
+                Resumo (Aparece nos cards da Home)
               </label>
               <textarea
                 value={formData.summary}
