@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// ATUALIZAÇÃO CRÍTICA: Usando apenas o modelo 2.5 (1.5 está depreciado/falhando)
+// Usando o modelo mais inteligente disponível
 const GEMINI_MODELS = ['gemini-2.5-flash']; 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -42,41 +42,44 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // --- PROMPT "REALIDADE DO TEXTO" (Blindagem contra Alucinação) ---
+    // --- PROMPT DE ALTA FIDELIDADE E EXTRAÇÃO DE DADOS ---
     const prompt = `
-    VOCÊ É: Editor Sênior do Portal DuoDunk.
-    MISSÃO: Traduzir e adaptar a notícia para PT-BR baseando-se 100% nos dados fornecidos abaixo.
-
-    🛑 REGRA SUPREMA (ANTI-ALUCINAÇÃO):
-    O texto abaixo descreve eventos da temporada 2025/2026.
-    MUITOS JOGADORES MUDARAM DE TIME.
-    - Se o texto diz "Mavericks center Anthony Davis", ENTÃO ELE É DO MAVERICKS.
-    - NÃO corrija para Lakers, Warriors ou qualquer outro time do seu "conhecimento prévio".
-    - O texto original é a ÚNICA fonte de verdade.
+    ATUE COMO: Jornalista Esportivo Sênior da NBA (DuoDunk).
+    TAREFA: Traduzir e Adaptar a notícia para PT-BR com FIDELIDADE TOTAL aos fatos.
 
     TEXTO ORIGINAL:
     """
     ${article.summary}
     """
 
-    ESTRUTURA OBRIGATÓRIA DO JSON:
-    1. Extraia o Time ATUAL citado no texto.
-    2. Extraia o Jogador citado.
-    3. Escreva a matéria assumindo essa realidade como verdade absoluta.
+    🚨 REGRAS DE OURO (PROIBIDO FALHAR):
+    1. **NÃO OMITA NOMES:** Se o texto diz "Austin Reaves", você DEVE escrever "Austin Reaves". NUNCA escreva "um jogador" ou "o atleta" sem antes citar o nome.
+    2. **NÃO OMITA NÚMEROS:** Se o texto tem médias de pontos (ex: 26.6), prazos (ex: 4 semanas) ou placares, ELES DEVEM ESTAR NO TEXTO FINAL.
+    3. **NÃO RESUMA:** O texto final deve ter aproximadamente o mesmo tamanho e detalhamento do original.
+    4. **ANTI-ALUCINAÇÃO DE TIME:** Respeite o time citado no texto. Se diz que Davis está no Dallas, ele está no Dallas.
+
+    🧠 PASSO A PASSO (RACIOCÍNIO OBRIGATÓRIO):
+    - Extraia: NOME DO JOGADOR PRINCIPAL.
+    - Extraia: TIME ATUAL DO JOGADOR (conforme o texto).
+    - Extraia: DETALHES DA LESÃO/FATO (Tipo, Grau, Tempo de recuperação).
+    - Extraia: ESTATÍSTICAS CITADAS (Pontos, Rebotes, etc).
+    
+    Agora, escreva a notícia em PT-BR usando TODOS os dados extraídos acima. Use linguagem de jornalista esportivo brasileiro.
 
     SAÍDA JSON:
     {
-      "title": "Título Jornalístico PT-BR (Max 80 chars)",
-      "subtitle": "Subtítulo complementar",
+      "title": "Título Jornalístico com Nome do Jogador e Time (Max 80 chars)",
+      "subtitle": "Subtítulo com detalhe importante (ex: tempo de fora)",
       "summary": "Resumo curto (Max 140 chars)",
       "paragraphs": [
-        "P1: Lide (Quem, onde, o que - Use o time citado no texto)...",
-        "P2: Detalhes...",
-        "P3: Contexto...",
-        "P4: Conclusão..."
+        "Parágrafo 1 (Lide completo com NOME, TIME e O QUE ACONTECEU)...",
+        "Parágrafo 2 (Detalhes da lesão/fato e prazos)...",
+        "Parágrafo 3 (Estatísticas e impacto no time)...",
+        "Parágrafo 4 (Contexto adicional ou histórico)...",
+        "Parágrafo 5 (Conclusão ou próximos jogos)..."
       ],
-      "tags": ["nba", "time_citado_no_texto", "jogador"],
-      "meta_description": "SEO Description (150 chars)",
+      "tags": ["nba", "nome_do_time", "nome_do_jogador", "topico"],
+      "meta_description": "SEO Description com o nome do jogador e a notícia principal (150 chars)",
       "slug": "titulo-url-amigavel"
     }
     `;
@@ -93,7 +96,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.1, // Baixa temperatura para ser fiel aos dados
+                  temperature: 0.1, // Temperatura baixa para máxima precisão factual
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
@@ -116,7 +119,7 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error(`Falha na IA. Nenhum modelo respondeu. Verifique a API KEY e Quota.`);
+    if (!aiResponse) throw new Error(`Falha na IA. Verifique API Key e Quota.`);
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
