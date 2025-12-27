@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Modelos (Mantendo a sua preferência, mas Flash-1.5 costuma ser mais obediente para contexto)
-const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro']; 
+// ATUALIZAÇÃO CRÍTICA: Usando apenas o modelo 2.5 (1.5 está depreciado/falhando)
+const GEMINI_MODELS = ['gemini-2.5-flash']; 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
 const getAuthorBySource = (source: string) => {
@@ -42,45 +42,40 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // --- PROMPT ANTI-ALUCINAÇÃO (FIDELIDADE ESTRITA) ---
+    // --- PROMPT "REALIDADE DO TEXTO" (Blindagem contra Alucinação) ---
     const prompt = `
-    VOCÊ É: Editor Chefe do Portal DuoDunk.
-    SUA FUNÇÃO: Reescrever a notícia para PT-BR respeitando ESTRITAMENTE os fatos do texto original.
+    VOCÊ É: Editor Sênior do Portal DuoDunk.
+    MISSÃO: Traduzir e adaptar a notícia para PT-BR baseando-se 100% nos dados fornecidos abaixo.
 
-    ⚠️ ALERTA DE MUNDO FUTURO/ALTERNATIVO:
-    Esta notícia pode conter trocas de jogadores (ex: Anthony Davis nos Mavericks, LeBron em outro time). 
-    IGNORE SEU CONHECIMENTO PRÉVIO DA NBA REAL.
-    SE O TEXTO DIZ QUE O JOGADOR ESTÁ NO TIME X, ELE ESTÁ NO TIME X. NÃO CORRIJA PARA OS LAKERS OU OUTRO TIME.
+    🛑 REGRA SUPREMA (ANTI-ALUCINAÇÃO):
+    O texto abaixo descreve eventos da temporada 2025/2026.
+    MUITOS JOGADORES MUDARAM DE TIME.
+    - Se o texto diz "Mavericks center Anthony Davis", ENTÃO ELE É DO MAVERICKS.
+    - NÃO corrija para Lakers, Warriors ou qualquer outro time do seu "conhecimento prévio".
+    - O texto original é a ÚNICA fonte de verdade.
 
     TEXTO ORIGINAL:
     """
     ${article.summary}
     """
 
-    PASSO A PASSO (RACIOCÍNIO INTERNO):
-    1. Identifique o Sujeito (Jogador/Técnico).
-    2. Identifique o Time ATUAL citado no texto (ex: se diz "Mavericks center Anthony Davis", o time é MAVERICKS).
-    3. Identifique a Ação (Lesão, Troca, Recorde).
-    4. Escreva a matéria baseada APENAS nesses dados extraídos.
-
-    ESTRUTURA DA MATÉRIA:
-    - Título Impactante (Use o time correto citado no texto).
-    - Subtítulo Informativo.
-    - Corpo: 4 a 6 parágrafos detalhados. Mantenha citações, números e fatos médicos/estatísticos exatos do original.
-    - NÃO INVENTE NADA. NÃO MUDE O TIME DO JOGADOR.
+    ESTRUTURA OBRIGATÓRIA DO JSON:
+    1. Extraia o Time ATUAL citado no texto.
+    2. Extraia o Jogador citado.
+    3. Escreva a matéria assumindo essa realidade como verdade absoluta.
 
     SAÍDA JSON:
     {
-      "title": "Título em PT-BR (Max 80 chars)",
+      "title": "Título Jornalístico PT-BR (Max 80 chars)",
       "subtitle": "Subtítulo complementar",
-      "summary": "Resumo para card (Max 140 chars)",
+      "summary": "Resumo curto (Max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1...",
-        "Parágrafo 2...",
-        "Parágrafo 3...",
-        "Parágrafo 4..."
+        "P1: Lide (Quem, onde, o que - Use o time citado no texto)...",
+        "P2: Detalhes...",
+        "P3: Contexto...",
+        "P4: Conclusão..."
       ],
-      "tags": ["nba", "time_correto_do_texto", "jogador", "lesão"],
+      "tags": ["nba", "time_citado_no_texto", "jogador"],
       "meta_description": "SEO Description (150 chars)",
       "slug": "titulo-url-amigavel"
     }
@@ -91,20 +86,26 @@ serve(async (req) => {
 
     for (const model of GEMINI_MODELS) {
         try {
+            console.log(`Tentando modelo: ${model}...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.1, // Temperatura BAIXÍSSIMA para evitar criatividade/alucinação
+                  temperature: 0.1, // Baixa temperatura para ser fiel aos dados
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
               })
             });
 
-            if (!response.ok) continue;
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error(`Erro no modelo ${model}:`, errText);
+                continue;
+            }
+
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
             if (rawText) {
@@ -115,11 +116,11 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error("Falha na IA.");
+    if (!aiResponse) throw new Error(`Falha na IA. Nenhum modelo respondeu. Verifique a API KEY e Quota.`);
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
-    // Tratamento de imagem (Fallback se vier quebrada)
+    // Tratamento de imagem
     const isOldBrokenPattern = article.image_url && (
         article.image_url.includes('agenda-nba-padrao.jpg') || 
         article.image_url.includes('undefined') ||
@@ -146,9 +147,10 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    return new Response(JSON.stringify({ success: true, message: `Processado (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, message: `Processado com sucesso (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
+    console.error("Erro Fatal:", error);
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
