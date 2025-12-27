@@ -20,10 +20,10 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.duodunk.com.br'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "DuoDunk - Notícias NBA, Estatísticas e Quiz",
+    default: "DuoDunk - Notícias NBA, Jogos, Times, Classificação e Quiz NBA",
     template: "%s | DuoDunk"
   },
-  description: "A sua fonte diária de NBA no Brasil. Fique por dentro das últimas notícias, rumores de trocas, estatísticas, onde assistir aos jogos e teste seus conhecimentos no nosso exclusivo Quiz NBA.",
+  description: "Acompanhe as últimas notícias da NBA, tabela de jogos, classificação e desafie seus amigos no Quiz NBA.",
   
   // Configuração para Facebook, LinkedIn, Discord, WhatsApp
   openGraph: {
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: baseUrl,
     siteName: "DuoDunk",
-    title: "DuoDunk - Notícias NBA, Estatísticas e Quiz",
-    description: "A sua fonte diária de NBA no Brasil. Fique por dentro das últimas notícias, rumores de trocas, estatísticas e teste seus conhecimentos no nosso exclusivo Quiz NBA.",
+    title: "DuoDunk - Notícias NBA, Jogos, Times, Classificação e Quiz NBA",
+    description: "Acompanhe as últimas notícias da NBA, tabela de jogos, classificação e desafie seus amigos no Quiz NBA.",
     images: [
       {
         url: "/images/banner-duodunkv2.jpg",
@@ -46,13 +46,13 @@ export const metadata: Metadata = {
   // Configuração Específica para Twitter / X
   twitter: {
     card: "summary_large_image",
-    title: "DuoDunk - Notícias NBA, Estatísticas e Quiz",
-    description: "Acompanhe as últimas notícias da NBA, estatísticas e desafie seus amigos no Quiz NBA.",
+    title: "DuoDunk - Notícias NBA, Jogos, Times, Classificação e Quiz NBA",
+    description: "Acompanhe as últimas notícias da NBA, tabela de jogos, classificação e desafie seus amigos no Quiz NBA.",
     images: ["/images/card-twitter-duodunk.jpg"],
     creator: "@duodunk", 
   },
 
-  // Ícones (Ajustado para o arquivo v2 existente)
+  // Ícones (Mantendo o arquivo v2 existente)
   icons: {
     icon: [
       { url: '/images/favicon-duodunkv2.svg', type: 'image/svg+xml' },
