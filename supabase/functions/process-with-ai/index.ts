@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Usando o modelo mais inteligente disponível
 const GEMINI_MODELS = ['gemini-2.5-flash']; 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -40,46 +39,39 @@ serve(async (req) => {
 
     if (fetchError || !article) return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    console.log(`📰 Processando: ${article.original_title}`);
+    console.log(`📰 Processando (Modo Tradução Direta): ${article.original_title}`);
 
-    // --- PROMPT DE ALTA FIDELIDADE E EXTRAÇÃO DE DADOS ---
+    // --- PROMPT SIMPLIFICADO E DIRETO ---
     const prompt = `
-    ATUE COMO: Jornalista Esportivo Sênior da NBA (DuoDunk).
-    TAREFA: Traduzir e Adaptar a notícia para PT-BR com FIDELIDADE TOTAL aos fatos.
-
-    TEXTO ORIGINAL:
+    AJA COMO: Jornalista Esportivo do Portal DuoDunk (Especialista em NBA).
+    
+    TAREFA: Traduzir e adaptar a notícia abaixo para Português do Brasil.
+    
+    TEXTO ORIGINAL (FONTE):
     """
     ${article.summary}
     """
 
-    🚨 REGRAS DE OURO (PROIBIDO FALHAR):
-    1. **NÃO OMITA NOMES:** Se o texto diz "Austin Reaves", você DEVE escrever "Austin Reaves". NUNCA escreva "um jogador" ou "o atleta" sem antes citar o nome.
-    2. **NÃO OMITA NÚMEROS:** Se o texto tem médias de pontos (ex: 26.6), prazos (ex: 4 semanas) ou placares, ELES DEVEM ESTAR NO TEXTO FINAL.
-    3. **NÃO RESUMA:** O texto final deve ter aproximadamente o mesmo tamanho e detalhamento do original.
-    4. **ANTI-ALUCINAÇÃO DE TIME:** Respeite o time citado no texto. Se diz que Davis está no Dallas, ele está no Dallas.
-
-    🧠 PASSO A PASSO (RACIOCÍNIO OBRIGATÓRIO):
-    - Extraia: NOME DO JOGADOR PRINCIPAL.
-    - Extraia: TIME ATUAL DO JOGADOR (conforme o texto).
-    - Extraia: DETALHES DA LESÃO/FATO (Tipo, Grau, Tempo de recuperação).
-    - Extraia: ESTATÍSTICAS CITADAS (Pontos, Rebotes, etc).
-    
-    Agora, escreva a notícia em PT-BR usando TODOS os dados extraídos acima. Use linguagem de jornalista esportivo brasileiro.
+    DIRETRIZES OBRIGATÓRIAS:
+    1. **NÃO INVENTE:** Escreva apenas o que está no texto.
+    2. **NÃO OMITE NOMES:** Se o texto fala "Austin Reaves", escreva "Austin Reaves". Se fala "Lakers", escreva "Lakers". JAMAIS use termos genéricos como "um jogador" ou "uma equipe" se o nome estiver disponível.
+    3. **MANTENHA OS DADOS:** Copie exatamente as estatísticas (pontos, assistências), prazos de lesão e placares citados.
+    4. **ESTILO:** Linguagem fluida de site de notícias esportivas.
+    5. **TAMANHO:** Mantenha a profundidade do texto original. Não resuma.
 
     SAÍDA JSON:
     {
-      "title": "Título Jornalístico com Nome do Jogador e Time (Max 80 chars)",
-      "subtitle": "Subtítulo com detalhe importante (ex: tempo de fora)",
+      "title": "Título em PT-BR (Fiel ao original)",
+      "subtitle": "Subtítulo informativo",
       "summary": "Resumo curto (Max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1 (Lide completo com NOME, TIME e O QUE ACONTECEU)...",
-        "Parágrafo 2 (Detalhes da lesão/fato e prazos)...",
-        "Parágrafo 3 (Estatísticas e impacto no time)...",
-        "Parágrafo 4 (Contexto adicional ou histórico)...",
-        "Parágrafo 5 (Conclusão ou próximos jogos)..."
+        "Parágrafo 1...",
+        "Parágrafo 2...",
+        "Parágrafo 3...",
+        "Parágrafo 4..."
       ],
-      "tags": ["nba", "nome_do_time", "nome_do_jogador", "topico"],
-      "meta_description": "SEO Description com o nome do jogador e a notícia principal (150 chars)",
+      "tags": ["nba", "time", "jogador", "topico"],
+      "meta_description": "SEO Description (150 chars)",
       "slug": "titulo-url-amigavel"
     }
     `;
@@ -89,14 +81,13 @@ serve(async (req) => {
 
     for (const model of GEMINI_MODELS) {
         try {
-            console.log(`Tentando modelo: ${model}...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.1, // Temperatura baixa para máxima precisão factual
+                  temperature: 0.1, // Temperatura baixa para fidelidade
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
@@ -104,8 +95,7 @@ serve(async (req) => {
             });
 
             if (!response.ok) {
-                const errText = await response.text();
-                console.error(`Erro no modelo ${model}:`, errText);
+                console.error(await response.text());
                 continue;
             }
 
@@ -119,7 +109,7 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error(`Falha na IA. Verifique API Key e Quota.`);
+    if (!aiResponse) throw new Error("Falha na IA.");
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
@@ -150,10 +140,9 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    return new Response(JSON.stringify({ success: true, message: `Processado com sucesso (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, message: `Processado (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
-    console.error("Erro Fatal:", error);
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
