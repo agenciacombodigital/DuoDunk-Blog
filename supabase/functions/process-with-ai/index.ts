@@ -39,46 +39,40 @@ serve(async (req) => {
 
     if (fetchError || !article) return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    console.log(`📰 Processando (Modo Simulação): ${article.original_title}`);
+    console.log(`📰 Traduzindo com Fidelidade: ${article.original_title}`);
 
-    // --- PROMPT "MODO SIMULAÇÃO DE FUTURO" ---
+    // --- PROMPT DE TRADUÇÃO JORNALÍSTICA (SEM RESUMO) ---
     const prompt = `
-    CONTEXTO DO SISTEMA: Você é o redator chefe de um "Simulador de Gestão da NBA" que se passa no futuro (Temporada 2026/2027).
+    ATUE COMO: Tradutor Especialista em NBA do Portal DuoDunk.
     
-    SUA TAREFA: Transformar o LOG DE EVENTOS da simulação (texto abaixo) em uma notícia realista em PT-BR.
+    SUA MISSÃO: Converter a notícia abaixo do Inglês para Português (Brasil) mantendo 100% dos detalhes informativos.
 
-    ⚠️ REGRAS DE REALIDADE DA SIMULAÇÃO (CRÍTICO):
-    1. O texto abaixo é a VERDADE ABSOLUTA deste universo simulado.
-    2. Se o texto diz "Anthony Davis (Mavericks)", ACEITE QUE ELE É DO MAVERICKS. Não corrija para Lakers.
-    3. Se o texto diz "Austin Reaves", use o nome "Austin Reaves". NÃO escreva "um jogador".
-    4. NÃO use seu conhecimento de 2024/2025. Use APENAS os dados do texto abaixo.
-
-    LOG DE EVENTOS (TEXTO ORIGINAL):
+    TEXTO ORIGINAL:
     """
     ${article.summary}
     """
 
-    INSTRUÇÕES DE ESCRITA:
-    - Escreva como uma matéria séria de jornalismo esportivo (ESPN/UOL).
-    - Mantenha TODOS os números, estátisticas, prazos de lesão e nomes citados.
-    - Se o texto original for longo, o seu também deve ser. Não resuma.
-    - Traduza termos técnicos para o linguajar do basquete brasileiro (ex: "calf strain" -> "lesão na panturrilha/gêmeo").
+    🚨 REGRAS DE OURO (NÃO QUEBRE):
+    1. **FIDELIDADE TOTAL:** No resuma. Se o texto original tem 4 parágrafos, o seu deve ter 4 parágrafos ou mais.
+    2. **NOMES E TIMES:** Mantenha EXATAMENTE os nomes e times do texto (ex: se diz "Anthony Davis no Mavericks", escreva "Anthony Davis do Mavericks"). Não corrija a realidade.
+    3. **ESTATÍSTICAS:** Se o texto cita médias (ex: 26.6 ppg), lesões (Grau 2) ou prazos (4 semanas), esses números PRECISAM aparecer no texto final.
+    4. **LINGUAGEM:** Use termos do basquete brasileiro (ex: "Grade 2 strain" -> "Lesão de grau 2", "out" -> "desfalcará").
+    5. **PROIBIDO TERMOS GENÉRICOS:** Nunca comece com "Um jogador não identificado". Comece com "O armador Austin Reaves..." (ou quem for o sujeito).
 
     SAÍDA JSON OBRIGATÓRIA:
     {
-      "title": "Título Jornalístico (Ex: 'Davis desfalca Mavericks por 4 semanas')",
-      "subtitle": "Subtítulo detalhado",
-      "summary": "Resumo curto para o feed (Max 140 chars)",
+      "title": "Título traduzido de forma atraente (max 80 chars)",
+      "subtitle": "Subtítulo com a informação chave (lesão, troca, recorde)",
+      "summary": "Resumo curto para redes sociais (max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1: O Fato Principal (Quem, Time, O Quê)...",
-        "Parágrafo 2: Detalhes da Lesão/Acontecimento...",
-        "Parágrafo 3: Estatísticas do jogador mencionadas no texto...",
-        "Parágrafo 4: Impacto no time e próximos jogos...",
-        "Parágrafo 5: Contexto adicional do texto original..."
+        "Parágrafo 1: Introdução completa (Quem, Onde, O Quê, Time)...",
+        "Parágrafo 2: Detalhes específicas citados no texto...",
+        "Parágrafo 3: Estatísticas e contexto mencionado...",
+        "Parágrafo 4: Conclusão ou próximos jogos citados..."
       ],
-      "tags": ["nba", "nome_do_time_no_texto", "nome_do_jogador", "tipo_lesao"],
-      "meta_description": "Descrição SEO completa",
-      "slug": "titulo-amigavel-url"
+      "tags": ["nba", "time_do_texto", "jogador_do_texto", "assunto"],
+      "meta_description": "Resumo SEO (150 chars)",
+      "slug": "titulo-url-amigavel"
     }
     `;
 
@@ -93,7 +87,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.1, // Temperatura mínima para obediência total
+                  temperature: 0.1, // Temperatura mínima para garantir que ele siga o texto estritamente
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
@@ -101,7 +95,8 @@ serve(async (req) => {
             });
 
             if (!response.ok) {
-                console.error(await response.text());
+                const err = await response.text();
+                console.error(`Erro API (${model}):`, err);
                 continue;
             }
 
@@ -115,7 +110,7 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error("Falha na IA. Nenhum modelo retornou JSON válido.");
+    if (!aiResponse) throw new Error("Falha na IA. Verifique se o texto original não está vazio.");
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
