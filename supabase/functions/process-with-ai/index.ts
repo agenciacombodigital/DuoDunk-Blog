@@ -39,40 +39,46 @@ serve(async (req) => {
 
     if (fetchError || !article) return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    console.log(`📰 Processando (Modo Tradução Direta): ${article.original_title}`);
+    console.log(`📰 Processando (Modo Simulação): ${article.original_title}`);
 
-    // --- PROMPT SIMPLIFICADO E DIRETO ---
+    // --- PROMPT "MODO SIMULAÇÃO DE FUTURO" ---
     const prompt = `
-    AJA COMO: Jornalista Esportivo do Portal DuoDunk (Especialista em NBA).
+    CONTEXTO DO SISTEMA: Você é o redator chefe de um "Simulador de Gestão da NBA" que se passa no futuro (Temporada 2026/2027).
     
-    TAREFA: Traduzir e adaptar a notícia abaixo para Português do Brasil.
-    
-    TEXTO ORIGINAL (FONTE):
+    SUA TAREFA: Transformar o LOG DE EVENTOS da simulação (texto abaixo) em uma notícia realista em PT-BR.
+
+    ⚠️ REGRAS DE REALIDADE DA SIMULAÇÃO (CRÍTICO):
+    1. O texto abaixo é a VERDADE ABSOLUTA deste universo simulado.
+    2. Se o texto diz "Anthony Davis (Mavericks)", ACEITE QUE ELE É DO MAVERICKS. Não corrija para Lakers.
+    3. Se o texto diz "Austin Reaves", use o nome "Austin Reaves". NÃO escreva "um jogador".
+    4. NÃO use seu conhecimento de 2024/2025. Use APENAS os dados do texto abaixo.
+
+    LOG DE EVENTOS (TEXTO ORIGINAL):
     """
     ${article.summary}
     """
 
-    DIRETRIZES OBRIGATÓRIAS:
-    1. **NÃO INVENTE:** Escreva apenas o que está no texto.
-    2. **NÃO OMITE NOMES:** Se o texto fala "Austin Reaves", escreva "Austin Reaves". Se fala "Lakers", escreva "Lakers". JAMAIS use termos genéricos como "um jogador" ou "uma equipe" se o nome estiver disponível.
-    3. **MANTENHA OS DADOS:** Copie exatamente as estatísticas (pontos, assistências), prazos de lesão e placares citados.
-    4. **ESTILO:** Linguagem fluida de site de notícias esportivas.
-    5. **TAMANHO:** Mantenha a profundidade do texto original. Não resuma.
+    INSTRUÇÕES DE ESCRITA:
+    - Escreva como uma matéria séria de jornalismo esportivo (ESPN/UOL).
+    - Mantenha TODOS os números, estátisticas, prazos de lesão e nomes citados.
+    - Se o texto original for longo, o seu também deve ser. Não resuma.
+    - Traduza termos técnicos para o linguajar do basquete brasileiro (ex: "calf strain" -> "lesão na panturrilha/gêmeo").
 
-    SAÍDA JSON:
+    SAÍDA JSON OBRIGATÓRIA:
     {
-      "title": "Título em PT-BR (Fiel ao original)",
-      "subtitle": "Subtítulo informativo",
-      "summary": "Resumo curto (Max 140 chars)",
+      "title": "Título Jornalístico (Ex: 'Davis desfalca Mavericks por 4 semanas')",
+      "subtitle": "Subtítulo detalhado",
+      "summary": "Resumo curto para o feed (Max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1...",
-        "Parágrafo 2...",
-        "Parágrafo 3...",
-        "Parágrafo 4..."
+        "Parágrafo 1: O Fato Principal (Quem, Time, O Quê)...",
+        "Parágrafo 2: Detalhes da Lesão/Acontecimento...",
+        "Parágrafo 3: Estatísticas do jogador mencionadas no texto...",
+        "Parágrafo 4: Impacto no time e próximos jogos...",
+        "Parágrafo 5: Contexto adicional do texto original..."
       ],
-      "tags": ["nba", "time", "jogador", "topico"],
-      "meta_description": "SEO Description (150 chars)",
-      "slug": "titulo-url-amigavel"
+      "tags": ["nba", "nome_do_time_no_texto", "nome_do_jogador", "tipo_lesao"],
+      "meta_description": "Descrição SEO completa",
+      "slug": "titulo-amigavel-url"
     }
     `;
 
@@ -87,7 +93,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                  temperature: 0.1, // Temperatura baixa para fidelidade
+                  temperature: 0.1, // Temperatura mínima para obediência total
                   maxOutputTokens: 8192,
                   responseMimeType: "application/json"
                 }
@@ -109,7 +115,7 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error("Falha na IA.");
+    if (!aiResponse) throw new Error("Falha na IA. Nenhum modelo retornou JSON válido.");
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
@@ -140,7 +146,7 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    return new Response(JSON.stringify({ success: true, message: `Processado (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, message: `Processado com sucesso (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
