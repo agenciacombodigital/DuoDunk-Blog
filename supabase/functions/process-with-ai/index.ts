@@ -6,8 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1200&auto=format&fit=crop";
+// Modelos (Mantendo a sua preferência, mas Flash-1.5 costuma ser mais obediente para contexto)
+const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro']; 
+const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
 const getAuthorBySource = (source: string) => {
     const s = (source || '').toLowerCase();
@@ -39,16 +40,55 @@ serve(async (req) => {
 
     if (fetchError || !article) return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
+    console.log(`📰 Processando: ${article.original_title}`);
+
+    // --- PROMPT ANTI-ALUCINAÇÃO (FIDELIDADE ESTRITA) ---
     const prompt = `
-    ATUE COMO: Jornalista Esportivo Sênior da NBA (Portal DuoDunk).
-    FONTE: ${article.source}
-    TITULO ORIGINAL: ${article.original_title}
-    CONTEÚDO ORIGINAL: """${article.summary}"""
-    OBJETIVO: Produzir uma matéria completa em PT-BR, mantendo a PROFUNDIDADE e a EXTENSÃO.
-    SAÍDA JSON: { "title", "subtitle", "summary", "paragraphs": [], "tags": [], "meta_description", "slug" }
+    VOCÊ É: Editor Chefe do Portal DuoDunk.
+    SUA FUNÇÃO: Reescrever a notícia para PT-BR respeitando ESTRITAMENTE os fatos do texto original.
+
+    ⚠️ ALERTA DE MUNDO FUTURO/ALTERNATIVO:
+    Esta notícia pode conter trocas de jogadores (ex: Anthony Davis nos Mavericks, LeBron em outro time). 
+    IGNORE SEU CONHECIMENTO PRÉVIO DA NBA REAL.
+    SE O TEXTO DIZ QUE O JOGADOR ESTÁ NO TIME X, ELE ESTÁ NO TIME X. NÃO CORRIJA PARA OS LAKERS OU OUTRO TIME.
+
+    TEXTO ORIGINAL:
+    """
+    ${article.summary}
+    """
+
+    PASSO A PASSO (RACIOCÍNIO INTERNO):
+    1. Identifique o Sujeito (Jogador/Técnico).
+    2. Identifique o Time ATUAL citado no texto (ex: se diz "Mavericks center Anthony Davis", o time é MAVERICKS).
+    3. Identifique a Ação (Lesão, Troca, Recorde).
+    4. Escreva a matéria baseada APENAS nesses dados extraídos.
+
+    ESTRUTURA DA MATÉRIA:
+    - Título Impactante (Use o time correto citado no texto).
+    - Subtítulo Informativo.
+    - Corpo: 4 a 6 parágrafos detalhados. Mantenha citações, números e fatos médicos/estatísticos exatos do original.
+    - NÃO INVENTE NADA. NÃO MUDE O TIME DO JOGADOR.
+
+    SAÍDA JSON:
+    {
+      "title": "Título em PT-BR (Max 80 chars)",
+      "subtitle": "Subtítulo complementar",
+      "summary": "Resumo para card (Max 140 chars)",
+      "paragraphs": [
+        "Parágrafo 1...",
+        "Parágrafo 2...",
+        "Parágrafo 3...",
+        "Parágrafo 4..."
+      ],
+      "tags": ["nba", "time_correto_do_texto", "jogador", "lesão"],
+      "meta_description": "SEO Description (150 chars)",
+      "slug": "titulo-url-amigavel"
+    }
     `;
 
     let aiResponse = null;
+    let modelUsed = '';
+
     for (const model of GEMINI_MODELS) {
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
@@ -56,14 +96,20 @@ serve(async (req) => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.2, maxOutputTokens: 8192, responseMimeType: "application/json" }
+                generationConfig: {
+                  temperature: 0.1, // Temperatura BAIXÍSSIMA para evitar criatividade/alucinação
+                  maxOutputTokens: 8192,
+                  responseMimeType: "application/json"
+                }
               })
             });
+
             if (!response.ok) continue;
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
             if (rawText) {
                 aiResponse = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+                modelUsed = model;
                 break;
             }
         } catch (e) { console.error(e); }
@@ -73,13 +119,12 @@ serve(async (req) => {
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
-    // ✅ CORREÇÃO DE IMAGEM: Verifica se o link é o antigo quebrado ou se está vazio
+    // Tratamento de imagem (Fallback se vier quebrada)
     const isOldBrokenPattern = article.image_url && (
         article.image_url.includes('agenda-nba-padrao.jpg') || 
         article.image_url.includes('undefined') ||
         article.image_url.length < 5
     );
-    
     const finalImage = isOldBrokenPattern ? DEFAULT_IMAGE : (article.image_url || DEFAULT_IMAGE);
 
     const { error: updateError } = await supabaseAdmin
@@ -100,7 +145,9 @@ serve(async (req) => {
         .eq('id', article.id);
 
     if (updateError) throw updateError;
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    return new Response(JSON.stringify({ success: true, message: `Processado (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
   } catch (error: any) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
