@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-const GEMINI_MODELS = ['gemini-2.5-flash']; 
+// Usando o modelo mais inteligente e atual
+const GEMINI_MODELS = ['gemini-2.0-flash-exp', 'gemini-1.5-flash']; 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
 const getAuthorBySource = (source: string) => {
@@ -37,41 +38,60 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    if (fetchError || !article) return new Response(JSON.stringify({ success: true, message: 'Fila vazia.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (fetchError || !article) {
+      return new Response(
+        JSON.stringify({ success: true, message: 'Fila vazia.' }), 
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    console.log(`📰 Traduzindo com Fidelidade: ${article.original_title}`);
+    console.log(`📰 Processando: ${article.original_title}`);
 
-    // --- PROMPT DE TRADUÇÃO JORNALÍSTICA (SEM RESUMO) ---
+    // ✅ CORREÇÃO CRÍTICA: Prioridade para encontrar o texto COMPLETO
+    const fullText = article.original_content || article.full_text || article.content || article.summary;
+    
+    if (!fullText || fullText.length < 100) {
+      console.error('❌ Texto original muito curto ou vazio (IA não tem o que traduzir).');
+      console.error('Conteúdo recebido:', fullText);
+      throw new Error('Texto original insuficiente para processamento. Verifique o Scraper.');
+    }
+
+    console.log(`📝 Tamanho do texto original para IA: ${fullText.length} caracteres`);
+
+    // --- PROMPT DE TRADUTOR JORNALÍSTICO (FIDELIDADE TOTAL) ---
     const prompt = `
     ATUE COMO: Tradutor Especialista em NBA do Portal DuoDunk.
     
-    SUA MISSÃO: Converter a notícia abaixo do Inglês para Português (Brasil) mantendo 100% dos detalhes informativos.
+    TAREFA: Traduzir a notícia abaixo do Inglês para Português (Brasil), mantendo 100% dos detalhes informativos.
 
-    TEXTO ORIGINAL:
+    TEXTO ORIGINAL (EM INGLÊS):
     """
-    ${article.summary}
+    ${fullText}
     """
 
-    🚨 REGRAS DE OURO (NÃO QUEBRE):
-    1. **FIDELIDADE TOTAL:** No resuma. Se o texto original tem 4 parágrafos, o seu deve ter 4 parágrafos ou mais.
-    2. **NOMES E TIMES:** Mantenha EXATAMENTE os nomes e times do texto (ex: se diz "Anthony Davis no Mavericks", escreva "Anthony Davis do Mavericks"). Não corrija a realidade.
-    3. **ESTATÍSTICAS:** Se o texto cita médias (ex: 26.6 ppg), lesões (Grau 2) ou prazos (4 semanas), esses números PRECISAM aparecer no texto final.
-    4. **LINGUAGEM:** Use termos do basquete brasileiro (ex: "Grade 2 strain" -> "Lesão de grau 2", "out" -> "desfalcará").
-    5. **PROIBIDO TERMOS GENÉRICOS:** Nunca comece com "Um jogador não identificado". Comece com "O armador Austin Reaves..." (ou quem for o sujeito).
+    📋 REGRAS DE OURO (FIDELIDADE):
+    1. **NÃO RESUMA:** Se o texto original tem 500 palavras, o seu deve ter ~500 palavras. Traduza parágrafo por parágrafo.
+    2. **PRESERVE OS DADOS:**
+       - Nomes de jogadores e times (NUNCA omita. Se diz "Austin Reaves", escreva "Austin Reaves").
+       - Estatísticas (pontos, médias, recordes).
+       - Prazos médicos (ex: "4 semanas").
+       - Citações entre aspas.
+    3. **TERMINOLOGIA:** Use termos do basquete brasileiro (ex: "calf strain" -> "lesão na panturrilha").
+    4. **NÃO INVENTE:** Não adicione opiniões que não estão no texto. Apenas traduza e adapte o estilo jornalístico.
 
-    SAÍDA JSON OBRIGATÓRIA:
+    FORMATO DE SAÍDA (JSON):
     {
-      "title": "Título traduzido de forma atraente (max 80 chars)",
-      "subtitle": "Subtítulo com a informação chave (lesão, troca, recorde)",
+      "title": "Título traduzido atrativo (max 80 chars)",
+      "subtitle": "Subtítulo com a informação chave",
       "summary": "Resumo curto para redes sociais (max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1: Introdução completa (Quem, Onde, O Quê, Time)...",
-        "Parágrafo 2: Detalhes específicas citados no texto...",
-        "Parágrafo 3: Estatísticas e contexto mencionado...",
-        "Parágrafo 4: Conclusão ou próximos jogos citados..."
+        "Parágrafo 1: Lide completo...",
+        "Parágrafo 2: Detalhes...",
+        "Parágrafo 3: Contexto...",
+        "Parágrafo 4+: Demais informações..."
       ],
-      "tags": ["nba", "time_do_texto", "jogador_do_texto", "assunto"],
-      "meta_description": "Resumo SEO (150 chars)",
+      "tags": ["nba", "time", "jogador", "topico"],
+      "meta_description": "SEO Description (150 chars)",
       "slug": "titulo-url-amigavel"
     }
     `;
@@ -81,39 +101,59 @@ serve(async (req) => {
 
     for (const model of GEMINI_MODELS) {
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                  temperature: 0.1, // Temperatura mínima para garantir que ele siga o texto estritamente
-                  maxOutputTokens: 8192,
-                  responseMimeType: "application/json"
-                }
-              })
-            });
+            console.log(`🤖 Tentando modelo: ${model}`);
+            
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, 
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }] }],
+                  generationConfig: {
+                    temperature: 0.2, // Baixa para manter fidelidade
+                    maxOutputTokens: 8192,
+                    responseMimeType: "application/json"
+                  }
+                })
+              }
+            );
 
             if (!response.ok) {
                 const err = await response.text();
-                console.error(`Erro API (${model}):`, err);
+                console.error(`❌ Erro API (${model}):`, err);
                 continue;
             }
 
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+            
             if (rawText) {
-                aiResponse = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+                // Limpeza extra para garantir JSON válido
+                const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                aiResponse = JSON.parse(cleanJson);
                 modelUsed = model;
+                console.log(`✅ Sucesso com modelo: ${model}`);
+                console.log(`📊 Parágrafos gerados: ${aiResponse.paragraphs?.length}`);
                 break;
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+          console.error(`❌ Erro ao processar ${model}:`, e); 
+        }
     }
 
-    if (!aiResponse) throw new Error("Falha na IA. Verifique se o texto original não está vazio.");
+    if (!aiResponse || !aiResponse.paragraphs || aiResponse.paragraphs.length === 0) {
+      throw new Error("IA não retornou conteúdo válido. Verifique o texto original.");
+    }
 
-    const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
+    const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('\n');
     
+    // Validação de qualidade (Alerta se o texto encolheu muito)
+    if (bodyText.length < fullText.length * 0.5) {
+      console.warn('⚠️ AVISO: Texto traduzido muito menor que o original (Possível resumo indesejado).');
+      console.warn(`Original: ${fullText.length} chars | Traduzido: ${bodyText.length} chars`);
+    }
+
     // Tratamento de imagem
     const isOldBrokenPattern = article.image_url && (
         article.image_url.includes('agenda-nba-padrao.jpg') || 
@@ -141,9 +181,26 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    return new Response(JSON.stringify({ success: true, message: `Processado com sucesso (${modelUsed})` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    console.log(`✅ Artigo processado com sucesso!`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: `Processado com sucesso (${modelUsed})`,
+        stats: {
+          paragraphs: aiResponse.paragraphs.length,
+          originalSize: fullText.length,
+          translatedSize: bodyText.length
+        }
+      }), 
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    console.error('❌ ERRO FATAL:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }), 
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
