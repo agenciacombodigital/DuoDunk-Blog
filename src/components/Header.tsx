@@ -15,7 +15,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0" aria-label="Página Inicial Duo Dunk">
             <img 
-              src="/images/duodunk-logoV2.svg" 
+              src="/images/duodunkv2-logo.svg" 
               alt="Duo Dunk Logo" 
               className="h-[88px]"
             />
