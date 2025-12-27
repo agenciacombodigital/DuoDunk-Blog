@@ -7,16 +7,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Seletores robustos (Múltiplas tentativas por site)
 const RSS_FEEDS = [
-  { name: 'ESPN', url: 'https://www.espn.com/espn/rss/nba/news', selector: '.article-body p' },
-  { name: 'CBS Sports', url: 'https://www.cbssports.com/rss/headlines/nba/', selector: '.Article-bodyContent p' },
-  { name: 'Yahoo Sports', url: 'https://sports.yahoo.com/nba/rss', selector: '.caas-body p' }
+  { 
+    name: 'CBS Sports', 
+    url: 'https://www.cbssports.com/rss/headlines/nba/',
+    selectors: ['.Article-bodyContent p', 'article p', '.article-content p', '[data-component="ArticleBody"] p']
+  },
+  { 
+    name: 'Yahoo Sports', 
+    url: 'https://sports.yahoo.com/nba/rss',
+    selectors: ['.caas-body p', 'article p', '.article-body p']
+  },
+  { 
+    name: 'ESPN', 
+    url: 'https://www.espn.com/espn/rss/nba/news',
+    selectors: ['.article-body p', 'article p', '.story p']
+  }
 ];
 
 const FAKE_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9'
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Referer': 'https://www.google.com/',
+  'DNT': '1',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1'
 };
 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
@@ -43,41 +61,72 @@ function extractImage(itemXml: string) {
   return null;
 }
 
-// Visita o link e baixa o texto completo
-async function fetchFullArticle(url: string, selector: string): Promise<string | null> {
+// Scraper Inteligente com Diagnóstico
+async function fetchFullArticle(url: string, selectors: string[]): Promise<{ text: string | null, stats: any }> {
   try {
-    console.log(`🌍 Visitando: ${url}`);
+    console.log(`\n🌐 Visitando: ${url}`);
     
     const response = await fetch(url, { 
       headers: FAKE_HEADERS,
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(20000) // 20s timeout
     });
 
     if (!response.ok) {
-      console.error(`❌ Erro HTTP ${response.status} em ${url}`);
-      return null;
+      console.error(`❌ HTTP ${response.status}`);
+      return { text: null, stats: { error: `HTTP ${response.status}` } };
     }
 
     const html = await response.text();
+    
+    if (html.length < 500) {
+      console.warn(`⚠️ HTML suspeito (${html.length} bytes) - Possível bloqueio`);
+      return { text: null, stats: { error: 'HTML vazio/bloqueado', size: html.length } };
+    }
+
     const { document } = new DOMParser().parseFromString(html, 'text/html');
 
-    const paragraphs = Array.from(document.querySelectorAll(selector))
-      .map(p => p.textContent?.trim())
-      .filter(text => text && text.length > 40);
+    let paragraphs: string[] = [];
+    let selectorUsed = '';
 
+    // Tenta cada seletor da lista
+    for (const selector of selectors) {
+      const found = Array.from(document.querySelectorAll(selector))
+        .map(p => p.textContent?.trim())
+        .filter(text => text && text.length > 40);
+
+      if (found.length > 0) {
+        paragraphs = found;
+        selectorUsed = selector;
+        console.log(`✅ Seletor "${selector}" funcionou: ${found.length} parágrafos`);
+        break;
+      }
+    }
+
+    // Fallback: Se nenhum funcionou, pega todos os <p> da página
     if (paragraphs.length === 0) {
-      console.warn(`⚠️ Nenhum texto encontrado com seletor "${selector}" em ${url}`);
-      return null;
+      console.warn(`⚠️ Seletores falharam. Tentando fallback genérico...`);
+      const allParagraphs = Array.from(document.querySelectorAll('p'))
+        .map(p => p.textContent?.trim())
+        .filter(text => text && text.length > 60);
+      
+      if (allParagraphs.length > 3) {
+        paragraphs = allParagraphs;
+        selectorUsed = 'fallback:p';
+        console.log(`⚠️ Fallback funcionou: ${paragraphs.length} parágrafos.`);
+      } else {
+        return { text: null, stats: { error: 'Nenhum texto encontrado' } };
+      }
     }
 
     const fullText = paragraphs.join('\n\n');
-    console.log(`✅ Sucesso: ${fullText.length} caracteres extraídos.`);
-    
-    return fullText;
+    return { 
+      text: fullText, 
+      stats: { selector: selectorUsed, chars: fullText.length } 
+    };
 
   } catch (error) {
-    console.error(`❌ Falha ao extrair ${url}:`, error.message);
-    return null;
+    console.error(`❌ Erro: ${error.message}`);
+    return { text: null, stats: { error: error.message } };
   }
 }
 
@@ -91,18 +140,20 @@ serve(async (req) => {
     );
 
     let allArticles: any[] = [];
+    let diagnostics: any[] = [];
 
     for (const feed of RSS_FEEDS) {
       try {
-        console.log(`📡 Lendo Feed: ${feed.name}`);
+        console.log(`\n📡 === ${feed.name} ===`);
         const response = await fetch(feed.url, { headers: FAKE_HEADERS, signal: AbortSignal.timeout(10000) });
         if (!response.ok) continue;
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        
-        // ✅ ATUALIZADO: Pega as 8 notícias mais recentes
-        const recentItems = items.slice(0, 8); 
+        // Pega as 8 últimas notícias
+        const recentItems = items.slice(0, 8);
+
+        console.log(`📋 ${recentItems.length} itens no feed RSS`);
 
         for (const itemXml of recentItems) {
           const title = extractTag(itemXml, 'title');
@@ -112,7 +163,7 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica existência antes de gastar recursos com fetchFullArticle
+          // Verifica se já existe
           const { data: existing } = await supabase
             .from('articles_queue')
             .select('id')
@@ -120,16 +171,17 @@ serve(async (req) => {
             .maybeSingle();
 
           if (existing) {
-             console.log(`⏭️ Já existe: ${title.slice(0, 30)}...`);
+             console.log(`⏭️ Já existe: ${title.slice(0, 20)}...`);
              continue;
           }
 
-          // Busca texto completo
-          const fullContent = await fetchFullArticle(link, feed.selector);
+          // 🔥 SCRAPING PROFUNDO
+          const { text: fullContent, stats } = await fetchFullArticle(link, feed.selectors);
           
-          // Fallback para o resumo se o scrape falhar
+          diagnostics.push({ title: title.slice(0, 30), stats });
+
           const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
-          const finalContent = fullContent || summary;
+          const finalContent = fullContent || summary; // Usa o texto completo se tiver, senão o resumo
 
           const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
           const finalImage = (image_url && !isInvalidImage) ? image_url : DEFAULT_IMAGE;
@@ -139,12 +191,14 @@ serve(async (req) => {
             original_title: title.slice(0, 200),
             original_link: link,
             summary: summary,
-            original_content: finalContent, // Texto Completo
+            original_content: finalContent, // Guardando o ouro aqui
             image_url: finalImage,
             source: feed.name,
             status: 'pending_approval',
             created_at: new Date().toISOString()
           });
+
+          console.log(`💾 Pronto para salvar: ${finalContent.length} chars.`);
         }
       } catch (e) {
         console.error(`Erro no feed ${feed.name}:`, e.message);
@@ -158,9 +212,13 @@ serve(async (req) => {
         if (error) throw error;
     }
 
-    return new Response(JSON.stringify({ success: true, processed: allArticles.length }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.log(`\n🎉 Total salvos: ${allArticles.length}`);
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      processed: allArticles.length,
+      diagnostics 
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
     return new Response(JSON.stringify({ success: false, error: error.message }), {
