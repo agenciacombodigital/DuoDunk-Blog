@@ -15,47 +15,65 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.duodunk.com.br';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.duodunk.com.br'),
+  metadataBase: new URL(baseUrl),
   title: {
-    default: 'DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje',
-    template: '%s | Duo Dunk',
+    default: "DuoDunk - Notícias NBA, Estatísticas e Quiz",
+    template: "%s | DuoDunk"
   },
-  description: "Notícias NBA em tempo real, análises táticas, estatísticas ao vivo e Quiz NBA. Cobertura completa do basquete em português.",
-  alternates: {
-    canonical: './',
+  description: "A sua fonte diária de NBA no Brasil. Fique por dentro das últimas notícias, rumores de trocas, estatísticas, onde assistir aos jogos e teste seus conhecimentos no nosso exclusivo Quiz NBA.",
+  
+  // Configuração para Facebook, LinkedIn, Discord, WhatsApp
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: baseUrl,
+    siteName: "DuoDunk",
+    title: "DuoDunk - Notícias NBA, Estatísticas e Quiz",
+    description: "A sua fonte diária de NBA no Brasil. Fique por dentro das últimas notícias, rumores de trocas, estatísticas e teste seus conhecimentos no nosso exclusivo Quiz NBA.",
+    images: [
+      {
+        url: "/images/banner-duodunkv2.jpg",
+        width: 1200,
+        height: 630,
+        alt: "DuoDunk NBA",
+      },
+    ],
   },
-  keywords: ['NBA hoje', 'Onde assistir NBA', 'Notícias Basquete', 'Duo Dunk', 'Estatísticas NBA'],
-  // ✅ CONFIGURAÇÃO DE ÍCONES MULTI-NAVEGADOR (VERSÃO V2)
+
+  // Configuração Específica para Twitter / X
+  twitter: {
+    card: "summary_large_image",
+    title: "DuoDunk - Notícias NBA, Estatísticas e Quiz",
+    description: "Acompanhe as últimas notícias da NBA, estatísticas e desafie seus amigos no Quiz NBA.",
+    images: ["/images/card-twitter-duodunk.jpg"],
+    creator: "@duodunk", 
+  },
+
+  // Ícones (Ajustado para o arquivo v2 existente)
   icons: {
     icon: [
       { url: '/images/favicon-duodunkv2.svg', type: 'image/svg+xml' },
-      { url: '/images/favicon-duodunkv2.svg', sizes: '32x32', type: 'image/svg+xml' },
     ],
-    shortcut: '/images/favicon-duodunkv2.svg',
-    apple: '/images/favicon-duodunkv2.svg',
-  },
-  manifest: '/manifest.json',
-  openGraph: {
-    title: "DuoDunk - Notícias NBA, Estatísticas e Onde Assistir Hoje",
-    description: "Notícias NBA em tempo real, análises táticas, estatísticas ao vivo e Quiz NBA. Cobertura completa do basquete em português.",
-    url: 'https://www.duodunk.com.br',
-    siteName: "Duo Dunk",
-    images: [
-      {
-        url: '/images/duodunk-logoV2.svg',
-        width: 800,
-        height: 600,
-      },
+    shortcut: ['/images/favicon-duodunkv2.svg'],
+    apple: [
+      { url: '/images/favicon-duodunkv2.svg' },
     ],
-    locale: 'pt_BR',
-    type: 'website',
   },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@duodunk',
-    creator: '@duodunk',
-    images: ['/images/duodunk-logoV2.svg'],
+  
+  // Robôs de busca
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -69,7 +87,7 @@ export default function RootLayout({
     "@type": "Organization",
     "name": "Duo Dunk",
     "url": "https://www.duodunk.com.br",
-    "logo": "https://www.duodunk.com.br/images/duodunk-logoV2.svg",
+    "logo": "https://www.duodunk.com.br/images/duodunkv2-logo.svg",
     "sameAs": [
       "https://www.instagram.com/duodunk/",
       "https://www.threads.net/@duodunk"
