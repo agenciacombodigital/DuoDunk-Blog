@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Modelos Gemini 2.5 (Flash Titular, Lite Reserva)
+// ✅ CONFIGURAÇÃO CORRETA: Modelos da série 2.5 (Ativos e Estáveis)
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -29,7 +29,6 @@ serve(async (req) => {
       Deno.env.get('SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Pega artigo pendente
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles_queue')
       .select('*')
@@ -43,36 +42,50 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // ✅ USA O CONTEÚDO COMPLETO CAPTURADO PELO NOVO SCRAPER
+    // Busca o texto completo
     const fullText = article.original_content || article.full_text || article.content || article.summary;
 
     if (!fullText || fullText.length < 200) {
-        console.warn(`⚠️ Texto muito curto (${fullText?.length} chars). A IA pode não ter detalhes suficientes.`);
-    } else {
-        console.log(`📝 Texto Base: ${fullText.length} caracteres.`);
+        console.warn(`⚠️ Texto muito curto (${fullText?.length} chars). Verifique o Scraper.`);
     }
 
-    const prompt = `
-    ATUE COMO: Jornalista da NBA (DuoDunk).
-    TAREFA: Traduzir e adaptar a notícia para PT-BR com FIDELIDADE TOTAL aos fatos.
+    // --- CÁLCULO DE PALAVRAS PARA EVITAR RESUMO ---
+    const wordCount = fullText.split(/\s+/).length;
+    const minTarget = Math.floor(wordCount * 0.85); // Meta: Pelo menos 85% do tamanho original
+    
+    console.log(`📝 Original: ${wordCount} palavras. Meta IA: ~${minTarget} palavras.`);
 
-    TEXTO ORIGINAL:
+    // --- PROMPT "TRADUTOR ESPELHO" (ANTI-RESUMO) ---
+    const prompt = `
+    VOCÊ É: Um "Tradutor Espelho" especializado em NBA do DuoDunk.
+    SUA FUNÇÃO: Converter o texto do Inglês para Português (Brasil) MANTENDO O MESMO TAMANHO E ESTRUTURA.
+
+    TEXTO ORIGINAL (${wordCount} palavras):
     """
     ${fullText}
     """
 
-    REGRAS:
-    1. **NÃO RESUMA:** Mantenha a profundidade do texto original.
-    2. **NOMES E DADOS:** Mantenha todos os nomes (ex: Austin Reaves), estatísticas e prazos médicos.
-    3. **ESTILO:** Linguagem esportiva profissional.
+    🛑 REGRAS MATEMÁTICAS DE EXECUÇÃO:
+    1. **PROIBIDO RESUMIR:** O texto original tem ${wordCount} palavras. O seu texto em PT-BR deve ter no mínimo ${minTarget} palavras.
+    2. **ESPELHAMENTO DE CONTEÚDO:**
+       - Se o original tem 5 parágrafos, você entrega 5 parágrafos.
+       - Se o original cita "26.6 points, 5 rebounds", você traduz "26,6 pontos, 5 rebotes".
+       - Se o original cita uma frase entre aspas de um técnico, TRADUZA A FRASE INTEIRA.
+    3. **ANTI-CORTES:** Não corte nomes de jogadores secundários, não corte estatísticas "menos importantes". Tudo importa.
+    4. **ESTILO:** Jornalismo esportivo brasileiro (ESPN/SporTV).
 
-    SAÍDA JSON:
+    SAÍDA JSON OBRIGATÓRIA:
     {
-      "title": "Título PT-BR (max 80 chars)",
-      "subtitle": "Subtítulo informativo",
-      "summary": "Resumo curto (max 140 chars)",
-      "paragraphs": ["Parágrafo 1...", "Parágrafo 2...", "Parágrafo 3..."],
-      "tags": ["nba", "time", "jogador", "tema"],
+      "title": "Título traduzido (fiel ao original)",
+      "subtitle": "Subtítulo detalhado",
+      "summary": "Resumo para redes sociais (max 140 chars)",
+      "paragraphs": [
+        "Parágrafo 1 (Tradução completa do P1 original)...",
+        "Parágrafo 2 (Tradução completa do P2 original)...",
+        "Parágrafo 3 (Tradução completa do P3 original)...",
+        "..."
+      ],
+      "tags": ["nba", "time", "jogador", "topico"],
       "meta_description": "SEO Description",
       "slug": "url-amigavel"
     }
@@ -83,18 +96,29 @@ serve(async (req) => {
 
     for (const model of GEMINI_MODELS) {
         try {
+            console.log(`🤖 Tentando modelo: ${model}...`);
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.1, maxOutputTokens: 8192, responseMimeType: "application/json" }
+                generationConfig: { 
+                    temperature: 0.1, // Baixa criatividade = Alta fidelidade
+                    maxOutputTokens: 8192, 
+                    responseMimeType: "application/json" 
+                }
               })
             });
 
-            if (!response.ok) continue;
+            if (!response.ok) {
+                const err = await response.text();
+                console.warn(`Erro no ${model}: ${err.substring(0, 100)}`);
+                continue;
+            }
+
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+            
             if (rawText) {
                 aiResponse = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
                 modelUsed = model;
@@ -103,7 +127,7 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error("Falha na IA.");
+    if (!aiResponse) throw new Error("Falha na IA. Nenhum modelo respondeu.");
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     
@@ -131,9 +155,10 @@ serve(async (req) => {
         .eq('id', article.id);
 
     if (updateError) throw updateError;
-    return new Response(JSON.stringify({ success: true, model: modelUsed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, model: modelUsed, originalWords: wordCount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
+    console.error('❌ ERRO FATAL:', error);
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

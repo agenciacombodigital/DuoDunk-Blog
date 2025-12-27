@@ -7,14 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Seletores CSS para encontrar o texto em cada site
 const RSS_FEEDS = [
   { name: 'ESPN', url: 'https://www.espn.com/espn/rss/nba/news', selector: '.article-body p' },
   { name: 'CBS Sports', url: 'https://www.cbssports.com/rss/headlines/nba/', selector: '.Article-bodyContent p' },
   { name: 'Yahoo Sports', url: 'https://sports.yahoo.com/nba/rss', selector: '.caas-body p' }
 ];
 
-// Headers para fingir ser um navegador real (evita bloqueio)
 const FAKE_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -45,14 +43,14 @@ function extractImage(itemXml: string) {
   return null;
 }
 
-// ✅ FUNÇÃO NOVA: Visita o link e baixa o texto completo
+// Visita o link e baixa o texto completo
 async function fetchFullArticle(url: string, selector: string): Promise<string | null> {
   try {
     console.log(`🌍 Visitando: ${url}`);
     
     const response = await fetch(url, { 
       headers: FAKE_HEADERS,
-      signal: AbortSignal.timeout(15000) // Timeout de 15s
+      signal: AbortSignal.timeout(15000)
     });
 
     if (!response.ok) {
@@ -63,17 +61,15 @@ async function fetchFullArticle(url: string, selector: string): Promise<string |
     const html = await response.text();
     const { document } = new DOMParser().parseFromString(html, 'text/html');
 
-    // Busca todos os parágrafos dentro do seletor do site
     const paragraphs = Array.from(document.querySelectorAll(selector))
       .map(p => p.textContent?.trim())
-      .filter(text => text && text.length > 40); // Ignora textos muito curtos (legendas, ads)
+      .filter(text => text && text.length > 40);
 
     if (paragraphs.length === 0) {
       console.warn(`⚠️ Nenhum texto encontrado com seletor "${selector}" em ${url}`);
       return null;
     }
 
-    // Junta tudo com quebra de linha
     const fullText = paragraphs.join('\n\n');
     console.log(`✅ Sucesso: ${fullText.length} caracteres extraídos.`);
     
@@ -104,8 +100,9 @@ serve(async (req) => {
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        // Processa apenas os 3 mais recentes para não estourar o tempo da Edge Function
-        const recentItems = items.slice(0, 3); 
+        
+        // ✅ ATUALIZADO: Pega as 8 notícias mais recentes
+        const recentItems = items.slice(0, 8); 
 
         for (const itemXml of recentItems) {
           const title = extractTag(itemXml, 'title');
@@ -115,7 +112,7 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica se já existe antes de fazer o scrape (economiza recursos)
+          // Verifica existência antes de gastar recursos com fetchFullArticle
           const { data: existing } = await supabase
             .from('articles_queue')
             .select('id')
@@ -127,10 +124,10 @@ serve(async (req) => {
              continue;
           }
 
-          // 🔥 A MÁGICA ACONTECE AQUI: Busca o texto completo
+          // Busca texto completo
           const fullContent = await fetchFullArticle(link, feed.selector);
           
-          // Se falhar o scrape, usa o resumo do RSS como fallback
+          // Fallback para o resumo se o scrape falhar
           const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
           const finalContent = fullContent || summary;
 
@@ -141,8 +138,8 @@ serve(async (req) => {
             title: title.slice(0, 200),
             original_title: title.slice(0, 200),
             original_link: link,
-            summary: summary, // Resumo curto
-            original_content: finalContent, // ✅ TEXTO COMPLETO
+            summary: summary,
+            original_content: finalContent, // Texto Completo
             image_url: finalImage,
             source: feed.name,
             status: 'pending_approval',
