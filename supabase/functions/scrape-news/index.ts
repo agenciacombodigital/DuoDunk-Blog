@@ -15,7 +15,6 @@ const RSS_FEEDS = [
 const FAKE_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9',
   'Referer': 'https://www.google.com/'
 };
 
@@ -43,12 +42,11 @@ function extractImage(itemXml: string) {
   return null;
 }
 
-// Scraper Otimizado (Regex + Timeout Curto)
+// Scraper com Filtros de Limpeza (Anti-Lixo)
 async function fetchFullArticle(url: string): Promise<{ text: string | null, chars: number }> {
   try {
-    // Timeout de 8s por página para não travar o processo geral
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000);
+    const id = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
     const response = await fetch(url, { 
       headers: FAKE_HEADERS,
@@ -60,18 +58,38 @@ async function fetchFullArticle(url: string): Promise<{ text: string | null, cha
 
     const html = await response.text();
     
-    // Regex para extrair <p>
+    // Regex para pegar parágrafos
     const pTagsRegex = /<p[^>]*>(.*?)<\/p>/gis;
     const matches = html.matchAll(pTagsRegex);
     
     const paragraphs: string[] = [];
+    
+    // Termos proibidos (lixo de menu/rodapé)
+    const blacklist = [
+      'copyright', 'all rights reserved', 'privacy policy', 'terms of use', 
+      'contact us', 'newsletter', 'subscribe', 'login', 'sign up',
+      'sports betting', 'gambling problem', 'odds', 'fantasy sports'
+    ];
+
     for (const match of matches) {
       let text = match[1]
-        .replace(/<[^>]+>/g, '') // Remove tags
+        .replace(/<[^>]+>/g, '') // Remove tags HTML
         .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
       
-      if (text.length > 60 && !text.includes('cookie') && !text.includes('JavaScript')) {
+      const lowerText = text.toLowerCase();
+
+      // FILTROS DE QUALIDADE:
+      // 1. Tamanho mínimo: Ignora frases curtas soltas
+      // 2. Blacklist: Ignora rodapés e avisos legais
+      // 3. Densidade de Links: Ignora listas de times (Ex: "Lakers Warriors Suns...")
+      if (text.length > 80 && 
+          !blacklist.some(term => lowerText.includes(term)) &&
+          !text.includes('{') && 
+          !text.includes('function(') &&
+          (text.match(/[A-Z]/g) || []).length < (text.length * 0.4) // Se tiver mais de 40% de maiúsculas, provavelmente é menu
+      ) {
         paragraphs.push(text);
       }
     }
@@ -105,9 +123,7 @@ serve(async (req) => {
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        
-        // ✅ REDUZIDO PARA 3 ITENS (Evita Timeout Geral)
-        const recentItems = items.slice(0, 3); 
+        const recentItems = items.slice(0, 3); // 3 notícias por vez
 
         for (const itemXml of recentItems) {
           const title = extractTag(itemXml, 'title');
@@ -117,7 +133,7 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica duplicata ANTES de fazer o scrape pesado
+          // Verifica duplicata
           const { data: existing } = await supabase
             .from('articles_queue')
             .select('id')
@@ -126,12 +142,12 @@ serve(async (req) => {
 
           if (existing) continue;
 
-          // Scraping Leve
+          // Scraper com limpeza
           const { text: fullContent, chars } = await fetchFullArticle(link);
           const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
           
-          // Se o scrape falhar, usa o resumo RSS
-          const finalContent = (fullContent && chars > 200) ? fullContent : summary;
+          // Se o scrape falhar ou vier sujo, usa o resumo RSS (que é limpo e seguro)
+          const finalContent = (fullContent && chars > 300) ? fullContent : summary;
           if (finalContent.length > summary.length) stats.scraped++;
 
           const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
