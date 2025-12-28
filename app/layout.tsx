@@ -15,15 +15,15 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.duodunk.com.br';
+const baseUrl = 'https://www.duodunk.com.br';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "DuoDunk - Notícias NBA, Jogos, Times, Classificação e Quiz NBA",
+    default: "DuoDunk - Notícias NBA e Quiz Milhão",
     template: "%s | DuoDunk"
   },
-  description: "Acompanhe as últimas notícias da NBA, tabela de jogos, classificação e desafie seus amigos no Quiz NBA.",
+  description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
   
   // Configuração para Facebook, LinkedIn, Discord, WhatsApp
   openGraph: {
@@ -31,14 +31,14 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: baseUrl,
     siteName: "DuoDunk",
-    title: "DuoDunk - Notícias NBA, Jogos, Times, Classificação e Quiz NBA",
-    description: "Acompanhe as últimas notícias da NBA, tabela de jogos, classificação e desafie seus amigos no Quiz NBA.",
+    title: "DuoDunk - Notícias NBA e Quiz Milhão",
+    description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
     images: [
       {
-        url: "/images/banner-duodunkv2.jpg",
+        url: `${baseUrl}/images/logo-duodunk-share.jpg`,
         width: 1200,
         height: 630,
-        alt: "DuoDunk NBA",
+        alt: "DuoDunk - Notícias NBA e Quiz Milhão",
       },
     ],
   },
@@ -46,13 +46,13 @@ export const metadata: Metadata = {
   // Configuração Específica para Twitter / X
   twitter: {
     card: "summary_large_image",
-    title: "DuoDunk - Notícias NBA, Jogos, Times, Classificação e Quiz NBA",
-    description: "Acompanhe as últimas notícias da NBA, tabela de jogos, classificação e desafie seus amigos no Quiz NBA.",
-    images: ["/images/card-twitter-duodunk.jpg"],
-    creator: "@duodunk", 
+    site: "@duodunk",
+    title: "DuoDunk - Notícias NBA e Quiz Milhão",
+    description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
+    images: [`${baseUrl}/images/logo-duodunk-share.jpg`],
   },
 
-  // Ícones (Mantendo o arquivo v2 existente)
+  // Ícones
   icons: {
     icon: [
       { url: '/images/favicon-duodunkv2.svg', type: 'image/svg+xml' },

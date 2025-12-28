@@ -2,9 +2,23 @@ import MilhaoInterface from '@/components/games/MilhaoInterface';
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
 
+const baseUrl = 'https://www.duodunk.com.br';
+
 export const metadata: Metadata = {
   title: 'Milhão NBA - O Quiz | Duo Dunk',
   description: 'O maior e mais difícil Quiz de NBA do Brasil.',
+  openGraph: {
+    title: 'Milhão NBA - O Quiz | Duo Dunk',
+    description: 'O maior e mais difícil Quiz de NBA do Brasil.',
+    images: [`${baseUrl}/images/logo-duodunk-share.jpg`],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@duodunk",
+    title: 'Milhão NBA - O Quiz | Duo Dunk',
+    description: 'O maior e mais difícil Quiz de NBA do Brasil.',
+    images: [`${baseUrl}/images/logo-duodunk-share.jpg`],
+  }
 };
 
 export const dynamic = 'force-dynamic';

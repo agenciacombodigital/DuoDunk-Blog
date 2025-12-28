@@ -37,7 +37,7 @@ export async function generateMetadata(
 
   const siteUrl = 'https://www.duodunk.com.br';
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
-  const ogImage = article.image_url || `${siteUrl}/images/duodunk-logoV2.svg`;
+  const ogImage = article.image_url || `${siteUrl}/images/logo-duodunk-share.jpg`;
   const description = article.meta_description || article.summary || 'Notícias da NBA no Duo Dunk.';
 
   return {
@@ -54,7 +54,10 @@ export async function generateMetadata(
       type: 'article',
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
+      site: "@duodunk",
+      title: article.title,
+      description: description,
       images: [ogImage],
     },
   };
