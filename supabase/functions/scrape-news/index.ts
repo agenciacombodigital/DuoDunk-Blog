@@ -43,14 +43,14 @@ function extractImage(itemXml: string) {
   return null;
 }
 
-// ✅ SCRAPER COM REGEX (SEM dependências externas)
+// ✅ SCRAPER COM REGEX (Zero Dependências, Máxima Compatibilidade)
 async function fetchFullArticle(url: string): Promise<{ text: string | null, chars: number }> {
   try {
     console.log(`🌐 Visitando: ${url}`);
     
     const response = await fetch(url, { 
       headers: FAKE_HEADERS,
-      signal: AbortSignal.timeout(20000)
+      signal: AbortSignal.timeout(20000) // 20s timeout
     });
 
     if (!response.ok) {
@@ -61,19 +61,24 @@ async function fetchFullArticle(url: string): Promise<{ text: string | null, cha
     const html = await response.text();
     
     if (html.length < 1000) {
-      console.warn(`⚠️ HTML muito pequeno (${html.length} bytes)`);
+      console.warn(`⚠️ HTML muito pequeno (${html.length} bytes) - Possível bloqueio`);
       return { text: null, chars: 0 };
     }
 
-    // 🔥 REGEX: Extrai TODOS os <p>...</p> do HTML
+    // 🔥 REGEX PODEROSA: Extrai o conteúdo dentro de tags <p>
+    // Ignora atributos (class, id) e pega o miolo
     const pTagsRegex = /<p[^>]*>(.*?)<\/p>/gis;
     const matches = html.matchAll(pTagsRegex);
     
     const paragraphs: string[] = [];
     for (const match of matches) {
-      // Limpeza de tags e entidades HTML
-      let text = match[1]
-        .replace(/<[^>]+>/g, '') // Remove tags internas
+      let text = match[1];
+
+      // Limpeza de Tags HTML internas (links, bold, etc)
+      text = text.replace(/<[^>]+>/g, '');
+      
+      // Limpeza de Entidades HTML comuns
+      text = text
         .replace(/&nbsp;/g, ' ')
         .replace(/&quot;/g, '"')
         .replace(/&apos;/g, "'")
@@ -82,27 +87,30 @@ async function fetchFullArticle(url: string): Promise<{ text: string | null, cha
         .replace(/&gt;/g, '>')
         .trim();
       
-      // Filtros de qualidade: ignora menus, avisos de cookies e scripts
-      if (text.length > 60 && 
-          !text.includes('cookie') && 
-          !text.includes('JavaScript') &&
-          !text.includes('Copyright')) {
+      // 🕵️ Filtros de Qualidade: Ignora lixo comum de rodapé/menu
+      if (text.length > 50 && 
+          !text.toLowerCase().includes('cookie') && 
+          !text.toLowerCase().includes('rights reserved') &&
+          !text.toLowerCase().includes('privacy policy') &&
+          !text.includes('{') && // Evita pedaços de JSON/JS
+          !text.includes('function(')) {
         paragraphs.push(text);
       }
     }
 
     if (paragraphs.length === 0) {
-      console.error(`❌ Nenhum parágrafo extraído de ${url}`);
+      console.error(`❌ Nenhum parágrafo válido extraído de ${url}`);
       return { text: null, chars: 0 };
     }
 
+    // Junta os parágrafos com quebra de linha dupla
     const fullText = paragraphs.join('\n\n');
     console.log(`✅ Extraído: ${paragraphs.length} parágrafos | ${fullText.length} chars`);
     
     return { text: fullText, chars: fullText.length };
 
   } catch (error) {
-    console.error(`❌ Erro: ${error.message}`);
+    console.error(`❌ Erro no fetchFullArticle: ${error.message}`);
     return { text: null, chars: 0 };
   }
 }
@@ -128,7 +136,7 @@ serve(async (req) => {
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
         
-        // Coleta as 8 notícias mais recentes
+        // Pega as 8 últimas notícias
         const recentItems = items.slice(0, 8); 
         stats.total += recentItems.length;
 
@@ -142,7 +150,7 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica se já existe na fila
+          // Verifica se já existe para não gastar recurso de scraping
           const { data: existing } = await supabase
             .from('articles_queue')
             .select('id')
@@ -154,18 +162,19 @@ serve(async (req) => {
              continue;
           }
 
-          // Busca conteúdo integral via Regex
+          // 🔥 TENTA O SCRAPING COMPLETO (Texto longo)
           const { text: fullContent, chars } = await fetchFullArticle(link);
           
           if (!fullContent || chars < 200) {
-             console.warn(`⚠️ Scraping falhou. Usando resumo.`);
+             console.warn(`⚠️ Scraping falhou ou retornou pouco texto. Usando resumo RSS.`);
              stats.failed++;
           } else {
              stats.scraped++;
           }
 
+          // Se o scrape falhar, usa o resumo do RSS como fallback
           const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
-          const finalContent = fullContent || summary;
+          const finalContent = (fullContent && fullContent.length > summary.length) ? fullContent : summary;
 
           const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
           const finalImage = (image_url && !isInvalidImage) ? image_url : DEFAULT_IMAGE;
@@ -175,7 +184,7 @@ serve(async (req) => {
             original_title: title.slice(0, 200),
             original_link: link,
             summary: summary,
-            original_content: finalContent,
+            original_content: finalContent, // O texto completo vai aqui
             image_url: finalImage,
             source: feed.name,
             status: 'pending_approval',
@@ -194,7 +203,7 @@ serve(async (req) => {
         if (error) throw error;
     }
 
-    console.log(`\n🎉 Finalizado: ${stats.scraped} artigos completos baixados.`);
+    console.log(`\n🎉 Finalizado: ${stats.scraped} artigos completos capturados.`);
 
     return new Response(JSON.stringify({ 
       success: true, 
