@@ -26,6 +26,9 @@ interface Article {
   author?: string;
 }
 
+// Configuração de Fuso Horário
+const TIMEZONE = 'America/Sao_Paulo';
+
 function getTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -117,7 +120,11 @@ export default async function Home() {
                     </div>
                     <div className="flex flex-col justify-center flex-1 pr-2">
                       <span className="text-[10px] text-[#FA007D] font-bold uppercase mb-1">
-                        {new Date(article.published_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • NBA
+                        {new Date(article.published_at).toLocaleTimeString('pt-BR', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          timeZone: TIMEZONE 
+                        })} • NBA
                       </span>
                       <h4 className="font-oswald text-xs md:text-sm lg:text-base font-bold text-gray-900 leading-snug group-hover:text-[#FA007D] line-clamp-3 uppercase transition-colors">
                         {article.title}
@@ -168,7 +175,9 @@ export default async function Home() {
                     <ImageWithFallback src={article.image_url} fill className="object-cover group-hover:scale-105 transition-transform duration-700" alt={article.title} />
                   </div>
                   <div className="pr-4">
-                    <span className="text-xs font-bold text-pink-600 uppercase mb-2 block tracking-wider">{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                    <span className="text-xs font-bold text-pink-600 uppercase mb-2 block tracking-wider">
+                      {new Date(article.published_at).toLocaleDateString('pt-BR', { timeZone: TIMEZONE })}
+                    </span>
                     <h3 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-pink-600 transition-colors font-inter">{article.title}</h3>
                   </div>
                 </Link>
@@ -265,7 +274,7 @@ export default async function Home() {
 
                     <div className="p-6 flex flex-col flex-1">
                       <div className="flex items-center gap-3 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wide">
-                        <span>{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
+                        <span>{new Date(article.published_at).toLocaleDateString('pt-BR', { timeZone: TIMEZONE })}</span>
                         <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                         <span>Leitura Rápida</span>
                       </div>
