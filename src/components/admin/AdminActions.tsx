@@ -35,7 +35,6 @@ export default function AdminActions({ isLoading, onScrape, onProcess, onDeleteA
         </button>
         {/* Usando Link do Next.js para navegação */}
         <Link href="/admin/manual" className={`btn-success ${ButtonBase}`}><Edit3 className="w-4 h-4" /> Manual</Link>
-        <Link href="/admin/rodada-nba" className={`bg-yellow-500 hover:bg-yellow-600 text-black ${ButtonBase}`}><Calendar className="w-4 h-4" /> Rodada Manual</Link>
         
         {/* NOVO BOTÃO */}
         <button onClick={onGenerateAutoAgenda} disabled={isLoading} className={`bg-purple-600 hover:bg-purple-700 text-white ${ButtonBase}`}>
