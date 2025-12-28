@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Milhão NBA - O Quiz | Duo Dunk',
-  description: 'O Quiz mais difícil do Brasil.',
+  description: 'O maior e mais difícil Quiz de NBA do Brasil.',
 };
 
 export const dynamic = 'force-dynamic';

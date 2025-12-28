@@ -227,7 +227,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
         )}
         
         <h2 className="text-lg md:text-2xl font-bebas text-white tracking-widest uppercase mb-4">
-          O Quiz Mais Difícil do Brasil
+          O maior e mais difícil Quiz de NBA do Brasil
         </h2>
         
         <div className="flex flex-col gap-3 w-full max-w-xs">
