@@ -1,40 +1,22 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { DOMParser } from "https://esm.sh/linkedom@0.14.12";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Seletores robustos (Múltiplas tentativas por site)
 const RSS_FEEDS = [
-  { 
-    name: 'CBS Sports', 
-    url: 'https://www.cbssports.com/rss/headlines/nba/',
-    selectors: ['.Article-bodyContent p', 'article p', '.article-content p', '[data-component="ArticleBody"] p']
-  },
-  { 
-    name: 'Yahoo Sports', 
-    url: 'https://sports.yahoo.com/nba/rss',
-    selectors: ['.caas-body p', 'article p', '.article-body p']
-  },
-  { 
-    name: 'ESPN', 
-    url: 'https://www.espn.com/espn/rss/nba/news',
-    selectors: ['.article-body p', 'article p', '.story p']
-  }
+  { name: 'CBS Sports', url: 'https://www.cbssports.com/rss/headlines/nba/' },
+  { name: 'Yahoo Sports', url: 'https://sports.yahoo.com/nba/rss' },
+  { name: 'ESPN', url: 'https://www.espn.com/espn/rss/nba/news' }
 ];
 
 const FAKE_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
   'Accept-Language': 'en-US,en;q=0.9',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Referer': 'https://www.google.com/',
-  'DNT': '1',
-  'Connection': 'keep-alive',
-  'Upgrade-Insecure-Requests': '1'
+  'Referer': 'https://www.google.com/'
 };
 
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
@@ -61,72 +43,67 @@ function extractImage(itemXml: string) {
   return null;
 }
 
-// Scraper Inteligente com Diagnóstico
-async function fetchFullArticle(url: string, selectors: string[]): Promise<{ text: string | null, stats: any }> {
+// ✅ SCRAPER COM REGEX (SEM dependências externas)
+async function fetchFullArticle(url: string): Promise<{ text: string | null, chars: number }> {
   try {
-    console.log(`\n🌐 Visitando: ${url}`);
+    console.log(`🌐 Visitando: ${url}`);
     
     const response = await fetch(url, { 
       headers: FAKE_HEADERS,
-      signal: AbortSignal.timeout(20000) // 20s timeout
+      signal: AbortSignal.timeout(20000)
     });
 
     if (!response.ok) {
       console.error(`❌ HTTP ${response.status}`);
-      return { text: null, stats: { error: `HTTP ${response.status}` } };
+      return { text: null, chars: 0 };
     }
 
     const html = await response.text();
     
-    if (html.length < 500) {
-      console.warn(`⚠️ HTML suspeito (${html.length} bytes) - Possível bloqueio`);
-      return { text: null, stats: { error: 'HTML vazio/bloqueado', size: html.length } };
+    if (html.length < 1000) {
+      console.warn(`⚠️ HTML muito pequeno (${html.length} bytes)`);
+      return { text: null, chars: 0 };
     }
 
-    const { document } = new DOMParser().parseFromString(html, 'text/html');
-
-    let paragraphs: string[] = [];
-    let selectorUsed = '';
-
-    // Tenta cada seletor da lista
-    for (const selector of selectors) {
-      const found = Array.from(document.querySelectorAll(selector))
-        .map(p => p.textContent?.trim())
-        .filter(text => text && text.length > 40);
-
-      if (found.length > 0) {
-        paragraphs = found;
-        selectorUsed = selector;
-        console.log(`✅ Seletor "${selector}" funcionou: ${found.length} parágrafos`);
-        break;
-      }
-    }
-
-    // Fallback: Se nenhum funcionou, pega todos os <p> da página
-    if (paragraphs.length === 0) {
-      console.warn(`⚠️ Seletores falharam. Tentando fallback genérico...`);
-      const allParagraphs = Array.from(document.querySelectorAll('p'))
-        .map(p => p.textContent?.trim())
-        .filter(text => text && text.length > 60);
+    // 🔥 REGEX: Extrai TODOS os <p>...</p> do HTML
+    const pTagsRegex = /<p[^>]*>(.*?)<\/p>/gis;
+    const matches = html.matchAll(pTagsRegex);
+    
+    const paragraphs: string[] = [];
+    for (const match of matches) {
+      // Limpeza de tags e entidades HTML
+      let text = match[1]
+        .replace(/<[^>]+>/g, '') // Remove tags internas
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .trim();
       
-      if (allParagraphs.length > 3) {
-        paragraphs = allParagraphs;
-        selectorUsed = 'fallback:p';
-        console.log(`⚠️ Fallback funcionou: ${paragraphs.length} parágrafos.`);
-      } else {
-        return { text: null, stats: { error: 'Nenhum texto encontrado' } };
+      // Filtros de qualidade: ignora menus, avisos de cookies e scripts
+      if (text.length > 60 && 
+          !text.includes('cookie') && 
+          !text.includes('JavaScript') &&
+          !text.includes('Copyright')) {
+        paragraphs.push(text);
       }
+    }
+
+    if (paragraphs.length === 0) {
+      console.error(`❌ Nenhum parágrafo extraído de ${url}`);
+      return { text: null, chars: 0 };
     }
 
     const fullText = paragraphs.join('\n\n');
-    return { 
-      text: fullText, 
-      stats: { selector: selectorUsed, chars: fullText.length } 
-    };
+    console.log(`✅ Extraído: ${paragraphs.length} parágrafos | ${fullText.length} chars`);
+    
+    return { text: fullText, chars: fullText.length };
 
   } catch (error) {
     console.error(`❌ Erro: ${error.message}`);
-    return { text: null, stats: { error: error.message } };
+    return { text: null, chars: 0 };
   }
 }
 
@@ -140,7 +117,7 @@ serve(async (req) => {
     );
 
     let allArticles: any[] = [];
-    let diagnostics: any[] = [];
+    let stats = { total: 0, scraped: 0, failed: 0 };
 
     for (const feed of RSS_FEEDS) {
       try {
@@ -150,10 +127,12 @@ serve(async (req) => {
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        // Pega as 8 últimas notícias
-        const recentItems = items.slice(0, 8);
+        
+        // Coleta as 8 notícias mais recentes
+        const recentItems = items.slice(0, 8); 
+        stats.total += recentItems.length;
 
-        console.log(`📋 ${recentItems.length} itens no feed RSS`);
+        console.log(`📋 ${recentItems.length} itens no RSS`);
 
         for (const itemXml of recentItems) {
           const title = extractTag(itemXml, 'title');
@@ -163,7 +142,7 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica se já existe
+          // Verifica se já existe na fila
           const { data: existing } = await supabase
             .from('articles_queue')
             .select('id')
@@ -175,13 +154,18 @@ serve(async (req) => {
              continue;
           }
 
-          // 🔥 SCRAPING PROFUNDO
-          const { text: fullContent, stats } = await fetchFullArticle(link, feed.selectors);
+          // Busca conteúdo integral via Regex
+          const { text: fullContent, chars } = await fetchFullArticle(link);
           
-          diagnostics.push({ title: title.slice(0, 30), stats });
+          if (!fullContent || chars < 200) {
+             console.warn(`⚠️ Scraping falhou. Usando resumo.`);
+             stats.failed++;
+          } else {
+             stats.scraped++;
+          }
 
           const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
-          const finalContent = fullContent || summary; // Usa o texto completo se tiver, senão o resumo
+          const finalContent = fullContent || summary;
 
           const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
           const finalImage = (image_url && !isInvalidImage) ? image_url : DEFAULT_IMAGE;
@@ -191,14 +175,12 @@ serve(async (req) => {
             original_title: title.slice(0, 200),
             original_link: link,
             summary: summary,
-            original_content: finalContent, // Guardando o ouro aqui
+            original_content: finalContent,
             image_url: finalImage,
             source: feed.name,
             status: 'pending_approval',
             created_at: new Date().toISOString()
           });
-
-          console.log(`💾 Pronto para salvar: ${finalContent.length} chars.`);
         }
       } catch (e) {
         console.error(`Erro no feed ${feed.name}:`, e.message);
@@ -212,12 +194,12 @@ serve(async (req) => {
         if (error) throw error;
     }
 
-    console.log(`\n🎉 Total salvos: ${allArticles.length}`);
+    console.log(`\n🎉 Finalizado: ${stats.scraped} artigos completos baixados.`);
 
     return new Response(JSON.stringify({ 
       success: true, 
       processed: allArticles.length,
-      diagnostics 
+      stats 
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {

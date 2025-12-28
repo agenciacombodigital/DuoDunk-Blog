@@ -6,6 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Modelos 2.5 (Flash e Lite)
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -41,44 +42,46 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // Busca o texto mais completo disponível
+    // Pega o texto completo capturado pelo Scraper
     const fullText = article.original_content || article.full_text || article.content || article.summary;
 
     if (!fullText || fullText.length < 200) {
         console.warn(`⚠️ Texto muito curto (${fullText?.length} chars). Verifique os logs do Scraper.`);
     }
 
-    // --- CÁLCULO DE PALAVRAS (A CHAVE DO SUCESSO) ---
+    // --- LÓGICA DE TRADUÇÃO ESPELHO ---
     const wordCount = fullText.split(/\s+/).length;
-    const minTarget = Math.floor(wordCount * 0.85); // Meta: 85% do original
+    const minWords = Math.floor(wordCount * 0.80); // Meta de extensão: 80% do original
     
-    console.log(`📝 Original: ${wordCount} palavras. Meta para IA: ~${minTarget} palavras.`);
+    console.log(`📝 Original: ${wordCount} palavras. Meta IA: ~${minWords} palavras.`);
 
     const prompt = `
     VOCÊ É: "Tradutor Espelho" especializado em NBA do DuoDunk.
-    MISSÃO: Converter o texto do Inglês para Português (Brasil) MANTENDO A EXTENSÃO ORIGINAL.
+    MISSÃO: Converter o texto do Inglês para Português (Brasil) SEM PERDER CONTEÚDO E DETALHES.
 
     TEXTO ORIGINAL (${wordCount} palavras):
     """
     ${fullText}
     """
 
-    🛑 REGRAS MATEMÁTICAS (NÃO RESUMA):
-    1. **TAMANHO:** O original tem ${wordCount} palavras. Seu texto deve ter no mínimo ${minTarget} palavras.
-    2. **ESTRUTURA:** Se o original tem 6 parágrafos, entregue 6 parágrafos.
-    3. **DADOS:** Não corte estatísticas, nomes de jogadores secundários ou citações. Traduza tudo.
-    4. **ESTILO:** Jornalístico profissional (ESPN/SporTV).
+    🛑 REGRAS MATEMÁTICAS OBRIGATÓRIAS (NÃO RESUMA):
+    1. **TAMANHO:** O original tem ${wordCount} palavras. O seu texto deve ter no mínimo ${minWords} palavras.
+    2. **ESTRUTURA:** Mantenha a mesma quantidade de parágrafos do original.
+    3. **INTEGRIDADE:** Não corte estatísticas, nomes de jogadores ou citações. Traduza tudo de forma fiel.
+    4. **ESTILO:** Linguagem de jornalismo esportivo profissional.
 
     SAÍDA JSON:
     {
-      "title": "Título traduzido (fiel ao original)",
-      "subtitle": "Subtítulo informativo",
+      "title": "Título fiel ao original (max 80 chars)",
+      "subtitle": "Subtítulo detalhado e informativo",
       "summary": "Resumo curto (max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1...", "Parágrafo 2...", "Parágrafo 3...", "..."
+        "Parágrafo 1 traduzido na íntegra...",
+        "Parágrafo 2 traduzido na íntegra...",
+        "..."
       ],
       "tags": ["nba", "time", "jogador", "topico"],
-      "meta_description": "SEO Description",
+      "meta_description": "Descrição SEO",
       "slug": "url-amigavel"
     }
     `;
@@ -102,7 +105,12 @@ serve(async (req) => {
               })
             });
 
-            if (!response.ok) continue;
+            if (!response.ok) {
+                const err = await response.text();
+                console.warn(`Erro no ${model}: ${err.substring(0, 100)}`);
+                continue;
+            }
+
             const json = await response.json();
             const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
             
@@ -114,7 +122,7 @@ serve(async (req) => {
         } catch (e) { console.error(e); }
     }
 
-    if (!aiResponse) throw new Error("Falha na IA.");
+    if (!aiResponse) throw new Error("Falha na IA. Nenhum modelo respondeu adequadamente.");
 
     const bodyText = aiResponse.paragraphs.map((p: string) => `<p>${p}</p>`).join('');
     const isOldBrokenPattern = article.image_url && (article.image_url.includes('agenda-nba-padrao.jpg') || article.image_url.includes('undefined') || article.image_url.length < 5);
@@ -138,6 +146,10 @@ serve(async (req) => {
         .eq('id', article.id);
 
     if (updateError) throw updateError;
+    
+    const finalWordCount = bodyText.split(/\s+/).length;
+    console.log(`✅ Sucesso! Original: ${wordCount} palavras -> Final: ${finalWordCount} palavras.`);
+
     return new Response(JSON.stringify({ success: true, model: modelUsed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
