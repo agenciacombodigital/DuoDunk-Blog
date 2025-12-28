@@ -43,74 +43,45 @@ function extractImage(itemXml: string) {
   return null;
 }
 
-// ✅ SCRAPER COM REGEX (Zero Dependências, Máxima Compatibilidade)
+// Scraper Otimizado (Regex + Timeout Curto)
 async function fetchFullArticle(url: string): Promise<{ text: string | null, chars: number }> {
   try {
-    console.log(`🌐 Visitando: ${url}`);
-    
+    // Timeout de 8s por página para não travar o processo geral
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 8000);
+
     const response = await fetch(url, { 
       headers: FAKE_HEADERS,
-      signal: AbortSignal.timeout(20000) // 20s timeout
+      signal: controller.signal
     });
+    clearTimeout(id);
 
-    if (!response.ok) {
-      console.error(`❌ HTTP ${response.status}`);
-      return { text: null, chars: 0 };
-    }
+    if (!response.ok) return { text: null, chars: 0 };
 
     const html = await response.text();
     
-    if (html.length < 1000) {
-      console.warn(`⚠️ HTML muito pequeno (${html.length} bytes) - Possível bloqueio`);
-      return { text: null, chars: 0 };
-    }
-
-    // 🔥 REGEX PODEROSA: Extrai o conteúdo dentro de tags <p>
-    // Ignora atributos (class, id) e pega o miolo
+    // Regex para extrair <p>
     const pTagsRegex = /<p[^>]*>(.*?)<\/p>/gis;
     const matches = html.matchAll(pTagsRegex);
     
     const paragraphs: string[] = [];
     for (const match of matches) {
-      let text = match[1];
-
-      // Limpeza de Tags HTML internas (links, bold, etc)
-      text = text.replace(/<[^>]+>/g, '');
-      
-      // Limpeza de Entidades HTML comuns
-      text = text
+      let text = match[1]
+        .replace(/<[^>]+>/g, '') // Remove tags
         .replace(/&nbsp;/g, ' ')
-        .replace(/&quot;/g, '"')
-        .replace(/&apos;/g, "'")
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
         .trim();
       
-      // 🕵️ Filtros de Qualidade: Ignora lixo comum de rodapé/menu
-      if (text.length > 50 && 
-          !text.toLowerCase().includes('cookie') && 
-          !text.toLowerCase().includes('rights reserved') &&
-          !text.toLowerCase().includes('privacy policy') &&
-          !text.includes('{') && // Evita pedaços de JSON/JS
-          !text.includes('function(')) {
+      if (text.length > 60 && !text.includes('cookie') && !text.includes('JavaScript')) {
         paragraphs.push(text);
       }
     }
 
-    if (paragraphs.length === 0) {
-      console.error(`❌ Nenhum parágrafo válido extraído de ${url}`);
-      return { text: null, chars: 0 };
-    }
+    if (paragraphs.length === 0) return { text: null, chars: 0 };
 
-    // Junta os parágrafos com quebra de linha dupla
     const fullText = paragraphs.join('\n\n');
-    console.log(`✅ Extraído: ${paragraphs.length} parágrafos | ${fullText.length} chars`);
-    
     return { text: fullText, chars: fullText.length };
 
   } catch (error) {
-    console.error(`❌ Erro no fetchFullArticle: ${error.message}`);
     return { text: null, chars: 0 };
   }
 }
@@ -125,22 +96,18 @@ serve(async (req) => {
     );
 
     let allArticles: any[] = [];
-    let stats = { total: 0, scraped: 0, failed: 0 };
+    let stats = { total: 0, scraped: 0 };
 
     for (const feed of RSS_FEEDS) {
       try {
-        console.log(`\n📡 === ${feed.name} ===`);
-        const response = await fetch(feed.url, { headers: FAKE_HEADERS, signal: AbortSignal.timeout(10000) });
+        const response = await fetch(feed.url, { headers: FAKE_HEADERS, signal: AbortSignal.timeout(5000) });
         if (!response.ok) continue;
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
         
-        // Pega as 8 últimas notícias
-        const recentItems = items.slice(0, 8); 
-        stats.total += recentItems.length;
-
-        console.log(`📋 ${recentItems.length} itens no RSS`);
+        // ✅ REDUZIDO PARA 3 ITENS (Evita Timeout Geral)
+        const recentItems = items.slice(0, 3); 
 
         for (const itemXml of recentItems) {
           const title = extractTag(itemXml, 'title');
@@ -150,31 +117,22 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica se já existe para não gastar recurso de scraping
+          // Verifica duplicata ANTES de fazer o scrape pesado
           const { data: existing } = await supabase
             .from('articles_queue')
             .select('id')
             .eq('original_link', link)
             .maybeSingle();
 
-          if (existing) {
-             console.log(`⏭️ Já existe: ${title.slice(0, 20)}...`);
-             continue;
-          }
+          if (existing) continue;
 
-          // 🔥 TENTA O SCRAPING COMPLETO (Texto longo)
+          // Scraping Leve
           const { text: fullContent, chars } = await fetchFullArticle(link);
-          
-          if (!fullContent || chars < 200) {
-             console.warn(`⚠️ Scraping falhou ou retornou pouco texto. Usando resumo RSS.`);
-             stats.failed++;
-          } else {
-             stats.scraped++;
-          }
-
-          // Se o scrape falhar, usa o resumo do RSS como fallback
           const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
-          const finalContent = (fullContent && fullContent.length > summary.length) ? fullContent : summary;
+          
+          // Se o scrape falhar, usa o resumo RSS
+          const finalContent = (fullContent && chars > 200) ? fullContent : summary;
+          if (finalContent.length > summary.length) stats.scraped++;
 
           const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
           const finalImage = (image_url && !isInvalidImage) ? image_url : DEFAULT_IMAGE;
@@ -184,7 +142,7 @@ serve(async (req) => {
             original_title: title.slice(0, 200),
             original_link: link,
             summary: summary,
-            original_content: finalContent, // O texto completo vai aqui
+            original_content: finalContent,
             image_url: finalImage,
             source: feed.name,
             status: 'pending_approval',
@@ -192,7 +150,7 @@ serve(async (req) => {
           });
         }
       } catch (e) {
-        console.error(`Erro no feed ${feed.name}:`, e.message);
+        console.error(`Erro feed ${feed.name}:`, e.message);
       }
     }
 
@@ -203,12 +161,10 @@ serve(async (req) => {
         if (error) throw error;
     }
 
-    console.log(`\n🎉 Finalizado: ${stats.scraped} artigos completos capturados.`);
-
     return new Response(JSON.stringify({ 
       success: true, 
       processed: allArticles.length,
-      stats 
+      scraped_full: stats.scraped 
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
