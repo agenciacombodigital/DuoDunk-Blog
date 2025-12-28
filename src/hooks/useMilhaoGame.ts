@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
 const MAX_QUESTIONS = 23;
-const INITIAL_TIME = 30; // 30 SEGUNDOS (Hardcore)
+const INITIAL_TIME = 24; // 24 SEGUNDOS (Shot Clock NBA)
 
 export function useMilhaoGame() {
   const [gameState, setGameState] = useState<'start' | 'playing' | 'won' | 'lost' | 'paused' | 'stopped'>('start');

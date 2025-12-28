@@ -17,7 +17,7 @@ interface QuizSettings {
 export default function MilhaoInterface({ initialSettings }: { initialSettings: QuizSettings }) {
   const { 
     gameState, setGameState, currentQuestion, prize, loading: gameLoading, startGame, handleAnswer, 
-    handleStop, timer, currentQIndex, questions // <-- ADICIONADO currentQIndex e questions
+    handleStop, timer, currentQIndex, questions, INITIAL_TIME // <-- ADICIONADO INITIAL_TIME
   } = useMilhaoGame();
   
   const [settings] = useState<QuizSettings>(initialSettings);
@@ -310,7 +310,7 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
             <div className="flex flex-col items-end">
                  <div className={`text-3xl md:text-4xl font-black font-oswald ${timer <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>{timer}s</div>
                  <div className="w-24 md:w-32 h-1.5 md:h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
-                    <div className={`h-full ${timer <= 10 ? 'bg-red-500' : 'bg-[#00ff00]'} transition-all duration-1000 linear`} style={{ width: `${(timer / 30) * 100}%` }} />
+                    <div className={`h-full ${timer <= 10 ? 'bg-red-500' : 'bg-[#00ff00]'} transition-all duration-1000 linear`} style={{ width: `${(timer / INITIAL_TIME) * 100}%` }} />
                  </div>
             </div>
         </div>
