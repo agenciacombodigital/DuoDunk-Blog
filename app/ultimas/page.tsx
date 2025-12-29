@@ -9,7 +9,7 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'Últimas Notícias | Duo Dunk',
-  description: 'Confira as últimas notícias, rumores e análises da NBA em tempo real.',
+  description: 'Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!',
   alternates: {
     canonical: '/ultimas',
   },

@@ -20,24 +20,24 @@ const baseUrl = 'https://www.duodunk.com.br';
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "DuoDunk - Notícias NBA e Quiz Milhão",
+    default: "DuoDunk - Notícias NBA em Tempo Real e Quiz Milhão NBA",
     template: "%s | DuoDunk"
   },
-  description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
+  description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!",
   
   openGraph: {
     type: "website",
     locale: "pt_BR",
     url: "/",
     siteName: "DuoDunk",
-    title: "DuoDunk - Notícias NBA e Quiz Milhão",
-    description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
+    title: "DuoDunk - Notícias NBA em Tempo Real e Quiz Milhão NBA",
+    description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!",
     images: [
       {
-        url: "/images/card-twitter-duodunk.jpg", // Arquivo que realmente existe no projeto
+        url: "/images/card-twitter-duodunk.jpg",
         width: 1200,
-        height: 630,
-        alt: "DuoDunk NBA",
+        height: 628,
+        alt: "DuoDunk - O Portal do Basquete NBA",
       },
     ],
   },
@@ -46,8 +46,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@duodunk",
     creator: "@duodunk",
-    title: "DuoDunk - Notícias NBA e Quiz Milhão",
-    description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
+    title: "DuoDunk - Notícias NBA em Tempo Real e Quiz Milhão NBA",
+    description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!",
     images: ["/images/card-twitter-duodunk.jpg"],
   },
 

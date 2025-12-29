@@ -33,12 +33,13 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const article = await getArticle(params.slug);
+  const siteUrl = 'https://www.duodunk.com.br';
+  
   if (!article) return { title: 'Artigo não encontrado | Duo Dunk' };
 
-  const siteUrl = 'https://www.duodunk.com.br';
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
-  const ogImage = article.image_url || `${siteUrl}/images/logo-duodunk-share.jpg`;
-  const description = article.meta_description || article.summary || 'Notícias da NBA no Duo Dunk.';
+  const ogImage = article.image_url || `${siteUrl}/images/card-twitter-duodunk.jpg`;
+  const description = article.meta_description || article.summary || 'Acompanhe as últimas notícias da NBA em tempo real no Duo Dunk. O melhor do basquete está aqui!';
 
   return {
     title: article.title,
@@ -49,7 +50,7 @@ export async function generateMetadata(
       description: description,
       url: currentUrl,
       siteName: 'Duo Dunk',
-      images: [{ url: ogImage, width: 1200, height: 630, alt: article.title }],
+      images: [{ url: ogImage, width: 1200, height: 628, alt: article.title }],
       locale: 'pt_BR',
       type: 'article',
     },

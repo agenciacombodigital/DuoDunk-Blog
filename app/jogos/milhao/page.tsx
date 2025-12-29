@@ -4,17 +4,24 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Milhão NBA - O Quiz | Duo Dunk',
-  description: 'O maior e mais difícil Quiz de NBA do Brasil.',
+  description: 'Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!',
   openGraph: {
     title: 'Milhão NBA - O Quiz | Duo Dunk',
-    description: 'O maior e mais difícil Quiz de NBA do Brasil.',
-    images: ['/images/card-twitter-duodunk.jpg'],
+    description: 'Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!',
+    images: [
+      {
+        url: '/images/card-twitter-duodunk.jpg',
+        width: 1200,
+        height: 628,
+        alt: "DuoDunk - O Portal do Basquete NBA",
+      }
+    ],
     type: 'website',
   },
   twitter: {
     card: "summary_large_image",
     title: 'Milhão NBA - O Quiz | Duo Dunk',
-    description: 'O maior e mais difícil Quiz de NBA do Brasil.',
+    description: 'Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!',
     images: ['/images/card-twitter-duodunk.jpg'],
   }
 };
