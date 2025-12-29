@@ -8,7 +8,8 @@ import { toast } from "sonner";
 import { Slider } from '@/components/ui/slider';
 import { getObjectPositionStyle, getHorizontalFocalPoint, getVerticalFocalPoint, slugify } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { clearAllFeaturedArticlesServer } from '@/services/adminActions'; // Importando Server Action
+import { clearAllFeaturedArticlesServer } from '@/services/adminActions';
+import { optimizeImageForOG } from '@/utils/imageProcessing'; // Importando otimizador
 import Link from 'next/link';
 
 export default function EditArticle({ params }: { params: { slug: string } }) {
@@ -22,7 +23,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
   
   const [formData, setFormData] = useState({
     title: '',
-    subtitle: '', // Adicionado
+    subtitle: '',
     slug: '',
     summary: '',
     body: '',
@@ -56,7 +57,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
       setArticle(data);
       setFormData({
         title: data.title || '',
-        subtitle: data.subtitle || '', // Adicionado
+        subtitle: data.subtitle || '',
         slug: data.slug || '',
         summary: data.summary || '',
         body: data.body || '',
@@ -81,15 +82,21 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
       return;
     }
 
-    const toastId = toast.loading("Fazendo upload da imagem...");
+    const toastId = toast.loading("Otimizando e enviando imagem...");
     setUploadingImage(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `public/${article.id}-${Date.now()}.${fileExt}`;
+      // ✅ OTIMIZAÇÃO: Converte para JPG 1200x630 antes do upload
+      const optimizedBlob = await optimizeImageForOG(file);
+      const optimizedFile = new File([optimizedBlob], `${article.id}.jpg`, { type: 'image/jpeg' });
+
+      const fileName = `public/${article.id}-${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('article-images')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, optimizedFile, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -97,11 +104,10 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
         .from('article-images')
         .getPublicUrl(fileName);
 
-      // ✅ Atualiza o formData com o novo URL público
       setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
-      toast.success('Imagem atualizada com sucesso!', { id: toastId });
+      toast.success('Imagem otimizada e salva!', { id: toastId });
     } catch (error: any) {
-      toast.error('Erro ao fazer upload', { id: toastId, description: error.message });
+      toast.error('Erro ao processar imagem', { id: toastId, description: error.message });
     } finally {
       setUploadingImage(false);
     }
@@ -119,7 +125,6 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
     const toastId = toast.loading("Salvando alterações...");
     try {
       if (formData.is_featured && !article.is_featured) {
-        // Usando a Server Action para limpar destaques
         await clearAllFeaturedArticlesServer();
       }
 
@@ -127,7 +132,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
         .from('articles')
         .update({
           title: formData.title,
-          subtitle: formData.subtitle, // Adicionado
+          subtitle: formData.subtitle,
           slug: finalSlug,
           summary: formData.summary,
           body: formData.body,
@@ -138,17 +143,14 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
           image_focal_point: formData.image_focal_point,
           image_focal_point_mobile: formData.image_focal_point_mobile,
           is_featured: formData.is_featured,
-          updated_at: new Date().toISOString(), // Força a atualização do timestamp
+          updated_at: new Date().toISOString(),
         })
         .eq('id', article.id);
 
       if (error) throw error;
 
       toast.success('Artigo atualizado com sucesso!', { id: toastId });
-      
-      // Navega para o painel de administração após salvar
       router.push('/admin');
-      
     } catch (error: any) {
       toast.error('Erro ao salvar', { id: toastId, description: error.message });
     } finally {
@@ -157,11 +159,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
   };
 
   const handleDelete = async () => {
-    const confirmText = prompt(
-      '⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\n' +
-      'Digite "DELETAR" para confirmar:'
-    );
-
+    const confirmText = prompt('⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nDigite "DELETAR" para confirmar:');
     if (confirmText !== 'DELETAR') {
       toast.info('Operação cancelada.');
       return;
@@ -170,13 +168,8 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
     setSaving(true);
     const toastId = toast.loading("Deletando artigo...");
     try {
-      const { error } = await supabase
-        .from('articles')
-        .delete()
-        .eq('id', article.id);
-
+      const { error } = await supabase.from('articles').delete().eq('id', article.id);
       if (error) throw error;
-
       toast.success('Artigo deletado com sucesso!', { id: toastId });
       router.push('/admin');
     } catch (error: any) {
@@ -186,13 +179,7 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
 
   const currentHorizontalFocalPoint = getHorizontalFocalPoint(formData.image_focal_point);
   const currentMobileFocalPoint = getVerticalFocalPoint(formData.image_focal_point_mobile);
@@ -203,46 +190,15 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
         <div className="bg-gray-800 rounded-2xl p-6 mb-6 border border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link
-                href="/admin"
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-6 h-6 text-gray-400" />
-              </Link>
+              <Link href="/admin" className="p-2 hover:bg-gray-700 rounded-lg transition-colors"><ArrowLeft className="w-6 h-6 text-gray-400" /></Link>
               <div>
                 <h1 className="text-3xl font-bold font-oswald uppercase">Editar Notícia</h1>
-                <p className="text-sm text-gray-400 mt-1 font-inter">
-                  Publicado em {new Date(article.published_at).toLocaleDateString('pt-BR')}
-                </p>
+                <p className="text-sm text-gray-400 mt-1 font-inter">Publicado em {new Date(article.published_at).toLocaleDateString('pt-BR')}</p>
               </div>
             </div>
-
             <div className="flex gap-3">
-              <button
-                onClick={handleDelete}
-                disabled={saving}
-                className="btn-danger flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Trash2 className="w-5 h-5" />
-                Deletar
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="btn-magenta flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    Salvar Alterações
-                  </>
-                )}
-              </button>
+              <button onClick={handleDelete} disabled={saving} className="btn-danger flex items-center justify-center gap-2 disabled:opacity-50"><Trash2 className="w-5 h-5" />Deletar</button>
+              <button onClick={handleSave} disabled={saving} className="btn-magenta flex items-center justify-center gap-2 disabled:opacity-50">{saving ? <><Loader2 className="w-5 h-5 animate-spin" />Salvando...</> : <><Save className="w-5 h-5" />Salvar Alterações</>}</button>
             </div>
           </div>
         </div>
@@ -250,258 +206,74 @@ export default function EditArticle({ params }: { params: { slug: string } }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Título da Notícia
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg font-oswald uppercase font-bold"
-                placeholder="Digite o título..."
-              />
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Título da Notícia</label>
+              <input type="text" value={formData.title} onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg font-oswald uppercase font-bold" placeholder="Digite o título..." />
             </div>
             
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Subtítulo (Aparece abaixo do título no artigo)
-              </label>
-              <textarea
-                value={formData.subtitle}
-                onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-                rows={2}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-inter"
-                placeholder="Ex: A estrela dos Lakers enfrenta sua 13ª contusão..."
-              />
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Subtítulo</label>
+              <textarea value={formData.subtitle} onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))} rows={2} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-inter" placeholder="Ex: A estrela dos Lakers enfrenta sua 13ª contusão..." />
             </div>
             
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Slug (URL)
-              </label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                onBlur={() => setFormData(prev => ({ ...prev, slug: slugify(prev.slug || prev.title) }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm font-mono"
-                placeholder="slug-da-noticia"
-              />
-              <p className="text-xs text-gray-500 mt-2 font-inter">
-                URL atual: <span className="text-cyan-400 break-all">/artigos/{formData.slug}</span>
-              </p>
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Slug (URL)</label>
+              <input type="text" value={formData.slug} onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))} onBlur={() => setFormData(prev => ({ ...prev, slug: slugify(prev.slug || prev.title) }))} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm font-mono" placeholder="slug-da-noticia" />
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Resumo (Aparece nos cards da Home)
-              </label>
-              <textarea
-                value={formData.summary}
-                onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))}
-                rows={4}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-inter"
-                placeholder="Escreva um resumo atrativo..."
-              />
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Resumo</label>
+              <textarea value={formData.summary} onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))} rows={4} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-inter" placeholder="Escreva um resumo atrativo..." />
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Conteúdo Completo (HTML)
-              </label>
-              <textarea
-                value={formData.body}
-                onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
-                rows={20}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-mono text-sm font-inter"
-                placeholder="<p>Parágrafo 1.</p><p>Parágrafo 2.</p>"
-              />
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Conteúdo Completo (HTML)</label>
+              <textarea value={formData.body} onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))} rows={20} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none font-mono text-sm font-inter" placeholder="<p>Conteúdo...</p>" />
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                🎬 Vídeo (Opcional) - YouTube, Twitter ou Instagram
-              </label>
-              <input
-                type="url"
-                value={formData.video_url || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent font-inter"
-                placeholder="https://... (YouTube, Twitter ou Instagram)"
-              />
-              <p className="text-xs text-gray-500 mt-2 font-inter">
-                Se preenchido, o vídeo substituirá a imagem de destaque.
-              </p>
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">🎬 Vídeo URL</label>
+              <input type="url" value={formData.video_url || ''} onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent font-inter" placeholder="https://..." />
             </div>
           </div>
 
           <div className="space-y-6">
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-4 font-inter">
-                Imagem de Destaque
-              </label>
-
+              <label className="block text-sm font-bold text-gray-300 mb-4 font-inter">Imagem de Destaque</label>
               {formData.image_url && (
                 <div className="relative mb-4 rounded-xl overflow-hidden aspect-video">
-                  <img
-                    src={formData.image_url}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    style={getObjectPositionStyle(formData.image_focal_point)}
-                  />
-                  <button
-                    onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                    className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" style={getObjectPositionStyle(formData.image_focal_point)} />
+                  <button onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"><X className="w-4 h-4" /></button>
                 </div>
               )}
-
               <div className="flex gap-2 items-center">
-                <input
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500 transition"
-                  placeholder="Cole a URL da imagem aqui..."
-                />
-                
-                <input
-                  type="file"
-                  id="image-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file);
-                  }}
-                  disabled={uploadingImage}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className={`flex items-center justify-center gap-2 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition cursor-pointer ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {uploadingImage ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Enviando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5" />
-                      <span>Upload</span>
-                    </>
-                  )}
-                </label>
+                <input type="url" value={formData.image_url} onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))} className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500 transition" placeholder="URL da imagem..." />
+                <input type="file" id="image-upload" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file); }} disabled={uploadingImage} />
+                <label htmlFor="image-upload" className={`flex items-center justify-center gap-2 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:bg-gray-700 transition cursor-pointer ${uploadingImage ? 'opacity-50' : ''}`}>{uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}</label>
               </div>
-              
               <div className="mt-6 pt-4 border-t border-gray-700">
-                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                  Foco Vertical (Mobile 3:4)
-                </label>
+                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Foco Vertical (Mobile)</label>
                 <div className="relative mb-4 rounded-xl overflow-hidden aspect-[3/4] border-2 border-pink-500/50 mt-2 max-h-96 mx-auto max-w-xs">
-                  <img
-                    src={formData.image_url}
-                    alt="Preview Mobile"
-                    className="w-full h-full object-cover"
-                    style={getObjectPositionStyle(formData.image_focal_point_mobile, true)}
-                  />
-                  <div className="absolute inset-0 border-4 border-dashed border-white/50 pointer-events-none flex items-center justify-center">
-                    <span className="text-white text-xs bg-black/50 p-1 rounded font-inter">Corte Mobile (3:4)</span>
-                  </div>
+                  <img src={formData.image_url} alt="" className="w-full h-full object-cover" style={getObjectPositionStyle(formData.image_focal_point_mobile, true)} />
                 </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="text-xs text-gray-400 font-inter">Topo</span>
-                  <Slider
-                    value={[currentMobileFocalPoint]}
-                    onValueChange={(value) => {
-                      setFormData(prev => ({ ...prev, image_focal_point_mobile: `${value[0]}%` }));
-                    }}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                  />
-                  <span className="text-xs text-gray-400 font-inter">Baixo</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-2 font-inter">
-                  Ajuste para garantir que o assunto principal apareça no corte vertical (3:4) da Home.
-                </p>
-              </div>
-              
-              <div className="mt-6 pt-4 border-t border-gray-700">
-                <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                  Foco Horizontal (Desktop 16:9)
-                </label>
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="text-xs text-gray-400 font-inter">Esquerda</span>
-                  <Slider
-                    value={[currentHorizontalFocalPoint]}
-                    onValueChange={(value) => {
-                      const currentVertical = getVerticalFocalPoint(formData.image_focal_point);
-                      setFormData(prev => ({ ...prev, image_focal_point: `${value[0]}% ${currentVertical}%` }));
-                    }}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                  />
-                  <span className="text-xs text-gray-400 font-inter">Direita</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-2 font-inter">
-                  Ajuste para garantir que o assunto principal apareça no corte horizontal (16:9).
-                </p>
+                <Slider value={[currentMobileFocalPoint]} onValueChange={(v) => setFormData(p => ({ ...p, image_focal_point_mobile: `${v[0]}%` }))} max={100} step={1} className="w-full" />
               </div>
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Tags
-              </label>
-              <input
-                type="text"
-                value={formData.tags.join(', ')}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  tags: e.target.value.split(',').map(t => t.trim()).filter(t => t)
-                }))}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm font-inter"
-                placeholder="nba, basquete, lakers..."
-              />
-              <p className="text-xs text-gray-500 mt-2 font-inter">
-                Separe as tags por vírgula
-              </p>
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Tags</label>
+              <input type="text" value={formData.tags.join(', ')} onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) }))} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 text-sm font-inter" placeholder="nba, basquete..." />
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">
-                Meta Description (SEO)
-              </label>
-              <textarea
-                value={formData.meta_description}
-                onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))}
-                rows={4}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none text-sm font-inter"
-                placeholder="Descrição para mecanismos de busca..."
-              />
+              <label className="block text-sm font-bold text-gray-300 mb-2 font-inter">Meta Description</label>
+              <textarea value={formData.meta_description} onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))} rows={4} className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 resize-none text-sm font-inter" placeholder="Descrição para busca..." />
             </div>
 
             <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="featured-edit"
-                  checked={formData.is_featured}
-                  onChange={(e) => setFormData(prev => ({ ...prev, is_featured: e.target.checked }))}
-                  className="w-5 h-5 rounded border-gray-600 text-pink-600 focus:ring-pink-500 focus:ring-offset-gray-900 cursor-pointer"
-                />
+                <input type="checkbox" id="featured-edit" checked={formData.is_featured} onChange={(e) => setFormData(prev => ({ ...prev, is_featured: e.target.checked }))} className="w-5 h-5 rounded border-gray-600 text-pink-600 focus:ring-pink-500 cursor-pointer" />
                 <label htmlFor="featured-edit" className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <Star className={`w-5 h-5 text-yellow-500 ${formData.is_featured ? 'fill-yellow-500' : ''}`} />
-                    <span className="font-bold text-white">Marcar como Destaque</span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Isso substituirá qualquer outra notícia em destaque.
-                  </p>
+                  <div className="flex items-center gap-2"><Star className={`w-5 h-5 text-yellow-500 ${formData.is_featured ? 'fill-yellow-500' : ''}`} /><span className="font-bold text-white">Destaque</span></div>
                 </label>
               </div>
             </div>

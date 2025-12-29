@@ -39,13 +39,11 @@ export async function generateMetadata(
 
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
   
-  // Garante que a imagem seja uma URL absoluta para o WhatsApp
   let ogImage = article.image_url;
   if (ogImage && !ogImage.startsWith('http')) {
     ogImage = `${siteUrl}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
   }
   
-  // Fallback definitivo se a imagem estiver quebrada ou ausente
   if (!ogImage || ogImage.includes('undefined') || ogImage.length < 10) {
     ogImage = `${siteUrl}/images/card-twitter-duodunk.jpg`;
   }
@@ -68,6 +66,7 @@ export async function generateMetadata(
           width: 1200,
           height: 630,
           alt: title,
+          type: 'image/jpeg', // ✅ TIPO EXPLÍCITO PARA WHATSAPP
         }
       ],
       locale: 'pt_BR',
