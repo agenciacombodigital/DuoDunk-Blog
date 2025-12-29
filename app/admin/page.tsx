@@ -16,7 +16,8 @@ import AutoApprovedSection from '@/components/admin/AutoApprovedSection';
 import { retryRateLimitedArticles } from '@/lib/retryRateLimitedArticles';
 import { useAuth } from '@/hooks/useAuth';
 import { clearAllFeaturedArticlesServer, getRateLimitStatsServer } from '@/services/adminActions'; 
-import { approveAndPublishArticleServer } from '@/services/articleActions'; // Importando a nova Server Action
+import { approveAndPublishArticleServer } from '@/services/articleActions';
+import { optimizeImageForOG } from '@/utils/imageProcessing'; // Importando o otimizador
 
 export default function AdminPage() {
   const router = useRouter();
@@ -55,7 +56,6 @@ export default function AdminPage() {
   };
 
   const loadQueue = async () => {
-    // BUSCA ATÉ 200 ITENS DA FILA (Aumentado)
     const { data, error } = await supabase
       .from('articles_queue')
       .select('*')
@@ -80,14 +80,12 @@ export default function AdminPage() {
   };
   
   const loadRateLimitStats = async () => {
-    // Usando a Server Action para buscar stats
     const stats = await getRateLimitStatsServer();
     if (stats.success) {
       setRateLimitStats(stats);
     }
   };
 
-  // --- NOVO: Acionar o Robô da Agenda ---
   const handleAutoAgenda = async () => {
     const toastId = toast.loading("🤖 Robô criando a agenda...");
     try {
@@ -101,7 +99,6 @@ export default function AdminPage() {
       toast.error('Erro no robô', { id: toastId, description: error.message });
     }
   };
-  // --------------------------------------
 
   const scrape = async () => {
     setIsScraping(true);
@@ -139,7 +136,6 @@ export default function AdminPage() {
     setIsRetrying(true);
     const toastId = toast.loading("Retentando artigos com Rate Limit...");
     try {
-      // Esta função usa o cliente normal, então pode ser chamada diretamente
       const result = await retryRateLimitedArticles();
       if (result.success) {
         if (result.processed > 0) {
@@ -163,17 +159,30 @@ export default function AdminPage() {
       toast.error('Por favor, selecione apenas imagens!');
       return;
     }
+    
     setUploadingImage(articleId);
-    const toastId = toast.loading("Fazendo upload da imagem...");
+    const toastId = toast.loading("Otimizando e enviando imagem...");
+    
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `public/${articleId}-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('article-images').upload(fileName, file, { upsert: true });
+      // ✅ OTIMIZAÇÃO: Converte para JPG 1200x630 (padrão Open Graph)
+      const optimizedBlob = await optimizeImageForOG(file);
+      const optimizedFile = new File([optimizedBlob], `${articleId}.jpg`, { type: 'image/jpeg' });
+      
+      const fileName = `public/${articleId}-${Date.now()}.jpg`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('article-images')
+        .upload(fileName, optimizedFile, { 
+          upsert: true,
+          contentType: 'image/jpeg',
+          cacheControl: '31536000'
+        });
+
       if (uploadError) throw uploadError;
+      
       const { data } = supabase.storage.from('article-images').getPublicUrl(fileName);
       if (!data.publicUrl) throw new Error("URL da imagem não encontrada.");
       
-      // Determina a tabela correta para atualização
       const table = published.some(p => p.id === articleId) ? 'articles' : 'articles_queue';
       
       const { error: updateError } = await supabase.from(table).update({ image_url: data.publicUrl }).eq('id', articleId);
@@ -182,8 +191,8 @@ export default function AdminPage() {
       if (editingArticle && editingArticle.id === articleId) {
         setEditingArticle((prev: any) => ({ ...prev, image_url: data.publicUrl }));
       }
-      toast.success('Imagem atualizada!', { id: toastId });
-      await loadData(); // Recarrega ambas as listas
+      toast.success('Imagem otimizada!', { id: toastId });
+      await loadData();
     } catch (error: any) {
       toast.error('Erro no upload', { id: toastId, description: error.message });
     } finally {
@@ -193,8 +202,6 @@ export default function AdminPage() {
 
   const handleFocalPointCommit = async (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
-    
-    // Determina a tabela correta para atualização
     const table = published.some(p => p.id === articleId) ? 'articles' : 'articles_queue';
     
     const { error } = await supabase
@@ -212,8 +219,6 @@ export default function AdminPage() {
 
   const handleFocalPointChange = (articleId: string, focalPoints: [string, string]) => {
     const [desktopFocalPoint, mobileFocalPoint] = focalPoints;
-    
-    // Atualiza o estado local da fila
     setQueue(prevQueue =>
       prevQueue.map(a =>
         a.id === articleId ? { 
@@ -223,8 +228,6 @@ export default function AdminPage() {
         } : a
       )
     );
-    
-    // Se for um artigo publicado, atualiza o estado local de published também (para o modal)
     setPublished(prevPublished =>
       prevPublished.map(a =>
         a.id === articleId ? { 
@@ -240,7 +243,6 @@ export default function AdminPage() {
     if (!window.confirm('Aprovar e publicar este artigo?')) return;
     const toastId = toast.loading("Publicando artigo...");
     try {
-      // Usando a Server Action para aprovar e revalidar o cache
       const result = await approveAndPublishArticleServer(article);
       
       if (!result.success) {
@@ -251,14 +253,9 @@ export default function AdminPage() {
       }
       
       toast.success('Artigo publicado! 🚀', { id: toastId });
-      
-      // ✅ CORREÇÃO: Usar router.refresh() para recarregar o Server Component (AdminPage)
       router.refresh(); 
-      
-      // Recarregar apenas os stats e a fila localmente (o published será recarregado pelo refresh)
       await loadQueue();
       await loadRateLimitStats();
-      
       setShowEditModal(false);
     } catch (error: any) {
       console.error('❌ ERRO:', error);
@@ -301,7 +298,6 @@ export default function AdminPage() {
     }
   };
   
-  // --- NOVA FUNÇÃO: DELETAR MÚLTIPLOS DA FILA ---
   const deleteMultipleFromQueue = async (articleIds: string[]) => {
     if (articleIds.length === 0) return;
     if (!window.confirm(`DELETAR ${articleIds.length} artigos da fila permanentemente? Esta ação é irreversível.`)) return;
@@ -318,7 +314,6 @@ export default function AdminPage() {
       toast.error('Erro ao deletar múltiplos artigos', { id: toastId, description: error.message });
     }
   };
-  // ---------------------------------------------
 
   const deletePublishedArticle = async (articleId: string) => {
     if (!window.confirm('DELETAR este artigo publicado permanentemente? Esta ação é irreversível.')) return;
@@ -327,7 +322,6 @@ export default function AdminPage() {
       await supabase.from('articles').delete().eq('id', articleId);
       toast.success('Artigo publicado deletado.', { id: toastId });
       await loadPublished();
-      // Revalida a home e ultimas após deletar um artigo publicado
       router.refresh(); 
     } catch (error: any) {
       toast.error('Erro ao deletar', { id: toastId, description: error.message });
@@ -343,11 +337,9 @@ export default function AdminPage() {
     setIsDeleting(true);
     const toastId = toast.loading("Deletando todas as notícias...");
     try {
-      // Usando o cliente normal, mas confiando que o RLS está desativado para admins
       await supabase.from('articles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       toast.success('Todas as notícias foram deletadas!', { id: toastId });
       await loadPublished();
-      // Revalida a home e ultimas após deletar tudo
       router.refresh(); 
     } catch (error: any) {
       toast.error('Erro ao deletar', { id: toastId, description: error.message });
@@ -366,11 +358,9 @@ export default function AdminPage() {
     const toastId = toast.loading("Salvando alterações...");
 
     try {
-      // Verifica se é um artigo publicado ou da fila
       const isPublished = published.some(p => p.id === articleToSave.id);
       const table = isPublished ? 'articles' : 'articles_queue';
 
-      // Campos a serem atualizados
       const updatePayload = {
         title: articleToSave.title,
         slug: articleToSave.slug,
@@ -383,14 +373,13 @@ export default function AdminPage() {
         image_focal_point: articleToSave.image_focal_point,
         image_focal_point_mobile: articleToSave.image_focal_point_mobile,
         is_featured: articleToSave.is_featured,
-        subtitle: articleToSave.subtitle, // Incluindo subtitle
-        author: articleToSave.author, // Incluindo author
-        // Apenas para artigos publicados, atualiza o timestamp
+        subtitle: articleToSave.subtitle, 
+        author: articleToSave.author, 
         ...(isPublished && { updated_at: new Date().toISOString() }),
       };
 
       const { error } = await supabase
-        .from(table) // ✅ Escolhe a tabela certa dinamicamente
+        .from(table) 
         .update(updatePayload)
         .eq('id', articleToSave.id);
 
@@ -399,11 +388,9 @@ export default function AdminPage() {
       toast.success('Alterações salvas com sucesso!', { id: toastId });
       setShowEditModal(false);
       
-      // Recarrega tudo para garantir
       await loadQueue();
       await loadPublished();
       
-      // Se for um artigo publicado, revalida o cache
       if (isPublished) {
         router.refresh();
       }
@@ -421,17 +408,14 @@ export default function AdminPage() {
     return null; 
   }
 
-  // --- FILTROS CORRIGIDOS (Mais permissivos) ---
   const pendingApproval = queue.filter(a => a.status === 'processed');
   
-  // CORREÇÃO: Aceita body null OU vazio, e aceita status pending_approval OU pending
   const pendingProcessing = queue.filter(a => 
     (a.status === 'pending_approval' || a.status === 'pending' || !a.status) && 
     (!a.body || a.body.trim() === '')
   );
   
   const autoApproved = queue.filter(a => a.status === 'auto_approved');
-  // ---------------------------------------------
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -471,7 +455,7 @@ export default function AdminPage() {
       <PendingProcessingSection 
         articles={pendingProcessing} 
         onDelete={deleteFromQueue} 
-        onDeleteMultiple={deleteMultipleFromQueue} // Passando a nova função
+        onDeleteMultiple={deleteMultipleFromQueue} 
       />
       <PublishedArticlesSection articles={published} onDelete={deletePublishedArticle} />
       
