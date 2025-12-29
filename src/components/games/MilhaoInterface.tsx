@@ -17,7 +17,7 @@ interface QuizSettings {
 export default function MilhaoInterface({ initialSettings }: { initialSettings: QuizSettings }) {
   const { 
     gameState, setGameState, currentQuestion, prize, loading: gameLoading, startGame, handleAnswer, 
-    handleStop, timer, currentQIndex, questions, INITIAL_TIME // <-- ADICIONADO INITIAL_TIME
+    handleStop, timer, currentQIndex, questions, INITIAL_TIME 
   } = useMilhaoGame();
   
   const [settings] = useState<QuizSettings>(initialSettings);
@@ -220,7 +220,6 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
             src={settings.logo_url} 
             alt="Milhão NBA" 
             className="w-[80%] max-w-[280px] md:max-w-md object-contain drop-shadow-[0_0_35px_rgba(255,0,255,0.3)] mb-4 md:mb-6 animate-float"
-            priority="true"
           />
         ) : (
           <h1 className="text-5xl md:text-7xl font-bebas text-transparent bg-clip-text bg-gradient-to-b from-[#ff00ff] to-[#00bfff]">MILHÃO NBA</h1>
@@ -258,7 +257,6 @@ export default function MilhaoInterface({ initialSettings }: { initialSettings: 
   if (gameState === 'won' || gameState === 'lost' || gameState === 'stopped') {
     const finalPrize = gameState === 'won' ? PRIZE_LADDER[23] : prize; 
     const isWin = gameState === 'won';
-    const isStopped = gameState === 'stopped';
     
     const resultImage = isWin ? settings.victory_image_url : settings.defeat_image_url;
 

@@ -5,6 +5,7 @@ export interface Question {
   question: string;
   options: string[];
   correct_index: number;
+  category?: string; // Adicionado para suportar categorias
 }
 
 export const PRIZE_LADDER = [

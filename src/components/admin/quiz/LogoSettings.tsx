@@ -36,7 +36,8 @@ export default function LogoSettings({ initialLogoUrl, onSave }: LogoSettingsPro
 
     try {
         // O blob retornado é sempre PNG (transparente)
-        const blob = await removeBackground(imageSource);
+        // Cast para any para resolver erro de assinatura de chamada no TS
+        const blob = await (removeBackground as any)(imageSource);
         const newFile = new File([blob], "logo-sem-fundo.png", { type: "image/png" });
         
         setLogoFile(newFile);
