@@ -25,34 +25,32 @@ export const metadata: Metadata = {
   },
   description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
   
-  // Configuração para Facebook, LinkedIn, Discord, WhatsApp
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: baseUrl,
+    url: "/",
     siteName: "DuoDunk",
     title: "DuoDunk - Notícias NBA e Quiz Milhão",
     description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
     images: [
       {
-        url: `${baseUrl}/images/logo-duodunk-share.jpg`,
+        url: "/images/card-twitter-duodunk.jpg", // Arquivo que realmente existe no projeto
         width: 1200,
         height: 630,
-        alt: "DuoDunk - Notícias NBA e Quiz Milhão",
+        alt: "DuoDunk NBA",
       },
     ],
   },
 
-  // Configuração Específica para Twitter / X
   twitter: {
     card: "summary_large_image",
     site: "@duodunk",
+    creator: "@duodunk",
     title: "DuoDunk - Notícias NBA e Quiz Milhão",
     description: "Acompanhe as últimas notícias da NBA e desafie seus amigos no Quiz Milhão NBA.",
-    images: [`${baseUrl}/images/logo-duodunk-share.jpg`],
+    images: ["/images/card-twitter-duodunk.jpg"],
   },
 
-  // Ícones
   icons: {
     icon: [
       { url: '/images/favicon-duodunkv2.svg', type: 'image/svg+xml' },
@@ -63,17 +61,9 @@ export const metadata: Metadata = {
     ],
   },
   
-  // Robôs de busca
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
 };
 

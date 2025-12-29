@@ -2,22 +2,20 @@ import MilhaoInterface from '@/components/games/MilhaoInterface';
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
 
-const baseUrl = 'https://www.duodunk.com.br';
-
 export const metadata: Metadata = {
   title: 'Milhão NBA - O Quiz | Duo Dunk',
   description: 'O maior e mais difícil Quiz de NBA do Brasil.',
   openGraph: {
     title: 'Milhão NBA - O Quiz | Duo Dunk',
     description: 'O maior e mais difícil Quiz de NBA do Brasil.',
-    images: [`${baseUrl}/images/logo-duodunk-share.jpg`],
+    images: ['/images/card-twitter-duodunk.jpg'],
+    type: 'website',
   },
   twitter: {
     card: "summary_large_image",
-    site: "@duodunk",
     title: 'Milhão NBA - O Quiz | Duo Dunk',
     description: 'O maior e mais difícil Quiz de NBA do Brasil.',
-    images: [`${baseUrl}/images/logo-duodunk-share.jpg`],
+    images: ['/images/card-twitter-duodunk.jpg'],
   }
 };
 
@@ -36,7 +34,6 @@ export default async function MilhaoPage() {
   return (
     // TRUQUE CSS: 'w-screen' e 'margin-left/right: -50vw' forçam o elemento a esticar 
     // até a borda da janela, mesmo se o pai tiver padding.
-    // Estilos inline removidos e substituídos por classes Tailwind:
     <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] min-h-[calc(100vh-80px)] bg-zinc-950 flex flex-col overflow-hidden">
       
       {/* Background Full Screen */}
