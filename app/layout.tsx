@@ -23,20 +23,20 @@ export const metadata: Metadata = {
     default: "DuoDunk - Notícias NBA em Tempo Real e Quiz Milhão NBA",
     template: "%s | DuoDunk"
   },
-  description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!",
+  description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA.",
   
   openGraph: {
     type: "website",
     locale: "pt_BR",
     url: "/",
     siteName: "DuoDunk",
-    title: "DuoDunk - Notícias NBA em Tempo Real e Quiz Milhão NBA",
-    description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!",
+    title: "DuoDunk - Notícias NBA em Tempo Real",
+    description: "O melhor do basquete NBA em tempo real.",
     images: [
       {
         url: "/images/card-twitter-duodunk.jpg",
         width: 1200,
-        height: 628,
+        height: 630,
         alt: "DuoDunk - O Portal do Basquete NBA",
       },
     ],
@@ -46,8 +46,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@duodunk",
     creator: "@duodunk",
-    title: "DuoDunk - Notícias NBA em Tempo Real e Quiz Milhão NBA",
-    description: "Acompanhe as últimas notícias da NBA em tempo real, análises táticas, estatísticas ao vivo e desafie seus amigos no Quiz Milhão NBA. O melhor do basquete está aqui!",
     images: ["/images/card-twitter-duodunk.jpg"],
   },
 

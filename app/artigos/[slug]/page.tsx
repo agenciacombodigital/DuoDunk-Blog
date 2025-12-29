@@ -38,26 +38,48 @@ export async function generateMetadata(
   if (!article) return { title: 'Artigo não encontrado | Duo Dunk' };
 
   const currentUrl = `${siteUrl}/artigos/${article.slug}`;
-  const ogImage = article.image_url || `${siteUrl}/images/card-twitter-duodunk.jpg`;
-  const description = article.meta_description || article.summary || 'Acompanhe as últimas notícias da NBA em tempo real no Duo Dunk. O melhor do basquete está aqui!';
+  
+  // Garante que a imagem seja uma URL absoluta para o WhatsApp
+  let ogImage = article.image_url;
+  if (ogImage && !ogImage.startsWith('http')) {
+    ogImage = `${siteUrl}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
+  }
+  
+  // Fallback definitivo se a imagem estiver quebrada ou ausente
+  if (!ogImage || ogImage.includes('undefined') || ogImage.length < 10) {
+    ogImage = `${siteUrl}/images/card-twitter-duodunk.jpg`;
+  }
+
+  const title = article.title;
+  const description = article.meta_description || article.summary || 'Acompanhe as últimas notícias da NBA em tempo real no Duo Dunk.';
 
   return {
-    title: article.title,
+    title: title,
     description: description,
     alternates: { canonical: currentUrl },
     openGraph: {
-      title: article.title,
+      title: title,
       description: description,
       url: currentUrl,
       siteName: 'Duo Dunk',
-      images: [{ url: ogImage, width: 1200, height: 628, alt: article.title }],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        }
+      ],
       locale: 'pt_BR',
       type: 'article',
+      publishedTime: article.published_at,
+      authors: [article.author || 'Redação Duo Dunk'],
     },
     twitter: {
       card: "summary_large_image",
       site: "@duodunk",
-      title: article.title,
+      creator: "@duodunk",
+      title: title,
       description: description,
       images: [ogImage],
     },
