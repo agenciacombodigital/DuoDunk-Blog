@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Modelos 2.5 (Flash e Lite)
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const DEFAULT_IMAGE = "https://duodunk.com.br/images/agenda-nba-padrao.jpg";
 
@@ -42,47 +41,49 @@ serve(async (req) => {
 
     console.log(`📰 Processando: ${article.original_title}`);
 
-    // Pega o texto completo capturado pelo Scraper
     const fullText = article.original_content || article.full_text || article.content || article.summary;
 
     if (!fullText || fullText.length < 200) {
-        console.warn(`⚠️ Texto muito curto (${fullText?.length} chars). Verifique os logs do Scraper.`);
+        console.warn(`⚠️ Texto muito curto (${fullText?.length} chars).`);
     }
 
-    // --- LÓGICA DE TRADUÇÃO ESPELHO ---
     const wordCount = fullText.split(/\s+/).length;
-    const minWords = Math.floor(wordCount * 0.80); // Meta de extensão: 80% do original
+    // Reduzimos um pouco a exigência de tamanho para dar liberdade criativa, mas mantemos o mínimo
+    const minWords = Math.floor(wordCount * 0.70); 
     
-    console.log(`📝 Original: ${wordCount} palavras. Meta IA: ~${minWords} palavras.`);
+    console.log(`📝 Original: ${wordCount} palavras. Meta Criativa: ~${minWords} palavras.`);
 
+    // 🔥 PROMPT DE JORNALISMO ESPORTIVO (REESCRITA CRIATIVA)
     const prompt = `
-    VOCÊ É: "Tradutor Espelho" especializado em NBA do DuoDunk.
-    MISSÃO: Converter o texto do Inglês para Português (Brasil) SEM PERDER CONTEÚDO E DETALHES.
+    ATUE COMO: Redator Sênior de NBA do portal DuoDunk.
+    SUA MISSÃO: Transformar a notícia abaixo em um artigo original, engajador e com personalidade para o público brasileiro.
 
-    TEXTO ORIGINAL (${wordCount} palavras):
+    TEXTO BASE (EM INGLÊS):
     """
     ${fullText}
     """
 
-    🛑 REGRAS MATEMÁTICAS OBRIGATÓRIAS (NÃO RESUMA):
-    1. **TAMANHO:** O original tem ${wordCount} palavras. O seu texto deve ter no mínimo ${minWords} palavras.
-    2. **ESTRUTURA:** Mantenha a mesma quantidade de parágrafos do original.
-    3. **INTEGRIDADE:** Não corte estatísticas, nomes de jogadores ou citações. Traduza tudo de forma fiel.
-    4. **ESTILO:** Linguagem de jornalismo esportivo profissional.
+    🛑 REGRAS DE OURO (ANTI-ROBÔ):
+    1. **NÃO TRADUZA LITERALMENTE:** Leia o texto, entenda os fatos e ESCREVA DO ZERO com suas próprias palavras. Evite frases que soem como tradução do Google.
+    2. **USE TOM JORNALÍSTICO ESPORTIVO:** Use termos como "climão", "baixa importante", "cenário preocupante", "show em quadra". Seja dinâmico.
+    3. **MANTENHA OS DADOS:** Nomes, números, lesões, prazos e placares devem ser EXATOS. Não invente dados, mas mude a forma de contá-los.
+    4. **ESTRUTURA:** Comece com um lide forte (o que aconteceu e por que importa). Desenvolva o contexto. Termine com uma perspectiva futura.
+    5. **TAMANHO:** O texto deve ser robusto (mínimo ${minWords} palavras). Se o original for curto, adicione contexto sobre a temporada dos times/jogadores envolvidos.
 
     SAÍDA JSON:
     {
-      "title": "Título fiel ao original (max 80 chars)",
-      "subtitle": "Subtítulo detalhado e informativo",
-      "summary": "Resumo curto (max 140 chars)",
+      "title": "Título chamativo em PT-BR (max 80 chars, estilo manchete)",
+      "subtitle": "Subtítulo que complementa e instiga a leitura",
+      "summary": "Resumo curto e direto para redes sociais (max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1 traduzido na íntegra...",
-        "Parágrafo 2 traduzido na íntegra...",
+        "Parágrafo 1 (Lide forte)...",
+        "Parágrafo 2 (Desenvolvimento com estilo)...",
+        "Parágrafo 3 (Contexto e dados)...",
         "..."
       ],
-      "tags": ["nba", "time", "jogador", "topico"],
-      "meta_description": "Descrição SEO",
-      "slug": "url-amigavel"
+      "tags": ["nba", "time", "jogador", "tema"],
+      "meta_description": "SEO Description atrativa",
+      "slug": "url-amigavel-baseada-no-titulo"
     }
     `;
 
@@ -98,7 +99,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { 
-                    temperature: 0.1, 
+                    temperature: 0.4, // Aumentei um pouco para dar criatividade (0.4 é seguro)
                     maxOutputTokens: 8192, 
                     responseMimeType: "application/json" 
                 }
@@ -148,7 +149,7 @@ serve(async (req) => {
     if (updateError) throw updateError;
     
     const finalWordCount = bodyText.split(/\s+/).length;
-    console.log(`✅ Sucesso! Original: ${wordCount} palavras -> Final: ${finalWordCount} palavras.`);
+    console.log(`✅ Sucesso! Original: ${wordCount} -> Final (Criativo): ${finalWordCount}.`);
 
     return new Response(JSON.stringify({ success: true, model: modelUsed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
