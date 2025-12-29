@@ -64,6 +64,11 @@ const getGameStatusDisplay = (stats: any): string => {
     const match = clock.match(/PT(\d+)M([\d.]+)S/);
     if (match) clock = `${match[1].padStart(2, '0')}:${Math.floor(parseFloat(match[2])).toString().padStart(2, '0')}`;
     
+    // Ajuste solicitado: Se for fim do 2º Quarto, exibe INTERVALO
+    if (stats.period === 2 && (clock === '00:00' || clock === '0:00' || clock === '')) {
+      return 'INTERVALO';
+    }
+
     if (stats.period > 4) return `PRORROGAÇÃO • ${clock}`;
     return `${stats.period}º QUARTO • ${clock}`;
   }

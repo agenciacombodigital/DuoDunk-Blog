@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Tv, Play } from 'lucide-react';
 import GameStatsModalV3 from './GameStatsModalV3';
 import { cn } from '@/lib/utils';
 
-// Interfaces e Helpers (Resumidos para brevidade, use a lógica Turbo existente)
+// Interfaces e Helpers
 interface Game {
   gameId: string;
   gameStatus: number;
@@ -44,6 +44,11 @@ const getGameStatusDisplay = (game: any) => {
     const match = clock.match(/PT(\d+)M([\d.]+)S/);
     if (match) clock = `${match[1].padStart(1, '0')}:${Math.floor(parseFloat(match[2])).toString().padStart(2, '0')}`;
     
+    // Ajuste solicitado: Se for fim do 2º Quarto, exibe INTERVALO
+    if (game.period === 2 && (clock === '00:00' || clock === '0:00' || clock === '')) {
+      return 'INTERVALO';
+    }
+
     const periodText = game.period > 4 ? 'PRORROGAÇÃO' : `${game.period}º Quarto`;
     
     // Retorna apenas o período e o tempo para o rodapé
@@ -80,7 +85,7 @@ export default function NBAScoreboardV2() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gamesPerView, setGamesPerView] = useState(3);
 
-  // Lógica de Resize e Fetch (Igual ao anterior)
+  // Lógica de Resize e Fetch
   useEffect(() => {
     const handleResize = () => setGamesPerView(window.innerWidth < 768 ? 1 : 3);
     window.addEventListener('resize', handleResize);
@@ -162,7 +167,7 @@ export default function NBAScoreboardV2() {
                 
                 const gameStatusDisplay = getGameStatusDisplay(game);
                 
-                // Determina a cor da borda (mantida para referência, mas não usada na borda lateral)
+                // Determina a cor da borda
                 const borderColor = isLive ? 'border-red-600' : isFinal ? 'border-cyan-600' : 'border-pink-600';
                 
                 return (
@@ -173,7 +178,7 @@ export default function NBAScoreboardV2() {
                       "relative group bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-xl p-4 transition-all cursor-pointer flex flex-col justify-between",
                       `hover:${borderColor}/40`,
                     )}
-                    style={{ minHeight: '180px' }} // Aumenta a altura mínima
+                    style={{ minHeight: '180px' }}
                   >
                      {/* Topo: Transmissão e Status AO VIVO */}
                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider mb-4">
@@ -231,8 +236,6 @@ export default function NBAScoreboardV2() {
                            Estatísticas <ChevronRight size={12} />
                         </span>
                      </div>
-                     
-                     {/* Hover Action (REMOVIDO) */}
                   </div>
                 );
               })}
