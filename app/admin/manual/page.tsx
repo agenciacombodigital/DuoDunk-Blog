@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Save, Upload, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Loader2, Star, Hash, PlayCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
 import { clearAllFeaturedArticlesServer } from '@/services/adminActions';
@@ -76,6 +76,7 @@ export default function AdminManual() {
         body: form.body,
         image_url: form.image_url || null,
         tags: form.tags.split(',').map(t => t.trim()).filter(t => t),
+        video_url: form.video_url || null, // Garantindo o envio do vídeo
         slug,
         meta_description: form.summary.substring(0, 160),
         published: true,
@@ -102,19 +103,50 @@ export default function AdminManual() {
       <div className="max-w-4xl mx-auto">
         <Link href="/admin" className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition"><ArrowLeft className="w-5 h-5" />Voltar</Link>
         <h1 className="text-3xl font-bold mb-8">✍️ Publicação Manual</h1>
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-2">Título *</label>
             <input type="text" required maxLength={80} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-pink-500 outline-none" />
           </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">Resumo *</label>
             <textarea required maxLength={240} rows={3} value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-pink-500 outline-none" />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                <Hash className="w-4 h-4 text-pink-500" /> Tags (separadas por vírgula)
+              </label>
+              <input 
+                type="text" 
+                placeholder="nba, lakers, lebron" 
+                value={form.tags} 
+                onChange={(e) => setForm({ ...form, tags: e.target.value })} 
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-pink-500 outline-none" 
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                <PlayCircle className="w-4 h-4 text-cyan-400" /> Vídeo URL (YouTube, X, Instagram)
+              </label>
+              <input 
+                type="url" 
+                placeholder="https://..." 
+                value={form.video_url} 
+                onChange={(e) => setForm({ ...form, video_url: e.target.value })} 
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-500 outline-none" 
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">Corpo (HTML) *</label>
             <textarea required rows={10} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-pink-500 outline-none font-mono" />
           </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">Imagem</label>
             {form.image_url && <img src={form.image_url} className="mb-4 h-48 w-full object-cover rounded-lg" />}
@@ -124,10 +156,12 @@ export default function AdminManual() {
               <label htmlFor="manual-image-upload" className="bg-gray-800 border border-gray-700 px-6 py-3 rounded-lg cursor-pointer hover:bg-gray-700">{uploadingImage ? <Loader2 className="animate-spin" /> : <Upload />}</label>
             </div>
           </div>
+
           <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
             <input type="checkbox" id="featured-manual" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} className="w-5 h-5 rounded text-pink-600" />
             <label htmlFor="featured-manual" className="font-bold">Marcar como Destaque</label>
           </div>
+
           <button type="submit" disabled={loading || uploadingImage} className="w-full bg-pink-600 py-4 rounded-lg font-bold flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <Save />} Publicar</button>
         </form>
       </div>
