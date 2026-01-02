@@ -32,6 +32,13 @@ export default function Footer() {
               </Link>
             </div>
           </div>
+
+          {/* Créditos de Desenvolvimento */}
+          <div className="mt-8 flex justify-center md:justify-end">
+            <span className="text-[12px] text-[#888] font-inter">
+              Desenvolvido pela <a href="https://www.agenciacombodigital.com.br" target="_blank" rel="noopener noreferrer" className="text-inherit no-underline font-bold hover:text-white transition-colors">Combo Digital</a>
+            </span>
+          </div>
         </div>
       </div>
     </footer>
