@@ -130,7 +130,7 @@ export default async function PalpitePage() {
                 <div className="px-8 py-4 bg-black/60 border-t border-white/5 flex justify-between items-center text-[9px] text-zinc-500 uppercase font-black tracking-widest">
                    <div className="flex items-center gap-2">
                      <BrainCircuit size={12} className="text-pink-500" />
-                     Gemini 2.5 Flash
+                     IA DUODUNK
                    </div>
                    <div className="flex items-center gap-1">
                      <Clock size={10} />
