@@ -1,6 +1,7 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
-import { BrainCircuit, Clock, Zap } from 'lucide-react';
+import { BrainCircuit, Clock } from 'lucide-react';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Palpiteiro NBA | Inteligência Artificial DuoDunk',
@@ -41,13 +42,8 @@ export default async function PalpitePage() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-16">
         
-        {/* Header Section */}
+        {/* Header Section (Limpado) */}
         <div className="flex flex-col items-center text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-black tracking-[0.2em] text-pink-500 mb-6 shadow-xl">
-            <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"/>
-            IA DUODUNK v2.5
-          </div>
-          
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-zinc-700 font-oswald uppercase">
             PALPITEIRO
           </h1>
@@ -70,17 +66,32 @@ export default async function PalpitePage() {
             return (
               <div key={game.id} className={`group relative flex flex-col bg-zinc-950/50 backdrop-blur-sm rounded-[2.5rem] border ${borderColor} overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:bg-zinc-900/50`}>
                 
-                {/* Header do Card */}
-                <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
-                  <div className="flex justify-between items-center text-xs font-bold tracking-widest text-zinc-400">
-                    <div className="flex flex-col">
-                        <span className="text-[9px] text-zinc-600 mb-1">CASA</span>
-                        <span className="text-white font-oswald uppercase text-lg">{game.home_team_name}</span>
+                {/* Header do Card com LOGOS */}
+                <div className="px-8 py-8 border-b border-white/5 bg-white/[0.02]">
+                  <div className="flex justify-between items-center text-sm font-bold tracking-wide text-zinc-300">
+                    
+                    {/* Time Casa */}
+                    <div className="flex flex-col items-center gap-2 w-1/3">
+                        <span className="text-[9px] text-zinc-600 uppercase tracking-widest">CASA</span>
+                        {game.home_team_logo && (
+                           <div className="w-12 h-12 relative mb-1">
+                             <Image src={game.home_team_logo} alt={game.home_team_name} fill className="object-contain" />
+                           </div>
+                        )}
+                        <span className="text-white font-oswald uppercase text-base text-center leading-tight">{game.home_team_name}</span>
                     </div>
+
                     <span className="text-zinc-800 font-oswald text-2xl italic">VS</span>
-                    <div className="flex flex-col text-right">
-                        <span className="text-[9px] text-zinc-600 mb-1">FORA</span>
-                        <span className="text-white font-oswald uppercase text-lg">{game.visitor_team_name}</span>
+
+                    {/* Time Fora */}
+                    <div className="flex flex-col items-center gap-2 w-1/3">
+                        <span className="text-[9px] text-zinc-600 uppercase tracking-widest">FORA</span>
+                        {game.visitor_team_logo && (
+                           <div className="w-12 h-12 relative mb-1">
+                             <Image src={game.visitor_team_logo} alt={game.visitor_team_name} fill className="object-contain" />
+                           </div>
+                        )}
+                        <span className="text-white font-oswald uppercase text-base text-center leading-tight">{game.visitor_team_name}</span>
                     </div>
                   </div>
                 </div>

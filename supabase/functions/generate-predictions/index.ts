@@ -28,7 +28,7 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Limpeza Automática
+    // 1. Limpeza Automática (Jogos com mais de 5 dias)
     await supabase.from('daily_games').delete().lt('date', new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString());
 
     // 2. Buscar Jogos de Hoje
@@ -46,6 +46,7 @@ serve(async (req) => {
         const homeTeam = competidores.find((c: any) => c.homeAway === 'home').team;
         const awayTeam = competidores.find((c: any) => c.homeAway === 'away').team;
 
+        // Verifica se já existe palpite para este jogo
         const { data: existing } = await supabase.from('daily_games').select('id').eq('espn_game_id', gameId).maybeSingle();
         if (existing) continue;
 
@@ -54,6 +55,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` 
         };
 
+        // Busca contexto técnico dos times
         const [homeStats, awayStats] = await Promise.all([
           fetch(NBA_TEAM_INFO_URL, { method: 'POST', headers, body: JSON.stringify({ teamId: homeTeam.id }) }).then(r => r.json()),
           fetch(NBA_TEAM_INFO_URL, { method: 'POST', headers, body: JSON.stringify({ teamId: awayTeam.id }) }).then(r => r.json())
@@ -95,14 +97,19 @@ serve(async (req) => {
         const geminiData = await geminiRes.json();
         const aiResult = JSON.parse(geminiData.candidates[0].content.parts[0].text);
 
-        const { data: gameDb } = await supabase.from('daily_games').insert({
+        // Salva o jogo com os logos
+        const { data: gameDb, error: gameError } = await supabase.from('daily_games').insert({
           espn_game_id: gameId,
           date: game.date, 
           home_team_id: homeTeam.id,
           home_team_name: homeTeam.displayName,
+          home_team_logo: homeTeam.logo, // ✅ LOGO CASA
           visitor_team_id: awayTeam.id,
-          visitor_team_name: awayTeam.displayName
+          visitor_team_name: awayTeam.displayName,
+          visitor_team_logo: awayTeam.logo // ✅ LOGO VISITANTE
         }).select().single();
+
+        if (gameError) throw gameError;
 
         if (gameDb) {
           await supabase.from('predictions').insert({
@@ -116,7 +123,7 @@ serve(async (req) => {
         }
       } catch (gameError) {
         console.error(`Erro ao processar jogo individual:`, gameError);
-        continue; // Pula para o próximo jogo
+        continue; 
       }
     }
 
