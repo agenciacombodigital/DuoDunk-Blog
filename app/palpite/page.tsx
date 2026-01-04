@@ -1,6 +1,7 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
 import { BrainCircuit, Clock } from 'lucide-react';
+import { getTeamById } from '@/lib/nbaTeams'; // Importando para pegar abreviação
 
 export const metadata: Metadata = {
   title: 'Palpiteiro NBA | Inteligência Artificial DuoDunk',
@@ -10,10 +11,23 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Helper para garantir que o logo apareça usando o ID da ESPN como fallback supremo
+// ✅ LÓGICA DE LOGO CORRIGIDA (Igual ao Placar e Calendário)
 const getTeamLogo = (logo: string | null, teamId: string) => {
-  if (logo && logo.includes('http') && !logo.includes('undefined')) return logo;
-  // Fallback para o CDN estável da ESPN por ID numérico
+  // Se já temos um logo válido da API, usamos ele
+  if (logo && logo.includes('http') && !logo.includes('undefined') && !logo.includes(`${teamId}.png`)) {
+    return logo;
+  }
+  
+  // Caso contrário, construímos via abreviação (o ID numérico traz logos antigos)
+  const teamInfo = getTeamById(teamId);
+  if (teamInfo) {
+    const abbr = teamInfo.abbreviation.toLowerCase();
+    // Tratamento de exceções da ESPN
+    const espnAbbr = abbr === 'uta' ? 'utah' : abbr === 'nop' ? 'no' : abbr;
+    return `https://a.espncdn.com/i/teamlogos/nba/500/${espnAbbr}.png`;
+  }
+
+  // Fallback final
   return `https://a.espncdn.com/i/teamlogos/nba/500/${teamId}.png`;
 };
 

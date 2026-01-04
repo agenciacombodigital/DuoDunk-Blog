@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Trash2, Edit, Save, X, Loader2, ArrowLeft, BrainCircuit, CheckSquare, Square } from 'lucide-react';
 import Link from 'next/link';
+import { getTeamById } from '@/lib/nbaTeams';
 
 export default function AdminPalpites() {
   const [games, setGames] = useState<any[]>([]);
@@ -28,6 +29,16 @@ export default function AdminPalpites() {
     if (error) toast.error("Erro ao carregar palpites");
     else setGames(data || []);
     setLoading(false);
+  };
+
+  const getLogo = (logo: string | null, teamId: string) => {
+    const teamInfo = getTeamById(teamId);
+    if (teamInfo) {
+      const abbr = teamInfo.abbreviation.toLowerCase();
+      const espnAbbr = abbr === 'uta' ? 'utah' : abbr === 'nop' ? 'no' : abbr;
+      return `https://a.espncdn.com/i/teamlogos/nba/500/${espnAbbr}.png`;
+    }
+    return logo || `https://a.espncdn.com/i/teamlogos/nba/500/${teamId}.png`;
   };
 
   const handleDelete = async (id: string) => {
@@ -130,9 +141,9 @@ export default function AdminPalpites() {
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
-                          <img src={game.visitor_team_logo} className="w-8 h-8 object-contain" />
+                          <img src={getLogo(game.visitor_team_logo, game.visitor_team_id)} className="w-8 h-8 object-contain" />
                           <span className="font-oswald uppercase text-lg">{game.visitor_team_name} @ {game.home_team_name}</span>
-                          <img src={game.home_team_logo} className="w-8 h-8 object-contain" />
+                          <img src={getLogo(game.home_team_logo, game.home_team_id)} className="w-8 h-8 object-contain" />
                           <span className="text-xs text-gray-500 font-mono bg-black px-2 py-1 rounded">
                             {new Date(game.date).toLocaleDateString('pt-BR')}
                           </span>

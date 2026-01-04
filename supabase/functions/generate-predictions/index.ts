@@ -65,14 +65,12 @@ serve(async (req) => {
     for (const [index, game] of games.entries()) {
       const gameId = game.id;
       
-      // VERIFICAÇÃO: Já existe palpite para esse ID da ESPN?
       const { data: existingGame } = await supabase
         .from('daily_games')
         .select('id, predictions(id)')
         .eq('espn_game_id', gameId)
         .maybeSingle();
 
-      // Se já tem palpite, pula para economizar tempo e API
       if (existingGame?.predictions && existingGame.predictions.length > 0) {
         console.log(`Skipping game ${gameId} (Already has prediction)`);
         continue;
@@ -111,22 +109,22 @@ serve(async (req) => {
         })
       });
 
-      if (geminiRes.status === 429) { await delay(60000); continue; }
+      if (geminiRes.status === 429) { await delay(12000); continue; }
       if (!geminiRes.ok) continue;
 
       const geminiData = await geminiRes.json();
       const aiResult = JSON.parse(geminiData.candidates[0].content.parts[0].text);
 
-      // Salvar (Upsert para o Jogo, Insert para o Palpite)
+      // ✅ SALVANDO LOGOS DA API OU CDN MODERNO
       const { data: gameDb } = await supabase.from('daily_games').upsert({
         espn_game_id: gameId,
         date: game.date, 
         home_team_id: homeTeam.id,
         home_team_name: homeTeam.displayName,
-        home_team_logo: `https://a.espncdn.com/i/teamlogos/nba/500/${homeTeam.id}.png`,
+        home_team_logo: homeTeam.logo || `https://a.espncdn.com/i/teamlogos/nba/500/${homeTeam.abbreviation?.toLowerCase() || homeTeam.id}.png`,
         visitor_team_id: awayTeam.id,
         visitor_team_name: awayTeam.displayName,
-        visitor_team_logo: `https://a.espncdn.com/i/teamlogos/nba/500/${awayTeam.id}.png`
+        visitor_team_logo: awayTeam.logo || `https://a.espncdn.com/i/teamlogos/nba/500/${awayTeam.abbreviation?.toLowerCase() || awayTeam.id}.png`
       }, { onConflict: 'espn_game_id' }).select().single();
 
       if (gameDb) {
@@ -140,11 +138,7 @@ serve(async (req) => {
         processedGames.push(gameId);
       }
 
-      // Delay apenas se houver mais jogos pendentes para processar
       if (index < games.length - 1) await delay(12000);
-      
-      // Segurança contra timeout: Se já passamos de 130s, paramos o loop e retornamos sucesso parcial
-      // (Isso evita o erro 546/Timeout total)
     }
 
     return new Response(JSON.stringify({ success: true, processed: processedGames.length }), { headers: { "Content-Type": "application/json" } });
