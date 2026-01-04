@@ -143,9 +143,10 @@ serve(async (req) => {
           predictionsGenerated.push(`${homeTeam.displayName} vs ${awayTeam.displayName}`);
         }
 
-        // 🛑 O FREIO MÁGICO: 15s de pausa
-        console.log("-> Sucesso! Aguardando 15s para respeitar a cota da API...");
-        await delay(15000);
+        // 🛑 O FREIO MÁGICO AJUSTADO:
+        // 60 segundos / 5 requests (limite) = 12 segundos.
+        console.log("Aguardando 12s (Limite Teto da API)...");
+        await delay(12000);
 
       } catch (gameError) {
         console.error(`Erro no jogo ${game.id}:`, gameError);
