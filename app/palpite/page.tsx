@@ -1,9 +1,9 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
-import { BrainCircuit, Zap, AlertCircle } from 'lucide-react';
+import { BrainCircuit, Zap, AlertCircle, TrendingUp, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// --- CONFIGURAÇÃO SEO & SOCIAL ---
+// --- CONFIGURAÇÃO SEO & SOCIAL (WHATSAPP/TWITTER) ---
 export const metadata: Metadata = {
   title: 'Palpite do Dia NBA | IA DuoDunk',
   description: 'Confira os palpites gerados por Inteligência Artificial para os jogos de hoje da NBA. Análises baseadas em estatísticas e histórico recente.',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     siteName: 'DuoDunk',
     images: [
       {
-        url: 'https://www.duodunk.com.br/images/banner-duodunkv2.jpg',
+        url: 'https://www.duodunk.com.br/images/banner-duodunkv2.jpg', 
         width: 1200,
         height: 630,
         alt: 'Palpiteiro DuoDunk NBA',
@@ -35,7 +35,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function PalpitePage() {
-  // Busca os jogos e palpites relacionados
+  // Busca os jogos e palpites relacionados (usando o cliente de servidor do projeto)
   const { data: games } = await supabaseServer
     .from('daily_games')
     .select(`
@@ -50,91 +50,101 @@ export default async function PalpitePage() {
       )
     `)
     .order('date', { ascending: false })
-    .limit(10);
+    .limit(12);
 
   if (!games || games.length === 0) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
         <div className="text-center">
-            <BrainCircuit className="w-16 h-16 text-pink-600 mx-auto mb-4 animate-pulse" />
-            <h1 className="text-2xl font-oswald font-bold text-gray-800 uppercase">A IA está aquecendo... 🤖🏀</h1>
-            <p className="text-gray-600 mt-2 font-inter">Nenhum palpite gerado para hoje ainda. Volte em breve!</p>
+            <BrainCircuit className="w-20 h-20 text-[#FA007D] mx-auto mb-6 animate-pulse" />
+            <h1 className="text-3xl font-oswald font-bold text-gray-900 uppercase tracking-tighter">A IA está aquecendo... 🤖🏀</h1>
+            <p className="text-gray-600 mt-3 font-inter max-w-md mx-auto">Nenhum palpite gerado para hoje ainda. O robô DuoDunk analisa os jogos algumas horas antes do início da rodada.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <span className="inline-flex items-center gap-2 py-1 px-4 rounded-full bg-pink-100 text-pink-700 text-xs font-bold mb-4 uppercase tracking-widest border border-pink-200">
-            <Zap className="w-3 h-3 fill-current" /> IA DuoDunk v2.5
+    <div className="min-h-screen bg-[#F8F9FA] py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        
+        {/* Header Hero */}
+        <div className="text-center mb-16 relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-pink-500/10 blur-[100px] rounded-full -z-10"></div>
+          <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-black text-white text-[10px] font-black mb-6 uppercase tracking-[0.2em]">
+            <Zap className="w-3 h-3 text-[#FA007D] fill-[#FA007D]" /> BETA v2.5
           </span>
-          <h1 className="text-4xl sm:text-6xl font-bebas text-gray-900 mb-4 tracking-tight uppercase">
-            🔮 Palpites da Rodada
+          <h1 className="text-5xl sm:text-7xl font-bebas text-gray-900 mb-4 tracking-tight uppercase leading-none">
+            🔮 Palpites <span className="text-[#FA007D]">DuoDunk</span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto font-inter leading-relaxed">
-            Nossa Inteligência Artificial analisa histórico, confrontos diretos e estatísticas avançadas para prever os resultados da NBA.
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto font-inter leading-relaxed">
+            Análises preditivas processadas por Inteligência Artificial via <strong>Gemini 2.5 Flash</strong>. Cruzamos estatísticas, <em>momentum</em> e histórico para encontrar as melhores oportunidades.
           </p>
         </div>
 
+        {/* Grid de Palpites */}
         <div className="grid gap-8 md:grid-cols-2">
           {games.map((game) => {
             const palpite = game.predictions?.[0];
             if (!palpite) return null;
 
-            // Cores Dinâmicas baseadas na Confiança
-            let confidenceColor = "text-red-500";
-            let confidenceBg = "bg-red-500";
-            let confidenceBorder = "border-red-200";
-            let confidenceLabel = "Arriscado";
+            // Cores e Status baseados na Confiança
+            const isHigh = palpite.confidence_score >= 80;
+            const isMid = palpite.confidence_score >= 60 && palpite.confidence_score < 80;
             
-            if (palpite.confidence_score >= 80) {
-              confidenceColor = "text-emerald-600";
-              confidenceBg = "bg-emerald-500";
-              confidenceBorder = "border-emerald-200";
-              confidenceLabel = "Alta Confiança";
-            } else if (palpite.confidence_score >= 60) {
-              confidenceColor = "text-amber-600";
-              confidenceBg = "bg-amber-500";
-              confidenceBorder = "border-amber-200";
-              confidenceLabel = "Moderado";
-            }
+            const confidenceStyles = isHigh 
+              ? { bg: "bg-emerald-500", text: "text-emerald-600", border: "border-emerald-100", label: "Alta Confiança" }
+              : isMid 
+              ? { bg: "bg-amber-500", text: "text-amber-600", border: "border-amber-100", label: "Moderado" }
+              : { bg: "bg-rose-500", text: "text-rose-600", border: "border-rose-100", label: "Arriscado" };
 
             return (
-              <div key={game.id} className="group bg-white rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden relative flex flex-col">
-                {/* Header do Jogo */}
-                <div className="p-6 pb-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                  <div className="flex flex-col flex-1">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">MANDANTE</span>
-                    <span className="font-oswald font-bold text-gray-900 text-lg uppercase leading-none">{game.home_team_name}</span>
+              <div key={game.id} className="group bg-white rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden flex flex-col relative">
+                
+                {/* Indicador de Confiança Superior */}
+                <div className={cn("absolute top-0 left-0 w-full h-1.5", confidenceStyles.bg)} />
+
+                {/* Matchup Header */}
+                <div className="px-8 pt-10 pb-6 flex items-center justify-between">
+                  <div className="flex-1 text-left">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">CASA</span>
+                    <h4 className="font-oswald font-bold text-gray-900 text-xl uppercase leading-none">{game.home_team_name}</h4>
                   </div>
+                  
                   <div className="flex flex-col items-center px-4">
-                    <span className="text-pink-600 font-bebas text-2xl">VS</span>
+                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 shadow-inner">
+                      <span className="text-gray-300 font-bebas text-lg">VS</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col flex-1 text-right">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">VISITANTE</span>
-                    <span className="font-oswald font-bold text-gray-900 text-lg uppercase leading-none">{game.visitor_team_name}</span>
+
+                  <div className="flex-1 text-right">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">FORA</span>
+                    <h4 className="font-oswald font-bold text-gray-900 text-xl uppercase leading-none">{game.visitor_team_name}</h4>
                   </div>
                 </div>
 
-                {/* Corpo do Palpite */}
-                <div className="p-6 flex-grow">
+                {/* Divider Estilizado */}
+                <div className="px-8"><div className="h-px bg-gray-50 w-full"></div></div>
+
+                {/* Conteúdo do Palpite */}
+                <div className="p-8 flex-grow">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex-1">
-                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block mb-1">Dica de Aposta</span>
-                      <h3 className="text-2xl font-oswald font-black text-gray-900 uppercase leading-tight group-hover:text-pink-600 transition-colors">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#00DBFB] uppercase tracking-widest mb-2 bg-[#00DBFB]/5 px-2 py-0.5 rounded">
+                        <TrendingUp size={10} /> Sugestão da IA
+                      </span>
+                      <h3 className="text-3xl font-oswald font-black text-gray-900 uppercase leading-none group-hover:text-[#FA007D] transition-colors">
                         {palpite.prediction_title}
                       </h3>
                     </div>
                   </div>
 
-                  <div className={cn("relative p-5 rounded-2xl border-l-4 bg-gray-50", confidenceBorder)}>
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className={cn("w-2 h-2 rounded-full animate-pulse", confidenceBg)} />
-                        <span className={cn("text-[10px] font-black uppercase tracking-tighter", confidenceColor)}>
-                            {confidenceLabel} ({palpite.confidence_score}%)
+                  {/* Caixa de Análise */}
+                  <div className={cn("relative p-6 rounded-3xl border bg-gray-50/50", confidenceStyles.border)}>
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className={cn("w-2 h-2 rounded-full animate-ping", confidenceStyles.bg)} />
+                        <span className={cn("text-[10px] font-black uppercase tracking-tighter", confidenceStyles.text)}>
+                            {confidenceStyles.label} — {palpite.confidence_score}%
                         </span>
                     </div>
                     <p className="text-gray-600 text-sm leading-relaxed font-inter italic">
@@ -143,30 +153,37 @@ export default async function PalpitePage() {
                   </div>
                 </div>
                 
-                {/* Footer */}
-                <div className="px-6 py-4 bg-zinc-950 flex items-center justify-between">
+                {/* Footer Rodapé */}
+                <div className="px-8 py-5 bg-zinc-950 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[9px] text-zinc-500 uppercase tracking-widest font-bold">
-                    <BrainCircuit size={12} className="text-pink-500" />
+                    <BrainCircuit size={14} className="text-[#FA007D]" />
                     AI Engine 2.5 Flash
                   </div>
-                  <span className="text-[9px] text-zinc-600 font-mono">
-                    ID: {game.id.toString().slice(0,8)}
-                  </span>
+                  <div className="flex items-center gap-1 text-zinc-600 text-[9px] font-mono">
+                    <Clock size={10} />
+                    {new Date(game.date).toLocaleDateString('pt-BR')}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="mt-16 bg-blue-600 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
-             <div className="relative z-10">
-                <h4 className="text-2xl font-oswald font-bold uppercase mb-2">Aviso Importante</h4>
-                <p className="text-blue-100 text-sm font-inter leading-relaxed max-w-2xl">
-                    Nossos palpites são gerados por algoritmos baseados em dados históricos. O basquete é um esporte imprevisível e não garantimos lucros. Jogue com responsabilidade.
-                </p>
+        {/* Disclaimer */}
+        <div className="mt-20 bg-gradient-to-br from-zinc-900 to-black rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl border border-white/5">
+             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                <div className="w-20 h-20 bg-[#FA007D]/20 rounded-full flex items-center justify-center shrink-0 border border-[#FA007D]/30">
+                    <AlertCircle size={40} className="text-[#FA007D]" />
+                </div>
+                <div className="text-center md:text-left">
+                    <h4 className="text-2xl font-oswald font-bold uppercase mb-2 tracking-tight">O Jogo é Imprevisível</h4>
+                    <p className="text-zinc-400 text-sm font-inter leading-relaxed max-w-2xl">
+                        Nossos palpites são gerados por algoritmos baseados em dados históricos e tendências de mercado. O basquete da NBA é dinâmico e surpresas acontecem a cada rodada. Não garantimos lucros e recomendamos que você utilize estas informações apenas como suporte para sua própria análise.
+                    </p>
+                </div>
              </div>
-             <div className="absolute top-[-20px] right-[-20px] opacity-10">
-                <AlertCircle size={150} />
+             <div className="absolute -bottom-10 -right-10 opacity-[0.03] text-white">
+                <BrainCircuit size={300} />
              </div>
         </div>
       </div>
