@@ -17,7 +17,7 @@ import { retryRateLimitedArticles } from '@/lib/retryRateLimitedArticles';
 import { useAuth } from '@/hooks/useAuth';
 import { clearAllFeaturedArticlesServer, getRateLimitStatsServer } from '@/services/adminActions'; 
 import { approveAndPublishArticleServer } from '@/services/articleActions';
-import { optimizeImageForOG } from '@/utils/imageProcessing'; // Importando o otimizador
+import { optimizeImageForOG } from '@/utils/imageProcessing';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -100,6 +100,27 @@ export default function AdminPage() {
     }
   };
 
+  // --- NOVA FUNÇÃO: GERAR PALPITES ---
+  const handleGeneratePredictions = async () => {
+    const toastId = toast.loading("🔮 IA Analisando os jogos de hoje...");
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-predictions');
+      if (error) throw error;
+      
+      if (data.success) {
+        toast.success(data.message, { 
+            id: toastId,
+            description: `Jogos processados: ${data.games.join(', ')}`
+        });
+      } else {
+        toast.info("Nenhum palpite novo para gerar agora.", { id: toastId });
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro na IA de Palpites', { id: toastId, description: error.message });
+    }
+  };
+
   const scrape = async () => {
     setIsScraping(true);
     const toastId = toast.loading("Coletando notícias...");
@@ -164,7 +185,6 @@ export default function AdminPage() {
     const toastId = toast.loading("Otimizando e enviando imagem...");
     
     try {
-      // ✅ OTIMIZAÇÃO: Converte para JPG 1200x630 (padrão Open Graph)
       const optimizedBlob = await optimizeImageForOG(file);
       const optimizedFile = new File([optimizedBlob], `${articleId}.jpg`, { type: 'image/jpeg' });
       
@@ -427,6 +447,7 @@ export default function AdminPage() {
         onRetryRateLimited={handleRetryRateLimited}
         readyToRetryCount={rateLimitStats.ready_to_retry}
         onGenerateAutoAgenda={handleAutoAgenda}
+        onGeneratePredictions={handleGeneratePredictions}
       />
       <AdminStats 
         pendingProcessingCount={pendingProcessing.length}
