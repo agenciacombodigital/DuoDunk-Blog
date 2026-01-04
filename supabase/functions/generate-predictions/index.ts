@@ -11,6 +11,9 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// 1. Função de Delay (Pausa)
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Helper para formatar líderes (Stats)
 const formatLeaders = (leaders: any[]) => {
   if (!leaders || !Array.isArray(leaders) || leaders.length === 0) return "Sem dados de líderes.";
@@ -28,10 +31,10 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Limpeza Automática (Jogos com mais de 5 dias)
+    // Limpeza de jogos antigos
     await supabase.from('daily_games').delete().lt('date', new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString());
 
-    // 2. Buscar Jogos de Hoje
+    // Buscar Jogos de Hoje
     const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
     const scoreboardRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${today}`);
     const scoreboardData = await scoreboardRes.json();
@@ -39,23 +42,30 @@ serve(async (req) => {
 
     const predictionsGenerated = [];
 
-    for (const game of games) {
+    console.log(`🏀 Encontrados ${games.length} jogos para análise.`);
+
+    for (const [index, game] of games.entries()) {
       try {
         const gameId = game.id; 
+        console.log(`[${index + 1}/${games.length}] Processando jogo ID: ${gameId}...`);
+
+        // Verifica se já existe para pular rápido
+        const { data: existing } = await supabase.from('daily_games').select('id').eq('espn_game_id', gameId).maybeSingle();
+        if (existing) {
+             console.log("-> Jogo já existe no banco, pulando análise.");
+             continue;
+        }
+
         const competidores = game.competitions[0].competitors;
         const homeTeam = competidores.find((c: any) => c.homeAway === 'home').team;
         const awayTeam = competidores.find((c: any) => c.homeAway === 'away').team;
-
-        // Verifica se já existe palpite para este jogo
-        const { data: existing } = await supabase.from('daily_games').select('id').eq('espn_game_id', gameId).maybeSingle();
-        if (existing) continue;
 
         const headers = { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` 
         };
 
-        // Busca contexto técnico dos times
+        // Busca contexto técnico
         const [homeStats, awayStats] = await Promise.all([
           fetch(NBA_TEAM_INFO_URL, { method: 'POST', headers, body: JSON.stringify({ teamId: homeTeam.id }) }).then(r => r.json()),
           fetch(NBA_TEAM_INFO_URL, { method: 'POST', headers, body: JSON.stringify({ teamId: awayTeam.id }) }).then(r => r.json())
@@ -94,19 +104,30 @@ serve(async (req) => {
           })
         });
         
+        // Tratamento de Erro de Cota Específico
+        if (geminiRes.status === 429) {
+            console.warn("⚠️ Cota excedida (429)! Aguardando 60 segundos antes de prosseguir...");
+            await delay(60000); 
+            continue; 
+        }
+
+        if (!geminiRes.ok) {
+            throw new Error(`Erro na API do Gemini: ${geminiRes.status}`);
+        }
+
         const geminiData = await geminiRes.json();
         const aiResult = JSON.parse(geminiData.candidates[0].content.parts[0].text);
 
-        // Salva o jogo com os logos
+        // Salva com Logos
         const { data: gameDb, error: gameError } = await supabase.from('daily_games').insert({
           espn_game_id: gameId,
           date: game.date, 
           home_team_id: homeTeam.id,
           home_team_name: homeTeam.displayName,
-          home_team_logo: homeTeam.logo, // ✅ LOGO CASA
+          home_team_logo: homeTeam.logo,
           visitor_team_id: awayTeam.id,
           visitor_team_name: awayTeam.displayName,
-          visitor_team_logo: awayTeam.logo // ✅ LOGO VISITANTE
+          visitor_team_logo: awayTeam.logo
         }).select().single();
 
         if (gameError) throw gameError;
@@ -121,13 +142,18 @@ serve(async (req) => {
           });
           predictionsGenerated.push(`${homeTeam.displayName} vs ${awayTeam.displayName}`);
         }
+
+        // 🛑 O FREIO MÁGICO: 15s de pausa
+        console.log("-> Sucesso! Aguardando 15s para respeitar a cota da API...");
+        await delay(15000);
+
       } catch (gameError) {
-        console.error(`Erro ao processar jogo individual:`, gameError);
+        console.error(`Erro no jogo ${game.id}:`, gameError);
         continue; 
       }
     }
 
-    return new Response(JSON.stringify({ success: true, games: predictionsGenerated }), { headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ success: true, count: predictionsGenerated.length }), { headers: { "Content-Type": "application/json" } });
   } catch (error: any) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
