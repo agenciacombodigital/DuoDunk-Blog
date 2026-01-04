@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Calendar } from 'lucide-react';
+import { Menu, X, Home, Newspaper, Users, Trophy, Instagram, Calendar, BrainCircuit } from 'lucide-react';
 import ThreadsIcon from './ThreadsIcon';
 
 export default function MobileMenu() {
@@ -13,22 +13,20 @@ export default function MobileMenu() {
   const menuItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/ultimas', label: 'Últimas', icon: Newspaper },
+    { path: '/palpite', label: 'Palpites IA', icon: BrainCircuit },
     { path: '/times', label: 'Times', icon: Users },
     { path: '/classificacao', label: 'Classificação', icon: Trophy },
     { path: '/calendario', label: 'Calendário', icon: Calendar },
-    // ATUALIZADO: Texto do Quiz
     { path: '/jogos/milhao', label: '🏆 NBA Quiz', icon: Trophy }, 
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
 
-  // Fecha o menu ao mudar de rota
   useEffect(() => {
     closeMenu();
   }, [pathname]);
 
-  // Previne o scroll da página quando o menu está aberto
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -42,7 +40,6 @@ export default function MobileMenu() {
 
   return (
     <>
-      {/* Botão hambúrguer */}
       <button
         onClick={toggleMenu}
         className="z-[100] relative text-gray-300 hover:text-white transition-colors"
@@ -51,7 +48,6 @@ export default function MobileMenu() {
         {isOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
       </button>
 
-      {/* Overlay com blur */}
       {isOpen && (
         <div
           onClick={closeMenu}
@@ -59,7 +55,6 @@ export default function MobileMenu() {
         ></div>
       )}
 
-      {/* Menu lateral */}
       <aside
         className={`
           fixed top-0 left-0 h-full w-4/5 max-w-xs bg-gray-900/90 backdrop-blur-lg
@@ -68,7 +63,6 @@ export default function MobileMenu() {
         `}
       >
         <div className="p-6 pt-24 flex flex-col h-full">
-          {/* Items do menu */}
           <nav className="flex-grow space-y-2">
             {menuItems.map((item, index) => {
               const Icon = item.icon;
@@ -98,7 +92,6 @@ export default function MobileMenu() {
             })}
           </nav>
 
-          {/* Footer com redes sociais */}
           <div className="mt-auto pt-6 border-t border-white/10 text-center">
             <p className="text-sm text-gray-400 mb-4">Siga-nos:</p>
             <div className="flex justify-center gap-6">

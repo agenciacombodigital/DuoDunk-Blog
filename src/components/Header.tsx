@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Instagram } from 'lucide-react';
+import { Instagram, BrainCircuit } from 'lucide-react';
 import MobileMenu from './MobileMenu';
 import ThreadsIcon from './ThreadsIcon';
 
@@ -22,13 +22,15 @@ export default function Header() {
           </Link>
           
           {/* Navegação */}
-          <nav className="flex items-center gap-8 text-sm uppercase tracking-widest font-inter font-semibold">
+          <nav className="flex items-center gap-6 xl:gap-8 text-[11px] xl:text-sm uppercase tracking-widest font-inter font-semibold">
             <Link href="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
             <Link href="/ultimas" className="text-gray-300 hover:text-white transition-colors">Últimas</Link>
+            <Link href="/palpite" className="text-pink-500 hover:text-pink-400 transition-colors flex items-center gap-1">
+              <BrainCircuit size={16} /> Palpites
+            </Link>
             <Link href="/times" className="text-gray-300 hover:text-white transition-colors">Times</Link>
             <Link href="/classificacao" className="text-gray-300 hover:text-white transition-colors">Classificação</Link>
             <Link href="/calendario" className="text-gray-300 hover:text-white transition-colors">Calendário</Link>
-            {/* Corrigido para manter o tom amarelo/ouro no hover */}
             <Link href="/jogos/milhao" className="text-yellow-400 hover:text-yellow-300 transition-colors font-bebas tracking-wide text-lg">🏆 NBA Quiz</Link>
           </nav>
           
