@@ -88,12 +88,10 @@ serve(async (req) => {
         console.log(`[${index + 1}/${games.length}] Processando jogo ID: ${gameId}...`);
 
         // --- MUDANÇA CRÍTICA: REGENERAÇÃO ---
-        // Verifica se já existe. Se existir, DELETE para recriar com a nova lógica.
         const { data: existing } = await supabase.from('daily_games').select('id').eq('espn_game_id', gameId).maybeSingle();
         
         if (existing) {
              console.log("-> Jogo existente encontrado. Deletando para regenerar...");
-             // Deleta o jogo antigo (o 'predictions' será deletado via CASCADE se configurado, ou ficará órfão)
              await supabase.from('daily_games').delete().eq('id', existing.id);
         }
 
@@ -110,7 +108,7 @@ serve(async (req) => {
         const [homeInternal, awayInternal, gameDetails] = await Promise.all([
             fetch(NBA_TEAM_INFO_URL, { method: 'POST', headers, body: JSON.stringify({ teamId: homeTeam.id }) }).then(r => r.json()).catch(() => ({})),
             fetch(NBA_TEAM_INFO_URL, { method: 'POST', headers, body: JSON.stringify({ teamId: awayTeam.id }) }).then(r => r.json()).catch(() => ({})),
-            getGameDetails(gameId) // <--- Nova função de stats ricos
+            getGameDetails(gameId)
         ]);
 
         const safeDetails = gameDetails || { homeLeadersData: [], awayLeadersData: [], espnPrediction: "N/A" };
@@ -168,16 +166,16 @@ serve(async (req) => {
         const geminiData = await geminiRes.json();
         const aiResult = JSON.parse(geminiData.candidates[0].content.parts[0].text);
 
-        // 7. Salvar no Banco
+        // 7. Salvar no Banco (USANDO LOGO POR ID PARA ESTABILIDADE)
         const { data: gameDb, error: gameError } = await supabase.from('daily_games').insert({
           espn_game_id: gameId,
           date: game.date, 
           home_team_id: homeTeam.id,
           home_team_name: homeTeam.displayName,
-          home_team_logo: homeTeam.logo,
+          home_team_logo: `https://a.espncdn.com/i/teamlogos/nba/500/${homeTeam.id}.png`,
           visitor_team_id: awayTeam.id,
           visitor_team_name: awayTeam.displayName,
-          visitor_team_logo: awayTeam.logo
+          visitor_team_logo: `https://a.espncdn.com/i/teamlogos/nba/500/${awayTeam.id}.png`
         }).select().single();
 
         if (gameError) throw gameError;

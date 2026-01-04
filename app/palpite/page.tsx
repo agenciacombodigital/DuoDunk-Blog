@@ -1,7 +1,6 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
 import { BrainCircuit, Clock } from 'lucide-react';
-import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Palpiteiro NBA | Inteligência Artificial DuoDunk',
@@ -10,6 +9,13 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Helper para garantir que o logo apareça usando o ID da ESPN como fallback supremo
+const getTeamLogo = (logo: string | null, teamId: string) => {
+  if (logo && logo.includes('http') && !logo.includes('undefined')) return logo;
+  // Fallback para o CDN estável da ESPN por ID numérico
+  return `https://a.espncdn.com/i/teamlogos/nba/500/${teamId}.png`;
+};
 
 export default async function PalpitePage() {
   const { data: games } = await supabaseServer
@@ -42,7 +48,7 @@ export default async function PalpitePage() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-16">
         
-        {/* Header Section (Limpado) */}
+        {/* Header Section */}
         <div className="flex flex-col items-center text-center mb-16">
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-zinc-700 font-oswald uppercase">
             PALPITEIRO
@@ -73,11 +79,13 @@ export default async function PalpitePage() {
                     {/* Time Casa */}
                     <div className="flex flex-col items-center gap-2 w-1/3">
                         <span className="text-[9px] text-zinc-600 uppercase tracking-widest">CASA</span>
-                        {game.home_team_logo && (
-                           <div className="w-12 h-12 relative mb-1">
-                             <Image src={game.home_team_logo} alt={game.home_team_name} fill className="object-contain" />
-                           </div>
-                        )}
+                        <div className="w-12 h-12 relative mb-1 flex items-center justify-center">
+                          <img 
+                            src={getTeamLogo(game.home_team_logo, game.home_team_id)} 
+                            alt={game.home_team_name} 
+                            className="max-w-full max-h-full object-contain drop-shadow-md" 
+                          />
+                        </div>
                         <span className="text-white font-oswald uppercase text-base text-center leading-tight">{game.home_team_name}</span>
                     </div>
 
@@ -86,11 +94,13 @@ export default async function PalpitePage() {
                     {/* Time Fora */}
                     <div className="flex flex-col items-center gap-2 w-1/3">
                         <span className="text-[9px] text-zinc-600 uppercase tracking-widest">FORA</span>
-                        {game.visitor_team_logo && (
-                           <div className="w-12 h-12 relative mb-1">
-                             <Image src={game.visitor_team_logo} alt={game.visitor_team_name} fill className="object-contain" />
-                           </div>
-                        )}
+                        <div className="w-12 h-12 relative mb-1 flex items-center justify-center">
+                          <img 
+                            src={getTeamLogo(game.visitor_team_logo, game.visitor_team_id)} 
+                            alt={game.visitor_team_name} 
+                            className="max-w-full max-h-full object-contain drop-shadow-md" 
+                          />
+                        </div>
                         <span className="text-white font-oswald uppercase text-base text-center leading-tight">{game.visitor_team_name}</span>
                     </div>
                   </div>
