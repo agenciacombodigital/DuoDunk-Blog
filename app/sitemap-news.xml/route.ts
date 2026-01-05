@@ -60,7 +60,7 @@ export async function GET() {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
       'Cache-Control': 'public, max-age=0, s-maxage=3600',
-      'X-Robots-Tag': 'noindex', // O sitemap em si não deve ser indexado, apenas lido
+      'X-Robots-Tag': 'index, follow',
     },
   });
 }
