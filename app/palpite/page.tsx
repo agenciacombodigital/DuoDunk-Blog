@@ -1,11 +1,38 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import { Metadata } from 'next';
 import { BrainCircuit, Clock } from 'lucide-react';
-import { getTeamById } from '@/lib/nbaTeams'; // Importando para pegar abreviação
+import { getTeamById } from '@/lib/nbaTeams'; 
+
+// URL base do storage
+const SUPABASE_STORAGE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://brerfpcfkyptkzygyzxl.supabase.co';
+// Caminho exato da imagem conforme definido para o Palpiteiro
+const OG_IMAGE_URL = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/article-images/public/card-twitter-palpite.jpg`;
 
 export const metadata: Metadata = {
-  title: 'Palpiteiro NBA | Inteligência Artificial DuoDunk',
-  description: 'Previsões de alta precisão baseadas em estatísticas da temporada 2025-26.',
+  title: 'Palpiteiro NBA | Previsões com Inteligência Artificial DuoDunk',
+  description: 'Domine a rodada da NBA com o Palpiteiro DuoDunk. Nossa IA analisa estatísticas avançadas da temporada 2025-26, histórico e matchups para entregar previsões diárias com índice de confiança.',
+  openGraph: {
+    title: '🏀 Palpites NBA de Hoje | IA DuoDunk',
+    description: 'Veja as previsões da nossa Inteligência Artificial para os jogos de hoje. Análise estatística e nível de confiança para cada confronto.',
+    url: 'https://www.duodunk.com.br/palpite',
+    siteName: 'DuoDunk',
+    locale: 'pt_BR',
+    type: 'website',
+    images: [
+      {
+        url: OG_IMAGE_URL,
+        width: 1200,
+        height: 630,
+        alt: 'Palpiteiro DuoDunk NBA - Previsões com IA',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '🏀 Palpites NBA de Hoje | IA DuoDunk',
+    description: 'Veja as previsões da nossa IA para a rodada de hoje da NBA.',
+    images: [OG_IMAGE_URL],
+  },
 };
 
 export const dynamic = 'force-dynamic';
