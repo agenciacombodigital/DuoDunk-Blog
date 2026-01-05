@@ -48,6 +48,10 @@ export async function generateMetadata(
     ogImage = `${siteUrl}/images/card-twitter-duodunk.jpg`;
   }
 
+  // ✅ CACHE BUSTING: Timestamp diário para forçar o Twitter a atualizar a imagem
+  const cacheBuster = `?t=${new Date().toISOString().split('T')[0]}`;
+  const finalOgImage = `${ogImage}${cacheBuster}`;
+
   const title = article.title;
   const description = article.meta_description || article.summary || 'Acompanhe as últimas notícias da NBA em tempo real no Duo Dunk.';
 
@@ -62,11 +66,11 @@ export async function generateMetadata(
       siteName: 'Duo Dunk',
       images: [
         {
-          url: ogImage,
-          width: 1200,
-          height: 630,
+          url: finalOgImage,
+          width: 1200, // ✅ OBRIGATÓRIO PARA TWITTER MODERNO
+          height: 630, // ✅ OBRIGATÓRIO PARA TWITTER MODERNO
           alt: title,
-          type: 'image/jpeg', // ✅ TIPO EXPLÍCITO PARA WHATSAPP
+          type: 'image/jpeg',
         }
       ],
       locale: 'pt_BR',
@@ -80,7 +84,7 @@ export async function generateMetadata(
       creator: "@duodunk",
       title: title,
       description: description,
-      images: [ogImage],
+      images: [finalOgImage],
     },
   };
 }
