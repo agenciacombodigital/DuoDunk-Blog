@@ -8,6 +8,7 @@ import ArticleBody from '@/components/ArticleBody';
 import nextDynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { notFound } from 'next/navigation';
+import Script from 'next/script'; // Importando para injetar JSON-LD
 
 // Imports Dinâmicos
 const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
@@ -67,8 +68,8 @@ export async function generateMetadata(
       images: [
         {
           url: finalOgImage,
-          width: 1200, // ✅ OBRIGATÓRIO PARA TWITTER MODERNO
-          height: 630, // ✅ OBRIGATÓRIO PARA TWITTER MODERNO
+          width: 1200, 
+          height: 630, 
           alt: title,
           type: 'image/jpeg',
         }
@@ -93,6 +94,7 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   const article = await getArticle(params.slug);
   if (!article) notFound();
 
+  const siteUrl = 'https://www.duodunk.com.br';
   const date = new Date(article.published_at);
   const timeZone = 'America/Sao_Paulo';
   
@@ -105,8 +107,42 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   
   const leadText = article.subtitle || article.summary;
 
+  // JSON-LD NewsArticle para Google News
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    'headline': article.title,
+    'image': [
+      article.image_url?.startsWith('http') 
+        ? article.image_url 
+        : `${siteUrl}${article.image_url?.startsWith('/') ? '' : '/'}${article.image_url}`
+    ],
+    'datePublished': article.published_at,
+    'dateModified': article.updated_at || article.published_at,
+    'author': [{
+      '@type': 'Person',
+      'name': article.author || 'Redação Duo Dunk',
+      'url': siteUrl
+    }],
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'Duo Dunk',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': `${siteUrl}/images/duodunkv2-logo.svg`
+      }
+    }
+  };
+
   return (
     <div className="bg-white text-gray-900">
+      {/* Dados Estruturados Schema.org */}
+      <Script
+        id="news-article-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
           <article>
