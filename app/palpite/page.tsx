@@ -3,10 +3,8 @@ import { Metadata } from 'next';
 import { BrainCircuit, Clock } from 'lucide-react';
 import { getTeamById } from '@/lib/nbaTeams'; 
 
-// URL base do storage
-const SUPABASE_STORAGE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://brerfpcfkyptkzygyzxl.supabase.co';
-// Caminho exato da imagem conforme definido para o Palpiteiro
-const OG_IMAGE_URL = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/article-images/public/card-twitter-palpite.jpg`;
+// URL absoluta estática (Mais segura e rápida para OG Images fixas)
+const OG_IMAGE_URL = 'https://www.duodunk.com.br/images/card-twitter-palpite.jpg';
 
 export const metadata: Metadata = {
   title: 'Palpiteiro NBA | Previsões com Inteligência Artificial DuoDunk',
@@ -20,17 +18,18 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: OG_IMAGE_URL,
-        width: 1200,
+        url: OG_IMAGE_URL, 
+        width: 1200, // Dimensões explícitas são OBRIGATÓRIAS para o Twitter renderizar rápido
         height: 630,
-        alt: 'Palpiteiro DuoDunk NBA - Previsões com IA',
+        alt: 'Palpites NBA DuoDunk',
+        type: 'image/jpeg',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     title: '🏀 Palpites NBA de Hoje | IA DuoDunk',
-    description: 'Veja as previsões da nossa IA para a rodada de hoje da NBA.',
+    description: 'Veja as previsões da nossa IA para a rodada de hoje.',
     images: [OG_IMAGE_URL],
   },
 };
