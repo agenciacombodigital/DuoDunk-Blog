@@ -48,27 +48,30 @@ serve(async (req) => {
     }
 
     const wordCount = fullText.split(/\s+/).length;
-    // Reduzimos um pouco a exigência de tamanho para dar liberdade criativa, mas mantemos o mínimo
     const minWords = Math.floor(wordCount * 0.70); 
     
     console.log(`📝 Original: ${wordCount} palavras. Meta Criativa: ~${minWords} palavras.`);
 
-    // 🔥 PROMPT DE JORNALISMO ESPORTIVO (REESCRITA CRIATIVA)
+    // 🔥 PROMPT DE JORNALISMO ESPORTIVO (REFINADO PARA PRECISÃO)
     const prompt = `
     ATUE COMO: Redator Sênior de NBA do portal DuoDunk.
-    SUA MISSÃO: Transformar a notícia abaixo em um artigo original, engajador e com personalidade para o público brasileiro.
+    SUA MISSÃO: Transformar a notícia abaixo em um artigo original, engajador e com personalidade para o público brasileiro, SEM PERDER DETALHES TÉCNICOS.
 
     TEXTO BASE (EM INGLÊS):
     """
     ${fullText}
     """
 
-    🛑 REGRAS DE OURO (ANTI-ROBÔ):
-    1. **NÃO TRADUZA LITERALMENTE:** Leia o texto, entenda os fatos e ESCREVA DO ZERO com suas próprias palavras. Evite frases que soem como tradução do Google.
-    2. **USE TOM JORNALÍSTICO ESPORTIVO:** Use termos como "climão", "baixa importante", "cenário preocupante", "show em quadra". Seja dinâmico.
-    3. **MANTENHA OS DADOS:** Nomes, números, lesões, prazos e placares devem ser EXATOS. Não invente dados, mas mude a forma de contá-los.
-    4. **ESTRUTURA:** Comece com um lide forte (o que aconteceu e por que importa). Desenvolva o contexto. Termine com uma perspectiva futura.
-    5. **TAMANHO:** O texto deve ser robusto (mínimo ${minWords} palavras). Se o original for curto, adicione contexto sobre a temporada dos times/jogadores envolvidos.
+    🛑 REGRAS DE OURO (ANTI-ROBÔ & PRECISÃO DE DADOS):
+    1. **NÃO TRADUZA LITERALMENTE:** Escreva do zero com suas palavras, mas mantenha a fidelidade aos fatos.
+    2. **PRECISÃO CIRÚRGICA DE DADOS (CRUCIAL):**
+       - Se o texto original diz "9 e 11 de outubro", VOCÊ DEVE ESCREVER "9 e 11 de outubro". NÃO generalize para "em outubro".
+       - Mantenha EXATOS: Nomes, Placas, Datas de Jogos, Locais (Arenas), Valores de Contrato e Lesões.
+    3. **TOM JORNALÍSTICO ESPORTIVO:** Use termos como "climão", "baixa importante", "cenário preocupante", "show em quadra".
+    4. **ESTRUTURA:** - Lide forte (O que, Quem, Quando, Onde).
+       - Desenvolvimento (Contexto, Citações traduzidas).
+       - Conclusão (O que vem a seguir).
+    5. **TAMANHO:** O texto deve ser robusto (mínimo ${minWords} palavras).
 
     SAÍDA JSON:
     {
@@ -76,9 +79,8 @@ serve(async (req) => {
       "subtitle": "Subtítulo que complementa e instiga a leitura",
       "summary": "Resumo curto e direto para redes sociais (max 140 chars)",
       "paragraphs": [
-        "Parágrafo 1 (Lide forte)...",
-        "Parágrafo 2 (Desenvolvimento com estilo)...",
-        "Parágrafo 3 (Contexto e dados)...",
+        "Parágrafo 1...",
+        "Parágrafo 2...",
         "..."
       ],
       "tags": ["nba", "time", "jogador", "tema"],
@@ -99,7 +101,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { 
-                    temperature: 0.4, // Aumentei um pouco para dar criatividade (0.4 é seguro)
+                    temperature: 0.3, // Reduzi levemente para 0.3 para focar mais na precisão dos dados
                     maxOutputTokens: 8192, 
                     responseMimeType: "application/json" 
                 }
@@ -149,7 +151,7 @@ serve(async (req) => {
     if (updateError) throw updateError;
     
     const finalWordCount = bodyText.split(/\s+/).length;
-    console.log(`✅ Sucesso! Original: ${wordCount} -> Final (Criativo): ${finalWordCount}.`);
+    console.log(`✅ Sucesso! Original: ${wordCount} -> Final (Preciso): ${finalWordCount}.`);
 
     return new Response(JSON.stringify({ success: true, model: modelUsed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
