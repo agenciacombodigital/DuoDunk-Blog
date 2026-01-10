@@ -50,9 +50,17 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Limpeza de jogos expirados (não afeta os de hoje)
+    // 1. Limpeza de jogos antigos e palpites do dia (para regeneração limpa)
+    // Limpa jogos com mais de 3 dias
     await supabase.from('daily_games').delete().lt('date', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString());
 
+    // --- NOVA LÓGICA: REMOVER PALPITES DO DIA ATUAL PARA REGENERAR ---
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    
+    // Deleta os jogos de hoje (o CASCADE deve apagar os palpites atrelados)
+    await supabase.from('daily_games').delete().gte('date', startOfDay);
+    
     // 2. Buscar Scoreboard
     const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
     const scoreboardRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${today}`);
@@ -65,17 +73,6 @@ serve(async (req) => {
     for (const [index, game] of games.entries()) {
       const gameId = game.id;
       
-      const { data: existingGame } = await supabase
-        .from('daily_games')
-        .select('id, predictions(id)')
-        .eq('espn_game_id', gameId)
-        .maybeSingle();
-
-      if (existingGame?.predictions && existingGame.predictions.length > 0) {
-        console.log(`Skipping game ${gameId} (Already has prediction)`);
-        continue;
-      }
-
       console.log(`Analyzing game ${gameId}...`);
 
       const competidores = game.competitions[0].competitors;
