@@ -214,7 +214,7 @@ export default async function Home() {
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors p-8 flex flex-col justify-end">
                     <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full w-fit mb-3">DESTAQUE</span>
                     <h3 className="text-2xl md:text-4xl font-black text-white uppercase leading-none mb-2">{otherArticles[7].title}</h3>
-                    <p className="text-gray-200 line-clamp-2 hidden md:block">{otherArticles[7].summary}</p>
+                    <p className="text-gray-200 line-clamp-2 hidden md:block" data-nosnippet="true">{otherArticles[7].summary}</p>
                   </div>
                 </Link>
               )}
@@ -283,7 +283,7 @@ export default async function Home() {
                         {article.title}
                       </h3>
                       
-                      <p className={cn("text-gray-500 font-inter leading-relaxed mb-6 line-clamp-2", isLarge ? 'text-base' : 'text-sm')}>
+                      <p className={cn("text-gray-500 font-inter leading-relaxed mb-6 line-clamp-2", isLarge ? 'text-base' : 'text-sm')} data-nosnippet="true">
                         {article.summary}
                       </p>
                       
