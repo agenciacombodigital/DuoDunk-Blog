@@ -5,9 +5,32 @@ import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye, ChevronRi
 import { getObjectPositionStyle } from '@/lib/utils';
 import AmazonCTA from '@/components/AmazonCTA';
 import { cn } from '@/lib/utils';
+import { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60; 
+
+export const metadata: Metadata = {
+  title: 'DuoDunk | O Melhor Portal de NBA do Brasil',
+  description: 'Notícias, estatísticas, rumores e o Quiz do Milhão. Acompanhe tudo sobre a NBA em tempo real.',
+  
+  openGraph: {
+    title: 'DuoDunk | O Melhor Portal de NBA do Brasil',
+    description: 'Notícias, estatísticas, rumores e o Quiz do Milhão. Acompanhe tudo sobre a NBA em tempo real.',
+    url: 'https://www.duodunk.com.br',
+    siteName: 'DuoDunk',
+    images: [
+      {
+        url: 'https://www.duodunk.com.br/images/banner-duodunkv2.jpg', 
+        width: 1200,
+        height: 630,
+        alt: 'DuoDunk NBA - Notícias e Quiz',
+      },
+    ],
+    locale: 'pt_BR',
+    type: 'website',
+  },
+};
 
 interface Article {
   id: string;
