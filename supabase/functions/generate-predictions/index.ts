@@ -6,102 +6,103 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
 
-// ✅ CORREÇÃO: Usando a versão que o cliente confirmou e que apareceu nos logs de cota
+// Modelo atualizado para performance e estabilidade
 const GEMINI_MODEL = "gemini-2.5-flash"; 
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 serve(async (req) => {
-  // CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' } });
   }
 
   try {
-    console.log(`🚀 Iniciando Palpiteiro Batch (${GEMINI_MODEL})...`);
+    console.log(`🚀 Iniciando Palpiteiro (Modo Direto)...`);
 
-    // 1. LIMPEZA DIÁRIA 
-    // Garante que não haja palpites duplicados ou velhos do mesmo dia
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    await supabase.from('daily_games').delete().gte('date', startOfDay);
+    // 1. DEFINIR DATA DA RODADA (Fuso Horário BR ou UTC tratado)
+    // Usamos YYYYMMDD para a ESPN
+    const todayDate = new Date();
+    const formattedDateESPN = todayDate.toISOString().split('T')[0].replace(/-/g, ''); // Ex: 20260131
+    const formattedDateDB = todayDate.toISOString().split('T')[0]; // Ex: 2026-01-31
 
-    // 2. BUSCAR JOGOS (Scoreboard ESPN)
-    const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const scoreboardRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${today}`);
+    console.log(`📅 Processando rodada: ${formattedDateDB}`);
+
+    // 2. LIMPEZA CIRÚRGICA
+    // Deleta apenas os jogos desta data específica para evitar duplicidade na visualização
+    // O filtro 'like' garante que pegue qualquer hora do dia (2026-01-31%)
+    await supabase.from('daily_games').delete().like('date', `${formattedDateDB}%`);
+
+    // 3. BUSCAR JOGOS (Scoreboard ESPN)
+    const scoreboardRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${formattedDateESPN}`);
     const scoreboardData = await scoreboardRes.json();
     const games = scoreboardData.events || [];
 
-    console.log(`🏀 Jogos encontrados na ESPN: ${games.length}`);
+    console.log(`🏀 Jogos encontrados: ${games.length}`);
 
     if (games.length === 0) {
-        return new Response(JSON.stringify({ message: "Nenhum jogo na rodada hoje." }), { headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ message: "Nenhum jogo na rodada de hoje." }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // 3. PREPARAR O PROMPT EM LOTE (Batch Processing)
-    // Agrupa todos os jogos em uma única string de texto
+    // 4. PREPARAR O PROMPT EM LOTE
     const gamesList = games.map((g: any) => {
       const home = g.competitions[0].competitors.find((c: any) => c.homeAway === 'home').team;
       const away = g.competitions[0].competitors.find((c: any) => c.homeAway === 'away').team;
       
-      const homeRecord = g.competitions[0].competitors.find((c: any) => c.homeAway === 'home').records?.[0]?.summary || "";
-      const awayRecord = g.competitions[0].competitors.find((c: any) => c.homeAway === 'away').records?.[0]?.summary || "";
+      const homeRecord = g.competitions[0].competitors.find((c: any) => c.homeAway === 'home').records?.[0]?.summary || "0-0";
+      const awayRecord = g.competitions[0].competitors.find((c: any) => c.homeAway === 'away').records?.[0]?.summary || "0-0";
       
-      return `- ID: "${g.id}" | ${home.displayName} (${homeRecord}) vs ${away.displayName} (${awayRecord})`;
+      return `- ID: "${g.id}" | JOGO: ${home.displayName} (${homeRecord}) vs ${away.displayName} (${awayRecord})`;
     }).join('\n');
 
+    // Prompt ajustado para: Sem justificativa longa, considerar momento/elenco
     const prompt = `
-      Atue como o analista sênior de apostas da NBA (DuoDunk).
+      Atue como especialista em NBA (DuoDunk).
       
-      TAREFA: Analise a lista de jogos abaixo e preveja o vencedor de CADA UM DELES.
+      TAREFA: Preveja o vencedor para cada jogo da lista abaixo.
       
-      JOGOS DE HOJE:
+      CRITÉRIOS DE ANÁLISE:
+      1. Considere a campanha atual (Record).
+      2. Considere o mando de quadra.
+      3. Considere a força teórica dos elencos titulares e estrelas disponíveis.
+      
+      LISTA DE JOGOS:
       ${gamesList}
 
-      REGRAS DE SAÍDA (IMPORTANTE):
-      1. Retorne APENAS um Array JSON válido. Não use Markdown (\`\`\`json). Apenas o JSON puro.
-      2. Para CADA jogo, gere um objeto com: "id", "vencedor", "confianca" (número 0-100) e "analise".
-      3. A "analise" deve ser curta (máx 150 caracteres), citando um fator chave.
-      4. Seja decisivo.
+      REGRAS DE SAÍDA (JSON PURO):
+      1. Retorne APENAS um Array JSON.
+      2. Campos: "id", "titulo" (Ex: "Lakers Vence"), "confianca" (0-100).
+      3. NÃO escreva justificativa ou análise. O foco é o resultado direto.
 
-      EXEMPLO DE FORMATO:
+      EXEMPLO:
       [
-        { "id": "401810418", "vencedor": "Lakers", "confianca": 82, "analise": "LeBron lidera o ataque." },
-        { "id": "401810419", "vencedor": "Celtics", "confianca": 65, "analise": "Mando de quadra decisivo." }
+        { "id": "401810418", "titulo": "Lakers Vence", "confianca": 82 },
+        { "id": "401810419", "titulo": "Celtics Vence", "confianca": 65 }
       ]
     `;
 
-    // 4. CHAMADA ÚNICA AO GEMINI (1 Requisição = Economia de Cota)
-    console.log("🤖 Enviando requisição única (Batch)...");
+    // 5. CHAMADA ÚNICA AO GEMINI
+    console.log("🤖 Consultando IA...");
     
     const geminiRes = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
          contents: [{ parts: [{ text: prompt }] }],
-         generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+         generationConfig: { temperature: 0.1, responseMimeType: "application/json" } // Temp baixa para ser mais "lógico" e menos criativo
       })
     });
 
-    if (!geminiRes.ok) {
-        const errorText = await geminiRes.text();
-        console.error("Erro Gemini API:", errorText);
-        throw new Error(`Erro Gemini API: ${geminiRes.status}`);
-    }
+    if (!geminiRes.ok) throw new Error(`Erro Gemini API: ${geminiRes.status}`);
 
     const geminiData = await geminiRes.json();
     let aiResponseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!aiResponseText) throw new Error("IA não retornou texto.");
 
-    // Limpeza de segurança do JSON (caso a IA mande markdown)
-    aiResponseText = aiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const predictions = JSON.parse(aiResponseText);
+    const predictions = JSON.parse(aiResponseText.replace(/```json/g, '').replace(/```/g, '').trim());
 
-    console.log(`✅ IA gerou ${predictions.length} palpites.`);
-
-    // 5. SALVAR NO BANCO (Loop local, muito rápido)
+    // 6. SALVAR NO BANCO
     const savedGames = [];
 
     for (const pred of predictions) {
@@ -128,16 +129,16 @@ serve(async (req) => {
           continue;
       }
 
-      // Insert do Palpite
+      // Insert do Palpite (Sem descrição longa)
       if (gameDb) {
         await supabase.from('predictions').insert({
           game_id: gameDb.id,
-          prediction_title: `${pred.vencedor} Vence`,
-          prediction_analysis: pred.analise,
+          prediction_title: pred.titulo, // Ex: "Lakers Vence"
+          prediction_analysis: "Probabilidade calculada com base em retrospecto e elenco.", // Texto padrão curto
           confidence_score: pred.confianca,
           ai_model: GEMINI_MODEL
         });
-        savedGames.push(pred.vencedor);
+        savedGames.push(pred.titulo);
       }
     }
 
