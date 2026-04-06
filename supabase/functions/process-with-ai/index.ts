@@ -52,42 +52,49 @@ serve(async (req) => {
     
     console.log(`📝 Original: ${wordCount} palavras. Meta Criativa: ~${minWords} palavras.`);
 
-    // 🔥 PROMPT DE JORNALISMO ESPORTIVO (REFINADO PARA PRECISÃO)
+    // 🔥 NOVO PROMPT REFINADO (HUMAN-LIKE)
     const prompt = `
-    ATUE COMO: Redator Sênior de NBA do portal DuoDunk.
-    SUA MISSÃO: Transformar a notícia abaixo em um artigo original, engajador e com personalidade para o público brasileiro, SEM PERDER DETALHES TÉCNICOS.
+Você é um redator brasileiro de esportes que escreve para o portal DuoDunk — um blog de NBA com linguagem descontraída, direta e apaixonada pelo basquete.
 
-    TEXTO BASE (EM INGLÊS):
-    """
-    ${fullText}
-    """
+Seu trabalho é transformar o texto abaixo em um artigo em português, escrito como se fosse um jornalista humano empolgado com a notícia.
 
-    🛑 REGRAS DE OURO (ANTI-ROBÔ & PRECISÃO DE DADOS):
-    1. **NÃO TRADUZA LITERALMENTE:** Escreva do zero com suas palavras, mas mantenha a fidelidade aos fatos.
-    2. **PRECISÃO CIRÚRGICA DE DADOS (CRUCIAL):**
-       - Se o texto original diz "9 e 11 de outubro", VOCÊ DEVE ESCREVER "9 e 11 de outubro". NÃO generalize para "em outubro".
-       - Mantenha EXATOS: Nomes, Placas, Datas de Jogos, Locais (Arenas), Valores de Contrato e Lesões.
-    3. **TOM JORNALÍSTICO ESPORTIVO:** Use termos como "climão", "baixa importante", "cenário preocupante", "show em quadra".
-    4. **ESTRUTURA:** - Lide forte (O que, Quem, Quando, Onde).
-       - Desenvolvimento (Contexto, Citações traduzidas).
-       - Conclusão (O que vem a seguir).
-    5. **TAMANHO:** O texto deve ser robusto (mínimo ${minWords} palavras).
+TEXTO ORIGINAL (em inglês):
+"""
+${fullText}
+"""
 
-    SAÍDA JSON:
-    {
-      "title": "Título chamativo em PT-BR (max 80 chars, estilo manchete)",
-      "subtitle": "Subtítulo que complementa e instiga a leitura",
-      "summary": "Resumo curto e direto para redes sociais (max 140 chars)",
-      "paragraphs": [
-        "Parágrafo 1...",
-        "Parágrafo 2...",
-        "..."
-      ],
-      "tags": ["nba", "time", "jogador", "tema"],
-      "meta_description": "SEO Description atrativa",
-      "slug": "url-amigavel-baseada-no-titulo"
-    }
-    `;
+COMO ESCREVER (leia com atenção):
+- Escreva como se estivesse contando a novidade para um amigo que também curte NBA. Natural, sem frescura.
+- Varie bastante o tamanho das frases. Algumas curtas. Outras mais longas, com mais contexto e detalhes. Isso é fundamental.
+- NUNCA use travessão (—) para separar ideias. Use vírgulas, parênteses ou simplesmente quebre em outra frase.
+- Evite começar muitas frases seguidas com a mesma palavra ou estrutura.
+- Troque frases genéricas por expressões do dia a dia do esporte: "deu trabalho", "foi pra cima", "não deixou barato", "jogou o peso do nome", "tá num momento", "se impôs".
+- Use parágrafos curtos. Máximo 3 ou 4 linhas cada.
+- Não use listas com bullet points. Tudo em texto corrido.
+- Não use palavras de transição robóticas como "Ademais", "Portanto", "Destarte", "Vale ressaltar que", "No contexto atual", "Em suma", "Não obstante".
+- Conclua o artigo de forma natural, com uma perspectiva sobre o que vem pela frente — sem soar como resumo de relatório.
+
+PRECISÃO DOS DADOS (obrigatório):
+- Preserve exatamente: nomes, datas, placares, times, arenas, valores de contrato e lesões.
+- Se o texto diz "9 e 11 de outubro", escreva "9 e 11 de outubro". Nunca generalize.
+
+TAMANHO: No mínimo ${minWords} palavras nel corpo do artigo.
+
+Responda SOMENTE com o JSON abaixo, sem nenhum texto fora dele:
+{
+  "title": "Título chamativo em PT-BR (máx 80 caracteres, estilo manchete de jornal esportivo)",
+  "subtitle": "Subtítulo que complementa e instiga a leitura",
+  "summary": "Resumo curto e direto para redes sociais (máx 140 caracteres)",
+  "paragraphs": [
+    "Parágrafo 1...",
+    "Parágrafo 2...",
+    "..."
+  ],
+  "tags": ["nba", "time", "jogador", "tema"],
+  "meta_description": "Descrição SEO atrativa",
+  "slug": "url-amigavel-baseada-no-titulo"
+}
+`;
 
     let aiResponse = null;
     let modelUsed = '';
@@ -101,7 +108,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { 
-                    temperature: 0.3, // Reduzi levemente para 0.3 para focar mais na precisão dos dados
+                    temperature: 0.3, 
                     maxOutputTokens: 8192, 
                     responseMimeType: "application/json" 
                 }
