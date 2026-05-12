@@ -23,35 +23,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    let mounted = true;
+
     // 1. Carregar sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsAdmin(!!session); 
-      setIsLoading(false);
-    });
+    const initAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setIsAdmin(!!session);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar sessão inicial:", error);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    initAuth();
 
     // 2. Monitorar mudanças de estado
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsAdmin(!!session);
-      setIsLoading(false);
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAdmin(!!session);
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
   
   // 3. Redirecionamento de proteção (Client-side check)
   useEffect(() => {
     if (!isLoading) {
-      const isAdminRoute = pathname.startsWith('/admin') && pathname !== '/admin/login';
+      const isLoginRoute = pathname === '/admin/login';
+      const isAdminRoute = pathname.startsWith('/admin') && !isLoginRoute;
       
       if (isAdminRoute && !isAdmin) {
         router.replace('/admin/login');
       }
       
-      if (pathname === '/admin/login' && isAdmin) {
+      if (isLoginRoute && isAdmin) {
         router.replace('/admin');
       }
     }
