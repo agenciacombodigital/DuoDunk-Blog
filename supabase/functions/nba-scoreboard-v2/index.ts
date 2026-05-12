@@ -10,7 +10,13 @@ const corsHeaders = {
 const fetchStandingsMap = async () => {
     try {
         const standingsUrl = 'https://cdn.nba.com/static/json/liveData/standings/leagueStandings.json';
-        const response = await fetch(standingsUrl);
+        const response = await fetch(standingsUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+          signal: AbortSignal.timeout(5000) // Timeout de 5 segundos
+        });
+        
         if (!response.ok) return new Map();
         const data = await response.json();
         const standingsMap = new Map();
@@ -27,8 +33,8 @@ const fetchStandingsMap = async () => {
         }
         return standingsMap;
     } catch (error) {
-        console.error('[Standings Fetch] Error:', error.message);
-        return new Map();
+        console.error('[Standings Fetch] Erro na API da NBA (CDN):', error.message);
+        return new Map(); // Retorna mapa vazio para não travar o fluxo
     }
 };
 
@@ -37,7 +43,10 @@ const fetchESPNFallback = async (dateStr: string) => {
   try {
     console.log(`[Scoreboard] Tentando Fallback ESPN para a data: ${dateStr}`);
     const espnUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
-    const response = await fetch(espnUrl);
+    const response = await fetch(espnUrl, {
+      signal: AbortSignal.timeout(8000)
+    });
+    
     if (!response.ok) return null;
     
     const data = await response.json();
@@ -51,7 +60,6 @@ const fetchESPNFallback = async (dateStr: string) => {
       const home = competition.competitors.find((c: any) => c.homeAway === 'home');
       const away = competition.competitors.find((c: any) => c.homeAway === 'away');
       
-      const status = competition.status.type.name;
       let gameStatus = 1; // agendado
       if (competition.status.type.state === 'in') gameStatus = 2; // ao vivo
       if (competition.status.type.completed) gameStatus = 3; // finalizado
@@ -91,7 +99,7 @@ const fetchESPNFallback = async (dateStr: string) => {
 
     return { games };
   } catch (e) {
-    console.error('[ESPN Fallback] Error:', e.message);
+    console.error('[ESPN Fallback] Erro Crítico:', e.message);
     return null;
   }
 };
@@ -106,24 +114,29 @@ serve(async (req) => {
     const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }).replace(/-/g, '');
 
     // 1. Tentar API da NBA
-    const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
-    const response = await fetch(nbaApiUrl, {
-      cache: "no-store",
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      }
-    });
-
     let scoreboardData = null;
-    if (response.ok) {
-        const data = await response.json();
-        // Se a API da NBA retornar vazio, consideramos "atrasada"
-        if (data.scoreboard && data.scoreboard.games && data.scoreboard.games.length > 0) {
-            scoreboardData = data.scoreboard;
-            console.log(`[Scoreboard] Dados obtidos via NBA API (${scoreboardData.games.length} jogos)`);
-        }
+    
+    try {
+      const nbaApiUrl = `https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?_=${cacheBuster}`;
+      const response = await fetch(nbaApiUrl, {
+        cache: "no-store",
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      if (response.ok) {
+          const data = await response.json();
+          if (data.scoreboard && data.scoreboard.games && data.scoreboard.games.length > 0) {
+              scoreboardData = data.scoreboard;
+              console.log(`[Scoreboard] Dados obtidos via NBA API (${scoreboardData.games.length} jogos)`);
+          }
+      }
+    } catch (nbaError) {
+      console.warn('[Scoreboard] NBA API falhou ou expirou. Usando fallback...');
     }
 
     // 2. Fallback para ESPN se NBA falhar ou estiver vazia
@@ -142,7 +155,8 @@ serve(async (req) => {
     }
 
     // Se vier da NBA (original), precisamos injetar os recordes (o Fallback ESPN já faz isso)
-    if (!scoreboardData.games[0].gameTimeUTC) { // Heurística simples para saber se é formato NBA original
+    const firstGame = scoreboardData.games[0];
+    if (firstGame && !firstGame.gameTimeUTC && firstGame.homeTeam.wins === undefined) { 
         const standingsMap = await fetchStandingsMap();
         scoreboardData.games.forEach((game: any) => {
             const h = standingsMap.get(game.homeTeam.teamTricode);
@@ -160,7 +174,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in nba-scoreboard-v2:', error.message);
+    console.error('Erro Final no nba-scoreboard-v2:', error.message);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders }, status: 500,
     });
