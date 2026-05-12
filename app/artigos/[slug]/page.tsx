@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/integrations/supabase/server';
-import { ArrowLeft, Clock } from 'lucide-center';
+import { ArrowLeft, Clock } from 'lucide-react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/ImageWithFallback'; 
 import { getObjectPositionStyle } from '@/lib/utils';
