@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/integrations/supabase/server';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-center';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/ImageWithFallback'; 
 import { getObjectPositionStyle } from '@/lib/utils';
@@ -8,7 +8,7 @@ import ArticleBody from '@/components/ArticleBody';
 import nextDynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { notFound } from 'next/navigation';
-import Script from 'next/script'; // Importando para injetar JSON-LD
+import Script from 'next/script';
 
 // Imports Dinâmicos
 const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
@@ -20,13 +20,39 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 async function getArticle(slug: string) {
-  const { data } = await supabaseServer
-    .from('articles')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle();
+  try {
+    console.log(`[Artigo] Buscando slug: ${slug}`);
+    const { data, error } = await supabaseServer
+      .from('articles')
+      .select('*')
+      .eq('slug', slug)
+      .eq('published', true)
+      .maybeSingle();
+    
+    if (error) {
+      console.error(`[Artigo] Erro Supabase para slug "${slug}":`, error.message);
+      return null;
+    }
+
+    if (!data) {
+      console.warn(`[Artigo] Nenhum artigo publicado encontrado com o slug: ${slug}`);
+      // Verificação extra: existe o slug mas não está publicado?
+      const { data: checkExists } = await supabaseServer
+        .from('articles')
+        .select('id, published')
+        .eq('slug', slug)
+        .maybeSingle();
+      
+      if (checkExists) {
+        console.warn(`[Artigo] O artigo existe (ID: ${checkExists.id}), mas o status 'published' é: ${checkExists.published}`);
+      }
+    }
+
     return data;
+  } catch (e: any) {
+    console.error(`[Artigo] Erro fatal ao buscar slug "${slug}":`, e.message);
+    return null;
+  }
 }
 
 export async function generateMetadata(
@@ -49,7 +75,6 @@ export async function generateMetadata(
     ogImage = `${siteUrl}/images/card-twitter-duodunk.jpg`;
   }
 
-  // ✅ CACHE BUSTING: Timestamp diário para forçar o Twitter a atualizar a imagem
   const cacheBuster = `?t=${new Date().toISOString().split('T')[0]}`;
   const finalOgImage = `${ogImage}${cacheBuster}`;
 
@@ -107,7 +132,6 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
   
   const leadText = article.subtitle || article.summary;
 
-  // JSON-LD NewsArticle para Google News
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
@@ -136,7 +160,6 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
 
   return (
     <div className="bg-white text-gray-900">
-      {/* Dados Estruturados Schema.org */}
       <Script
         id="news-article-schema"
         type="application/ld+json"

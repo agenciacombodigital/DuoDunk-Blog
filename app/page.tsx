@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/integrations/supabase/server';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/ImageWithFallback'; 
-import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye, ChevronRight } from 'lucide-react';
+import { TrendingUp, Clock, Zap, BarChart2, BookOpen, ArrowRight, Eye, ChevronRight, Newspaper } from 'lucide-react';
 import { getObjectPositionStyle } from '@/lib/utils';
 import AmazonCTA from '@/components/AmazonCTA';
 import { cn } from '@/lib/utils';
@@ -64,18 +64,45 @@ function getTimeAgo(dateString: string): string {
 }
 
 async function loadArticles(): Promise<Article[]> {
-  const { data } = await supabaseServer
-    .from('articles')
-    .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, created_at, image_focal_point, image_focal_point_mobile, is_featured, author')
-    .eq('published', true)
-    .order('published_at', { ascending: false })
-    .limit(100); 
-  return data || [];
+  try {
+    const { data, error } = await supabaseServer
+      .from('articles')
+      .select('id, title, subtitle, slug, summary, image_url, source, tags, published_at, created_at, image_focal_point, image_focal_point_mobile, is_featured, author')
+      .eq('published', true)
+      .order('published_at', { ascending: false })
+      .limit(100); 
+    
+    if (error) {
+      console.error('[Home] Erro ao buscar artigos:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (e: any) {
+    console.error('[Home] Erro fatal no fetch:', e.message);
+    return [];
+  }
 }
 
 export default async function Home() {
   const articles = await loadArticles();
-  if (articles.length === 0) return null;
+
+  // Estado Vazio Amigável
+  if (articles.length === 0) {
+    return (
+      <div className="min-h-[60vh] bg-white flex flex-col items-center justify-center p-8 text-center">
+        <div className="bg-gray-100 p-6 rounded-full mb-6">
+          <Newspaper className="w-12 h-12 text-gray-400" />
+        </div>
+        <h2 className="text-2xl font-oswald font-bold text-gray-900 uppercase mb-2">Nenhuma notícia publicada ainda</h2>
+        <p className="text-gray-500 font-inter max-w-md mb-8">
+          Estamos preparando os melhores conteúdos da NBA para você. Volte em instantes!
+        </p>
+        <Link href="/ultimas" className="btn-magenta">
+          Ver Arquivo de Notícias
+        </Link>
+      </div>
+    );
+  }
 
   // Distribuição fixa para o Hero
   const featured = articles.find(a => a.is_featured) || articles[0];
