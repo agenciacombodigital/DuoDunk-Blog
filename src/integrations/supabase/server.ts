@@ -12,11 +12,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const cleanUrl = (supabaseUrl || FALLBACK_URL).replace(/["']/g, "").trim();
 const cleanKey = (supabaseKey || FALLBACK_ANON_KEY).replace(/["']/g, "").trim();
 
-console.log("--- [Supabase Server Connect] ---");
-console.log("URL Alvo:", cleanUrl);
-console.log("Key usada:", cleanKey ? `${cleanKey.slice(0, 10)}... (Tamanho: ${cleanKey.length})` : "VAZIA");
-
-// 3. Criação do Cliente
+// 3. Criação do Cliente (Sem logs excessivos que podem travar o buffer de saída)
 export const supabaseServer = createClient(cleanUrl, cleanKey, {
   auth: {
     persistSession: false,
