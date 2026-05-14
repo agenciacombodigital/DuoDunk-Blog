@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json'
 };
 
 const RSS_FEEDS = [
@@ -33,38 +34,30 @@ function extractImage(itemXml: string) {
   if (enclosureMatch) return enclosureMatch[1];
   const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]*url=["']([^"']+)["'][^>]*>/i);
   if (mediaMatch) return mediaMatch[1];
-  const imgMatch = itemXml.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))["']/i);
+  const imgMatch = itemXml.match(/src=["']([^"']+)["']/i);
   if (imgMatch) {
-      let url = imgMatch[1];
-      if (url.startsWith('//')) url = 'https:' + url;
-      return url;
+    let url = imgMatch[1];
+    if (url.startsWith('//')) url = 'https:' + url;
+    return url;
   }
   return null;
 }
 
-// Scraper com Filtros de Limpeza (Anti-Lixo)
 async function fetchFullArticle(url: string): Promise<{ text: string | null, chars: number }> {
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000); // 8s timeout
+    const id = setTimeout(() => controller.abort(), 8000);
 
-    const response = await fetch(url, { 
-      headers: FAKE_HEADERS,
-      signal: controller.signal
-    });
+    const response = await fetch(url, { headers: FAKE_HEADERS, signal: controller.signal });
     clearTimeout(id);
 
     if (!response.ok) return { text: null, chars: 0 };
-
     const html = await response.text();
-    
-    // Regex para pegar parágrafos
+
     const pTagsRegex = /<p[^>]*>(.*?)<\/p>/gis;
     const matches = html.matchAll(pTagsRegex);
-    
     const paragraphs: string[] = [];
-    
-    // Termos proibidos (lixo de menu/rodapé)
+
     const blacklist = [
       'copyright', 'all rights reserved', 'privacy policy', 'terms of use', 
       'contact us', 'newsletter', 'subscribe', 'login', 'sign up',
@@ -72,33 +65,22 @@ async function fetchFullArticle(url: string): Promise<{ text: string | null, cha
     ];
 
     for (const match of matches) {
-      let text = match[1]
-        .replace(/<[^>]+>/g, '') // Remove tags HTML
-        .replace(/&nbsp;/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
+      let text = match[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
       const lowerText = text.toLowerCase();
 
-      // FILTROS DE QUALIDADE:
-      // 1. Tamanho mínimo: Ignora frases curtas soltas
-      // 2. Blacklist: Ignora rodapés e avisos legais
-      // 3. Densidade de Links: Ignora listas de times (Ex: "Lakers Warriors Suns...")
       if (text.length > 80 && 
-          !blacklist.some(term => lowerText.includes(term)) &&
+          !blacklist.some(term => lowerText.includes(term)) && 
           !text.includes('{') && 
-          !text.includes('function(') &&
-          (text.match(/[A-Z]/g) || []).length < (text.length * 0.4) // Se tiver mais de 40% de maiúsculas, provavelmente é menu
+          !text.includes('function(') && 
+          (text.match(/[A-Z]/g) || []).length < (text.length * 0.4)
       ) {
         paragraphs.push(text);
       }
     }
 
     if (paragraphs.length === 0) return { text: null, chars: 0 };
-
     const fullText = paragraphs.join('\n\n');
     return { text: fullText, chars: fullText.length };
-
   } catch (error) {
     return { text: null, chars: 0 };
   }
@@ -113,19 +95,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    let allArticles: any[] = [];
+    console.log("[scrape-news] Iniciando coleta de feeds...");
+    let allRawArticles: any[] = [];
     let stats = { total: 0, scraped: 0 };
 
-    for (const feed of RSS_FEEDS) {
+    const feedPromises = RSS_FEEDS.map(async (feed) => {
       try {
         const response = await fetch(feed.url, { headers: FAKE_HEADERS, signal: AbortSignal.timeout(5000) });
-        if (!response.ok) continue;
+        if (!response.ok) return [];
 
         const xmlText = await response.text();
         const items = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-        const recentItems = items.slice(0, 3); // 3 notícias por vez
-
-        for (const itemXml of recentItems) {
+        const articlesFromFeed: any[] = [];
+        
+        for (const itemXml of items.slice(0, 3)) {
           const title = extractTag(itemXml, 'title');
           const link = extractTag(itemXml, 'link');
           const description = extractTag(itemXml, 'description');
@@ -133,59 +116,65 @@ serve(async (req) => {
 
           if (!title || !link) continue;
 
-          // Verifica duplicata
-          const { data: existing } = await supabase
-            .from('articles_queue')
-            .select('id')
-            .eq('original_link', link)
-            .maybeSingle();
-
-          if (existing) continue;
-
-          // Scraper com limpeza
-          const { text: fullContent, chars } = await fetchFullArticle(link);
-          const summary = description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '';
-          
-          // Se o scrape falhar ou vier sujo, usa o resumo RSS (que é limpo e seguro)
-          const finalContent = (fullContent && chars > 300) ? fullContent : summary;
-          if (finalContent.length > summary.length) stats.scraped++;
-
-          const isInvalidImage = image_url && (image_url.includes('pixel') || image_url.includes('statcounter'));
-          const finalImage = (image_url && !isInvalidImage) ? image_url : DEFAULT_IMAGE;
-
-          allArticles.push({
+          articlesFromFeed.push({
             title: title.slice(0, 200),
             original_title: title.slice(0, 200),
             original_link: link,
-            summary: summary,
-            original_content: finalContent,
-            image_url: finalImage,
+            summary: description ? cleanText(description.replace(/<[^>]*>?/gm, '')).slice(0, 400) : '',
+            image_url: image_url,
             source: feed.name,
             status: 'pending_approval',
             created_at: new Date().toISOString()
           });
         }
-      } catch (e) {
-        console.error(`Erro feed ${feed.name}:`, e.message);
+        return articlesFromFeed;
+      } catch (e: any) {
+        console.error(`[scrape-news] Erro feed ${feed.name}:`, e.message);
+        return [];
       }
-    }
-
-    if (allArticles.length > 0) {
-        const { error } = await supabase
-            .from('articles_queue')
-            .upsert(allArticles, { onConflict: 'original_link', ignoreDuplicates: true });
-        if (error) throw error;
-    }
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      processed: allArticles.length,
-      scraped_full: stats.scraped 
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+
+    const results = await Promise.all(feedPromises);
+    allRawArticles = results.flat();
+
+    if (allRawArticles.length === 0) {
+      return new Response(JSON.stringify({ success: true, message: 'Nenhum artigo novo encontrado.' }), { headers: corsHeaders });
+    }
+
+    const originalLinks = allRawArticles.map(article => article.original_link);
+    const { data: existingArticles, error: existingError } = await supabase
+      .from('articles_queue')
+      .select('original_link')
+      .in('original_link', originalLinks);
+
+    if (existingError) throw existingError;
+    const existingLinksSet = new Set(existingArticles?.map(a => a.original_link));
+    const articlesToScrape = allRawArticles.filter(article => !existingLinksSet.has(article.original_link));
+
+    if (articlesToScrape.length === 0) {
+      return new Response(JSON.stringify({ success: true, message: 'Todos os artigos encontrados já existem.' }), { headers: corsHeaders });
+    }
+
+    let newArticles: any[] = [];
+    for (const article of articlesToScrape) {
+      const { text: fullContent, chars } = await fetchFullArticle(article.original_link);
+      const finalContent = (fullContent && chars > 300) ? fullContent : article.summary;
+      if (finalContent.length > article.summary.length) stats.scraped++;
+
+      const isInvalidImage = article.image_url && (article.image_url.includes('pixel') || article.image_url.includes('statcounter'));
+      const finalImage = (article.image_url && !isInvalidImage) ? article.image_url : DEFAULT_IMAGE;
+
+      newArticles.push({ ...article, original_content: finalContent, image_url: finalImage });
+    }
+
+    if (newArticles.length > 0) {
+      const { error } = await supabase.from('articles_queue').upsert(newArticles, { onConflict: 'original_link', ignoreDuplicates: true });
+      if (error) throw error;
+    }
+
+    return new Response(JSON.stringify({ success: true, processed: newArticles.length, scraped_full: stats.scraped }), { headers: corsHeaders });
+  } catch (error: any) {
+    console.error("[scrape-news] Erro fatal:", error.message);
+    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: corsHeaders });
   }
 });
