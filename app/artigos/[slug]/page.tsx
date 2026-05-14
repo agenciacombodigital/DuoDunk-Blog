@@ -11,7 +11,7 @@ import { notFound } from 'next/navigation';
 import Script from 'next/script';
 
 // Imports Dinâmicos
-const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl mb-10" /> });
+const VideoEmbed = nextDynamic(() => import('@/components/VideoEmbed'), { ssr: false });
 const DisqusComments = nextDynamic(() => import('@/components/DisqusComments'), { ssr: false });
 const LatestNews = nextDynamic(() => import('@/components/LatestNews'), { ssr: true });
 const AmazonCTA = nextDynamic(() => import('@/components/AmazonCTA'), { ssr: true });
@@ -21,7 +21,9 @@ export const revalidate = 0;
 
 async function getArticle(slug: string) {
   try {
-    console.log(`[Artigo] Buscando slug: ${slug}`);
+    console.log(`[Artigo] Tentando carregar o slug: "${slug}"`);
+    
+    // 1. Busca tentando encontrar o artigo publicado
     const { data, error } = await supabaseServer
       .from('articles')
       .select('*')
@@ -30,181 +32,99 @@ async function getArticle(slug: string) {
       .maybeSingle();
     
     if (error) {
-      console.error(`[Artigo] Erro Supabase para slug "${slug}":`, error.message);
+      console.error(`[Artigo] Erro de consulta para slug "${slug}":`, {
+        message: error.message,
+        code: error.code
+      });
       return null;
     }
 
     if (!data) {
-      console.warn(`[Artigo] Nenhum artigo publicado encontrado com o slug: ${slug}`);
-      // Verificação extra: existe o slug mas não está publicado?
-      const { data: checkExists } = await supabaseServer
+      // 2. Log de diagnóstico: Existe o slug, mas não está publicado?
+      const { data: checkAny } = await supabaseServer
         .from('articles')
-        .select('id, published')
+        .select('id, title, published, slug')
         .eq('slug', slug)
         .maybeSingle();
-      
-      if (checkExists) {
-        console.warn(`[Artigo] O artigo existe (ID: ${checkExists.id}), mas o status 'published' é: ${checkExists.published}`);
+
+      if (checkAny) {
+        console.warn(`[Artigo] Slug "${slug}" encontrado, mas não exibido. Status: published=${checkAny.published}`);
+      } else {
+        console.error(`[Artigo] Slug "${slug}" absolutamente não encontrado no banco.`);
       }
+      return null;
     }
 
+    console.log(`[Artigo] Sucesso! Artigo "${data.title}" carregado.`);
     return data;
   } catch (e: any) {
-    console.error(`[Artigo] Erro fatal ao buscar slug "${slug}":`, e.message);
+    console.error(`[Artigo] Exceção crítica durante getArticle("${slug}"):`, e.message);
     return null;
   }
 }
 
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
-  parent: ResolvingMetadata
+  { params }: { params: { slug: string } }
 ): Promise<Metadata> {
   const article = await getArticle(params.slug);
-  const siteUrl = 'https://www.duodunk.com.br';
-  
   if (!article) return { title: 'Artigo não encontrado | Duo Dunk' };
 
-  const currentUrl = `${siteUrl}/artigos/${article.slug}`;
-  
-  let ogImage = article.image_url;
-  if (ogImage && !ogImage.startsWith('http')) {
-    ogImage = `${siteUrl}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
-  }
-  
-  if (!ogImage || ogImage.includes('undefined') || ogImage.length < 10) {
-    ogImage = `${siteUrl}/images/card-twitter-duodunk.jpg`;
-  }
-
-  const cacheBuster = `?t=${new Date().toISOString().split('T')[0]}`;
-  const finalOgImage = `${ogImage}${cacheBuster}`;
-
-  const title = article.title;
-  const description = article.meta_description || article.summary || 'Acompanhe as últimas notícias da NBA em tempo real no Duo Dunk.';
-
   return {
-    title: title,
-    description: description,
-    alternates: { canonical: currentUrl },
+    title: article.title,
+    description: article.meta_description || article.summary,
     openGraph: {
-      title: title,
-      description: description,
-      url: currentUrl,
-      siteName: 'Duo Dunk',
-      images: [
-        {
-          url: finalOgImage,
-          width: 1200, 
-          height: 630, 
-          alt: title,
-          type: 'image/jpeg',
-        }
-      ],
-      locale: 'pt_BR',
+      title: article.title,
+      description: article.summary,
       type: 'article',
-      publishedTime: article.published_at,
-      authors: [article.author || 'Redação Duo Dunk'],
-    },
-    twitter: {
-      card: "summary_large_image",
-      site: "@duodunk",
-      creator: "@duodunk",
-      title: title,
-      description: description,
-      images: [finalOgImage],
+      images: [article.image_url || '/images/card-twitter-duodunk.jpg'],
     },
   };
 }
 
 export default async function Artigo({ params }: { params: { slug: string } }) {
   const article = await getArticle(params.slug);
-  if (!article) notFound();
+  
+  // Se não encontrar o artigo após os logs, aí sim disparamos o notFound do Next.js
+  if (!article) {
+    notFound();
+  }
 
-  const siteUrl = 'https://www.duodunk.com.br';
   const date = new Date(article.published_at);
-  const timeZone = 'America/Sao_Paulo';
-  
-  const publishedDate = date.toLocaleDateString('pt-BR', { 
-    day: '2-digit', month: 'short', year: 'numeric', timeZone 
-  });
-  const publishedTime = date.toLocaleTimeString('pt-BR', { 
-    hour: '2-digit', minute: '2-digit', timeZone 
-  });
-  
-  const leadText = article.subtitle || article.summary;
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
-    'headline': article.title,
-    'image': [
-      article.image_url?.startsWith('http') 
-        ? article.image_url 
-        : `${siteUrl}${article.image_url?.startsWith('/') ? '' : '/'}${article.image_url}`
-    ],
-    'datePublished': article.published_at,
-    'dateModified': article.updated_at || article.published_at,
-    'author': [{
-      '@type': 'Person',
-      'name': article.author || 'Redação Duo Dunk',
-      'url': siteUrl
-    }],
-    'publisher': {
-      '@type': 'Organization',
-      'name': 'Duo Dunk',
-      'logo': {
-        '@type': 'ImageObject',
-        'url': `${siteUrl}/images/duodunkv2-logo.svg`
-      }
-    }
-  };
+  const publishedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const publishedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="bg-white text-gray-900">
-      <Script
-        id="news-article-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
           <article>
-            <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 transition-colors mb-8 font-bold font-inter text-sm uppercase tracking-wide">
-              <ArrowLeft className="w-4 h-4" /> Voltar para Home
+            <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-600 transition-colors mb-8 font-bold font-inter text-sm uppercase">
+              <ArrowLeft className="w-4 h-4" /> Voltar
             </Link>
 
-            <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-4 leading-tight">
+            <h1 className="font-oswald text-4xl md:text-6xl font-bold uppercase text-gray-900 mb-6 leading-tight">
               {article.title}
             </h1>
             
-            {leadText && (
-              <h2 className="text-lg md:text-xl text-gray-600 mb-6 font-inter leading-relaxed normal-case">
-                {leadText}
-              </h2>
-            )}
-            
-            <div className="flex flex-col items-start gap-1 mb-8 text-sm text-gray-500 font-inter">
-               <span className="font-bold text-[#FA007D]">
-                 Por {article.author || 'Redação Duo Dunk'}
-               </span>
-               <span>
-                 Postado em {publishedDate} às {publishedTime}
-               </span>
+            <div className="flex items-center gap-4 mb-8 text-sm text-gray-500 border-b border-gray-100 pb-6 font-inter">
+               <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold">
+                 {article.author?.charAt(0) || 'D'}
+               </div>
+               <div>
+                 <p className="font-bold text-gray-900">Por {article.author || 'Duo Dunk Redação'}</p>
+                 <p>{publishedDate} às {publishedTime}</p>
+               </div>
             </div>
 
             {article.image_url && (
-              <div className={cn(
-                "relative w-full rounded-2xl overflow-hidden mb-10 shadow-lg bg-gray-100",
-                "aspect-[4/3] md:aspect-video"
-              )}>
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-10 shadow-lg bg-gray-100">
                  <ImageWithFallback
                     src={article.image_url}
                     alt={article.title}
                     fill
-                    priority={true}
+                    priority
                     className="object-cover"
                     style={getObjectPositionStyle(article.image_focal_point, false)}
-                    sizes="(max-width: 768px) 100vw, 800px"
                  />
               </div>
             )}
@@ -216,23 +136,13 @@ export default async function Artigo({ params }: { params: { slug: string } }) {
             <div className="my-12">
                 <AmazonCTA />
             </div>
-
-            {article.tags && article.tags.length > 0 && (
-              <div className="pt-8 border-t border-gray-100">
-                <div className="flex flex-wrap gap-2">
-                  {article.tags.map((tag: string) => (
-                    <Link key={tag} href={`/ultimas?tag=${tag}`} className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors">#{tag}</Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </article>
         </div>
       </div>
 
       <div className="bg-gray-50 py-12 mt-12">
         <div className="container mx-auto px-4 max-w-5xl">
-           <h2 className="font-bebas text-3xl text-gray-900 mb-8 border-l-4 border-pink-600 pl-3">Continue Lendo</h2>
+           <h2 className="font-bebas text-3xl text-gray-900 mb-8">Continue Lendo</h2>
            <LatestNews currentPostId={article.id} limit={3} />
            <div className="mt-12">
               <DisqusComments identifier={article.slug} title={article.title} url={`https://www.duodunk.com.br/artigos/${article.slug}`} />
