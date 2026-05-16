@@ -40,6 +40,18 @@
     {
       "path": "/api/cron-posts-nba",
       "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron-scrape-news",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron-process-ai",
+      "schedule": "*/20 * * * *"
+    },
+    {
+      "path": "/api/cron-auto-publish",
+      "schedule": "*/30 * * * *"
     }
   ]
 }
